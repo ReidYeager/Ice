@@ -3,6 +3,7 @@
 #define CORE_APPLICATION_H_ 1
 
 #include "defines.h"
+#include "platform/platform.h"
 
 class ICE_API Application
 {
@@ -10,6 +11,7 @@ class ICE_API Application
 // Variables
 //=================================================================================================
 private:
+  Platform* platform = nullptr;
   b8 m_shouldClose = false;
 
 //=================================================================================================

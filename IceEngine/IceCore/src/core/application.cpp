@@ -15,6 +15,9 @@ i8 Application::Initialize()
 {
   printf("Ice App Init\n");
 
+  platform = new Platform();
+  platform->Initialize(800, 600);
+
   return 0;
 }
 
@@ -22,10 +25,11 @@ i8 Application::MainLoop()
 {
   printf("Ice App MainLoop\n");
 
-  //while (!m_shouldClose)
-  //{
-  //  
-  //}
+  while (!m_shouldClose)
+  {
+    platform->PlatformPumpMessages();
+  }
+
   return 0;
 }
 
@@ -33,9 +37,7 @@ i8 Application::Shutdown()
 {
   printf("Ice App Shutdown\n");
 
-  Platform p;
-  p.Initialize();
-  p.Shutdown();
+  platform->Shutdown();
 
   return 0;
 }
