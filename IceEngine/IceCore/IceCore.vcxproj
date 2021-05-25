@@ -89,12 +89,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\core\application.h" />
+    <ClInclude Include="src\core\memory_manager.h" />
     <ClInclude Include="src\defines.h" />
     <ClInclude Include="src\profiler.h" />
     <ClInclude Include="src\platform\platform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />
+    <ClCompile Include="src\core\memory_manager.cpp" />
     <ClCompile Include="src\platform\platform_windows.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

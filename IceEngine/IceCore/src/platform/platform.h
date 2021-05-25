@@ -4,33 +4,30 @@
 
 #include "defines.h"
 
-class Platform
+typedef struct PlatformState
 {
-//=================================================================================================
-// Variables
-//=================================================================================================
-private:
-  struct PlatformState
-  {
-    void* localState; // pointer to a platform specific struct
-  } state;
+  void* localState; // pointer to a platform specific struct
+} PlatformState;
 
-//=================================================================================================
-// Functions
-//=================================================================================================
-public:
-  // Creates a window
-  // Returns an Ice Error Code
-  i8 Initialize(u32 _width, u32 _height, const char* _title = "IceApp");
-  // Destroys the window
-  i8 Shutdown();
+// Creates a window
+// Returns an Ice Error Code
+i8 PlatformInitialize(PlatformState* _platformState, u32 _width, u32 _height, const char* _title = "IceApp");
+// Destroys the window
+i8 PlatformShutdown(PlatformState* _platformState);
 
-  // Outputs a string message to the platform's console
-  i8 PrintToConsole(const char* message, ...);
+// Allocates a block of memory on the stack of size _size
+void* PlatformAllocateMem(u64 _size);
+// Frees a block of memory on the stack
+void  PlatformFreeMem(void* _data);
+// Sets a block of memory of size _size to all 0
+void* PlatformZeroMem(void* _data, u64 _size);
+// Copies _size bytes from _src to _dst
+void* PlatformCopyMem(void* _dst, const void* _src, u64 _size);
 
-  // TODO : Research
-  i8 PlatformPumpMessages();
+// Outputs a string message to the platform's console
+i8 PlatformPrintToConsole(const char* message, ...);
 
-};
+// TODO : Research
+i8 PlatformPumpMessages();
 
 #endif // !PLATFORM_PLATFORM_H

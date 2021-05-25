@@ -27,12 +27,18 @@
     <ClInclude Include="src\profiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\memory_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\platform_windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\memory_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

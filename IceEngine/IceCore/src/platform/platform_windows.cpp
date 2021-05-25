@@ -2,6 +2,8 @@
 #include "defines.h"
 #include "platform/platform.h"
 
+#ifdef ICE_PLATFORM_WINDOWS
+
 #include <windows.h>
 
 // TOOD : Remove?
@@ -9,12 +11,12 @@
 #include <stdlib.h>
 #include <cstdarg>
 
-struct WindowsState
+typedef struct WindowsState
 {
   // Windows specific information
   HINSTANCE hinstance;
   HWND hwnd;
-};
+} WindowsState;
 
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
@@ -31,10 +33,10 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
-i8 Platform::Initialize(u32 _width, u32 _height, const char* _title /*= "IceApp"*/)
+i8 PlatformInitialize(PlatformState* _platformState, u32 _width, u32 _height, const char* _title /*= "IceApp"*/)
 {
-  state.localState = malloc(sizeof(WindowsState));
-  WindowsState& lstate = *((WindowsState*)state.localState);
+  _platformState->localState = malloc(sizeof(WindowsState));
+  WindowsState& lstate = *((WindowsState*)_platformState->localState);
 
 
   // Register window
@@ -99,10 +101,10 @@ i8 Platform::Initialize(u32 _width, u32 _height, const char* _title /*= "IceApp"
   return 0;
 }
 
-i8 Platform::Shutdown()
+i8 PlatformShutdown(PlatformState* _platformState)
 {
   // TODO : Destroy the window
-  WindowsState& lstate = *((WindowsState*)state.localState);
+  WindowsState& lstate = *((WindowsState*)_platformState->localState);
 
   if (lstate.hwnd)
   {
@@ -110,11 +112,31 @@ i8 Platform::Shutdown()
     lstate.hwnd = 0;
   }
 
-  free(state.localState);
+  free(_platformState->localState);
   return 0;
 }
 
-i8 Platform::PrintToConsole(const char* message, ...)
+void* PlatformAllocateMem(u64 _size)
+{
+  return malloc(_size);
+}
+
+void  PlatformFreeMem(void* _data)
+{
+  free(_data);
+}
+
+void* PlatformZeroMem(void* _data, u64 _size)
+{
+  return memset(_data, 0, _size);
+}
+
+void* PlatformCopyMem(void* _dst, const void* _src, u64 _size)
+{
+  return memcpy(_dst, _src, _size);
+}
+
+i8 PlatformPrintToConsole(const char* message, ...)
 {
   va_list vaList;
   va_start(vaList, message);
@@ -124,7 +146,7 @@ i8 Platform::PrintToConsole(const char* message, ...)
   return 0;
 }
 
-i8 Platform::PlatformPumpMessages()
+i8 PlatformPumpMessages()
 {
   MSG message;
   while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
@@ -136,3 +158,4 @@ i8 Platform::PlatformPumpMessages()
   return 0;
 }
 
+#endif // ICE_PLATFORM_WINDOWS

@@ -1,9 +1,9 @@
 \IceEngine\IceCore\src\core\application.h
-	 TODO :--: Line    41 :--: // TODO : Add any game->engine API calls here
+	 TODO :--: Line    45 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\platform.h
-	 TODO :--: Line    30 :--: // TODO : Research
+	 TODO :--: Line    29 :--: // TODO : Research
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	 TODO :--: Line    23 :--: // TODO : Replace with a platform/application callback
-	 TODO :--: Line   103 :--: // TODO : Destroy the window
+	 TODO :--: Line    25 :--: // TODO : Replace with a platform/application callback
+	 TODO :--: Line   105 :--: // TODO : Destroy the window
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     4 :--: // TODO : Add profiling tools
