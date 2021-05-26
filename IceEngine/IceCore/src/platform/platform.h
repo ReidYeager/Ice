@@ -7,6 +7,7 @@
 typedef struct PlatformState
 {
   void* localState; // pointer to a platform specific struct
+  b8 shouldClose;
 } PlatformState;
 
 // Creates a window
@@ -26,7 +27,6 @@ void* PlatformCopyMem(void* _dst, const void* _src, u64 _size);
 
 // Outputs a string message to the platform's console
 i8 PlatformPrintToConsole(const char* message, ...);
-
 // TODO : Research
 i8 PlatformPumpMessages();
 

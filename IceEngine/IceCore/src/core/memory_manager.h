@@ -3,7 +3,6 @@
 #define CORE_MEMORY_MANAGER_H 1
 
 #include "defines.h"
-#include "platform/platform.h"
 
 enum IceMemoryTypeBits
 {
@@ -15,8 +14,12 @@ enum IceMemoryTypeBits
 };
 typedef IceFlag IceMemoryTypeFlag;
 
+// TODO : ? Include a vector of void* to all allocated memory ?
+
 // Initializes memory statistics
 void IMemInitialize();
+// 
+void IMemShutdown();
 // Allocates a block of memory on the stack of size _size
 void* IMemAllocate(u64 _size, IceMemoryTypeFlag _type);
 // Frees a block of memory on the stack

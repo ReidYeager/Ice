@@ -18,13 +18,17 @@ typedef struct WindowsState
   HWND hwnd;
 } WindowsState;
 
+// TODO : Remove -- Only used to close the application from input callback
+PlatformState* platState = nullptr;
+
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
   switch (message)
   {
   case WM_CLOSE:
     // TODO : Replace with a platform/application callback
-    printf("EXIT");
+    // Remove platState definition when proper callback is added
+    platState->shouldClose = true;
     break;
   default:
     break;
@@ -35,6 +39,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
 
 i8 PlatformInitialize(PlatformState* _platformState, u32 _width, u32 _height, const char* _title /*= "IceApp"*/)
 {
+  platState = _platformState;
   _platformState->localState = malloc(sizeof(WindowsState));
   WindowsState& lstate = *((WindowsState*)_platformState->localState);
 

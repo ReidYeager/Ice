@@ -1,9 +1,14 @@
 \IceEngine\IceCore\src\core\application.h
 	 TODO :--: Line    45 :--: // TODO : Add any game->engine API calls here
+\IceEngine\IceCore\src\core\memory_manager.cpp
+	 TODO :--: Line    27 :--: // TODO : Free any remaining allocated memory
+\IceEngine\IceCore\src\core\memory_manager.h
+	 TODO :--: Line    16 :--: // TODO : ? Include a vector of void* to all allocated memory ?
 \IceEngine\IceCore\src\platform\platform.h
 	 TODO :--: Line    29 :--: // TODO : Research
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	 TODO :--: Line    25 :--: // TODO : Replace with a platform/application callback
-	 TODO :--: Line   105 :--: // TODO : Destroy the window
+	 TODO :--: Line    20 :--: // TODO : Remove -- Only used to close the application from input callback
+	 TODO :--: Line    28 :--: // TODO : Replace with a platform/application callback
+	 TODO :--: Line   110 :--: // TODO : Destroy the window
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     4 :--: // TODO : Add profiling tools

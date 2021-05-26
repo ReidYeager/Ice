@@ -3,7 +3,6 @@
 #include "core/application.h"
 #include "platform/platform.h"
 #include "core/memory_manager.h"
-#include <iostream>
 
 void Application::Run()
 {
@@ -14,7 +13,7 @@ void Application::Run()
 
 i8 Application::Initialize()
 {
-  printf("Ice App Init\n");
+  PlatformPrintToConsole("Ice App Init\n");
 
   platformState = new PlatformState();
 
@@ -30,29 +29,31 @@ i8 Application::Initialize()
 
 i8 Application::MainLoop()
 {
-  printf("Ice App MainLoop\n");
+  PlatformPrintToConsole("Ice App MainLoop\n");
 
-  //while (!m_shouldClose)
-  //{
-  //  PlatformPumpMessages();
-  //}
+  while (!platformState->shouldClose)
+  {
+    PlatformPumpMessages();
+    // Handle input
+    // Run game code
+    // Render
+  }
 
   return 0;
 }
 
 i8 Application::Shutdown()
 {
-  printf("Ice App Shutdown\n");
+  PlatformPrintToConsole("Ice App Shutdown\n");
 
+  PlatformPrintToConsole("\n\n");
   IMemLogStats();
-
   IMemFree(a, 12, IMEM_UNKNOWN);
   IMemFree(b, 100, IMEM_BUFFER);
   IMemFree(c, 540, IMEM_ARRAY);
+  PlatformPrintToConsole("\n\n");
 
-  printf("\n\n");
-  IMemLogStats();
-
+  IMemShutdown();
   PlatformShutdown(platformState);
   return 0;
 }

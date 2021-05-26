@@ -1,7 +1,6 @@
 
 #include "core/memory_manager.h"
-
-#include <stdio.h>
+#include "platform/platform.h"
 
 const char* IceMemoryTypeStrings[IMEM_COUNT] = {
   "IMEM_UNKNOWN",
@@ -14,6 +13,7 @@ struct IceMemoryStats
 {
   u64 totalAllocationAmount;
   u64 typeAllocationAmounts[IMEM_COUNT];
+  //std::vector<void*> allocations[IMEM_COUNT]; // Not sure if this is a good idea
 };
 IceMemoryStats stats;
 
@@ -22,15 +22,23 @@ void IMemInitialize()
   PlatformZeroMem(&stats, sizeof(IceMemoryStats));
 }
 
+void IMemShutdown()
+{
+  IMemLogStats();
+  // TODO : Free any remaining allocated memory
+}
+
 void* IMemAllocate(u64 _size, IceMemoryTypeFlag _type)
 {
   stats.typeAllocationAmounts[_type] += _size;
+  stats.totalAllocationAmount += _size;
   return PlatformAllocateMem(_size);
 }
 
 void IMemFree(void* _data, u64 _size, IceMemoryTypeFlag _type)
 {
   stats.typeAllocationAmounts[_type] -= _size;
+  stats.totalAllocationAmount -= _size;
   PlatformFreeMem(_data);
 }
 
