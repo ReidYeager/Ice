@@ -93,11 +93,15 @@
     <ClInclude Include="src\defines.h" />
     <ClInclude Include="src\profiler.h" />
     <ClInclude Include="src\platform\platform.h" />
+    <ClInclude Include="src\renderer\renderer.h" />
+    <ClInclude Include="src\renderer\renderer_backend.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />
     <ClCompile Include="src\core\memory_manager.cpp" />
     <ClCompile Include="src\platform\platform_windows.cpp" />
+    <ClCompile Include="src\renderer\renderer.cpp" />
+    <ClCompile Include="src\renderer\renderer_backend_vk.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

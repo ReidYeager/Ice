@@ -12,3 +12,7 @@
 	 TODO :--: Line   110 :--: // TODO : Destroy the window
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     4 :--: // TODO : Add profiling tools
+\IceEngine\IceCore\src\renderer\renderer_backend.h
+	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
+\IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
+	 TODO :--: Line    38 :--: // TODO : Make this editable from the client
