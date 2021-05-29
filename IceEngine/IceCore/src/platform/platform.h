@@ -3,6 +3,7 @@
 #define PLATFORM_PLATFORM_H 1
 
 #include "defines.h"
+#include <vulkan/vulkan.h>
 
 typedef struct PlatformState
 {
@@ -15,6 +16,7 @@ typedef struct PlatformState
 i8 PlatformInitialize(PlatformState* _platformState, u32 _width, u32 _height, const char* _title = "IceApp");
 // Destroys the window
 i8 PlatformShutdown(PlatformState* _platformState);
+VkSurfaceKHR PlatformCreateSurface(VkInstance* _instance);
 
 // Allocates a block of memory on the stack of size _size
 void* PlatformAllocateMem(u64 _size);

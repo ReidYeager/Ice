@@ -4,6 +4,7 @@
 
 #include "defines.h"
 #include "platform/platform.h"
+#include "renderer/renderer.h"
 
 class ICE_API Application
 {
@@ -13,6 +14,7 @@ class ICE_API Application
 private:
   b8 m_shouldClose = false;
   PlatformState* platformState = nullptr;
+  Renderer* renderer = nullptr;
 
   void* a = nullptr;
   void* b = nullptr;

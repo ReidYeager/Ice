@@ -24,6 +24,8 @@ i8 Application::Initialize()
   b = IMemAllocate(100, IMEM_BUFFER);
   c = IMemAllocate(540, IMEM_ARRAY);
 
+  renderer = new Renderer();
+
   return 0;
 }
 
@@ -45,6 +47,8 @@ i8 Application::MainLoop()
 i8 Application::Shutdown()
 {
   PlatformPrintToConsole("Ice App Shutdown\n");
+
+  delete(renderer);
 
   PlatformPrintToConsole("\n\n");
   IMemLogStats();

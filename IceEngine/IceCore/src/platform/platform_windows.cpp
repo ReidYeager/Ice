@@ -5,6 +5,8 @@
 #ifdef ICE_PLATFORM_WINDOWS
 
 #include <windows.h>
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_win32.h>
 
 // TOOD : Remove?
 #include <stdio.h>
@@ -119,6 +121,27 @@ i8 PlatformShutdown(PlatformState* _platformState)
 
   free(_platformState->localState);
   return 0;
+}
+
+VkSurfaceKHR PlatformCreateSurface(VkInstance* _instance)
+{
+  WindowsState& lstate = *((WindowsState*)platState->localState);
+
+  VkWin32SurfaceCreateInfoKHR createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+  createInfo.flags = 0;
+  createInfo.pNext = NULL;
+  createInfo.hinstance = lstate.hinstance;
+  createInfo.hwnd = lstate.hwnd;
+
+  VkSurfaceKHR surface = VK_NULL_HANDLE;
+  if (vkCreateWin32SurfaceKHR(*_instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
+  {
+    // ERROR : Failed to create surface
+    return nullptr;
+  }
+
+  return surface;
 }
 
 void* PlatformAllocateMem(u64 _size)
