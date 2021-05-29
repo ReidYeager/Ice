@@ -6,29 +6,39 @@
 
 enum IceMemoryTypeBits
 {
-  IMEM_UNKNOWN,
-  IMEM_ARRAY,
-  IMEM_TEXTURE,
-  IMEM_BUFFER,
-  IMEM_COUNT
+  IMEM_TYPE_UNKNOWN,
+  IMEM_TYPE_BUFFER,
+  IMEM_TYPE_COUNT
 };
 typedef IceFlag IceMemoryTypeFlag;
 
-// TODO : ? Include a vector of void* to all allocated memory ?
+class MemoryManager
+{
+public:
+  struct MemoryStatistics
+  {
+    u64 totalMemoryAllocated;
+    u64 categoryAllocations[IMEM_TYPE_COUNT];
+  };
 
-// Initializes memory statistics
-void IMemInitialize();
-// 
-void IMemShutdown();
-// Allocates a block of memory on the stack of size _size
-void* IMemAllocate(u64 _size, IceMemoryTypeFlag _type);
-// Frees a block of memory on the stack
-void  IMemFree(void* _data, u64 _size, IceMemoryTypeFlag _type);
-// Sets a block of memory of size _size to all 0
-void* IMemZero(void* _data, u64 _size);
-// Copies _size bytes from _src to _dst
-void* IMemCopy(void* _dst, const void* _src, u64 _size);
-// Prints the current data usage in each memory type
-void IMemLogStats();
+private:
+  MemoryStatistics stats{};
+  static MemoryManager* instance;
+
+  //=================================================================================================
+  // Functions
+  //=================================================================================================
+public:
+  static void Initialize();
+  static void Shutdown();
+  static MemoryManager* GetInstance();
+  MemoryStatistics* GetStats();
+
+  static void* Allocate(u32 size, IceMemoryTypeFlag flag);
+  static void Free(void* data, u32 size, IceMemoryTypeFlag flag);
+  static void Zero(void* data, u32 size);
+
+  static void PrintStats();
+};
 
 #endif // !CORE_MEMORY_MANAGER_H

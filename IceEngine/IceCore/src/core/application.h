@@ -12,8 +12,7 @@ class ICE_API Application
 // Variables
 //=================================================================================================
 private:
-  b8 m_shouldClose = false;
-  PlatformState* platformState = nullptr;
+  Platform* platform = nullptr;
   Renderer* renderer = nullptr;
 
   void* a = nullptr;

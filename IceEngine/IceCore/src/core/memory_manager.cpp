@@ -2,62 +2,69 @@
 #include "core/memory_manager.h"
 #include "platform/platform.h"
 
-const char* IceMemoryTypeStrings[IMEM_COUNT] = {
-  "IMEM_UNKNOWN",
-  "IMEM_ARRAY",
-  "IMEM_TEXTURE",
-  "IMEM_BUFFER"
-};
+// TEMPORARY -- Replace with a proper logging system
+#include <stdio.h>
 
-struct IceMemoryStats
-{
-  u64 totalAllocationAmount;
-  u64 typeAllocationAmounts[IMEM_COUNT];
-  //std::vector<void*> allocations[IMEM_COUNT]; // Not sure if this is a good idea
-};
-IceMemoryStats stats;
+MemoryManager* MemoryManager::instance;
 
-void IMemInitialize()
+void MemoryManager::Initialize()
 {
-  PlatformZeroMem(&stats, sizeof(IceMemoryStats));
+  Zero(GetInstance()->GetStats(), sizeof(MemoryStatistics));
 }
 
-void IMemShutdown()
+void MemoryManager::Shutdown()
 {
-  IMemLogStats();
-  // TODO : Free any remaining allocated memory
+  PrintStats();
 }
 
-void* IMemAllocate(u64 _size, IceMemoryTypeFlag _type)
+MemoryManager* MemoryManager::GetInstance()
 {
-  stats.typeAllocationAmounts[_type] += _size;
-  stats.totalAllocationAmount += _size;
-  return PlatformAllocateMem(_size);
-}
-
-void IMemFree(void* _data, u64 _size, IceMemoryTypeFlag _type)
-{
-  stats.typeAllocationAmounts[_type] -= _size;
-  stats.totalAllocationAmount -= _size;
-  PlatformFreeMem(_data);
-}
-
-void* IMemZero(void* _data, u64 _size)
-{
-  return PlatformZeroMem(_data, _size);
-}
-
-void* IMemCopy(void* _dst, const void* _src, u64 _size)
-{
-  return PlatformCopyMem(_dst, _src, _size);
-}
-
-void IMemLogStats()
-{
-  PlatformPrintToConsole("Total                     : %llu\n", stats.totalAllocationAmount);
-  for (u32 i = 0; i < IMEM_COUNT; i++)
+  if (!instance)
   {
-    PlatformPrintToConsole("%-25s : %llu\n", IceMemoryTypeStrings[i], stats.typeAllocationAmounts[i]);
+    instance = new MemoryManager();
   }
+
+  return instance;
 }
 
+MemoryManager::MemoryStatistics* MemoryManager::GetStats()
+{
+  return &stats;
+}
+
+void MemoryManager::PrintStats()
+{
+  const char* categoryNames[IMEM_TYPE_COUNT] = {
+    "MEM_TYPE_UNKNOWN", "MEM_TYPE_BUFFER"
+  };
+
+  MemoryManager* mm = MemoryManager::GetInstance();
+  MemoryStatistics* stats = mm->GetStats();
+
+  for (u32 i = 0; i < IMEM_TYPE_COUNT; i++)
+  {
+    printf("%-25s : %llu %s\n", categoryNames[i], stats->categoryAllocations[i], "B");
+  }
+  printf("%-25s : %llu %s\n", "Total", stats->totalMemoryAllocated, "B");
+}
+
+void* MemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)
+{
+  MemoryStatistics* stats = GetInstance()->GetStats();
+  stats->totalMemoryAllocated += size;
+  stats->categoryAllocations[flag] += size;
+  return Platform::AllocateMem(size);
+}
+
+void MemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
+{
+  MemoryStatistics* stats = GetInstance()->GetStats();
+  stats->totalMemoryAllocated -= size;
+  stats->categoryAllocations[flag] -= size;
+  Platform::FreeMem(data);
+}
+
+void MemoryManager::Zero(void* data, u32 size)
+{
+  Platform::ZeroMem(data, size);
+}

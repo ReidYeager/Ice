@@ -11,8 +11,9 @@
 RendererBackend::RendererBackend()
 {
   CreateInstance();
-  surface = PlatformCreateSurface(&instance);
-  CreateDevice();
+  //surface = // Get surface from platform?
+
+  //CreateDevice();
   // Create command pool
 }
 
@@ -67,8 +68,8 @@ i8 RendererBackend::CreateDevice()
   VkPhysicalDevice chosenPhysicalDevice = VK_NULL_HANDLE;
   ChoosePhysicalDevice(chosenPhysicalDevice, queueIndices[0], queueIndices[1], queueIndices[2]);
 
-  PlatformPrintToConsole("Graphics : %u\nPresent : %u\nTransfer : %u\n",
-                         queueIndices[0], queueIndices[1], queueIndices[2]);
+  //PlatformPrintToConsole("Graphics : %u\nPresent : %u\nTransfer : %u\n",
+  //                       queueIndices[0], queueIndices[1], queueIndices[2]);
 
   return 0;
 }
@@ -154,7 +155,7 @@ i8 RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32&
     return 0;
   }
 
-  // Error : Failed to find a sutable GPU
+  // Error : Failed to find a suitable GPU
   return -1;
 }
 

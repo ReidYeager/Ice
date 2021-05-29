@@ -13,16 +13,13 @@ void Application::Run()
 
 i8 Application::Initialize()
 {
-  PlatformPrintToConsole("Ice App Init\n");
+  platform = new Platform(800, 600, "Test ice");
 
-  platformState = new PlatformState();
-
-  PlatformInitialize(platformState, 800, 600);
-  IMemInitialize();
-
-  a = IMemAllocate(12, IMEM_UNKNOWN);
-  b = IMemAllocate(100, IMEM_BUFFER);
-  c = IMemAllocate(540, IMEM_ARRAY);
+  MemoryManager::Initialize();
+  a = MemoryManager::Allocate(12, IMEM_TYPE_UNKNOWN);
+  b = MemoryManager::Allocate(100, IMEM_TYPE_BUFFER);
+  c = MemoryManager::Allocate(540, IMEM_TYPE_BUFFER);
+  MemoryManager::PrintStats();
 
   renderer = new Renderer();
 
@@ -31,11 +28,8 @@ i8 Application::Initialize()
 
 i8 Application::MainLoop()
 {
-  PlatformPrintToConsole("Ice App MainLoop\n");
-
-  while (!platformState->shouldClose)
+  while (platform->Tick())
   {
-    PlatformPumpMessages();
     // Handle input
     // Run game code
     // Render
@@ -46,18 +40,13 @@ i8 Application::MainLoop()
 
 i8 Application::Shutdown()
 {
-  PlatformPrintToConsole("Ice App Shutdown\n");
-
   delete(renderer);
 
-  PlatformPrintToConsole("\n\n");
-  IMemLogStats();
-  IMemFree(a, 12, IMEM_UNKNOWN);
-  IMemFree(b, 100, IMEM_BUFFER);
-  IMemFree(c, 540, IMEM_ARRAY);
-  PlatformPrintToConsole("\n\n");
+  MemoryManager::Free(a, 12, IMEM_TYPE_UNKNOWN);
+  MemoryManager::Free(b, 100, IMEM_TYPE_BUFFER);
+  MemoryManager::Free(c, 540, IMEM_TYPE_BUFFER);
 
-  IMemShutdown();
-  PlatformShutdown(platformState);
+  MemoryManager::Shutdown();
+  delete(platform);
   return 0;
 }

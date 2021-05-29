@@ -3,33 +3,43 @@
 #define PLATFORM_PLATFORM_H 1
 
 #include "defines.h"
-#include <vulkan/vulkan.h>
 
-typedef struct PlatformState
+#ifdef ICE_PLATFORM_WINDOWS
+#include <windows.h>
+struct LocalStateInformation
 {
-  void* localState; // pointer to a platform specific struct
-  b8 shouldClose;
-} PlatformState;
+  HWND hwnd;
+  HINSTANCE hinstance;
+};
+#endif // ICE_PLATFORM_WINDOWS
 
-// Creates a window
-// Returns an Ice Error Code
-i8 PlatformInitialize(PlatformState* _platformState, u32 _width, u32 _height, const char* _title = "IceApp");
-// Destroys the window
-i8 PlatformShutdown(PlatformState* _platformState);
-VkSurfaceKHR PlatformCreateSurface(VkInstance* _instance);
+class Platform
+{
+private:
+  struct PlatformStateInformation
+  {
+    LocalStateInformation internalState; // Should use void* instead?
+    bool shouldClose;
+  };
+  static PlatformStateInformation platState;
 
-// Allocates a block of memory on the stack of size _size
-void* PlatformAllocateMem(u64 _size);
-// Frees a block of memory on the stack
-void  PlatformFreeMem(void* _data);
-// Sets a block of memory of size _size to all 0
-void* PlatformZeroMem(void* _data, u64 _size);
-// Copies _size bytes from _src to _dst
-void* PlatformCopyMem(void* _dst, const void* _src, u64 _size);
+public:
+  Platform(u32 _width, u32 _height, const char* _title);
+  ~Platform();
+  bool Tick();
 
-// Outputs a string message to the platform's console
-i8 PlatformPrintToConsole(const char* message, ...);
-// TODO : Research
-i8 PlatformPumpMessages();
+  static void* AllocateMem(u32 size);
+  static void FreeMem(void* data);
+  static void ZeroMem(void* data, u32 size);
+
+  // TODO : Dirty. Find a better way to close
+  static inline void Close() { platState.shouldClose = true; }
+
+  // TODO : Add Logging
+
+private:
+  void PumpMessages();
+
+};
 
 #endif // !PLATFORM_PLATFORM_H

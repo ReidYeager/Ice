@@ -1,18 +1,13 @@
 \IceEngine\IceCore\src\core\application.h
-	 TODO :--: Line    45 :--: // TODO : Add any game->engine API calls here
-\IceEngine\IceCore\src\core\memory_manager.cpp
-	 TODO :--: Line    27 :--: // TODO : Free any remaining allocated memory
-\IceEngine\IceCore\src\core\memory_manager.h
-	 TODO :--: Line    16 :--: // TODO : ? Include a vector of void* to all allocated memory ?
+	 TODO :--: Line    46 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\platform.h
-	 TODO :--: Line    29 :--: // TODO : Research
+	 TODO :--: Line    34 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    37 :--: // TODO : Add Logging
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	 TODO :--: Line    20 :--: // TODO : Remove -- Only used to close the application from input callback
-	 TODO :--: Line    28 :--: // TODO : Replace with a platform/application callback
-	 TODO :--: Line   110 :--: // TODO : Destroy the window
+	 TODO :--: Line    17 :--: // TODO : Dirty. Find a better way to close
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     4 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
-	 TODO :--: Line    38 :--: // TODO : Make this editable from the client
+	 TODO :--: Line    42 :--: // TODO : Make this editable from the client
