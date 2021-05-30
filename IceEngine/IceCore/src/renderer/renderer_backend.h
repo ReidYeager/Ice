@@ -10,11 +10,45 @@
 
 class RendererBackend
 {
+private:
+  struct IcePhysicalDeviceInformation
+  {
+    VkPhysicalDevice device;
+    VkPhysicalDeviceProperties properties;
+    VkPhysicalDeviceMemoryProperties memProperties;
+    VkPhysicalDeviceFeatures features;
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    std::vector<VkSurfaceFormatKHR> surfaceFormats;
+    std::vector<VkPresentModeKHR> presentModes;
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+    std::vector<VkExtensionProperties> extensionProperties;
+  };
+
+  struct IceVulkanState
+  {
+    IcePhysicalDeviceInformation gpu;
+    VkDevice device;
+
+    uint32_t graphicsIdx;
+    uint32_t presentIdx;
+    uint32_t transferIdx;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkQueue transferQueue;
+
+    VkCommandPool graphicsCommandPool;
+
+    VkExtent2D renderExtent;
+    VkRenderPass renderPass;
+  };
+
 //=================================================================================================
 // VARIABLES
 //=================================================================================================
 private:
-  std::vector<const char*> validationLayer = { "VK_LAYER_KHRONOS_validation" };
+  IceVulkanState vState {};
+
+  std::vector<const char*> deviceLayers = { "VK_LAYER_KHRONOS_validation" };
   std::vector<const char*> instanceExtensions = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                                                   VK_KHR_SURFACE_EXTENSION_NAME,
                                                   "VK_KHR_win32_surface" };

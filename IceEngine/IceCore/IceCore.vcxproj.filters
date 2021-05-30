@@ -36,6 +36,9 @@
     <ClInclude Include="src\renderer\renderer_backend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">

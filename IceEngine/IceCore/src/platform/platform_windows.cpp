@@ -2,10 +2,15 @@
 #include "defines.h"
 
 #ifdef ICE_PLATFORM_WINDOWS
+#include "logger.h"
 #include "platform/platform.h"
 
+#include <stdio.h>
+#include <stdarg.h>
 #include <windows.h>
+
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_win32.h>
 
 Platform::PlatformStateInformation Platform::platState;
 
@@ -106,19 +111,45 @@ bool Platform::Tick()
   return !platState.shouldClose;
 }
 
-void* Platform::AllocateMem(u32 size)
+void* Platform::AllocateMem(u32 _size)
 {
-  return malloc(size);
+  return malloc(_size);
 }
 
-void Platform::FreeMem(void* data)
+void Platform::FreeMem(void* _data)
 {
-  free(data);
+  free(_data);
 }
 
-void Platform::ZeroMem(void* data, u32 size)
+void Platform::ZeroMem(void* _data, u32 _size)
 {
-  memset(data, 0, size);
+  memset(_data, 0, _size);
+}
+
+void Platform::PrintToConsole(const char* _message, ...)
+{
+  va_list args;
+  va_start(args, _message);
+  vprintf(_message, args);
+  va_end(args);
+}
+
+VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)
+{
+  VkWin32SurfaceCreateInfoKHR createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+  createInfo.hinstance = platState.internalState.hinstance;
+  createInfo.hwnd = platState.internalState.hwnd;
+  createInfo.flags = 0;
+
+  VkSurfaceKHR surface;
+  if (vkCreateWin32SurfaceKHR(*_instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
+  {
+    IPrint("Failed to create vkSurface\n");
+    return VK_NULL_HANDLE;
+  }
+
+  return surface;
 }
 
 void Platform::PumpMessages()

@@ -1,24 +1,27 @@
 
-#include "renderer\renderer_backend.h"
+#include "defines.h"
 
 #if defined(ICE_VULKAN)
 
 #include <vulkan/vulkan.h>
 #include <set>
 #include <string>
-#include <platform/platform.h>
+
+#include "logger.h"
+#include "renderer\renderer_backend.h"
+#include "platform/platform.h"
 
 RendererBackend::RendererBackend()
 {
   CreateInstance();
-  //surface = // Get surface from platform?
-
-  //CreateDevice();
+  surface = Platform::CreateSurface(&instance);
+  CreateDevice();
   // Create command pool
 }
 
 RendererBackend::~RendererBackend()
 {
+  vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
 }
 
@@ -50,8 +53,8 @@ i8 RendererBackend::CreateInstance()
   createInfo.pApplicationInfo = &appInfo;
   createInfo.enabledExtensionCount = (u32)instanceExtensions.size();
   createInfo.ppEnabledExtensionNames = instanceExtensions.data();
-  createInfo.enabledLayerCount = (u32)validationLayer.size();
-  createInfo.ppEnabledLayerNames = validationLayer.data();
+  createInfo.enabledLayerCount = (u32)deviceLayers.size();
+  createInfo.ppEnabledLayerNames = deviceLayers.data();
 
   if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
   {
@@ -64,12 +67,76 @@ i8 RendererBackend::CreateInstance()
 
 i8 RendererBackend::CreateDevice()
 {
+  // Choose a physical device
   u32 queueIndices[3];
+  u32 queueCount = 3;
   VkPhysicalDevice chosenPhysicalDevice = VK_NULL_HANDLE;
   ChoosePhysicalDevice(chosenPhysicalDevice, queueIndices[0], queueIndices[1], queueIndices[2]);
 
-  //PlatformPrintToConsole("Graphics : %u\nPresent : %u\nTransfer : %u\n",
-  //                       queueIndices[0], queueIndices[1], queueIndices[2]);
+  IPrint("Graphics : %u\nPresent : %u\nTransfer : %u\n",
+         queueIndices[0], queueIndices[1], queueIndices[2]);
+
+  // Fill physical device details
+  vState.gpu.device = chosenPhysicalDevice;
+  vState.graphicsIdx = queueIndices[0];
+  vState.presentIdx  = queueIndices[1];
+  vState.transferIdx = queueIndices[2];
+
+  IcePhysicalDeviceInformation& dInfo = vState.gpu;
+  VkPhysicalDevice& pDevice = vState.gpu.device;
+
+  u32 count = 0;
+  vkGetPhysicalDeviceFeatures(pDevice, &dInfo.features);
+  vkGetPhysicalDeviceProperties(pDevice, &dInfo.properties);
+  vkGetPhysicalDeviceMemoryProperties(pDevice, &dInfo.memProperties);
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &dInfo.surfaceCapabilities);
+
+  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, nullptr);
+  dInfo.queueFamilyProperties.resize(count);
+  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, dInfo.queueFamilyProperties.data());
+
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, nullptr);
+  dInfo.presentModes.resize(count);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, dInfo.presentModes.data());
+
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, nullptr);
+  dInfo.surfaceFormats.resize(count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, dInfo.surfaceFormats.data());
+
+  // Create logical device
+
+  VkPhysicalDeviceFeatures enabledFeatures {};
+  enabledFeatures.samplerAnisotropy = VK_TRUE;
+
+  const float priority = 1.0f;
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
+  for (u32 i = 0; i < queueCount; i++)
+  {
+    queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfos[i].queueFamilyIndex = queueIndices[i];
+    queueCreateInfos[i].queueCount = 1;
+    queueCreateInfos[i].pQueuePriorities = &priority;
+  }
+
+  VkDeviceCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  createInfo.pEnabledFeatures = &enabledFeatures;
+  createInfo.enabledExtensionCount   = static_cast<u32>(deviceExtensions.size());
+  createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+  createInfo.enabledLayerCount   = static_cast<u32>(deviceLayers.size());
+  createInfo.ppEnabledLayerNames = deviceLayers.data();
+  createInfo.queueCreateInfoCount = queueCount;
+  createInfo.pQueueCreateInfos    = queueCreateInfos.data();
+
+  if (vkCreateDevice(pDevice, &createInfo, nullptr, &vState.device) != VK_SUCCESS)
+  {
+    IPrint("Failed to create vkDevice\n");
+    return -1;
+  }
+
+  vkGetDeviceQueue(vState.device, vState.graphicsIdx, 0, &vState.graphicsQueue);
+  vkGetDeviceQueue(vState.device, vState.presentIdx , 0, &vState.presentQueue );
+  vkGetDeviceQueue(vState.device, vState.transferIdx, 0, &vState.transferQueue);
 
   return 0;
 }

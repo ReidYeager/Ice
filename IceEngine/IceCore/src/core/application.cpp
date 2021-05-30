@@ -1,5 +1,6 @@
 
 #include "defines.h"
+#include "logger.h"
 #include "core/application.h"
 #include "platform/platform.h"
 #include "core/memory_manager.h"
@@ -13,6 +14,8 @@ void Application::Run()
 
 i8 Application::Initialize()
 {
+  IPrint("ICE INIT =================================================");
+
   platform = new Platform(800, 600, "Test ice");
 
   MemoryManager::Initialize();
@@ -28,6 +31,7 @@ i8 Application::Initialize()
 
 i8 Application::MainLoop()
 {
+  IPrint("ICE LOOP =================================================");
   while (platform->Tick())
   {
     // Handle input
@@ -40,6 +44,7 @@ i8 Application::MainLoop()
 
 i8 Application::Shutdown()
 {
+  IPrint("ICE SHUTDOWN =============================================");
   delete(renderer);
 
   MemoryManager::Free(a, 12, IMEM_TYPE_UNKNOWN);

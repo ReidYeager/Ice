@@ -1,13 +1,13 @@
 \IceEngine\IceCore\src\core\application.h
 	 TODO :--: Line    46 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\platform.h
-	 TODO :--: Line    34 :--: // TODO : Dirty. Find a better way to close
-	 TODO :--: Line    37 :--: // TODO : Add Logging
+	 TODO :--: Line    38 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    41 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	 TODO :--: Line    17 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    22 :--: // TODO : Dirty. Find a better way to close
 \IceEngine\IceCore\src\profiler.h
-	 TODO :--: Line     4 :--: // TODO : Add profiling tools
+	 TODO :--: Line     6 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
-	 TODO :--: Line    42 :--: // TODO : Make this editable from the client
+	 TODO :--: Line    45 :--: // TODO : Make this editable from the client

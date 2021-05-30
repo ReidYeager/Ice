@@ -92,6 +92,7 @@
     <ClInclude Include="src\core\application.h" />
     <ClInclude Include="src\core\memory_manager.h" />
     <ClInclude Include="src\defines.h" />
+    <ClInclude Include="src\logger.h" />
     <ClInclude Include="src\profiler.h" />
     <ClInclude Include="src\platform\platform.h" />
     <ClInclude Include="src\renderer\renderer.h" />

@@ -6,6 +6,8 @@
 
 #ifdef ICE_PLATFORM_WINDOWS
 #include <windows.h>
+#include <vulkan/vulkan.h>
+
 struct LocalStateInformation
 {
   HWND hwnd;
@@ -28,14 +30,17 @@ public:
   ~Platform();
   bool Tick();
 
-  static void* AllocateMem(u32 size);
-  static void FreeMem(void* data);
-  static void ZeroMem(void* data, u32 size);
+  static void* AllocateMem(u32 _size);
+  static void FreeMem(void* _data);
+  static void ZeroMem(void* _data, u32 _size);
+
+  static void PrintToConsole(const char* _message, ...);
 
   // TODO : Dirty. Find a better way to close
   static inline void Close() { platState.shouldClose = true; }
 
-  // TODO : Add Logging
+  // TODO : Find a way to create the surface without including Vulkan here
+  static VkSurfaceKHR CreateSurface(VkInstance* _instance);
 
 private:
   void PumpMessages();
