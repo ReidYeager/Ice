@@ -21,6 +21,7 @@ RendererBackend::RendererBackend()
 
 RendererBackend::~RendererBackend()
 {
+  vkDestroyDevice(vState.device, nullptr);
   vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
 }
