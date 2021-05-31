@@ -14,7 +14,7 @@ void Application::Run()
 
 i8 Application::Initialize()
 {
-  IPrint("ICE INIT =================================================");
+  IcePrint("ICE INIT =================================================");
 
   platform = new Platform(800, 600, "Test ice");
 
@@ -31,7 +31,7 @@ i8 Application::Initialize()
 
 i8 Application::MainLoop()
 {
-  IPrint("ICE LOOP =================================================");
+  IcePrint("ICE LOOP =================================================");
   while (platform->Tick())
   {
     // Handle input
@@ -44,7 +44,7 @@ i8 Application::MainLoop()
 
 i8 Application::Shutdown()
 {
-  IPrint("ICE SHUTDOWN =============================================");
+  IcePrint("ICE SHUTDOWN =============================================");
   delete(renderer);
 
   MemoryManager::Free(a, 12, IMEM_TYPE_UNKNOWN);

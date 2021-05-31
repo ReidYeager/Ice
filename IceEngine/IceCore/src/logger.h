@@ -4,7 +4,7 @@
 
 #include "platform/platform.h"
 
-#define IPrint(message, ...)                        \
+#define IcePrint(message, ...)                        \
 {                                                   \
   Platform::PrintToConsole(message, __VA_ARGS__);   \
   Platform::PrintToConsole("\n");   \

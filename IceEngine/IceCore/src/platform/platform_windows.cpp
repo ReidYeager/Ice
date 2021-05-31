@@ -145,11 +145,24 @@ VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)
   VkSurfaceKHR surface;
   if (vkCreateWin32SurfaceKHR(*_instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
   {
-    IPrint("Failed to create vkSurface\n");
+    IcePrint("Failed to create vkSurface\n");
     return VK_NULL_HANDLE;
   }
 
   return surface;
+}
+
+void Platform::GetWindowExtent(u32& _width, u32& _height)
+{
+  RECT rect;
+
+  if (!GetWindowRect(platState.internalState.hwnd, &rect))
+  {
+    IcePrint("Failed to get window rect");
+  }
+
+  _width = rect.right - rect.left;
+  _height = rect.bottom - rect.top;
 }
 
 void Platform::PumpMessages()

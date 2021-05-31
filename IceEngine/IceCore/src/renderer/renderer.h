@@ -1,6 +1,7 @@
 
 #ifndef RENDERER_RENDERER_H
 #define RENDERER_RENDERER_H 1
+// TODO : Define API agnostic calls
 
 #include "defines.h"
 #include "renderer/renderer_backend.h"

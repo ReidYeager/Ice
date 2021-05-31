@@ -41,6 +41,7 @@ public:
 
   // TODO : Find a way to create the surface without including Vulkan here
   static VkSurfaceKHR CreateSurface(VkInstance* _instance);
+  static void GetWindowExtent(u32& _width, u32& _height);
 
 private:
   void PumpMessages();
