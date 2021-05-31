@@ -88,6 +88,7 @@ private:
                           u32& _presentIndex, u32& _transferIndex);
   i8 CreateCommandPool();
   i8 CreateSwapchain();
+  i8 CreateRenderpass();
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags
@@ -97,6 +98,9 @@ private:
       const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
   VkImageView CreateImageView(
       const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
+  VkFormat FindDepthFormat();
+  VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
+                               VkImageTiling _tiling, VkFormatFeatureFlags _features);
 
 };
 

@@ -46,7 +46,7 @@ void RendererBackend::InitializeComponents()
 void RendererBackend::CreateComponents()
 {
   CreateSwapchain();
-  //CreateRenderpass();
+  CreateRenderpass();
   //CreateDepthImage();
   //CreateFramebuffers();
 }
@@ -56,7 +56,7 @@ void RendererBackend::DestroyComponents()
   // Destroy framebuffers
   // Destroy depth image
   // Destroy renderpass
-
+  vkDestroyRenderPass(vState.device, vState.renderPass, nullptr);
   // Destroy swapchain
   for (const auto& view : swapchainImageViews)
   {
@@ -401,6 +401,69 @@ i8 RendererBackend::CreateSwapchain()
   return 0;
 }
 
+i8 RendererBackend::CreateRenderpass()
+{
+  VkAttachmentDescription colorDesc {};
+  colorDesc.format = swapchainFormat;
+  colorDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  colorDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  VkAttachmentReference colorRef;
+  colorRef.attachment = 0;
+  colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentDescription depthDesc {};
+  depthDesc.format = FindDepthFormat();
+  depthDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthDesc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depthRef {};
+  depthRef.attachment = 1;
+  depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass {};
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorRef;
+  subpass.pDepthStencilAttachment = &depthRef;
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+  VkSubpassDependency dependency {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkAttachmentDescription attachments[] = { colorDesc, depthDesc };
+  VkRenderPassCreateInfo creteInfo {};
+  creteInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  creteInfo.attachmentCount = 2;
+  creteInfo.pAttachments = attachments;
+  creteInfo.subpassCount = 1;
+  creteInfo.pSubpasses = &subpass;
+  creteInfo.dependencyCount = 1;
+  creteInfo.pDependencies = &dependency;
+
+  if (vkCreateRenderPass(vState.device, &creteInfo, nullptr, &vState.renderPass) != VK_SUCCESS)
+  {
+    IcePrint("Failed to create renderpass");
+    return -1;
+  }
+
+  return 0;
+}
+
 u32 RendererBackend::GetQueueIndex(
     std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags)
 {
@@ -482,6 +545,35 @@ VkImageView RendererBackend::CreateImageView(const VkFormat _format, VkImageAspe
   }
 
   return createdView;
+}
+
+VkFormat RendererBackend::FindDepthFormat()
+{
+  return FindSupportedFormat(
+      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+      VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+VkFormat RendererBackend::FindSupportedFormat(
+    const std::vector<VkFormat>& _formats, VkImageTiling _tiling, VkFormatFeatureFlags _features)
+{
+  for (VkFormat format : _formats)
+  {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(vState.gpu.device, format, &props);
+
+    if (_tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & _features) == _features)
+    {
+      return format;
+    }
+    else if (_tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & _features) == _features)
+    {
+      return format;
+    }
+  }
+
+  IcePrint("Failed to find a suitable format");
+  return _formats[0];
 }
 
 #endif // ICE_VULKAN
