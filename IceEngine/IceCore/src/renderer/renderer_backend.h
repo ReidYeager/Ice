@@ -41,6 +41,15 @@ private:
     VkRenderPass renderPass;
   };
 
+  struct iceImage_t
+  {
+    VkImage image;
+    VkDeviceMemory memory;
+    VkFormat format;
+    VkImageView view;
+    //VkSampler sampler;
+  };
+
 //=================================================================================================
 // VARIABLES
 //=================================================================================================
@@ -61,6 +70,10 @@ private:
   VkFormat swapchainFormat;
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
+
+  iceImage_t* depthImage = nullptr;
+
+  std::vector<iceImage_t*> iceImages;
 
 //=================================================================================================
 // FUNCTIONS
@@ -89,6 +102,7 @@ private:
   i8 CreateCommandPool();
   i8 CreateSwapchain();
   i8 CreateRenderpass();
+  i8 CreateDepthImage();
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags
@@ -96,11 +110,16 @@ private:
   // Returns the first instance of a presentation queue
   u32 GetPresentIndex(
       const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
-  VkImageView CreateImageView(
-      const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
   VkFormat FindDepthFormat();
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
                                VkImageTiling _tiling, VkFormatFeatureFlags _features);
+  u32 FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags);
+
+  // TODO : Move to an image manager?
+  u32 CreateImage(u32 _width, u32 _height, VkFormat _format, VkImageTiling _tiling,
+    VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps);
+  VkImageView CreateImageView(
+    const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
 
 };
 

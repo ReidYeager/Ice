@@ -47,7 +47,7 @@ void RendererBackend::CreateComponents()
 {
   CreateSwapchain();
   CreateRenderpass();
-  //CreateDepthImage();
+  CreateDepthImage();
   //CreateFramebuffers();
 }
 
@@ -55,6 +55,9 @@ void RendererBackend::DestroyComponents()
 {
   // Destroy framebuffers
   // Destroy depth image
+  vkDestroyImageView(vState.device, depthImage->view, nullptr);
+  vkDestroyImage(vState.device, depthImage->image, nullptr);
+  vkFreeMemory(vState.device, depthImage->memory, nullptr);
   // Destroy renderpass
   vkDestroyRenderPass(vState.device, vState.renderPass, nullptr);
   // Destroy swapchain
@@ -464,6 +467,19 @@ i8 RendererBackend::CreateRenderpass()
   return 0;
 }
 
+i8 RendererBackend::CreateDepthImage()
+{
+  VkFormat format = FindDepthFormat();
+  u32 imageIdx = CreateImage(
+      vState.renderExtent.width, vState.renderExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  depthImage = iceImages[imageIdx];
+  depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT, depthImage->image);
+
+  return 1;
+}
+
 u32 RendererBackend::GetQueueIndex(
     std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags)
 {
@@ -574,6 +590,75 @@ VkFormat RendererBackend::FindSupportedFormat(
 
   IcePrint("Failed to find a suitable format");
   return _formats[0];
+}
+
+u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
+    VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps)
+{
+  VkImageCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  createInfo.imageType = VK_IMAGE_TYPE_2D;
+  createInfo.extent.width = _width;
+  createInfo.extent.height = _height;
+  createInfo.extent.depth = 1;
+  createInfo.mipLevels = 1;
+  createInfo.arrayLayers = 1;
+  createInfo.format = _format;
+  createInfo.tiling = _tiling;
+  createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  createInfo.usage = _usage;
+  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  createInfo.flags = 0;
+
+  VkImage vImage;
+  if (vkCreateImage(vState.device, &createInfo, nullptr, &vImage) != VK_SUCCESS)
+  {
+    IcePrint("Failed to create vkImages");
+    return -1;
+  }
+
+  // Allocate device memory for image
+  VkMemoryRequirements memReqs;
+  vkGetImageMemoryRequirements(vState.device, vImage, &memReqs);
+
+  VkMemoryAllocateInfo allocInfo {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memReqs.size;
+  allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits, _memProps);
+
+  VkDeviceMemory vMemory;
+  if (vkAllocateMemory(vState.device, &allocInfo, nullptr, &vMemory) != VK_SUCCESS)
+  {
+    IcePrint("Failed to allocate texture memory");
+  }
+
+  // Bind image and device memory
+  vkBindImageMemory(vState.device, vImage, vMemory, 0);
+
+  iceImage_t* image = new iceImage_t();
+  image->image = vImage;
+  image->memory = vMemory;
+  image->format = _format;
+  iceImages.push_back(image);
+
+  return static_cast<u32>(iceImages.size() - 1);
+}
+
+u32 RendererBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
+{
+  const VkPhysicalDeviceMemoryProperties& props = vState.gpu.memProperties;
+
+  for (u32 i = 0; i < props.memoryTypeCount; i++)
+  {
+    if (_mask & (1 << i) && (props.memoryTypes[i].propertyFlags & _flags) == _flags)
+    {
+      return i;
+    }
+  }
+
+  IcePrint("Failed to find a suitable memory type");
+  return -1;
 }
 
 #endif // ICE_VULKAN
