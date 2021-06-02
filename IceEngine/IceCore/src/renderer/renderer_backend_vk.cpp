@@ -48,12 +48,16 @@ void RendererBackend::CreateComponents()
   CreateSwapchain();
   CreateRenderpass();
   CreateDepthImage();
-  //CreateFramebuffers();
+  CreateFramebuffers();
 }
 
 void RendererBackend::DestroyComponents()
 {
   // Destroy framebuffers
+  for (const auto& fb : frameBuffers)
+  {
+    vkDestroyFramebuffer(vState.device, fb, nullptr);
+  }
   // Destroy depth image
   vkDestroyImageView(vState.device, depthImage->view, nullptr);
   vkDestroyImage(vState.device, depthImage->image, nullptr);
@@ -76,7 +80,7 @@ void RendererBackend::RecreateComponents()
   CreateComponents();
 }
 
-i8 RendererBackend::CreateInstance()
+void RendererBackend::CreateInstance()
 {
   // Basic application metadata
   VkApplicationInfo appInfo {};
@@ -100,13 +104,12 @@ i8 RendererBackend::CreateInstance()
   if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
   {
     // ERROR
-    return -1;
+    IcePrint("Failed to create instance");
   }
 
-  return 0;
 }
 
-i8 RendererBackend::CreateDevice()
+void RendererBackend::CreateDevice()
 {
   // Choose a physical device
   u32 queueIndices[3];
@@ -172,17 +175,14 @@ i8 RendererBackend::CreateDevice()
   if (vkCreateDevice(pDevice, &createInfo, nullptr, &vState.device) != VK_SUCCESS)
   {
     IcePrint("Failed to create vkDevice\n");
-    return -1;
   }
 
   vkGetDeviceQueue(vState.device, vState.graphicsIdx, 0, &vState.graphicsQueue);
   vkGetDeviceQueue(vState.device, vState.presentIdx , 0, &vState.presentQueue );
   vkGetDeviceQueue(vState.device, vState.transferIdx, 0, &vState.transferQueue);
-
-  return 0;
 }
 
-i8 RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
+void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
                                          u32& _presentIndex, u32& _transferIndex)
 {
   // Get all available physical devices
@@ -249,7 +249,7 @@ i8 RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32&
       else
       {
         _selectedDevice = pdevice;
-        return 0;
+        return;
       }
     }
   }
@@ -260,14 +260,13 @@ i8 RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32&
     _graphicsIndex = bestFit.graphicsIndex;
     _presentIndex = bestFit.presentIndex;
     _transferIndex = bestFit.transferIndex;
-    return 0;
+    return;
   }
 
-  // Error : Failed to find a suitable GPU
-  return -1;
+  IcePrint("Failed to find a suitable GPU");
 }
 
-i8 RendererBackend::CreateCommandPool()
+void RendererBackend::CreateCommandPool()
 {
   VkCommandPoolCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -276,13 +275,10 @@ i8 RendererBackend::CreateCommandPool()
   if (vkCreateCommandPool(vState.device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
   {
     IcePrint("Failed to create command pool for queue family %u", vState.graphicsIdx);
-    return -1;
   }
-
-  return 0;
 }
 
-i8 RendererBackend::CreateSwapchain()
+void RendererBackend::CreateSwapchain()
 {
   // Find the best format
   VkSurfaceFormatKHR formatInfo = vState.gpu.surfaceFormats[0];
@@ -379,7 +375,6 @@ i8 RendererBackend::CreateSwapchain()
   if (vkCreateSwapchainKHR(vState.device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
   {
     IcePrint("Failed to create swapchain");
-    return -1;
   }
 
   swapchainFormat = formatInfo.format;
@@ -397,14 +392,12 @@ i8 RendererBackend::CreateSwapchain()
 
     if (swapchainImageViews[i] == VK_NULL_HANDLE)
     {
-      return -1;
+      IcePrint("Failed to create swapchain image view");
     }
   }
-
-  return 0;
 }
 
-i8 RendererBackend::CreateRenderpass()
+void RendererBackend::CreateRenderpass()
 {
   VkAttachmentDescription colorDesc {};
   colorDesc.format = swapchainFormat;
@@ -461,13 +454,10 @@ i8 RendererBackend::CreateRenderpass()
   if (vkCreateRenderPass(vState.device, &creteInfo, nullptr, &vState.renderPass) != VK_SUCCESS)
   {
     IcePrint("Failed to create renderpass");
-    return -1;
   }
-
-  return 0;
 }
 
-i8 RendererBackend::CreateDepthImage()
+void RendererBackend::CreateDepthImage()
 {
   VkFormat format = FindDepthFormat();
   u32 imageIdx = CreateImage(
@@ -476,8 +466,31 @@ i8 RendererBackend::CreateDepthImage()
 
   depthImage = iceImages[imageIdx];
   depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT, depthImage->image);
+}
 
-  return 1;
+void RendererBackend::CreateFramebuffers()
+{
+  VkFramebufferCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  createInfo.renderPass = vState.renderPass;
+  createInfo.layers = 1;
+  createInfo.width = vState.renderExtent.width;
+  createInfo.height = vState.renderExtent.height;
+
+  u32 imageCount = static_cast<u32>(swapchainImages.size());
+  frameBuffers.resize(imageCount);
+
+  for (u32 i = 0; i < imageCount; i++)
+  {
+    VkImageView attachments[] = {swapchainImageViews[i], depthImage->view};
+    createInfo.attachmentCount = 2;
+    createInfo.pAttachments = attachments;
+
+    if (vkCreateFramebuffer(vState.device, &createInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
+    {
+      IcePrint("Failed to create framebuffers");
+    }
+  }
 }
 
 u32 RendererBackend::GetQueueIndex(

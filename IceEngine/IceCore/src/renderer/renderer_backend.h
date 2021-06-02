@@ -70,8 +70,8 @@ private:
   VkFormat swapchainFormat;
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
-
   iceImage_t* depthImage = nullptr;
+  std::vector<VkFramebuffer> frameBuffers;
 
   std::vector<iceImage_t*> iceImages;
 
@@ -95,14 +95,15 @@ private:
   // Creates components that live through recreation
   void InitializeComponents();
 
-  i8 CreateInstance();
-  i8 CreateDevice();
-  i8 ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
+  void CreateInstance();
+  void CreateDevice();
+  void ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
                           u32& _presentIndex, u32& _transferIndex);
-  i8 CreateCommandPool();
-  i8 CreateSwapchain();
-  i8 CreateRenderpass();
-  i8 CreateDepthImage();
+  void CreateCommandPool();
+  void CreateSwapchain();
+  void CreateRenderpass();
+  void CreateDepthImage();
+  void CreateFramebuffers();
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags
