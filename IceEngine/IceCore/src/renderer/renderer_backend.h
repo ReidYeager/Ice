@@ -64,7 +64,6 @@ private:
       { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
   VkInstance instance;
   VkSurfaceKHR surface;
-  VkCommandPool commandPool; // Graphics command pool
 
   VkSwapchainKHR swapchain;
   VkFormat swapchainFormat;
@@ -73,7 +72,19 @@ private:
   iceImage_t* depthImage = nullptr;
   std::vector<VkFramebuffer> frameBuffers;
 
+  VkDescriptorPool descriptorPool;
+
   std::vector<iceImage_t*> iceImages;
+
+  // Synchronization
+  #define MAX_FLIGHT_IMAGE_COUNT 3
+  std::vector<VkFence> imageIsInFlightFences;
+  std::vector<VkFence> flightFences;
+  std::vector<VkSemaphore> renderCompleteSemaphores;
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  u32 currentFrame = 0;
+
+  std::vector<VkCommandBuffer> commandBuffers;
 
 //=================================================================================================
 // FUNCTIONS
@@ -99,11 +110,18 @@ private:
   void CreateDevice();
   void ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
                           u32& _presentIndex, u32& _transferIndex);
-  void CreateCommandPool();
+  void CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
+                         VkCommandPoolCreateFlags _flags = 0);
+
+  // Render components
   void CreateSwapchain();
   void CreateRenderpass();
   void CreateDepthImage();
   void CreateFramebuffers();
+
+  void CreateDescriptorPool();
+  void CreateSyncObjects();
+  void CreateCommandBuffers();
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags
@@ -121,6 +139,7 @@ private:
     VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps);
   VkImageView CreateImageView(
     const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
+  
 
 };
 

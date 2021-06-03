@@ -6,8 +6,15 @@ int main()
 {
   printf("Sandbox\n");
 
-  Application* app = new Application();
-  app->Run();
+  try
+  {
+    Application* app = new Application();
+    app->Run();
+  }
+  catch (const char* e)
+  {
+    std::cout << "Ice caught " << e << "\n";
+  }
 
   return 0;
 }

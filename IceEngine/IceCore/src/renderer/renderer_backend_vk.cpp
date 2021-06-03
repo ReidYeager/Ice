@@ -16,19 +16,25 @@ RendererBackend::RendererBackend()
   CreateInstance();
   surface = Platform::CreateSurface(&instance);
   CreateDevice();
-  CreateCommandPool();
+  CreateCommandPool(vState.graphicsCommandPool, vState.graphicsIdx);
 
   InitializeComponents();
 }
 
 RendererBackend::~RendererBackend()
 {
-  // Destroy command buffers
-  // Destroy sync objects
-  // Destroy descriptor pool
+  for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
+  {
+    vkDestroySemaphore(vState.device, imageAvailableSemaphores[i], nullptr);
+    vkDestroySemaphore(vState.device, renderCompleteSemaphores[i], nullptr);
+    vkDestroyFence(vState.device, flightFences[i], nullptr);
+  }
+
+  vkDestroyDescriptorPool(vState.device, descriptorPool, nullptr);
+
   DestroyComponents();
 
-  vkDestroyCommandPool(vState.device, commandPool, nullptr);
+  vkDestroyCommandPool(vState.device, vState.graphicsCommandPool, nullptr);
   vkDestroyDevice(vState.device, nullptr);
   vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
@@ -38,9 +44,9 @@ void RendererBackend::InitializeComponents()
 {
   CreateComponents();
 
-  //CreateDescriptorPool();
-  //CreateSyncObjects();
-  //CreateCommandBuffers();
+  CreateDescriptorPool();
+  CreateSyncObjects();
+  CreateCommandBuffers();
 }
 
 void RendererBackend::CreateComponents()
@@ -101,12 +107,7 @@ void RendererBackend::CreateInstance()
   createInfo.enabledLayerCount = (u32)deviceLayers.size();
   createInfo.ppEnabledLayerNames = deviceLayers.data();
 
-  if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
-  {
-    // ERROR
-    IcePrint("Failed to create instance");
-  }
-
+  ICE_ASSERT(vkCreateInstance(&createInfo, nullptr, &instance), "Failed to create instance");
 }
 
 void RendererBackend::CreateDevice()
@@ -172,10 +173,8 @@ void RendererBackend::CreateDevice()
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos    = queueCreateInfos.data();
 
-  if (vkCreateDevice(pDevice, &createInfo, nullptr, &vState.device) != VK_SUCCESS)
-  {
-    IcePrint("Failed to create vkDevice\n");
-  }
+  ICE_ASSERT(vkCreateDevice(pDevice, &createInfo, nullptr, &vState.device),
+             "Failed to create vkDevice");
 
   vkGetDeviceQueue(vState.device, vState.graphicsIdx, 0, &vState.graphicsQueue);
   vkGetDeviceQueue(vState.device, vState.presentIdx , 0, &vState.presentQueue );
@@ -266,16 +265,15 @@ void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u3
   IcePrint("Failed to find a suitable GPU");
 }
 
-void RendererBackend::CreateCommandPool()
+void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
+                                        VkCommandPoolCreateFlags _flags /*= 0*/)
 {
   VkCommandPoolCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  createInfo.queueFamilyIndex = vState.graphicsIdx;
-  createInfo.flags = 0;
-  if (vkCreateCommandPool(vState.device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
-  {
-    IcePrint("Failed to create command pool for queue family %u", vState.graphicsIdx);
-  }
+  createInfo.queueFamilyIndex = _queueIndex;
+  createInfo.flags = _flags;
+  ICE_ASSERT(vkCreateCommandPool(vState.device, &createInfo, nullptr, &_pool),
+             "Failed to create command pool for queue family %u", _queueIndex);
 }
 
 void RendererBackend::CreateSwapchain()
@@ -372,10 +370,8 @@ void RendererBackend::CreateSwapchain()
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
 
-  if (vkCreateSwapchainKHR(vState.device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
-  {
-    IcePrint("Failed to create swapchain");
-  }
+  ICE_ASSERT(vkCreateSwapchainKHR(vState.device, &createInfo, nullptr, &swapchain),
+             "Failed to create swapchain");
 
   swapchainFormat = formatInfo.format;
   vState.renderExtent = extent;
@@ -451,10 +447,8 @@ void RendererBackend::CreateRenderpass()
   creteInfo.dependencyCount = 1;
   creteInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(vState.device, &creteInfo, nullptr, &vState.renderPass) != VK_SUCCESS)
-  {
-    IcePrint("Failed to create renderpass");
-  }
+  ICE_ASSERT(vkCreateRenderPass(vState.device, &creteInfo, nullptr, &vState.renderPass),
+             "Failed to create renderpass");
 }
 
 void RendererBackend::CreateDepthImage()
@@ -486,11 +480,67 @@ void RendererBackend::CreateFramebuffers()
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    if (vkCreateFramebuffer(vState.device, &createInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS)
-    {
-      IcePrint("Failed to create framebuffers");
-    }
+    ICE_ASSERT(vkCreateFramebuffer(vState.device, &createInfo, nullptr, &frameBuffers[i]),
+               "Failed to create framebuffers");
   }
+}
+
+void RendererBackend::CreateDescriptorPool()
+{
+  VkDescriptorPoolSize poolSizes[2] = {};
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount = 3;
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizes[1].descriptorCount = 6;
+
+  VkDescriptorPoolCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  createInfo.poolSizeCount = 2;
+  createInfo.pPoolSizes = poolSizes;
+  createInfo.maxSets = 3;
+
+  ICE_ASSERT(vkCreateDescriptorPool(vState.device, &createInfo, nullptr, &descriptorPool),
+             "Failed to create descriptor pool");
+}
+
+void RendererBackend::CreateSyncObjects()
+{
+  imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
+  imageIsInFlightFences.resize(swapchainImages.size(), VK_NULL_HANDLE);
+
+  VkSemaphoreCreateInfo semaphoreInfo {};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceInfo {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
+  {
+    ICE_ASSERT(vkCreateFence(vState.device, &fenceInfo, nullptr, &flightFences[i]),
+               "Failed to create fence");
+    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, nullptr,
+               &imageAvailableSemaphores[i]), "Failed to create image semaphore");
+    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, nullptr,
+               &renderCompleteSemaphores[i]), "Failed to create render semaphore");
+  }
+}
+
+void RendererBackend::CreateCommandBuffers()
+{
+  u32 bufferCount = static_cast<u32>(swapchainImages.size());
+  commandBuffers.resize(bufferCount);
+
+  VkCommandBufferAllocateInfo allocInfo {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = bufferCount;
+  allocInfo.commandPool = vState.graphicsCommandPool;
+
+  ICE_ASSERT(vkAllocateCommandBuffers(vState.device, &allocInfo, commandBuffers.data()),
+             "Failed to allocate command buffers");
 }
 
 u32 RendererBackend::GetQueueIndex(
