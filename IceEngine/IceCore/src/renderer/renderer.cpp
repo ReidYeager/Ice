@@ -11,12 +11,13 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-  
   delete(backend);
 }
 
 void Renderer::RenderFrame()
 {
+  // Make draw calls
+  // Present render
   //backend->RenderFrame();
 }
 
@@ -34,7 +35,7 @@ u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
     i++;
   }
 
-  // Create a new shader
+  // Create a new shader program
   i = static_cast<u32>(shaderPrograms.size());
 
   iceShaderProgram_t newShaderProgram{};

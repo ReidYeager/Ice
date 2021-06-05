@@ -13,11 +13,12 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	 TODO :--: Line   139 :--: // TODO : Move to an image manager?
+	 NOTE :--: Line   104 :--: // NOTE : Temporary?
+	 TODO :--: Line   143 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
-	 TODO :--: Line    96 :--: // TODO : Load char* from file
-	 TODO :--: Line   107 :--: // TODO : Get shader bindings from its layout file
-	 TODO :--: Line   120 :--: // TODO : Make this editable from the client
-	 TODO :--: Line   339 :--: // TODO : Replace with clamp function calls
+	 TODO :--: Line   139 :--: // TODO : Load char* from file
+	 TODO :--: Line   150 :--: // TODO : Get shader bindings from its layout file
+	 TODO :--: Line   163 :--: // TODO : Make this editable from the client
+	 TODO :--: Line   382 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\shader_program.h
 	 NOTE :--: Line     7 :--: // NOTE : Move to defines?

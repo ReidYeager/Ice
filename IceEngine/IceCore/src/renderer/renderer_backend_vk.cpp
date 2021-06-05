@@ -87,6 +87,49 @@ void RendererBackend::RecreateComponents()
   CreateComponents();
 }
 
+void RendererBackend::RenderFrame()
+{
+  vkWaitForFences(vState.device, 1, &flightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+  u32 imageIndex;
+  vkAcquireNextImageKHR(vState.device, swapchain, UINT64_MAX,
+                        imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+  if (imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
+  {
+    vkWaitForFences(vState.device, 1, &imageIsInFlightFences[imageIndex], VK_TRUE, UINT64_MAX);
+  }
+  imageIsInFlightFences[imageIndex] = flightFences[currentFrame];
+
+  VkSubmitInfo submitInfo {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &imageAvailableSemaphores[currentFrame];
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &renderCompleteSemaphores[currentFrame];
+
+  vkResetFences(vState.device, 1, &flightFences[currentFrame]);
+  ICE_ASSERT(vkQueueSubmit(vState.graphicsQueue, 1, &submitInfo, flightFences[currentFrame]),
+             "Failed to submit draw command");
+
+  VkPresentInfoKHR presentInfo {};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &renderCompleteSemaphores[currentFrame];
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &swapchain;
+  presentInfo.pImageIndices = &imageIndex;
+
+  vkQueuePresentKHR(vState.presentQueue, &presentInfo);
+
+  currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
+}
+
 iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
 {
   iceShader_t s {};

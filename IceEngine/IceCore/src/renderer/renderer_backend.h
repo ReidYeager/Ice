@@ -101,6 +101,10 @@ public:
   void DestroyComponents();
   // Destroys and recreates rendering components
   void RecreateComponents();
+
+  // NOTE : Temporary?
+  void RenderFrame();
+
   // Creates a new iceShader
   iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
 
