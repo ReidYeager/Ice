@@ -99,6 +99,7 @@
     <ClInclude Include="src\platform\platform.h" />
     <ClInclude Include="src\renderer\renderer.h" />
     <ClInclude Include="src\renderer\renderer_backend.h" />
+    <ClInclude Include="src\renderer\shader_program.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />

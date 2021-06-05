@@ -5,6 +5,9 @@
 
 #include "defines.h"
 #include "renderer/renderer_backend.h"
+#include "renderer/shader_program.h"
+
+#include <vector>
 
 class Renderer
 {
@@ -14,6 +17,9 @@ class Renderer
 private:
   RendererBackend* backend = nullptr;
 
+  std::vector<iceShaderProgram_t> shaderPrograms;
+  std::vector<iceShader_t> shaders;
+
 //=================================================
 // Functions
 //=================================================
@@ -21,15 +27,22 @@ public:
   Renderer();
   ~Renderer();
 
-  i8 RenderFrame();
+  void RenderFrame();
+
+  // Returns the index of the shader program
+  // Creates a new shader if none match the given description
+  u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
+  // Returns the index of the shader
+  // Creates a new shader if none match the given description
+  u32 GetShader(const char* _name, IceShaderStageFlags _stage);
 
 private:
-  i8 Initialize();
-  i8 Shutdown();
+  //void Initialize();
+  //void Shutdown();
 
-  i8 CreateRenderer();
-  i8 CleanupRenderer();
-  i8 RecreateRenderer();
+  void CreateRenderer();
+  void CleanupRenderer();
+  void RecreateRenderer();
 
 };
 

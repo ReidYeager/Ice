@@ -3,6 +3,7 @@
 #define RENDERER_RENDERER_BACKEND_H 1
 
 #include "defines.h"
+#include "renderer/shader_program.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -100,6 +101,8 @@ public:
   void DestroyComponents();
   // Destroys and recreates rendering components
   void RecreateComponents();
+  // Creates a new iceShader
+  iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
 
 private:
   // Calls CreateComponents

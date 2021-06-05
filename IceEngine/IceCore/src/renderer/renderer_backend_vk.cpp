@@ -8,8 +8,9 @@
 #include <string>
 
 #include "logger.h"
-#include "renderer\renderer_backend.h"
 #include "platform/platform.h"
+#include "renderer/renderer_backend.h"
+#include "renderer/shader_program.h"
 
 RendererBackend::RendererBackend()
 {
@@ -84,6 +85,29 @@ void RendererBackend::RecreateComponents()
 
   DestroyComponents();
   CreateComponents();
+}
+
+iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
+{
+  iceShader_t s {};
+  s.name = _name;
+  s.stage = _stage;
+
+  // Load shader file
+  // TODO : Load char* from file
+
+  // Create VkShaderModule
+  //VkShaderModuleCreateInfo createInfo {};
+  //createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  //createInfo.codeSize =
+  //createInfo.pCode = 
+
+  //ICE_ASSERT(vkCreateShaderModule(vState.device, &creteInfo, nullptr, &s.module),
+  //           "Failed to create shader module");
+
+  // TODO : Get shader bindings from its layout file
+
+  return s;
 }
 
 void RendererBackend::CreateInstance()

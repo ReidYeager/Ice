@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "platform/platform.h"
 #include "renderer/renderer.h"
+#include "renderer/shader_program.h"
 
 class ICE_API Application
 {
@@ -24,21 +25,27 @@ private:
 //=================================================================================================
 private:
   // Initializes all allocators and subsystems
-  i8 Initialize();
+  void Initialize();
   // Loops until closed
   // Calls input, ChildLoop, and renderer
-  i8 MainLoop();
+  void MainLoop();
   // Destroys all allocators and subsystems
-  i8 Shutdown();
+  void Shutdown();
 
 
 protected:
-  //// Used for any initialization the child application requires
+  // Used for any initialization the child application requires
   //virtual void ChildInit() = 0;
-  //// Houses the core game code
+  // Houses the core game code
   //virtual void ChildLoop() = 0;
-  //// Used for any destruction the child application requires
+  // Used for any destruction the child application requires
   //virtual void ChildShutdown() = 0;
+
+  // TODO : Modify to fit a proper ECS system
+  // Temporarily : Adds the given model to the world
+  void CreateObject();
+  // Retrieves a shader of _name in pipeline _stagess
+  void GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
 
 public:
   // Houses the Initialize, MainLoop, and Shutdown calls
