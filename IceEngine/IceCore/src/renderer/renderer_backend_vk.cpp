@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.h>
 #include <set>
+// TODO : Replace with custom data type -- only used in CreateShader
 #include <string>
 
 #include "logger.h"
@@ -136,21 +137,48 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
   s.name = _name;
   s.stage = _stage;
 
+  std::string fileDir = ICE_RESOURCE_SHADER_DIR;
+  fileDir.append(_name);
+  std::string layoutDir(fileDir);
+
+  switch (_stage)
+  {
+  case ICE_SHADER_STAGE_VERT:
+    fileDir.append(".vspv");
+    layoutDir.append(".vlayout");
+    break;
+  case ICE_SHADER_STAGE_FRAG:
+    fileDir.append(".vspv");
+    layoutDir.append(".vlayout");
+    break;
+  case ICE_SHADER_STAGE_COMP:
+    fileDir.append(".vspv");
+    layoutDir.append(".vlayout");
+    break;
+  }
+
   // Load shader file
-  // TODO : Load char* from file
+  std::vector<char> shaderCode = Platform::LoadFile(fileDir.c_str());
+  //std::vector<char> shaderLayout = Platform::LoadFile(layoutDir);
 
   // Create VkShaderModule
-  //VkShaderModuleCreateInfo createInfo {};
-  //createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  //createInfo.codeSize =
-  //createInfo.pCode = 
+  VkShaderModuleCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = shaderCode.size();
+  createInfo.pCode = reinterpret_cast<const u32*>(shaderCode.data());
 
-  //ICE_ASSERT(vkCreateShaderModule(vState.device, &creteInfo, nullptr, &s.module),
-  //           "Failed to create shader module");
+  ICE_ASSERT(vkCreateShaderModule(vState.device, &createInfo, nullptr, &s.module),
+             "Failed to create shader module");
 
   // TODO : Get shader bindings from its layout file
+  //s.CreateBindings(shaderLayout);
 
   return s;
+}
+
+void RendererBackend::DestroyShaderModule(VkShaderModule& _module)
+{
+  vkDestroyShaderModule(vState.device, _module, nullptr);
 }
 
 void RendererBackend::CreateInstance()

@@ -8,6 +8,8 @@
 #include <windows.h>
 #include <vulkan/vulkan.h>
 
+#include <vector>
+
 struct LocalStateInformation
 {
   HWND hwnd;
@@ -35,6 +37,7 @@ public:
   static void ZeroMem(void* _data, u32 _size);
 
   static void PrintToConsole(const char* _message, ...);
+  static std::vector<char> LoadFile(const char* _directory);
 
   // TODO : Dirty. Find a better way to close
   static inline void Close() { platState.shouldClose = true; }

@@ -11,6 +11,16 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+  for (const auto& sp : shaderPrograms)
+  {
+    if (sp.stages & ICE_SHADER_STAGE_VERT)
+      backend->DestroyShaderModule(shaders[sp.vertIndex].module);
+    if (sp.stages & ICE_SHADER_STAGE_FRAG)
+      backend->DestroyShaderModule(shaders[sp.fragIndex].module);
+    if (sp.stages & ICE_SHADER_STAGE_COMP)
+      backend->DestroyShaderModule(shaders[sp.compIndex].module);
+  }
+
   delete(backend);
 }
 
@@ -76,6 +86,8 @@ u32 Renderer::GetShader(const char* _name, IceShaderStageFlags _stage)
   }
 
   shaders.push_back(backend->CreateShader(_name, _stage));
+
+  return i;
 }
 
 void Renderer::CreateRenderer()

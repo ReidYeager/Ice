@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <windows.h>
+#include <fstream>
+#include <vector>
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>
@@ -132,6 +134,26 @@ void Platform::PrintToConsole(const char* _message, ...)
   va_start(args, _message);
   vprintf(_message, args);
   va_end(args);
+}
+
+std::vector<char> Platform::LoadFile(const char* _directory)
+{
+  std::ifstream inFile;
+  inFile.open(_directory, std::ios::ate | std::ios::binary);
+  if (!inFile)
+  {
+    // TODO : Log non-Vulkan errors
+    IcePrint("ERROR :: Failed to load file %s", _directory);
+    return {};
+  }
+
+  size_t fileSize = inFile.tellg();
+  inFile.seekg(0);
+  std::vector<char> rawData(fileSize);
+  inFile.read(rawData.data(), fileSize);
+
+  inFile.close();
+  return rawData;
 }
 
 VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)

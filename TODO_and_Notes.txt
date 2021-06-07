@@ -4,21 +4,23 @@
 	 TODO :--: Line    43 :--: // TODO : Modify to fit a proper ECS system
 	 TODO :--: Line    53 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\platform.h
-	 TODO :--: Line    38 :--: // TODO : Dirty. Find a better way to close
-	 TODO :--: Line    41 :--: // TODO : Find a way to create the surface without including Vulkan here
+	 TODO :--: Line    41 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    44 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	 TODO :--: Line    22 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    24 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line   144 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     6 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\renderer.h
 	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	 NOTE :--: Line   104 :--: // NOTE : Temporary?
-	 TODO :--: Line   143 :--: // TODO : Move to an image manager?
+	 TODO :--: Line   109 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	 TODO :--: Line   145 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
-	 TODO :--: Line   139 :--: // TODO : Load char* from file
-	 TODO :--: Line   150 :--: // TODO : Get shader bindings from its layout file
-	 TODO :--: Line   163 :--: // TODO : Make this editable from the client
-	 TODO :--: Line   382 :--: // TODO : Replace with clamp function calls
+	 TODO :--: Line     7 :--: // TODO : Replace with custom data type -- only used in CreateShader
+	 TODO :--: Line   172 :--: // TODO : Get shader bindings from its layout file
+	 TODO :--: Line   191 :--: // TODO : Make this editable from the client
+	 TODO :--: Line   410 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\shader_program.h
 	 NOTE :--: Line     7 :--: // NOTE : Move to defines?

@@ -39,6 +39,8 @@ struct iceShaderProgram_t
   u16 vertIndex;
   u16 fragIndex;
   u16 compIndex;
+
+  iceShaderProgram_t() : name(""), stages(0), vertIndex(-1), fragIndex(-1), compIndex(-1) {}
 };
 
 #endif // !RENDERER_SHADER_PROGRAM_H

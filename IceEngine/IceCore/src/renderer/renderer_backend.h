@@ -107,6 +107,8 @@ public:
 
   // Creates a new iceShader
   iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
+  // TODO : I don't like this. Find a better way to destroy shaders
+  void DestroyShaderModule(VkShaderModule& _shader);
 
 private:
   // Calls CreateComponents
