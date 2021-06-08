@@ -1,16 +1,19 @@
 \IceEngine\IceCore\src\core\application.cpp
-	 TODO :--: Line    26 :--: // TODO : TEMPORARY -- Delete
+	 TODO :--: Line    28 :--: // TODO : TEMPORARY -- Delete
 \IceEngine\IceCore\src\core\application.h
 	 TODO :--: Line    43 :--: // TODO : Modify to fit a proper ECS system
 	 TODO :--: Line    53 :--: // TODO : Add any game->engine API calls here
+\IceEngine\IceCore\src\platform\file_system.cpp
+	 TODO :--: Line    19 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\platform\platform.h
-	 TODO :--: Line    41 :--: // TODO : Dirty. Find a better way to close
-	 TODO :--: Line    44 :--: // TODO : Find a way to create the surface without including Vulkan here
+	 TODO :--: Line    40 :--: // TODO : Dirty. Find a better way to close
+	 TODO :--: Line    43 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
 	 TODO :--: Line    24 :--: // TODO : Dirty. Find a better way to close
-	 TODO :--: Line   144 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\profiler.h
 	 TODO :--: Line     6 :--: // TODO : Add profiling tools
+\IceEngine\IceCore\src\renderer\mesh.h
+	 TODO :--: Line    26 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.h
 	 TODO :--: Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
@@ -19,8 +22,29 @@
 	 TODO :--: Line   145 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
 	 TODO :--: Line     7 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	 TODO :--: Line   172 :--: // TODO : Get shader bindings from its layout file
-	 TODO :--: Line   191 :--: // TODO : Make this editable from the client
-	 TODO :--: Line   410 :--: // TODO : Replace with clamp function calls
+	 TODO :--: Line   173 :--: // TODO : Get shader bindings from its layout file
+	 TODO :--: Line   192 :--: // TODO : Make this editable from the client
+	 TODO :--: Line   411 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\shader_program.h
 	 NOTE :--: Line     7 :--: // NOTE : Move to defines?
+\IceEngine\libraries\include\glm\detail\compute_common.hpp
+	 TODO :--: Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
+\IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
+	 TODO :--: Line    51 :--: /// TODO: Fixme!
+\IceEngine\libraries\include\glm\simd\common.h
+	 TODO :--: Line   136 :--: /* trunc TODO
+\IceEngine\libraries\include\stb\stb_image.h
+	 NOTE :--: Line    18 :--: QUICK NOTES:
+\IceEngine\libraries\include\tinyobjloader\tiny_obj_loader.h
+	 TODO :--: Line    66 :--: // TODO(syoyo): Better C++11 detection for older compiler
+	 NOTE :--: Line   402 :--: // NOTE(syoyo): array index is based on the appearance order.
+	 TODO :--: Line   724 :--: // TODO(syoyo): bspline, surface, ...
+	 NOTE :--: Line   850 :--: // NOTE: THESE MUST BE DECLARED HERE SINCE WE ARE NOT ALLOWED
+	 NOTE :--: Line   911 :--: // NOTE: Don't use powf here, it will absolutely murder precision.
+	 TODO :--: Line  1227 :--: // TODO(syoyo): Check if arg is int type.
+	 TODO :--: Line  1254 :--: // TODO(syoyo): Support parsing texture option flag after the filename.
+	 TODO :--: Line  1363 :--: // TODO(syoyo): refactor function.
+	 NOTE :--: Line  1868 :--: // NOTE: Interpretation of Tr is application(exporter) dependent. For
+	 TODO :--: Line  2306 :--: // TODO(syoyo): Add syntax check
+	 TODO :--: Line  2317 :--: // TODO(syoyo): # of elements check
+	 TODO :--: Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.

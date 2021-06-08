@@ -136,26 +136,6 @@ void Platform::PrintToConsole(const char* _message, ...)
   va_end(args);
 }
 
-std::vector<char> Platform::LoadFile(const char* _directory)
-{
-  std::ifstream inFile;
-  inFile.open(_directory, std::ios::ate | std::ios::binary);
-  if (!inFile)
-  {
-    // TODO : Log non-Vulkan errors
-    IcePrint("ERROR :: Failed to load file %s", _directory);
-    return {};
-  }
-
-  size_t fileSize = inFile.tellg();
-  inFile.seekg(0);
-  std::vector<char> rawData(fileSize);
-  inFile.read(rawData.data(), fileSize);
-
-  inFile.close();
-  return rawData;
-}
-
 VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)
 {
   VkWin32SurfaceCreateInfoKHR createInfo {};

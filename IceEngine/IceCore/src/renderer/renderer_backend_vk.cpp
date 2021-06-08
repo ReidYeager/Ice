@@ -10,6 +10,7 @@
 
 #include "logger.h"
 #include "platform/platform.h"
+#include "platform/file_system.h"
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
 
@@ -158,7 +159,7 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
   }
 
   // Load shader file
-  std::vector<char> shaderCode = Platform::LoadFile(fileDir.c_str());
+  std::vector<char> shaderCode = FileSystem::LoadFile(fileDir.c_str());
   //std::vector<char> shaderLayout = Platform::LoadFile(layoutDir);
 
   // Create VkShaderModule

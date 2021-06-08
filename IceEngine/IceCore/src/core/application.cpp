@@ -3,7 +3,9 @@
 #include "logger.h"
 #include "core/application.h"
 #include "platform/platform.h"
+#include "platform/file_system.h"
 #include "core/memory_manager.h"
+#include "renderer/mesh.h"
 
 void Application::Run()
 {
@@ -26,6 +28,8 @@ void Application::Initialize()
 
   // TODO : TEMPORARY -- Delete
   GetShaderProgram("default", ICE_SHADER_STAGE_VERT | ICE_SHADER_STAGE_FRAG);
+  CreateObject();
+
 }
 
 void Application::MainLoop()
@@ -46,6 +50,11 @@ void Application::Shutdown()
 
   MemoryManager::Shutdown();
   delete(platform);
+}
+
+void Application::CreateObject()
+{
+  mesh_t m = FileSystem::LoadMesh("Cube.obj");
 }
 
 void Application::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
