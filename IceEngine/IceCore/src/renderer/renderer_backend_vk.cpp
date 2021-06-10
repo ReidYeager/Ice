@@ -20,6 +20,7 @@ RendererBackend::RendererBackend()
   surface = Platform::CreateSurface(&instance);
   CreateDevice();
   CreateCommandPool(vState.graphicsCommandPool, vState.graphicsIdx);
+  CreateCommandPool(vState.transientCommandPool, vState.transferIdx);
 
   InitializeComponents();
 }
@@ -180,6 +181,97 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
 void RendererBackend::DestroyShaderModule(VkShaderModule& _module)
 {
   vkDestroyShaderModule(vState.device, _module, nullptr);
+}
+
+void RendererBackend::CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
+{
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingMemory;
+  CreateBuffer(stagingBuffer, stagingMemory, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  FillBuffer(stagingMemory, _data, _size);
+
+  CreateBuffer(_buffer, _mem, _size,
+               _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  CopyBuffer(stagingBuffer, _buffer, _size);
+
+  vkFreeMemory(vState.device, stagingMemory, nullptr);
+  vkDestroyBuffer(vState.device, stagingBuffer, nullptr);
+}
+
+void RendererBackend::CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDeviceSize _size,
+                                   VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
+{
+  VkBufferCreateInfo createInfo = {};
+  createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  createInfo.usage = _usage;
+  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.size = _size;
+
+  ICE_ASSERT(vkCreateBuffer(vState.device, &createInfo, nullptr, &_buffer),
+             "Failed to create vert buffer");
+
+  VkMemoryRequirements memReq;
+  vkGetBufferMemoryRequirements(vState.device, _buffer, &memReq);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memReq.size;
+  allocInfo.memoryTypeIndex = FindMemoryType(
+    memReq.memoryTypeBits,
+    _memProperties);
+
+  ICE_ASSERT(vkAllocateMemory(vState.device, &allocInfo, nullptr, &_mem),
+             "Failed to allocate vert memory");
+
+  vkBindBufferMemory(vState.device, _buffer, _mem, 0);
+}
+
+void RendererBackend::FillBuffer(VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size)
+{
+  void* tmpData;
+  vkMapMemory(vState.device, _mem, 0, _size, 0, &tmpData);
+  memcpy(tmpData, _data, static_cast<size_t>(_size));
+  vkUnmapMemory(vState.device, _mem);
+}
+
+void RendererBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)
+{
+  VkCommandBufferAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = vState.transientCommandPool;
+  allocInfo.commandBufferCount = 1;
+
+  VkCommandBuffer transferCommand;
+  ICE_ASSERT(vkAllocateCommandBuffers(vState.device, &allocInfo, &transferCommand),
+             "Failed to create transient command buffer");
+
+  VkCommandBufferBeginInfo beginInfo = {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  vkBeginCommandBuffer(transferCommand, &beginInfo);
+
+  VkBufferCopy region = {};
+  region.size = _size;
+  region.dstOffset = 0;
+  region.srcOffset = 0;
+
+  vkCmdCopyBuffer(transferCommand, _src, _dst, 1, &region);
+
+  vkEndCommandBuffer(transferCommand);
+
+  VkSubmitInfo submitInfo = {};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &transferCommand;
+
+  vkQueueSubmit(vState.transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(vState.transferQueue);
+
+  vkFreeCommandBuffers(vState.device, vState.transientCommandPool, 1, &transferCommand);
 }
 
 void RendererBackend::CreateInstance()

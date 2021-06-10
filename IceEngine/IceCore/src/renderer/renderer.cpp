@@ -3,6 +3,8 @@
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
 
+// TODO : Remove all API types & references
+
 Renderer::Renderer()
 {
   // Get window surface
@@ -88,6 +90,11 @@ u32 Renderer::GetShader(const char* _name, IceShaderStageFlags _stage)
   shaders.push_back(backend->CreateShader(_name, _stage));
 
   return i;
+}
+
+u32 Renderer::CreateBuffer(const void* _data, u32 _size)
+{
+  return 0;
 }
 
 void Renderer::CreateRenderer()

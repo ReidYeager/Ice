@@ -8,6 +8,22 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+struct iceImage_t
+{
+  VkImage image;
+  VkDeviceMemory memory;
+  VkFormat format;
+  VkImageView view;
+  //VkSampler sampler;
+};
+
+//struct iceBuffer_t
+//{
+//  VkBuffer buffer;
+//  VkDeviceMemory memory;
+//  //u32 size;
+//};
+
 class RendererBackend
 {
 private:
@@ -37,18 +53,10 @@ private:
     VkQueue transferQueue;
 
     VkCommandPool graphicsCommandPool;
+    VkCommandPool transientCommandPool;
 
     VkExtent2D renderExtent;
     VkRenderPass renderPass;
-  };
-
-  struct iceImage_t
-  {
-    VkImage image;
-    VkDeviceMemory memory;
-    VkFormat format;
-    VkImageView view;
-    //VkSampler sampler;
   };
 
 //=================================================================================================
@@ -109,6 +117,14 @@ public:
   iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
   // TODO : I don't like this. Find a better way to destroy shaders
   void DestroyShaderModule(VkShaderModule& _shader);
+
+  // Creates a buffer on the GPU and fills it with data
+  void CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, const void* _data,
+                           VkDeviceSize _size, VkBufferUsageFlags _usage);
+  void CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDeviceSize _size,
+                    VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
+  void FillBuffer(VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size);
+  void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
 
 private:
   // Calls CreateComponents
