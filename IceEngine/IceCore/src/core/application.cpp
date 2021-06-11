@@ -54,7 +54,8 @@ void Application::Shutdown()
 
 void Application::CreateObject()
 {
-  mesh_t m = FileSystem::LoadMesh("Cube.obj");
+  mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
+
 }
 
 void Application::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)

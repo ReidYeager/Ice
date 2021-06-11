@@ -2,6 +2,7 @@
 #include "renderer/renderer.h"
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
+#include "platform/file_system.h"
 
 // TODO : Remove all API types & references
 
@@ -13,6 +14,11 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+  for (u32 i = 0; i < buffers.size(); i++)
+  {
+    DestroyBuffer(i);
+  }
+
   for (const auto& sp : shaderPrograms)
   {
     if (sp.stages & ICE_SHADER_STAGE_VERT)
@@ -92,9 +98,36 @@ u32 Renderer::GetShader(const char* _name, IceShaderStageFlags _stage)
   return i;
 }
 
-u32 Renderer::CreateBuffer(const void* _data, u32 _size)
+u32 Renderer::CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
-  return 0;
+  u32 index = static_cast<u32>(buffers.size());
+
+  VkBuffer buffer;
+  VkDeviceMemory memory;
+
+  backend->CreateAndFillBuffer(buffer, memory, _data, _size, _usage);
+
+  buffers.push_back(buffer);
+  bufferMemories.push_back(memory);
+  return index;
+}
+
+void Renderer::DestroyBuffer(u32 _index)
+{
+  backend->DestroyBuffer(buffers[_index], bufferMemories[_index]);
+}
+
+mesh_t Renderer::CreateMesh(const char* _model)
+{
+  mesh_t m = FileSystem::LoadMesh(_model);
+  u32 index = CreateBuffer(m.vertices.data(), m.vertices.size() * sizeof(vertex_t),
+                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+  m.vertexBuffer = buffers[index];
+  index = CreateBuffer(m.indices.data(), m.indices.size() * sizeof(u32),
+                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+  m.indexBuffer = buffers[index];
+
+  return m;
 }
 
 void Renderer::CreateRenderer()

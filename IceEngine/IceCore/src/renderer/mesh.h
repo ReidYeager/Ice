@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <vulkan/vulkan.h>
 
 #include "defines.h"
 
@@ -41,8 +42,8 @@ struct mesh_t
   std::vector<vertex_t> vertices;
   std::vector<u32> indices;
 
-  // vertex buffer
-  // index buffer
+  VkBuffer vertexBuffer;
+  VkBuffer indexBuffer;
 };
 
 #endif // !RENDERER_MESH_H

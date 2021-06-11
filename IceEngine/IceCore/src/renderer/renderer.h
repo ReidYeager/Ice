@@ -6,6 +6,7 @@
 #include "defines.h"
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
+#include "renderer/mesh.h"
 
 #include <vector>
 
@@ -39,7 +40,10 @@ public:
   // Creates a new shader if none match the given description
   u32 GetShader(const char* _name, IceShaderStageFlags _stage);
 
-  u32 CreateBuffer(const void* _data, u32 _size);
+  u32 CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  void DestroyBuffer(u32 _index);
+
+  mesh_t CreateMesh(const char* _model);
 
 private:
   //void Initialize();

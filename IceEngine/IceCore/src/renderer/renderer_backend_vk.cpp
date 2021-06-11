@@ -38,6 +38,7 @@ RendererBackend::~RendererBackend()
 
   DestroyComponents();
 
+  vkDestroyCommandPool(vState.device, vState.transientCommandPool, nullptr);
   vkDestroyCommandPool(vState.device, vState.graphicsCommandPool, nullptr);
   vkDestroyDevice(vState.device, nullptr);
   vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -183,7 +184,8 @@ void RendererBackend::DestroyShaderModule(VkShaderModule& _module)
   vkDestroyShaderModule(vState.device, _module, nullptr);
 }
 
-void RendererBackend::CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
+void RendererBackend::CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem,
+    const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
   VkBuffer stagingBuffer;
   VkDeviceMemory stagingMemory;
@@ -272,6 +274,12 @@ void RendererBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _siz
   vkQueueWaitIdle(vState.transferQueue);
 
   vkFreeCommandBuffers(vState.device, vState.transientCommandPool, 1, &transferCommand);
+}
+
+void RendererBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
+{
+  vkFreeMemory(vState.device, _memory, nullptr);
+  vkDestroyBuffer(vState.device, _buffer, nullptr);
 }
 
 void RendererBackend::CreateInstance()

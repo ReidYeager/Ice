@@ -125,6 +125,7 @@ public:
                     VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
   void FillBuffer(VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size);
   void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
+  void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
 
 private:
   // Calls CreateComponents
