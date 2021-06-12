@@ -42,6 +42,8 @@ private:
 
   struct IceVulkanState
   {
+    VkAllocationCallbacks* allocator;
+
     IcePhysicalDeviceInformation gpu;
     VkDevice device;
 
@@ -95,6 +97,11 @@ private:
 
   std::vector<VkCommandBuffer> commandBuffers;
 
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+
 //=================================================================================================
 // FUNCTIONS
 //=================================================================================================
@@ -127,6 +134,8 @@ public:
   void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
   void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
 
+  void RecordCommandBuffers();
+
 private:
   // Calls CreateComponents
   // Creates components that live through recreation
@@ -148,6 +157,12 @@ private:
   void CreateDescriptorPool();
   void CreateSyncObjects();
   void CreateCommandBuffers();
+
+  // TODO : Move to shaderprograms?
+  void CreateDescriptorSetLayout();
+  void CreatePipelineLayout();
+  void CreatePipeline();
+  void CreateDescriptorSet();
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags

@@ -23,30 +23,37 @@ RendererBackend::RendererBackend()
   CreateCommandPool(vState.transientCommandPool, vState.transferIdx);
 
   InitializeComponents();
+
+  RecordCommandBuffers();
 }
 
 RendererBackend::~RendererBackend()
 {
+  vkDeviceWaitIdle(vState.device);
+
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    vkDestroySemaphore(vState.device, imageAvailableSemaphores[i], nullptr);
-    vkDestroySemaphore(vState.device, renderCompleteSemaphores[i], nullptr);
-    vkDestroyFence(vState.device, flightFences[i], nullptr);
+    vkDestroySemaphore(vState.device, imageAvailableSemaphores[i], vState.allocator);
+    vkDestroySemaphore(vState.device, renderCompleteSemaphores[i], vState.allocator);
+    vkDestroyFence(vState.device, flightFences[i], vState.allocator);
   }
 
-  vkDestroyDescriptorPool(vState.device, descriptorPool, nullptr);
+  vkDestroyDescriptorPool(vState.device, descriptorPool, vState.allocator);
 
   DestroyComponents();
 
-  vkDestroyCommandPool(vState.device, vState.transientCommandPool, nullptr);
-  vkDestroyCommandPool(vState.device, vState.graphicsCommandPool, nullptr);
-  vkDestroyDevice(vState.device, nullptr);
-  vkDestroySurfaceKHR(instance, surface, nullptr);
-  vkDestroyInstance(instance, nullptr);
+  vkDestroyDescriptorSetLayout(vState.device, descriptorSetLayout, vState.allocator);
+  vkDestroyCommandPool(vState.device, vState.transientCommandPool, vState.allocator);
+  vkDestroyCommandPool(vState.device, vState.graphicsCommandPool, vState.allocator);
+  vkDestroyDevice(vState.device, vState.allocator);
+  vkDestroySurfaceKHR(instance, surface, vState.allocator);
+  vkDestroyInstance(instance, vState.allocator);
 }
 
 void RendererBackend::InitializeComponents()
 {
+  CreateDescriptorSetLayout();
+
   CreateComponents();
 
   CreateDescriptorPool();
@@ -59,6 +66,10 @@ void RendererBackend::CreateComponents()
   CreateSwapchain();
   CreateRenderpass();
   CreateDepthImage();
+
+  CreatePipelineLayout();
+  CreatePipeline();
+
   CreateFramebuffers();
 }
 
@@ -67,20 +78,23 @@ void RendererBackend::DestroyComponents()
   // Destroy framebuffers
   for (const auto& fb : frameBuffers)
   {
-    vkDestroyFramebuffer(vState.device, fb, nullptr);
+    vkDestroyFramebuffer(vState.device, fb, vState.allocator);
   }
   // Destroy depth image
-  vkDestroyImageView(vState.device, depthImage->view, nullptr);
-  vkDestroyImage(vState.device, depthImage->image, nullptr);
-  vkFreeMemory(vState.device, depthImage->memory, nullptr);
+  vkDestroyImageView(vState.device, depthImage->view, vState.allocator);
+  vkDestroyImage(vState.device, depthImage->image, vState.allocator);
+  vkFreeMemory(vState.device, depthImage->memory, vState.allocator);
+
   // Destroy renderpass
-  vkDestroyRenderPass(vState.device, vState.renderPass, nullptr);
+  vkDestroyPipeline(vState.device, pipeline, vState.allocator);
+  vkDestroyPipelineLayout(vState.device, pipelineLayout, vState.allocator);
+  vkDestroyRenderPass(vState.device, vState.renderPass, vState.allocator);
   // Destroy swapchain
   for (const auto& view : swapchainImageViews)
   {
-    vkDestroyImageView(vState.device, view, nullptr);
+    vkDestroyImageView(vState.device, view, vState.allocator);
   }
-  vkDestroySwapchainKHR(vState.device, swapchain, nullptr); // Implicitly destroys swapchainImages
+  vkDestroySwapchainKHR(vState.device, swapchain, vState.allocator); // Implicitly destroys swapchainImages
 }
 
 void RendererBackend::RecreateComponents()
@@ -151,12 +165,12 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
     layoutDir.append(".vlayout");
     break;
   case ICE_SHADER_STAGE_FRAG:
-    fileDir.append(".vspv");
-    layoutDir.append(".vlayout");
+    fileDir.append(".fspv");
+    layoutDir.append(".flayout");
     break;
   case ICE_SHADER_STAGE_COMP:
-    fileDir.append(".vspv");
-    layoutDir.append(".vlayout");
+    fileDir.append(".cspv");
+    layoutDir.append(".clayout");
     break;
   }
 
@@ -170,7 +184,7 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
   createInfo.codeSize = shaderCode.size();
   createInfo.pCode = reinterpret_cast<const u32*>(shaderCode.data());
 
-  ICE_ASSERT(vkCreateShaderModule(vState.device, &createInfo, nullptr, &s.module),
+  ICE_ASSERT(vkCreateShaderModule(vState.device, &createInfo, vState.allocator, &s.module),
              "Failed to create shader module");
 
   // TODO : Get shader bindings from its layout file
@@ -181,7 +195,7 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
 
 void RendererBackend::DestroyShaderModule(VkShaderModule& _module)
 {
-  vkDestroyShaderModule(vState.device, _module, nullptr);
+  vkDestroyShaderModule(vState.device, _module, vState.allocator);
 }
 
 void RendererBackend::CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem,
@@ -199,8 +213,8 @@ void RendererBackend::CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _me
 
   CopyBuffer(stagingBuffer, _buffer, _size);
 
-  vkFreeMemory(vState.device, stagingMemory, nullptr);
-  vkDestroyBuffer(vState.device, stagingBuffer, nullptr);
+  vkFreeMemory(vState.device, stagingMemory, vState.allocator);
+  vkDestroyBuffer(vState.device, stagingBuffer, vState.allocator);
 }
 
 void RendererBackend::CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDeviceSize _size,
@@ -212,7 +226,7 @@ void RendererBackend::CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDe
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   createInfo.size = _size;
 
-  ICE_ASSERT(vkCreateBuffer(vState.device, &createInfo, nullptr, &_buffer),
+  ICE_ASSERT(vkCreateBuffer(vState.device, &createInfo, vState.allocator, &_buffer),
              "Failed to create vert buffer");
 
   VkMemoryRequirements memReq;
@@ -225,7 +239,7 @@ void RendererBackend::CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDe
     memReq.memoryTypeBits,
     _memProperties);
 
-  ICE_ASSERT(vkAllocateMemory(vState.device, &allocInfo, nullptr, &_mem),
+  ICE_ASSERT(vkAllocateMemory(vState.device, &allocInfo, vState.allocator, &_mem),
              "Failed to allocate vert memory");
 
   vkBindBufferMemory(vState.device, _buffer, _mem, 0);
@@ -278,8 +292,46 @@ void RendererBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _siz
 
 void RendererBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
 {
-  vkFreeMemory(vState.device, _memory, nullptr);
-  vkDestroyBuffer(vState.device, _buffer, nullptr);
+  vkFreeMemory(vState.device, _memory, vState.allocator);
+  vkDestroyBuffer(vState.device, _buffer, vState.allocator);
+}
+
+void RendererBackend::RecordCommandBuffers()
+{
+  u32 commandCount = static_cast<u32>(commandBuffers.size());
+  VkCommandBufferBeginInfo beginInfo {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  VkClearValue clearValues [2] = {};
+  clearValues[0].color = { 0.20784313725f, 0.21568627451f, 0.21568627451f, 1.0f };
+  clearValues[1].depthStencil = { 1, 0 };
+
+  VkRenderPassBeginInfo rpBeginInfo {};
+  rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  rpBeginInfo.renderPass = vState.renderPass;
+  rpBeginInfo.clearValueCount = 2;
+  rpBeginInfo.pClearValues = clearValues;
+  rpBeginInfo.renderArea.extent = vState.renderExtent;
+  rpBeginInfo.renderArea.offset = { 0, 0 };
+
+  VkDeviceSize offset[] = { 0 };
+
+  for (u32 i = 0; i < commandCount; i++)
+  {
+    rpBeginInfo.framebuffer = frameBuffers[i];
+
+    ICE_ASSERT(vkBeginCommandBuffer(commandBuffers[i], &beginInfo), "Failed to being command buffer");
+
+    vkCmdBeginRenderPass(commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    //vkCmdBindDescriptorSets((commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+    //vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &)
+    vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(commandBuffers[i]);
+
+    ICE_ASSERT(vkEndCommandBuffer(commandBuffers[i]), "Failed to record command buffer");
+  }
 }
 
 void RendererBackend::CreateInstance()
@@ -303,7 +355,7 @@ void RendererBackend::CreateInstance()
   createInfo.enabledLayerCount = (u32)deviceLayers.size();
   createInfo.ppEnabledLayerNames = deviceLayers.data();
 
-  ICE_ASSERT(vkCreateInstance(&createInfo, nullptr, &instance), "Failed to create instance");
+  ICE_ASSERT(vkCreateInstance(&createInfo, vState.allocator, &instance), "Failed to create instance");
 }
 
 void RendererBackend::CreateDevice()
@@ -369,7 +421,7 @@ void RendererBackend::CreateDevice()
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos    = queueCreateInfos.data();
 
-  ICE_ASSERT(vkCreateDevice(pDevice, &createInfo, nullptr, &vState.device),
+  ICE_ASSERT(vkCreateDevice(pDevice, &createInfo, vState.allocator, &vState.device),
              "Failed to create vkDevice");
 
   vkGetDeviceQueue(vState.device, vState.graphicsIdx, 0, &vState.graphicsQueue);
@@ -468,7 +520,7 @@ void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.queueFamilyIndex = _queueIndex;
   createInfo.flags = _flags;
-  ICE_ASSERT(vkCreateCommandPool(vState.device, &createInfo, nullptr, &_pool),
+  ICE_ASSERT(vkCreateCommandPool(vState.device, &createInfo, vState.allocator, &_pool),
              "Failed to create command pool for queue family %u", _queueIndex);
 }
 
@@ -566,7 +618,7 @@ void RendererBackend::CreateSwapchain()
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
 
-  ICE_ASSERT(vkCreateSwapchainKHR(vState.device, &createInfo, nullptr, &swapchain),
+  ICE_ASSERT(vkCreateSwapchainKHR(vState.device, &createInfo, vState.allocator, &swapchain),
              "Failed to create swapchain");
 
   swapchainFormat = formatInfo.format;
@@ -643,7 +695,7 @@ void RendererBackend::CreateRenderpass()
   creteInfo.dependencyCount = 1;
   creteInfo.pDependencies = &dependency;
 
-  ICE_ASSERT(vkCreateRenderPass(vState.device, &creteInfo, nullptr, &vState.renderPass),
+  ICE_ASSERT(vkCreateRenderPass(vState.device, &creteInfo, vState.allocator, &vState.renderPass),
              "Failed to create renderpass");
 }
 
@@ -676,7 +728,7 @@ void RendererBackend::CreateFramebuffers()
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    ICE_ASSERT(vkCreateFramebuffer(vState.device, &createInfo, nullptr, &frameBuffers[i]),
+    ICE_ASSERT(vkCreateFramebuffer(vState.device, &createInfo, vState.allocator, &frameBuffers[i]),
                "Failed to create framebuffers");
   }
 }
@@ -695,7 +747,7 @@ void RendererBackend::CreateDescriptorPool()
   createInfo.pPoolSizes = poolSizes;
   createInfo.maxSets = 3;
 
-  ICE_ASSERT(vkCreateDescriptorPool(vState.device, &createInfo, nullptr, &descriptorPool),
+  ICE_ASSERT(vkCreateDescriptorPool(vState.device, &createInfo, vState.allocator, &descriptorPool),
              "Failed to create descriptor pool");
 }
 
@@ -715,11 +767,11 @@ void RendererBackend::CreateSyncObjects()
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    ICE_ASSERT(vkCreateFence(vState.device, &fenceInfo, nullptr, &flightFences[i]),
+    ICE_ASSERT(vkCreateFence(vState.device, &fenceInfo, vState.allocator, &flightFences[i]),
                "Failed to create fence");
-    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, nullptr,
+    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, vState.allocator,
                &imageAvailableSemaphores[i]), "Failed to create image semaphore");
-    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, nullptr,
+    ICE_ASSERT(vkCreateSemaphore(vState.device, &semaphoreInfo, vState.allocator,
                &renderCompleteSemaphores[i]), "Failed to create render semaphore");
   }
 }
@@ -737,6 +789,163 @@ void RendererBackend::CreateCommandBuffers()
 
   ICE_ASSERT(vkAllocateCommandBuffers(vState.device, &allocInfo, commandBuffers.data()),
              "Failed to allocate command buffers");
+}
+
+void RendererBackend::CreateDescriptorSetLayout()
+{
+  VkDescriptorSetLayoutBinding mvpBufferBinding {};
+  mvpBufferBinding.binding = 0;
+  mvpBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  mvpBufferBinding.descriptorCount = 1;
+  mvpBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  mvpBufferBinding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutBinding bindings[] = {mvpBufferBinding};
+  VkDescriptorSetLayoutCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  createInfo.bindingCount = 1;
+  createInfo.pBindings = bindings;
+
+  ICE_ASSERT(vkCreateDescriptorSetLayout(
+                vState.device, &createInfo, vState.allocator, &descriptorSetLayout),
+             "Failed to create descriptor set layout");
+}
+
+void RendererBackend::CreatePipelineLayout()
+{
+  VkPipelineLayoutCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  createInfo.setLayoutCount = 1;
+  createInfo.pSetLayouts = &descriptorSetLayout;
+  createInfo.pushConstantRangeCount = 0;
+  createInfo.pPushConstantRanges = 0;
+
+  ICE_ASSERT(vkCreatePipelineLayout(vState.device, &createInfo, vState.allocator, &pipelineLayout),
+             "Failed to create pipeline layout");
+}
+
+void RendererBackend::CreatePipeline()
+{
+  VkViewport viewport;
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.width = (float)vState.renderExtent.width;
+  viewport.height = (float)vState.renderExtent.height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1;
+
+  VkRect2D scissor {};
+  scissor.extent = vState.renderExtent;
+  scissor.offset = {0, 0};
+
+  VkPipelineViewportStateCreateInfo viewportStateInfo {};
+  viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  viewportStateInfo.viewportCount = 1;
+  viewportStateInfo.pViewports = &viewport;
+  viewportStateInfo.scissorCount = 1;
+  viewportStateInfo.pScissors = &scissor;
+
+  const auto vertexInputBindingDesc = vertex_t::GetBindingDescription();
+  const auto vertexInputAttribDesc = vertex_t::GetAttributeDescriptions();
+
+  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
+  vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
+  //vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
+  //vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttribDesc.data();
+  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
+  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  //vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDesc;
+
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
+  inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
+
+  VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
+  rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
+  rasterStateInfo.lineWidth = 1.0f;
+  rasterStateInfo.depthBiasEnable = VK_FALSE;
+  rasterStateInfo.depthClampEnable = VK_FALSE;
+  rasterStateInfo.rasterizerDiscardEnable = VK_FALSE;
+
+  VkPipelineMultisampleStateCreateInfo multisampleStateInfo {};
+  multisampleStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  multisampleStateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multisampleStateInfo.sampleShadingEnable = VK_FALSE;
+
+  VkPipelineDepthStencilStateCreateInfo depthStateInfo {};
+  depthStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStateInfo.depthTestEnable = VK_TRUE;
+  depthStateInfo.depthWriteEnable = VK_TRUE;
+  depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+  depthStateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+  depthStateInfo.depthBoundsTestEnable = VK_FALSE;
+
+  VkPipelineColorBlendAttachmentState blendAttachmentState {};
+  blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  blendAttachmentState.blendEnable = VK_FALSE;
+
+  VkPipelineColorBlendStateCreateInfo blendStateInfo {};
+  blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  blendStateInfo.logicOpEnable = VK_FALSE;
+  blendStateInfo.attachmentCount = 1;
+  blendStateInfo.pAttachments = &blendAttachmentState;
+
+  VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
+  dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamicStateInfo.dynamicStateCount = 0;
+  dynamicStateInfo.pDynamicStates = nullptr;
+
+  VkShaderModule vertModule = CreateShader("test", ICE_SHADER_STAGE_VERT).module;
+  VkShaderModule fragModule = CreateShader("test", ICE_SHADER_STAGE_FRAG).module;
+
+  VkPipelineShaderStageCreateInfo vertShaderStageInfo {};
+  vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  vertShaderStageInfo.module = vertModule;
+  vertShaderStageInfo.pName = "main";
+
+  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+  fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  fragShaderStageInfo.module = fragModule;
+  fragShaderStageInfo.pName = "main";
+
+  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+  VkGraphicsPipelineCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+  createInfo.pViewportState = &viewportStateInfo;
+  createInfo.pVertexInputState = &vertexInputStateInfo;
+  createInfo.pInputAssemblyState = &inputAssemblyStateInfo;
+  createInfo.pRasterizationState = &rasterStateInfo;
+  createInfo.pMultisampleState = &multisampleStateInfo;
+  createInfo.pDepthStencilState = &depthStateInfo;
+  createInfo.pColorBlendState = &blendStateInfo;
+  createInfo.pDynamicState = &dynamicStateInfo;
+
+  createInfo.stageCount = 2;
+  createInfo.pStages = shaderStages;
+
+  createInfo.layout = pipelineLayout;
+  createInfo.renderPass = vState.renderPass;
+
+  ICE_ASSERT(vkCreateGraphicsPipelines(vState.device, nullptr, 1, &createInfo, vState.allocator, &pipeline),
+             "Failed to create graphics pipeline");
+
+  vkDestroyShaderModule(vState.device, vertModule, vState.allocator);
+  vkDestroyShaderModule(vState.device, fragModule, vState.allocator);
+}
+
+void RendererBackend::CreateDescriptorSet()
+{
+  
 }
 
 u32 RendererBackend::GetQueueIndex(
@@ -813,7 +1022,7 @@ VkImageView RendererBackend::CreateImageView(const VkFormat _format, VkImageAspe
   createInfo.format = _format;
 
   VkImageView createdView;
-  if (vkCreateImageView(vState.device, &createInfo, nullptr, &createdView) != VK_SUCCESS)
+  if (vkCreateImageView(vState.device, &createInfo, vState.allocator, &createdView) != VK_SUCCESS)
   {
     IcePrint("Failed to create image view");
     return VK_NULL_HANDLE;
@@ -871,7 +1080,7 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   createInfo.flags = 0;
 
   VkImage vImage;
-  if (vkCreateImage(vState.device, &createInfo, nullptr, &vImage) != VK_SUCCESS)
+  if (vkCreateImage(vState.device, &createInfo, vState.allocator, &vImage) != VK_SUCCESS)
   {
     IcePrint("Failed to create vkImages");
     return -1;
@@ -887,7 +1096,7 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits, _memProps);
 
   VkDeviceMemory vMemory;
-  if (vkAllocateMemory(vState.device, &allocInfo, nullptr, &vMemory) != VK_SUCCESS)
+  if (vkAllocateMemory(vState.device, &allocInfo, vState.allocator, &vMemory) != VK_SUCCESS)
   {
     IcePrint("Failed to allocate texture memory");
   }

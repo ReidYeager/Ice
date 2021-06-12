@@ -37,6 +37,7 @@ void Application::MainLoop()
   IcePrint("ICE LOOP =================================================");
   while (platform->Tick())
   {
+    renderer->RenderFrame();
     // Handle input
     // Run game code
     // Render

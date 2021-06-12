@@ -13,20 +13,21 @@
 \IceEngine\IceCore\src\profiler.h
 	Line     6 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\mesh.h
-	Line    26 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
-	Line     5 :--: // TODO : Remove all API types & references
+	Line     6 :--: // TODO : Remove all API types & references
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line   112 :--: // NOTE : Temporary?
-	Line   117 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   161 :--: // TODO : Move to an image manager?
+	Line   119 :--: // NOTE : Temporary?
+	Line   124 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   160 :--: // TODO : Move to shaderprograms?
+	Line   177 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
 	Line     7 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line   174 :--: // TODO : Get shader bindings from its layout file
-	Line   284 :--: // TODO : Make this editable from the client
-	Line   503 :--: // TODO : Replace with clamp function calls
+	Line   189 :--: // TODO : Get shader bindings from its layout file
+	Line   344 :--: // TODO : Make this editable from the client
+	Line   563 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\shader_program.h
 	Line     7 :--: // NOTE : Move to defines?
 \IceEngine\libraries\include\glm\detail\compute_common.hpp

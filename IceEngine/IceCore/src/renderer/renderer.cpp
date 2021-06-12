@@ -36,7 +36,7 @@ void Renderer::RenderFrame()
 {
   // Make draw calls
   // Present render
-  //backend->RenderFrame();
+  backend->RenderFrame();
 }
 
 u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
