@@ -7,6 +7,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <glm/glm.hpp>
 
 struct iceImage_t
 {
@@ -60,6 +61,16 @@ private:
     VkExtent2D renderExtent;
     VkRenderPass renderPass;
   };
+
+  // TODO : Delete
+  struct mvpMatrices
+  {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+  } mvp;
+  VkBuffer mvpBuffer;
+  VkDeviceMemory mvpBufferMemory;
 
 //=================================================================================================
 // VARIABLES
@@ -158,7 +169,7 @@ private:
   void CreateSyncObjects();
   void CreateCommandBuffers();
 
-  // TODO : Move to shaderprograms?
+  // TODO : Move to shader programs?
   void CreateDescriptorSetLayout();
   void CreatePipelineLayout();
   void CreatePipeline();

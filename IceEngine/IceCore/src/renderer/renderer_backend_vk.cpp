@@ -4,6 +4,7 @@
 #if defined(ICE_VULKAN)
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 #include <set>
 // TODO : Replace with custom data type -- only used in CreateShader
 #include <string>
@@ -22,6 +23,11 @@ RendererBackend::RendererBackend()
   CreateCommandPool(vState.graphicsCommandPool, vState.graphicsIdx);
   CreateCommandPool(vState.transientCommandPool, vState.transferIdx);
 
+  // TODO : Delete
+  mvp.model = glm::mat4(1);
+  mvp.view = glm::lookAt(glm::vec3(0.0f, 5.0f, 15.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
+  mvp.projection = glm::perspective(glm::radians(3.14f), 1.778f, 0.1f, 50.0f);
+
   InitializeComponents();
 
   RecordCommandBuffers();
@@ -30,6 +36,10 @@ RendererBackend::RendererBackend()
 RendererBackend::~RendererBackend()
 {
   vkDeviceWaitIdle(vState.device);
+
+  // TODO : Delete
+  vkDestroyBuffer(vState.device, mvpBuffer, vState.allocator);
+  vkFreeMemory(vState.device, mvpBufferMemory, vState.allocator);
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -57,6 +67,7 @@ void RendererBackend::InitializeComponents()
   CreateComponents();
 
   CreateDescriptorPool();
+  CreateDescriptorSet();
   CreateSyncObjects();
   CreateCommandBuffers();
 }
@@ -108,6 +119,10 @@ void RendererBackend::RecreateComponents()
 void RendererBackend::RenderFrame()
 {
   vkWaitForFences(vState.device, 1, &flightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+  static float time = 0.0f;
+  mvp.model = glm::rotate(glm::mat4(1), (time += 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
+  FillBuffer(mvpBufferMemory, &mvp, sizeof(mvp));
 
   u32 imageIndex;
   vkAcquireNextImageKHR(vState.device, swapchain, UINT64_MAX,
@@ -320,11 +335,13 @@ void RendererBackend::RecordCommandBuffers()
   {
     rpBeginInfo.framebuffer = frameBuffers[i];
 
-    ICE_ASSERT(vkBeginCommandBuffer(commandBuffers[i], &beginInfo), "Failed to being command buffer");
+    ICE_ASSERT(vkBeginCommandBuffer(commandBuffers[i], &beginInfo),
+               "Failed to being command buffer");
 
     vkCmdBeginRenderPass(commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    //vkCmdBindDescriptorSets((commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
+                            0, 1, &descriptorSet, 0, nullptr);
     //vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &)
     vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
@@ -355,7 +372,8 @@ void RendererBackend::CreateInstance()
   createInfo.enabledLayerCount = (u32)deviceLayers.size();
   createInfo.ppEnabledLayerNames = deviceLayers.data();
 
-  ICE_ASSERT(vkCreateInstance(&createInfo, vState.allocator, &instance), "Failed to create instance");
+  ICE_ASSERT(vkCreateInstance(&createInfo, vState.allocator, &instance),
+             "Failed to create instance");
 }
 
 void RendererBackend::CreateDevice()
@@ -945,7 +963,37 @@ void RendererBackend::CreatePipeline()
 
 void RendererBackend::CreateDescriptorSet()
 {
-  
+  CreateBuffer(mvpBuffer, mvpBufferMemory, sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  FillBuffer(mvpBufferMemory, &mvp, sizeof(mvp));
+
+  VkDescriptorSetAllocateInfo allocInfo {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &descriptorSetLayout;
+
+  ICE_ASSERT(vkAllocateDescriptorSets(vState.device, &allocInfo, &descriptorSet),
+             "Failed to allocate descriptor set");
+
+  VkDescriptorBufferInfo mvpBufferInfo {};
+  mvpBufferInfo.buffer = mvpBuffer;
+  mvpBufferInfo.offset = 0;
+  mvpBufferInfo.range = VK_WHOLE_SIZE;
+
+  VkWriteDescriptorSet descWrites[1] = {};
+  descWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descWrites[0].dstSet = descriptorSet;
+  descWrites[0].dstBinding = 0;
+  descWrites[0].dstArrayElement = 0;
+  descWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descWrites[0].descriptorCount = 1;
+  descWrites[0].pBufferInfo = &mvpBufferInfo;
+  descWrites[0].pImageInfo = nullptr;
+  descWrites[0].pTexelBufferView = nullptr;
+
+  vkUpdateDescriptorSets(vState.device, 1, descWrites, 0, nullptr);
+
 }
 
 u32 RendererBackend::GetQueueIndex(
