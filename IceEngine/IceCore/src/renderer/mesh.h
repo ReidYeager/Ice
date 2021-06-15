@@ -75,7 +75,9 @@ struct mesh_t
   std::vector<u32> indices;
 
   VkBuffer vertexBuffer;
+  VkDeviceMemory vertexBufferMemory;
   VkBuffer indexBuffer;
+  VkDeviceMemory indexBufferMemory;
 };
 
 #endif // !RENDERER_MESH_H

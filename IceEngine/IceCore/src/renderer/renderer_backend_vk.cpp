@@ -14,6 +14,17 @@
 #include "platform/file_system.h"
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
+#include "renderer/mesh.h"
+
+void RendererBackend::CreateMesh(const char* _model)
+{
+  mesh_t m = FileSystem::LoadMesh(_model);
+  CreateAndFillBuffer(vertexBuffer, vertexBufferMemory, m.vertices.data(),
+                      sizeof(vertex_t) * m.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+  CreateAndFillBuffer(indexBuffer, indexBufferMemory, m.indices.data(),
+                      sizeof(u32) * m.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+  indexCount = m.indices.size();
+}
 
 RendererBackend::RendererBackend()
 {
@@ -25,8 +36,10 @@ RendererBackend::RendererBackend()
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
-  mvp.view = glm::lookAt(glm::vec3(0.0f, 5.0f, 15.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
-  mvp.projection = glm::perspective(glm::radians(3.14f), 1.778f, 0.1f, 50.0f);
+  mvp.view = glm::lookAt(glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
+  mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
+  mvp.projection[1][1] *= -1; // un-flip the rendered y-axis
+  CreateMesh("Cube.obj");
 
   InitializeComponents();
 
@@ -40,6 +53,10 @@ RendererBackend::~RendererBackend()
   // TODO : Delete
   vkDestroyBuffer(vState.device, mvpBuffer, vState.allocator);
   vkFreeMemory(vState.device, mvpBufferMemory, vState.allocator);
+  vkDestroyBuffer(vState.device, vertexBuffer, vState.allocator);
+  vkFreeMemory(vState.device, vertexBufferMemory, vState.allocator);
+  vkDestroyBuffer(vState.device, indexBuffer, vState.allocator);
+  vkFreeMemory(vState.device, indexBufferMemory, vState.allocator);
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -121,7 +138,8 @@ void RendererBackend::RenderFrame()
   vkWaitForFences(vState.device, 1, &flightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
-  mvp.model = glm::rotate(glm::mat4(1), (time += 0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
+  mvp.model = glm::rotate(glm::mat4(1), (time += 0.001f), glm::vec3(0.0f, 1.0f, 0.0f));
+  mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 0.5f) * 0.2f, 0));
   FillBuffer(mvpBufferMemory, &mvp, sizeof(mvp));
 
   u32 imageIndex;
@@ -342,8 +360,10 @@ void RendererBackend::RecordCommandBuffers()
     vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
                             0, 1, &descriptorSet, 0, nullptr);
-    //vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &)
-    vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+    vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &vertexBuffer, offset);
+    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffers[i], indexCount, 1, 0, 0, 0);
+    //vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -868,12 +888,12 @@ void RendererBackend::CreatePipeline()
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  //vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
-  //vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttribDesc.data();
-  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  //vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDesc;
+  //vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
+  vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttribDesc.data();
+  //vertexInputStateInfo.vertexBindingDescriptionCount = 0;
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDesc;
 
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
   inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

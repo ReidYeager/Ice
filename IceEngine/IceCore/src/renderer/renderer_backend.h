@@ -4,6 +4,7 @@
 
 #include "defines.h"
 #include "renderer/shader_program.h"
+#include "renderer/mesh.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -71,6 +72,14 @@ private:
   } mvp;
   VkBuffer mvpBuffer;
   VkDeviceMemory mvpBufferMemory;
+
+  VkBuffer vertexBuffer;
+  VkDeviceMemory vertexBufferMemory;
+  VkBuffer indexBuffer;
+  VkDeviceMemory indexBufferMemory;
+  u32 indexCount = 0;
+
+  void CreateMesh(const char* _model);
 
 //=================================================================================================
 // VARIABLES
