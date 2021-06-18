@@ -48,6 +48,12 @@
     <ClInclude Include="src\platform\file_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\renderer\backend_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
@@ -62,13 +68,16 @@
     <ClCompile Include="src\renderer\renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\renderer\renderer_backend_vk.cpp">
+    <ClCompile Include="src\renderer\vulkan\renderer_backend_vk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\renderer\mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\file_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\renderer\buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

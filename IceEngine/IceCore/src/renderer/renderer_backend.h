@@ -3,8 +3,10 @@
 #define RENDERER_RENDERER_BACKEND_H 1
 
 #include "defines.h"
+#include "renderer/backend_context.h"
 #include "renderer/shader_program.h"
 #include "renderer/mesh.h"
+#include "renderer/buffer.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -19,50 +21,9 @@ struct iceImage_t
   //VkSampler sampler;
 };
 
-//struct iceBuffer_t
-//{
-//  VkBuffer buffer;
-//  VkDeviceMemory memory;
-//  //u32 size;
-//};
-
 class RendererBackend
 {
 private:
-  struct IcePhysicalDeviceInformation
-  {
-    VkPhysicalDevice device;
-    VkPhysicalDeviceProperties properties;
-    VkPhysicalDeviceMemoryProperties memProperties;
-    VkPhysicalDeviceFeatures features;
-    VkSurfaceCapabilitiesKHR surfaceCapabilities;
-    std::vector<VkSurfaceFormatKHR> surfaceFormats;
-    std::vector<VkPresentModeKHR> presentModes;
-    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-    std::vector<VkExtensionProperties> extensionProperties;
-  };
-
-  struct IceVulkanState
-  {
-    VkAllocationCallbacks* allocator;
-
-    IcePhysicalDeviceInformation gpu;
-    VkDevice device;
-
-    uint32_t graphicsIdx;
-    uint32_t presentIdx;
-    uint32_t transferIdx;
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    VkQueue transferQueue;
-
-    VkCommandPool graphicsCommandPool;
-    VkCommandPool transientCommandPool;
-
-    VkExtent2D renderExtent;
-    VkRenderPass renderPass;
-  };
-
   // TODO : Delete
   struct mvpMatrices
   {
@@ -70,13 +31,10 @@ private:
     glm::mat4 view;
     glm::mat4 projection;
   } mvp;
-  VkBuffer mvpBuffer;
-  VkDeviceMemory mvpBufferMemory;
+  IceBuffer* mvpBuffer;
 
-  VkBuffer vertexBuffer;
-  VkDeviceMemory vertexBufferMemory;
-  VkBuffer indexBuffer;
-  VkDeviceMemory indexBufferMemory;
+  IceBuffer* vertexBuffer;
+  IceBuffer* indexBuffer;
   u32 indexCount = 0;
 
   void CreateMesh(const char* _model);
@@ -85,7 +43,7 @@ private:
 // VARIABLES
 //=================================================================================================
 private:
-  IceVulkanState vState {};
+  //IceRenderContext rContext;
 
   std::vector<const char*> deviceLayers =
       { "VK_LAYER_KHRONOS_validation" };
@@ -146,11 +104,9 @@ public:
   void DestroyShaderModule(VkShaderModule& _shader);
 
   // Creates a buffer on the GPU and fills it with data
-  void CreateAndFillBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, const void* _data,
-                           VkDeviceSize _size, VkBufferUsageFlags _usage);
-  void CreateBuffer(VkBuffer& _buffer, VkDeviceMemory& _mem, VkDeviceSize _size,
-                    VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
-  void FillBuffer(VkDeviceMemory& _mem, const void* _data, VkDeviceSize _size);
+  IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  IceBuffer* CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
+  void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
   void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
   void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
 

@@ -12,6 +12,14 @@
 	Line    24 :--: // TODO : Dirty. Find a better way to close
 \IceEngine\IceCore\src\profiler.h
 	Line     6 :--: // TODO : Add profiling tools
+\IceEngine\IceCore\src\renderer\buffer.cpp
+	Line    32 :--: // TODO : Replace with a GPU memory allocator call
+\IceEngine\IceCore\src\renderer\buffer.h
+	Line    10 :--: // NOTE : I really don't like this implementation; especially as it stands now.
+	Line    12 :--: // TODO : Make API agnostic
+	Line    15 :--: // TODO : Add alignment to better utilize GPU
+	Line    39 :--: // TODO : Move to vkMemory allocator
+	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
@@ -19,20 +27,20 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    65 :--: // TODO : Delete
-	Line   139 :--: // NOTE : Temporary?
-	Line   144 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   180 :--: // TODO : Move to shader programs?
-	Line   197 :--: // TODO : Move to an image manager?
-\IceEngine\IceCore\src\renderer\renderer_backend_vk.cpp
-	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    36 :--: // TODO : Delete
-	Line    52 :--: // TODO : Delete
-	Line   222 :--: // TODO : Get shader bindings from its layout file
-	Line   381 :--: // TODO : Make this editable from the client
-	Line   601 :--: // TODO : Replace with clamp function calls
+	Line    26 :--: // TODO : Delete
+	Line    97 :--: // NOTE : Temporary?
+	Line   102 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   136 :--: // TODO : Move to shader programs?
+	Line   153 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\shader_program.h
 	Line     7 :--: // NOTE : Move to defines?
+\IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
+	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
+	Line    41 :--: // TODO : Delete
+	Line    57 :--: // TODO : Delete
+	Line   230 :--: // TODO : Get shader bindings from its layout file
+	Line   369 :--: // TODO : Make this editable from the client
+	Line   589 :--: // TODO : Replace with clamp function calls
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl

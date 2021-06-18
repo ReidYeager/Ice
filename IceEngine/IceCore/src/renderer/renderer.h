@@ -21,8 +21,8 @@ private:
   std::vector<iceShaderProgram_t> shaderPrograms;
   std::vector<iceShader_t> shaders;
 
-  std::vector<VkBuffer> buffers;
-  std::vector<VkDeviceMemory> bufferMemories;
+  //std::vector<VkBuffer> buffers;
+  //std::vector<VkDeviceMemory> bufferMemories;
 
 //=================================================
 // Functions
@@ -40,8 +40,8 @@ public:
   // Creates a new shader if none match the given description
   u32 GetShader(const char* _name, IceShaderStageFlags _stage);
 
-  u32 CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
-  void DestroyBuffer(u32 _index);
+  //u32 CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  //void DestroyBuffer(u32 _index);
 
   mesh_t CreateMesh(const char* _model);
 
