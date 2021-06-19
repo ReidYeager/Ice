@@ -27,7 +27,7 @@ void Application::Initialize()
   //ChildInit();
 
   // TODO : TEMPORARY -- Delete
-  GetShaderProgram("default", ICE_SHADER_STAGE_VERT | ICE_SHADER_STAGE_FRAG);
+  GetShaderProgram("default", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
   CreateObject();
 
 }

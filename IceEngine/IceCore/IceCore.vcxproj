@@ -113,6 +113,7 @@
     <ClCompile Include="src\core\memory_manager.cpp" />
     <ClCompile Include="src\platform\platform_windows.cpp" />
     <ClCompile Include="src\renderer\renderer.cpp" />
+    <ClCompile Include="src\renderer\shader_program.cpp" />
     <ClCompile Include="src\renderer\vulkan\renderer_backend_vk.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

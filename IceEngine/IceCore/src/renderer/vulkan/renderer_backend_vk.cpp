@@ -201,15 +201,15 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
 
   switch (_stage)
   {
-  case ICE_SHADER_STAGE_VERT:
+  case Ice_Shader_Stage_Vert:
     fileDir.append(".vspv");
     layoutDir.append(".vlayout");
     break;
-  case ICE_SHADER_STAGE_FRAG:
+  case Ice_Shader_Stage_Frag:
     fileDir.append(".fspv");
     layoutDir.append(".flayout");
     break;
-  case ICE_SHADER_STAGE_COMP:
+  case Ice_Shader_Stage_Comp:
     fileDir.append(".cspv");
     layoutDir.append(".clayout");
     break;
@@ -892,7 +892,7 @@ void RendererBackend::CreatePipeline()
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;
   rasterStateInfo.depthBiasEnable = VK_FALSE;
@@ -928,8 +928,8 @@ void RendererBackend::CreatePipeline()
   dynamicStateInfo.dynamicStateCount = 0;
   dynamicStateInfo.pDynamicStates = nullptr;
 
-  VkShaderModule vertModule = CreateShader("test", ICE_SHADER_STAGE_VERT).module;
-  VkShaderModule fragModule = CreateShader("test", ICE_SHADER_STAGE_FRAG).module;
+  VkShaderModule vertModule = CreateShader("test", Ice_Shader_Stage_Vert).module;
+  VkShaderModule fragModule = CreateShader("test", Ice_Shader_Stage_Frag).module;
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo {};
   vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

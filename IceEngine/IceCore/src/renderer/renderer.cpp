@@ -21,11 +21,11 @@ Renderer::~Renderer()
 
   for (const auto& sp : shaderPrograms)
   {
-    if (sp.stages & ICE_SHADER_STAGE_VERT)
+    if (sp.stages & Ice_Shader_Stage_Vert)
       backend->DestroyShaderModule(shaders[sp.vertIndex].module);
-    if (sp.stages & ICE_SHADER_STAGE_FRAG)
+    if (sp.stages & Ice_Shader_Stage_Frag)
       backend->DestroyShaderModule(shaders[sp.fragIndex].module);
-    if (sp.stages & ICE_SHADER_STAGE_COMP)
+    if (sp.stages & Ice_Shader_Stage_Comp)
       backend->DestroyShaderModule(shaders[sp.compIndex].module);
   }
 
@@ -56,23 +56,21 @@ u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
   // Create a new shader program
   i = static_cast<u32>(shaderPrograms.size());
 
-  iceShaderProgram_t newShaderProgram{};
-  newShaderProgram.name = _name;
-  newShaderProgram.stages = _stages;
+  iceShaderProgram_t newShaderProgram(_name, _stages);
 
-  if (_stages & ICE_SHADER_STAGE_VERT)
+  if (_stages & Ice_Shader_Stage_Vert)
   {
-    newShaderProgram.vertIndex = GetShader(_name, ICE_SHADER_STAGE_VERT);
+    newShaderProgram.vertIndex = GetShader(_name, Ice_Shader_Stage_Vert);
   }
 
-  if (_stages & ICE_SHADER_STAGE_FRAG)
+  if (_stages & Ice_Shader_Stage_Frag)
   {
-    newShaderProgram.fragIndex = GetShader(_name, ICE_SHADER_STAGE_FRAG);
+    newShaderProgram.fragIndex = GetShader(_name, Ice_Shader_Stage_Frag);
   }
 
-  if (_stages & ICE_SHADER_STAGE_COMP)
+  if (_stages & Ice_Shader_Stage_Comp)
   {
-    newShaderProgram.compIndex = GetShader(_name, ICE_SHADER_STAGE_COMP);
+    newShaderProgram.compIndex = GetShader(_name, Ice_Shader_Stage_Comp);
   }
 
   shaderPrograms.push_back(newShaderProgram);
