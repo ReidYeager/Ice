@@ -48,23 +48,22 @@ RendererBackend::RendererBackend()
 
   InitializeComponents();
 
-  RecordCommandBuffers();
+  //RecordCommandBuffers();
 }
 
 RendererBackend::~RendererBackend()
 {
   vkDeviceWaitIdle(rContext.device);
 
+  for (iceShaderProgram_t& sp : rContext.shaderPrograms)
+  {
+    sp.Shutdown();
+  }
+
   // TODO : Delete
   vertexBuffer->FreeBuffer();
   indexBuffer->FreeBuffer();
   mvpBuffer->FreeBuffer();
-  //vkDestroyBuffer(rContext.device, mvpBuffer, rContext.allocator);
-  //vkFreeMemory(rContext.device, mvpBufferMemory, rContext.allocator);
-  //vkDestroyBuffer(rContext.device, vertexBuffer, rContext.allocator);
-  //vkFreeMemory(rContext.device, vertexBufferMemory, rContext.allocator);
-  //vkDestroyBuffer(rContext.device, indexBuffer, rContext.allocator);
-  //vkFreeMemory(rContext.device, indexBufferMemory, rContext.allocator);
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -87,12 +86,9 @@ RendererBackend::~RendererBackend()
 
 void RendererBackend::InitializeComponents()
 {
-  CreateDescriptorSetLayout();
-
   CreateComponents();
 
   CreateDescriptorPool();
-  CreateDescriptorSet();
   CreateSyncObjects();
   CreateCommandBuffers();
 }
@@ -102,9 +98,6 @@ void RendererBackend::CreateComponents()
   CreateSwapchain();
   CreateRenderpass();
   CreateDepthImage();
-
-  CreatePipelineLayout();
-  CreatePipeline();
 
   CreateFramebuffers();
 }
@@ -191,9 +184,7 @@ void RendererBackend::RenderFrame()
 
 iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
 {
-  iceShader_t s {};
-  s.name = _name;
-  s.stage = _stage;
+  iceShader_t s(_name, _stage);
 
   std::string fileDir = ICE_RESOURCE_SHADER_DIR;
   fileDir.append(_name);
@@ -319,6 +310,9 @@ void RendererBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
 
 void RendererBackend::RecordCommandBuffers()
 {
+  CreateDescriptorSet(rContext.shaderPrograms[0]);
+  iceShaderProgram_t* shaderProgram = nullptr;
+
   u32 commandCount = static_cast<u32>(commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -337,6 +331,7 @@ void RendererBackend::RecordCommandBuffers()
 
   VkDeviceSize offset[] = { 0 };
 
+  shaderProgram = &rContext.shaderPrograms[0];
   for (u32 i = 0; i < commandCount; i++)
   {
     rpBeginInfo.framebuffer = frameBuffers[i];
@@ -345,9 +340,9 @@ void RendererBackend::RecordCommandBuffers()
                "Failed to being command buffer");
 
     vkCmdBeginRenderPass(commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout,
-                            0, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->GetPipeline());
+    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->pipelineLayout,
+                            0, 1, &shaderProgram->descriptorSet, 0, nullptr);
     vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
     vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(commandBuffers[i], indexCount, 1, 0, 0, 0);
@@ -817,159 +812,7 @@ void RendererBackend::CreateCommandBuffers()
              "Failed to allocate command buffers");
 }
 
-void RendererBackend::CreateDescriptorSetLayout()
-{
-  VkDescriptorSetLayoutBinding mvpBufferBinding {};
-  mvpBufferBinding.binding = 0;
-  mvpBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  mvpBufferBinding.descriptorCount = 1;
-  mvpBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  mvpBufferBinding.pImmutableSamplers = nullptr;
-
-  VkDescriptorSetLayoutBinding bindings[] = {mvpBufferBinding};
-  VkDescriptorSetLayoutCreateInfo createInfo {};
-  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  createInfo.bindingCount = 1;
-  createInfo.pBindings = bindings;
-
-  ICE_ASSERT(vkCreateDescriptorSetLayout(
-                rContext.device, &createInfo, rContext.allocator, &descriptorSetLayout),
-             "Failed to create descriptor set layout");
-}
-
-void RendererBackend::CreatePipelineLayout()
-{
-  VkPipelineLayoutCreateInfo createInfo {};
-  createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  createInfo.setLayoutCount = 1;
-  createInfo.pSetLayouts = &descriptorSetLayout;
-  createInfo.pushConstantRangeCount = 0;
-  createInfo.pPushConstantRanges = 0;
-
-  ICE_ASSERT(vkCreatePipelineLayout(rContext.device, &createInfo, rContext.allocator, &pipelineLayout),
-             "Failed to create pipeline layout");
-}
-
-void RendererBackend::CreatePipeline()
-{
-  VkViewport viewport;
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.width = (float)rContext.renderExtent.width;
-  viewport.height = (float)rContext.renderExtent.height;
-  viewport.minDepth = 0;
-  viewport.maxDepth = 1;
-
-  VkRect2D scissor {};
-  scissor.extent = rContext.renderExtent;
-  scissor.offset = {0, 0};
-
-  VkPipelineViewportStateCreateInfo viewportStateInfo {};
-  viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-  viewportStateInfo.viewportCount = 1;
-  viewportStateInfo.pViewports = &viewport;
-  viewportStateInfo.scissorCount = 1;
-  viewportStateInfo.pScissors = &scissor;
-
-  const auto vertexInputBindingDesc = vertex_t::GetBindingDescription();
-  const auto vertexInputAttribDesc = vertex_t::GetAttributeDescriptions();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
-  vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  //vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
-  vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttribDesc.data();
-  //vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDesc;
-
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
-  inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-  inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
-
-  VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
-  rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-  rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-  rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
-  rasterStateInfo.lineWidth = 1.0f;
-  rasterStateInfo.depthBiasEnable = VK_FALSE;
-  rasterStateInfo.depthClampEnable = VK_FALSE;
-  rasterStateInfo.rasterizerDiscardEnable = VK_FALSE;
-
-  VkPipelineMultisampleStateCreateInfo multisampleStateInfo {};
-  multisampleStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-  multisampleStateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-  multisampleStateInfo.sampleShadingEnable = VK_FALSE;
-
-  VkPipelineDepthStencilStateCreateInfo depthStateInfo {};
-  depthStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStateInfo.depthTestEnable = VK_TRUE;
-  depthStateInfo.depthWriteEnable = VK_TRUE;
-  depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-  depthStateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-  depthStateInfo.depthBoundsTestEnable = VK_FALSE;
-
-  VkPipelineColorBlendAttachmentState blendAttachmentState {};
-  blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  blendAttachmentState.blendEnable = VK_FALSE;
-
-  VkPipelineColorBlendStateCreateInfo blendStateInfo {};
-  blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = 1;
-  blendStateInfo.pAttachments = &blendAttachmentState;
-
-  VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
-  dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-  dynamicStateInfo.dynamicStateCount = 0;
-  dynamicStateInfo.pDynamicStates = nullptr;
-
-  VkShaderModule vertModule = CreateShader("test", Ice_Shader_Stage_Vert).module;
-  VkShaderModule fragModule = CreateShader("test", Ice_Shader_Stage_Frag).module;
-
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo {};
-  vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vertShaderStageInfo.module = vertModule;
-  vertShaderStageInfo.pName = "main";
-
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-  fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStageInfo.module = fragModule;
-  fragShaderStageInfo.pName = "main";
-
-  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
-  VkGraphicsPipelineCreateInfo createInfo {};
-  createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  createInfo.pViewportState = &viewportStateInfo;
-  createInfo.pVertexInputState = &vertexInputStateInfo;
-  createInfo.pInputAssemblyState = &inputAssemblyStateInfo;
-  createInfo.pRasterizationState = &rasterStateInfo;
-  createInfo.pMultisampleState = &multisampleStateInfo;
-  createInfo.pDepthStencilState = &depthStateInfo;
-  createInfo.pColorBlendState = &blendStateInfo;
-  createInfo.pDynamicState = &dynamicStateInfo;
-
-  createInfo.stageCount = 2;
-  createInfo.pStages = shaderStages;
-
-  createInfo.layout = pipelineLayout;
-  createInfo.renderPass = rContext.renderPass;
-
-  ICE_ASSERT(vkCreateGraphicsPipelines(rContext.device, nullptr, 1, &createInfo, rContext.allocator, &pipeline),
-             "Failed to create graphics pipeline");
-
-  vkDestroyShaderModule(rContext.device, vertModule, rContext.allocator);
-  vkDestroyShaderModule(rContext.device, fragModule, rContext.allocator);
-}
-
-void RendererBackend::CreateDescriptorSet()
+void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
 {
   mvpBuffer = CreateBuffer(sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -979,9 +822,9 @@ void RendererBackend::CreateDescriptorSet()
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = descriptorPool;
   allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &descriptorSetLayout;
+  allocInfo.pSetLayouts = &_shaderProgram.descriptorSetLayout;
 
-  ICE_ASSERT(vkAllocateDescriptorSets(rContext.device, &allocInfo, &descriptorSet),
+  ICE_ASSERT(vkAllocateDescriptorSets(rContext.device, &allocInfo, &_shaderProgram.descriptorSet),
              "Failed to allocate descriptor set");
 
   VkDescriptorBufferInfo mvpBufferInfo {};
@@ -991,7 +834,7 @@ void RendererBackend::CreateDescriptorSet()
 
   VkWriteDescriptorSet descWrites[1] = {};
   descWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descWrites[0].dstSet = descriptorSet;
+  descWrites[0].dstSet = _shaderProgram.descriptorSet;
   descWrites[0].dstBinding = 0;
   descWrites[0].dstArrayElement = 0;
   descWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1001,7 +844,6 @@ void RendererBackend::CreateDescriptorSet()
   descWrites[0].pTexelBufferView = nullptr;
 
   vkUpdateDescriptorSets(rContext.device, 1, descWrites, 0, nullptr);
-
 }
 
 u32 RendererBackend::GetQueueIndex(

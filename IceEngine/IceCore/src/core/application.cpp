@@ -27,9 +27,10 @@ void Application::Initialize()
   //ChildInit();
 
   // TODO : TEMPORARY -- Delete
-  GetShaderProgram("default", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
+  GetShaderProgramApp("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
   CreateObject();
 
+  renderer->RecordCommandBuffers();
 }
 
 void Application::MainLoop()
@@ -59,8 +60,9 @@ void Application::CreateObject()
 
 }
 
-void Application::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
+void Application::GetShaderProgramApp(const char* _name, IceShaderStageFlags _stages)
 {
-  renderer->GetShaderProgram(_name, _stages);
+  //renderer->GetShaderProgram(_name, _stages);
+  GetShaderProgram(_name, _stages);
 }
 

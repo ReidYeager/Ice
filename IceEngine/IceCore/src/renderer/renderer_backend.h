@@ -135,10 +135,7 @@ private:
   void CreateCommandBuffers();
 
   // TODO : Move to shader programs?
-  void CreateDescriptorSetLayout();
-  void CreatePipelineLayout();
-  void CreatePipeline();
-  void CreateDescriptorSet();
+  void CreateDescriptorSet(iceShaderProgram_t& _shaderProgram);
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags

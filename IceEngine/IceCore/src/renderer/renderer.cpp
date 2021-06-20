@@ -21,15 +21,26 @@ Renderer::~Renderer()
 
   for (const auto& sp : shaderPrograms)
   {
-    if (sp.stages & Ice_Shader_Stage_Vert)
-      backend->DestroyShaderModule(shaders[sp.vertIndex].module);
-    if (sp.stages & Ice_Shader_Stage_Frag)
-      backend->DestroyShaderModule(shaders[sp.fragIndex].module);
-    if (sp.stages & Ice_Shader_Stage_Comp)
-      backend->DestroyShaderModule(shaders[sp.compIndex].module);
+    //sp.Shutdown();
+
+    for (const auto& idx : sp.shaderIndices)
+    {
+      backend->DestroyShaderModule(shaders[idx].module);
+    }
+    //if (sp.stages & Ice_Shader_Stage_Vert)
+    //  backend->DestroyShaderModule(shaders[sp.vertIndex].module);
+    //if (sp.stages & Ice_Shader_Stage_Frag)
+    //  backend->DestroyShaderModule(shaders[sp.fragIndex].module);
+    //if (sp.stages & Ice_Shader_Stage_Comp)
+    //  backend->DestroyShaderModule(shaders[sp.compIndex].module);
   }
 
   delete(backend);
+}
+
+void Renderer::RecordCommandBuffers()
+{
+  backend->RecordCommandBuffers();
 }
 
 void Renderer::RenderFrame()
@@ -56,64 +67,11 @@ u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
   // Create a new shader program
   i = static_cast<u32>(shaderPrograms.size());
 
-  iceShaderProgram_t newShaderProgram(_name, _stages);
-
-  if (_stages & Ice_Shader_Stage_Vert)
-  {
-    newShaderProgram.vertIndex = GetShader(_name, Ice_Shader_Stage_Vert);
-  }
-
-  if (_stages & Ice_Shader_Stage_Frag)
-  {
-    newShaderProgram.fragIndex = GetShader(_name, Ice_Shader_Stage_Frag);
-  }
-
-  if (_stages & Ice_Shader_Stage_Comp)
-  {
-    newShaderProgram.compIndex = GetShader(_name, Ice_Shader_Stage_Comp);
-  }
-
+  iceShaderProgram_t newShaderProgram(_name);
   shaderPrograms.push_back(newShaderProgram);
-  return i;
-}
-
-u32 Renderer::GetShader(const char* _name, IceShaderStageFlags _stage)
-{
-  // Look for an existing shader matching the description
-  u32 i = 0;
-  for (const auto& s : shaders)
-  {
-    if (_stage & s.stage && std::strcmp(_name, s.name) == 0)
-    {
-      return i;
-    }
-
-    i++;
-  }
-
-  shaders.push_back(backend->CreateShader(_name, _stage));
 
   return i;
 }
-
-//u32 Renderer::CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
-//{
-//  u32 index = static_cast<u32>(buffers.size());
-//
-//  VkBuffer buffer;
-//  VkDeviceMemory memory;
-//
-//  backend->CreateAndFillBuffer(buffer, memory, _data, _size, _usage);
-//
-//  buffers.push_back(buffer);
-//  bufferMemories.push_back(memory);
-//  return index;
-//}
-//
-//void Renderer::DestroyBuffer(u32 _index)
-//{
-//  backend->DestroyBuffer(buffers[_index], bufferMemories[_index]);
-//}
 
 mesh_t Renderer::CreateMesh(const char* _model)
 {

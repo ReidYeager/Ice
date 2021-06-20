@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #ifdef ICE_VULKAN
+#include "renderer/shader_program.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 struct IcePhysicalDeviceInformation
@@ -39,6 +40,8 @@ struct IceRenderContext
 
   VkExtent2D renderExtent;
   VkRenderPass renderPass;
+  std::vector<iceShaderProgram_t> shaderPrograms;
+  std::vector<iceShader_t> shaders;
 };
 
 extern IceRenderContext rContext;

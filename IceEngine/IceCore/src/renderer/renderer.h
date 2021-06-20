@@ -31,6 +31,7 @@ public:
   Renderer();
   ~Renderer();
 
+  void RecordCommandBuffers();
   void RenderFrame();
 
   // Returns the index of the shader program
@@ -38,7 +39,7 @@ public:
   u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
   // Returns the index of the shader
   // Creates a new shader if none match the given description
-  u32 GetShader(const char* _name, IceShaderStageFlags _stage);
+  //u32 GetShader(const char* _name, IceShaderStageFlags _stage);
 
   //u32 CreateBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
   //void DestroyBuffer(u32 _index);

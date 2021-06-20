@@ -45,7 +45,7 @@ protected:
   // Temporarily : Adds the given model to the world
   void CreateObject();
   // Retrieves a shader of _name in pipeline _stagess
-  void GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
+  void GetShaderProgramApp(const char* _name, IceShaderStageFlags _stages);
 
 public:
   // Houses the Initialize, MainLoop, and Shutdown calls

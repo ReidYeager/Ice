@@ -42,6 +42,9 @@ struct iceShader_t
   IceShaderStageFlags stage;
   VkShaderModule module;
   std::vector<IceShaderBindingFlags> bindings;
+
+  iceShader_t(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
+  iceShader_t() {}
 };
 #else
 struct iceShader_t
@@ -55,11 +58,9 @@ struct iceShaderProgram_t
 {
   const char* name;
   IceShaderStageFlags stages;
-  IceShaderBindingFlags pipelineSettingFlags;
+  IceShaderBindingFlags pipelineSettings;
 
-  u8 vertIndex;
-  u8 fragIndex;
-  u8 compIndex;
+  std::vector<u8> shaderIndices;
 
   std::vector<IceShaderBindingFlags> bindings;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -68,6 +69,30 @@ struct iceShaderProgram_t
   VkPipeline pipeline;
 
   iceShaderProgram_t(const char* _name, IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+  VkPipeline GetPipeline();
+  void Shutdown();
 };
+
+// TODO : Refactor and move to RenderBackend
+u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
+                     IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+
+void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
+                         IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+
+VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
+                          VkPipelineLayout _layout, IcePipelineSettingFlags _settings);
+
+u32 GetShader(const char* _name, IceShaderStageFlags _stage);
+
+//void LoadShader(u32 _index);
+void LoadShader(iceShader_t& _shader);
+
+void ExtractShaderBindings(const char* _directory, iceShader_t& _shader);
+
+void CreateDescriptorSetLayout(iceShaderProgram_t& _program);
+
+size_t PadBufferForGpu(size_t _original);
+
 
 #endif // !RENDERER_SHADER_PROGRAM_H
