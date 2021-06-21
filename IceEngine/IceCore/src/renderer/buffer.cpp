@@ -6,11 +6,13 @@
 IceBuffer::~IceBuffer()
 {
   IcePrint("Deconstruct buffer");
-  FreeBuffer();
+  if (m_buffer != VK_NULL_HANDLE)
+    FreeBuffer();
 }
 
 void IceBuffer::AllocateBuffer(
-    u32 _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
+    u32 _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties,
+    bool _bind /*= true*/)
 {
   // Align data
 
@@ -38,12 +40,19 @@ void IceBuffer::AllocateBuffer(
 
   ICE_ASSERT(vkAllocateMemory(rContext.device, &allocInfo, rContext.allocator, &m_memory),
     "Failed to allocate vert memory");
+
+  if (_bind)
+  {
+    Bind();
+  }
 }
 
 void IceBuffer::FreeBuffer()
 {
-  vkDestroyBuffer(rContext.device, m_buffer, rContext.allocator);
   vkFreeMemory(rContext.device, m_memory, rContext.allocator);
+  vkDestroyBuffer(rContext.device, m_buffer, rContext.allocator);
+
+  m_buffer = VK_NULL_HANDLE;
 }
 
 void IceBuffer::Bind()

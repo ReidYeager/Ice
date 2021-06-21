@@ -28,7 +28,7 @@ void Application::Initialize()
 
   // TODO : TEMPORARY -- Delete
   GetShaderProgramApp("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
-  CreateObject();
+  //CreateObject();
 
   renderer->RecordCommandBuffers();
 }
@@ -56,7 +56,7 @@ void Application::Shutdown()
 
 void Application::CreateObject()
 {
-  mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
+  //mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
 
 }
 

@@ -25,7 +25,8 @@ VkPipeline iceShaderProgram_t::GetPipeline()
     {
       shaders[i] = rContext.shaders[shaderIndices[i]];
     }
-    pipeline = CreatePipeline(shaders.data(), shaders.size(), stages, pipelineLayout, pipelineSettings);
+    pipeline = CreatePipeline(shaders.data(), static_cast<u32>(shaders.size()), stages,
+                              pipelineLayout, pipelineSettings);
   }
 
   return pipeline;
@@ -50,7 +51,7 @@ u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
     }
   }
 
-  u32 index = rContext.shaderPrograms.size();
+  u32 index = static_cast<u32>(rContext.shaderPrograms.size());
   CreateShaderProgram(_name, _stages, _settings);
   return index;
 }
@@ -238,7 +239,7 @@ VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStag
   createInfo.pColorBlendState = &blendStateInfo;
   createInfo.pDynamicState = &dynamicStateInfo;
 
-  createInfo.stageCount = shaderStageInfos.size();
+  createInfo.stageCount = static_cast<uint32_t>(shaderStageInfos.size());
   createInfo.pStages = shaderStageInfos.data();
 
   createInfo.layout = _layout;
@@ -273,7 +274,7 @@ u32 GetShader(const char* _name, IceShaderStageFlags _stage)
     i++;
   }
 
-  i = rContext.shaders.size();
+  i = static_cast<u32>(rContext.shaders.size());
   iceShader_t newShader(_name, _stage);
   rContext.shaders.push_back(newShader);
   LoadShader(rContext.shaders[i]);
@@ -370,7 +371,7 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
 
   VkDescriptorSetLayoutCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  createInfo.bindingCount = stageBindings.size();
+  createInfo.bindingCount = static_cast<uint32_t>(stageBindings.size());
   createInfo.pBindings = stageBindings.data();
 
   ICE_ASSERT(vkCreateDescriptorSetLayout(rContext.device, &createInfo, rContext.allocator,

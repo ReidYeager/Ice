@@ -58,7 +58,7 @@ struct iceShaderProgram_t
 {
   const char* name;
   IceShaderStageFlags stages;
-  IceShaderBindingFlags pipelineSettings;
+  IcePipelineSettingFlags pipelineSettings;
 
   std::vector<u8> shaderIndices;
 

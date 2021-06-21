@@ -5,6 +5,8 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 
 #include "logger.h"
 #include "platform/file_system.h"
@@ -89,5 +91,18 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
            _directory, mesh.vertices.size(), mesh.indices.size());
 
   return mesh;
+}
+
+void* FileSystem::LoadImageFile(const char* _directory, int& _width, int& _height)
+{
+  int channels;
+  stbi_uc* image = stbi_load(_directory, &_width, &_height, &channels, STBI_rgb_alpha);
+  assert (image != nullptr);
+  return image;
+}
+
+void FileSystem::DestroyImageFile(void* _image)
+{
+  stbi_image_free(_image);
 }
 

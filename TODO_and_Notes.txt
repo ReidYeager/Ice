@@ -4,7 +4,7 @@
 	Line    43 :--: // TODO : Modify to fit a proper ECS system
 	Line    53 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\file_system.cpp
-	Line    19 :--: // TODO : Log non-Vulkan errors
+	Line    21 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\platform\platform.h
 	Line    40 :--: // TODO : Dirty. Find a better way to close
 	Line    43 :--: // TODO : Find a way to create the surface without including Vulkan here
@@ -13,13 +13,13 @@
 \IceEngine\IceCore\src\profiler.h
 	Line     6 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\buffer.cpp
-	Line    32 :--: // TODO : Replace with a GPU memory allocator call
+	Line    34 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\buffer.h
 	Line    10 :--: // NOTE : I really don't like this implementation; especially as it stands now.
 	Line    12 :--: // TODO : Make API agnostic
 	Line    15 :--: // TODO : Add alignment to better utilize GPU
-	Line    39 :--: // TODO : Move to vkMemory allocator
-	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
+	Line    40 :--: // TODO : Move to vkMemory allocator
+	Line    45 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
@@ -28,23 +28,23 @@
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    26 :--: // TODO : Delete
-	Line    97 :--: // NOTE : Temporary?
-	Line   102 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   136 :--: // TODO : Move to shader programs?
-	Line   150 :--: // TODO : Move to an image manager?
+	Line    99 :--: // NOTE : Temporary?
+	Line   104 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   138 :--: // TODO : Move to shader programs?
+	Line   152 :--: // TODO : Move to an image manager?
 \IceEngine\IceCore\src\renderer\shader_program.cpp
-	Line   284 :--: // TODO : Move to a constant value library
-	Line   319 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   285 :--: // TODO : Move to a constant value library
+	Line   320 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\shader_program.h
 	Line     7 :--: // NOTE : Move to defines?
 	Line    75 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
 	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    41 :--: // TODO : Delete
-	Line    62 :--: // TODO : Delete
-	Line   221 :--: // TODO : Get shader bindings from its layout file
-	Line   364 :--: // TODO : Make this editable from the client
-	Line   584 :--: // TODO : Replace with clamp function calls
+	Line    72 :--: // TODO : Delete
+	Line    94 :--: // TODO : Delete
+	Line   266 :--: // TODO : Get shader bindings from its layout file
+	Line   409 :--: // TODO : Make this editable from the client
+	Line   629 :--: // TODO : Replace with clamp function calls
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl

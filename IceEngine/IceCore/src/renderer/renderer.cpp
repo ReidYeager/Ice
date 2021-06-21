@@ -76,13 +76,6 @@ u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
 mesh_t Renderer::CreateMesh(const char* _model)
 {
   mesh_t m = FileSystem::LoadMesh(_model);
-  //u32 index = CreateBuffer(m.vertices.data(), m.vertices.size() * sizeof(vertex_t),
-  //                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-  //m.vertexBuffer = buffers[index];
-  //index = CreateBuffer(m.indices.data(), m.indices.size() * sizeof(u32),
-  //                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-  //m.indexBuffer = buffers[index];
-
   return m;
 }
 

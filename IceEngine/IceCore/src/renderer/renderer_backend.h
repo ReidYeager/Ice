@@ -18,7 +18,7 @@ struct iceImage_t
   VkDeviceMemory memory;
   VkFormat format;
   VkImageView view;
-  //VkSampler sampler;
+  VkSampler sampler;
 };
 
 class RendererBackend
@@ -37,7 +37,8 @@ private:
   IceBuffer* indexBuffer;
   u32 indexCount = 0;
 
-  void CreateMesh(const char* _model);
+  void CreateMesh(const char* _directory);
+  u32 CreateTexture(const char* _directory);
 
 //=================================================================================================
 // VARIABLES
@@ -64,6 +65,7 @@ private:
   VkDescriptorPool descriptorPool;
 
   std::vector<iceImage_t*> iceImages;
+  u32 testImageIndex = -1;
 
   // Synchronization
   #define MAX_FLIGHT_IMAGE_COUNT 3
@@ -153,7 +155,11 @@ private:
     VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps);
   VkImageView CreateImageView(
     const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
-  
+  VkSampler CreateSampler();
+  void TransitionImageLayout(
+      VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
+      VkPipelineStageFlagBits _shaderStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  void CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height);
 
 };
 

@@ -21,14 +21,45 @@
 
 IceRenderContext rContext;
 
-void RendererBackend::CreateMesh(const char* _model)
+void RendererBackend::CreateMesh(const char* _directory)
 {
-  mesh_t m = FileSystem::LoadMesh(_model);
+  mesh_t m = FileSystem::LoadMesh(_directory);
   vertexBuffer = CreateAndFillBuffer(m.vertices.data(), sizeof(vertex_t) * m.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
   indexBuffer = CreateAndFillBuffer(m.indices.data(), sizeof(u32) * m.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-  indexCount = m.indices.size();
+  indexCount = static_cast<u32>(m.indices.size());
+}
 
+u32 RendererBackend::CreateTexture(const char* _directory)
+{
+  int width, height;
+  void* imageFile = FileSystem::LoadImageFile(_directory, width, height);
+  VkDeviceSize size = static_cast<VkDeviceSize>(4 * width * height);
 
+  IceBuffer stagingBuffer;
+  stagingBuffer.AllocateBuffer(static_cast<u32>(size), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  FillBuffer(stagingBuffer.GetMemory(), imageFile, size);
+  FileSystem::DestroyImageFile(imageFile);
+
+  u32 imageIdx = CreateImage(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+                             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  iceImage_t* image = iceImages[imageIdx];
+  TransitionImageLayout(image->image, VK_FORMAT_R8G8B8A8_UNORM,
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  CopyBufferToImage(stagingBuffer.GetBuffer(), image->image, width, height);
+  TransitionImageLayout(image->image, VK_FORMAT_R8G8B8A8_UNORM,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+  stagingBuffer.FreeBuffer();
+
+  image->view = CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, image->image);
+  image->sampler = CreateSampler();
+
+  return static_cast<u32>(iceImages.size() - 1);
 }
 
 RendererBackend::RendererBackend()
@@ -45,6 +76,7 @@ RendererBackend::RendererBackend()
   mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
   mvp.projection[1][1] *= -1; // flip the rendered y-axis
   CreateMesh("Cube.obj");
+  testImageIndex = CreateTexture("res/textures/TestImage.png");
 
   InitializeComponents();
 
@@ -75,6 +107,18 @@ RendererBackend::~RendererBackend()
   vkDestroyDescriptorPool(rContext.device, descriptorPool, rContext.allocator);
 
   DestroyComponents();
+
+  for (iceImage_t* i : iceImages)
+  {
+    if (i->image != VK_NULL_HANDLE)
+    {
+      vkDestroyImageView(rContext.device, i->view, rContext.allocator);
+      vkDestroyImage(rContext.device, i->image, rContext.allocator);
+      vkFreeMemory(rContext.device, i->memory, rContext.allocator);
+      vkDestroySampler(rContext.device, i->sampler, rContext.allocator);
+      i->image = VK_NULL_HANDLE;
+    }
+  }
 
   vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
   vkDestroyCommandPool(rContext.device, rContext.transientCommandPool, rContext.allocator);
@@ -113,6 +157,7 @@ void RendererBackend::DestroyComponents()
   vkDestroyImageView(rContext.device, depthImage->view, rContext.allocator);
   vkDestroyImage(rContext.device, depthImage->image, rContext.allocator);
   vkFreeMemory(rContext.device, depthImage->memory, rContext.allocator);
+  depthImage->image = VK_NULL_HANDLE;
 
   // Destroy renderpass
   vkDestroyPipeline(rContext.device, pipeline, rContext.allocator);
@@ -251,8 +296,8 @@ IceBuffer* RendererBackend::CreateAndFillBuffer(const void* _data, VkDeviceSize 
 IceBuffer* RendererBackend::CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
 {
   IceBuffer* buffer = new IceBuffer();
-  buffer->AllocateBuffer(_size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, _memProperties);
-  buffer->Bind();
+  buffer->AllocateBuffer(static_cast<u32>(_size), _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                         _memProperties);
 
   return buffer;
 }
@@ -832,7 +877,8 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   mvpBufferInfo.offset = 0;
   mvpBufferInfo.range = VK_WHOLE_SIZE;
 
-  VkWriteDescriptorSet descWrites[1] = {};
+  VkWriteDescriptorSet descWrites[2] = {};
+  // MVP matrix
   descWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   descWrites[0].dstSet = _shaderProgram.descriptorSet;
   descWrites[0].dstBinding = 0;
@@ -843,7 +889,23 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   descWrites[0].pImageInfo = nullptr;
   descWrites[0].pTexelBufferView = nullptr;
 
-  vkUpdateDescriptorSets(rContext.device, 1, descWrites, 0, nullptr);
+  VkDescriptorImageInfo imageInfo {};
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageInfo.sampler = iceImages[testImageIndex]->sampler;
+  imageInfo.imageView = iceImages[testImageIndex]->view;
+
+  // Texture
+  descWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descWrites[1].dstSet = _shaderProgram.descriptorSet;
+  descWrites[1].dstBinding = 1;
+  descWrites[1].dstArrayElement = 0;
+  descWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  descWrites[1].descriptorCount = 1;
+  descWrites[1].pBufferInfo = nullptr;
+  descWrites[1].pImageInfo = &imageInfo;
+  descWrites[1].pTexelBufferView = nullptr;
+
+  vkUpdateDescriptorSets(rContext.device, 2, descWrites, 0, nullptr);
 }
 
 u32 RendererBackend::GetQueueIndex(
@@ -927,6 +989,104 @@ VkImageView RendererBackend::CreateImageView(const VkFormat _format, VkImageAspe
   }
 
   return createdView;
+}
+
+VkSampler RendererBackend::CreateSampler()
+{
+  VkSamplerCreateInfo createInfo {};
+  createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  createInfo.magFilter = VK_FILTER_LINEAR;
+  createInfo.minFilter = VK_FILTER_LINEAR;
+  createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+  createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  createInfo.unnormalizedCoordinates = VK_FALSE;
+  createInfo.compareEnable = VK_FALSE;
+  createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  createInfo.mipLodBias = 0.0f;
+  createInfo.minLod = 0.0f;
+  createInfo.maxLod = 0.0f;
+
+  createInfo.anisotropyEnable = VK_TRUE;
+  createInfo.maxAnisotropy = rContext.gpu.properties.limits.maxSamplerAnisotropy;
+
+  VkSampler sampler;
+  ICE_ASSERT(vkCreateSampler(rContext.device, &createInfo, rContext.allocator, &sampler),
+             "Failed to create texture sampler");
+
+  return sampler;
+}
+
+void RendererBackend::TransitionImageLayout(
+    VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
+    VkPipelineStageFlagBits _shaderStage /*= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT*/)
+{
+  VkCommandBuffer command = rContext.BeginSingleTimeCommand(rContext.graphicsCommandPool);
+
+  VkImageMemoryBarrier barrier {};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.oldLayout = _oldLayout;
+  barrier.newLayout = _newLayout;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = _image;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+
+  VkPipelineStageFlagBits srcStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
+  VkPipelineStageFlagBits dstStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
+
+  if (_oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && _newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+  {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  }
+  else if (_oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && _newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dstStage = _shaderStage;
+  }
+  else
+  {
+    IcePrint("Encountered an unhandled image layout transition");
+  }
+
+  vkCmdPipelineBarrier(command, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+  rContext.EndSingleTimeCommand(command, rContext.graphicsCommandPool, rContext.graphicsQueue);
+}
+
+void RendererBackend::CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height)
+{
+  VkCommandBuffer command = rContext.BeginSingleTimeCommand(rContext.transientCommandPool);
+
+  VkBufferImageCopy region {};
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageSubresource.baseArrayLayer = 0;
+
+  region.imageOffset = { 0, 0, 0 };
+  region.imageExtent = { _width, _height, 1 };
+
+  vkCmdCopyBufferToImage(
+      command, _buffer, _iamge, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+  rContext.EndSingleTimeCommand(command, rContext.transientCommandPool, rContext.transferQueue);
 }
 
 VkFormat RendererBackend::FindDepthFormat()

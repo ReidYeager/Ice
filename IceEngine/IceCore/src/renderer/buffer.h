@@ -26,7 +26,8 @@ public:
   //IceBuffer();
   ~IceBuffer();
 
-  void AllocateBuffer(u32 _size, VkBufferUsageFlags m_usage, VkMemoryPropertyFlags _memProperties);
+  void AllocateBuffer(u32 _size, VkBufferUsageFlags m_usage, VkMemoryPropertyFlags _memProperties,
+                      bool _bind = true);
   void FreeBuffer();
   void Bind();
   void Unbind();
