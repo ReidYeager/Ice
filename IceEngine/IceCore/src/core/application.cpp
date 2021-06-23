@@ -18,11 +18,11 @@ void Application::Initialize()
 {
   IcePrint("ICE INIT =================================================");
 
-  platform = new Platform(800, 600, "Test ice");
+  Platform.Initialize(800, 600, "Test ice");
 
-  MemoryManager::Initialize();
+  MemoryManager.Initialize();
 
-  renderer = new Renderer();
+  Renderer.Initialize();
 
   //ChildInit();
 
@@ -30,15 +30,15 @@ void Application::Initialize()
   GetShaderProgramApp("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
   //CreateObject();
 
-  renderer->RecordCommandBuffers();
+  Renderer.RecordCommandBuffers();
 }
 
 void Application::MainLoop()
 {
   IcePrint("ICE LOOP =================================================");
-  while (platform->Tick())
+  while (Platform.Tick())
   {
-    renderer->RenderFrame();
+    Renderer.RenderFrame();
     // Handle input
     // Run game code
     // Render
@@ -48,10 +48,10 @@ void Application::MainLoop()
 void Application::Shutdown()
 {
   IcePrint("ICE SHUTDOWN =============================================");
-  delete(renderer);
+  Renderer.Shutdown();
 
-  MemoryManager::Shutdown();
-  delete(platform);
+  MemoryManager.Shutdown();
+  Platform.Shutdown();
 }
 
 void Application::CreateObject()

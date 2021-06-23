@@ -65,7 +65,7 @@ u32 RendererBackend::CreateTexture(const char* _directory)
 RendererBackend::RendererBackend()
 {
   CreateInstance();
-  surface = Platform::CreateSurface(&instance);
+  surface = Platform.CreateSurface(&instance);
   CreateDevice();
   CreateCommandPool(rContext.graphicsCommandPool, rContext.graphicsIdx);
   CreateCommandPool(rContext.transientCommandPool, rContext.transferIdx);
@@ -625,7 +625,7 @@ void RendererBackend::CreateSwapchain()
   else
   {
     u32 width, height;
-    Platform::GetWindowExtent(width, height);
+    Platform.GetWindowExtent(width, height);
 
     // TODO : Replace with clamp function calls
     if (width < capabilities.minImageExtent.width)

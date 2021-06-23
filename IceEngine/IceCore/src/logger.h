@@ -6,8 +6,8 @@
 
 #define IcePrint(message, ...)                        \
 {                                                   \
-  Platform::PrintToConsole(message, __VA_ARGS__);   \
-  Platform::PrintToConsole("\n");   \
+  Platform.PrintToConsole(message, __VA_ARGS__);   \
+  Platform.PrintToConsole("\n");   \
 }
 
 #ifdef ICE_VULKAN

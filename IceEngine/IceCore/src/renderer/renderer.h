@@ -10,7 +10,7 @@
 
 #include <vector>
 
-class Renderer
+class IceRenderer
 {
 //=================================================
 // Variables
@@ -28,8 +28,8 @@ private:
 // Functions
 //=================================================
 public:
-  Renderer();
-  ~Renderer();
+  void Initialize();
+  void Shutdown();
 
   void RecordCommandBuffers();
   void RenderFrame();
@@ -55,5 +55,7 @@ private:
   void RecreateRenderer();
 
 };
+
+extern IceRenderer Renderer;
 
 #endif // !RENDERER_RENDERER_H

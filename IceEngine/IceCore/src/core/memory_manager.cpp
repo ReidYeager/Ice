@@ -5,41 +5,30 @@
 // TEMPORARY -- Replace with a proper logging system
 #include <stdio.h>
 
-MemoryManager* MemoryManager::instance;
+IceMemoryManager MemoryManager;
 
-void MemoryManager::Initialize()
+void IceMemoryManager::Initialize()
 {
-  Zero(GetInstance()->GetStats(), sizeof(MemoryStatistics));
+  Zero(MemoryManager.GetStats(), sizeof(MemoryStatistics));
 }
 
-void MemoryManager::Shutdown()
+void IceMemoryManager::Shutdown()
 {
   PrintStats();
 }
 
-MemoryManager* MemoryManager::GetInstance()
-{
-  if (!instance)
-  {
-    instance = new MemoryManager();
-  }
-
-  return instance;
-}
-
-MemoryManager::MemoryStatistics* MemoryManager::GetStats()
+IceMemoryManager::MemoryStatistics* IceMemoryManager::GetStats()
 {
   return &stats;
 }
 
-void MemoryManager::PrintStats()
+void IceMemoryManager::PrintStats()
 {
   const char* categoryNames[IMEM_TYPE_COUNT] = {
     "MEM_TYPE_UNKNOWN", "MEM_TYPE_BUFFER"
   };
 
-  MemoryManager* mm = MemoryManager::GetInstance();
-  MemoryStatistics* stats = mm->GetStats();
+  MemoryStatistics* stats = MemoryManager.GetStats();
 
   for (u32 i = 0; i < IMEM_TYPE_COUNT; i++)
   {
@@ -48,23 +37,23 @@ void MemoryManager::PrintStats()
   printf("%-25s : %llu %s\n", "Total", stats->totalMemoryAllocated, "B");
 }
 
-void* MemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)
+void* IceMemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)
 {
-  MemoryStatistics* stats = GetInstance()->GetStats();
+  MemoryStatistics* stats = MemoryManager.GetStats();
   stats->totalMemoryAllocated += size;
   stats->categoryAllocations[flag] += size;
-  return Platform::AllocateMem(size);
+  return Platform.AllocateMem(size);
 }
 
-void MemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
+void IceMemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
 {
-  MemoryStatistics* stats = GetInstance()->GetStats();
+  MemoryStatistics* stats = MemoryManager.GetStats();
   stats->totalMemoryAllocated -= size;
   stats->categoryAllocations[flag] -= size;
-  Platform::FreeMem(data);
+  Platform.FreeMem(data);
 }
 
-void MemoryManager::Zero(void* data, u32 size)
+void IceMemoryManager::Zero(void* data, u32 size)
 {
-  Platform::ZeroMem(data, size);
+  Platform.ZeroMem(data, size);
 }

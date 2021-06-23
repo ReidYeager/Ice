@@ -12,7 +12,7 @@ enum IceMemoryTypeBits
 };
 typedef IceFlag IceMemoryTypeFlag;
 
-class MemoryManager
+class IceMemoryManager
 {
 public:
   struct MemoryStatistics
@@ -23,22 +23,22 @@ public:
 
 private:
   MemoryStatistics stats{};
-  static MemoryManager* instance;
 
   //=================================================================================================
   // Functions
   //=================================================================================================
 public:
-  static void Initialize();
-  static void Shutdown();
-  static MemoryManager* GetInstance();
+  void Initialize();
+  void Shutdown();
   MemoryStatistics* GetStats();
 
-  static void* Allocate(u32 size, IceMemoryTypeFlag flag);
-  static void Free(void* data, u32 size, IceMemoryTypeFlag flag);
-  static void Zero(void* data, u32 size);
+  void* Allocate(u32 size, IceMemoryTypeFlag flag);
+  void Free(void* data, u32 size, IceMemoryTypeFlag flag);
+  void Zero(void* data, u32 size);
 
-  static void PrintStats();
+  void PrintStats();
 };
+
+extern IceMemoryManager MemoryManager;
 
 #endif // !CORE_MEMORY_MANAGER_H

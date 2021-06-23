@@ -17,7 +17,7 @@ struct LocalStateInformation
 };
 #endif // ICE_PLATFORM_WINDOWS
 
-class Platform
+class IcePlatform
 {
 private:
   struct PlatformStateInformation
@@ -25,29 +25,32 @@ private:
     LocalStateInformation internalState; // Should use void* instead?
     bool shouldClose;
   };
-  static PlatformStateInformation platState;
+  PlatformStateInformation platState;
 
 public:
-  Platform(u32 _width, u32 _height, const char* _title);
-  ~Platform();
+  
+  void Initialize(u32 _width, u32 _height, const char* _title);
+  void Shutdown();
   bool Tick();
 
-  static void* AllocateMem(u32 _size);
-  static void FreeMem(void* _data);
-  static void ZeroMem(void* _data, u32 _size);
+  void* AllocateMem(u32 _size);
+  void FreeMem(void* _data);
+  void ZeroMem(void* _data, u32 _size);
 
-  static void PrintToConsole(const char* _message, ...);
+  void PrintToConsole(const char* _message, ...);
 
   // TODO : Dirty. Find a better way to close
-  static inline void Close() { platState.shouldClose = true; }
+  void Close() { platState.shouldClose = true; }
 
   // TODO : Find a way to create the surface without including Vulkan here
-  static VkSurfaceKHR CreateSurface(VkInstance* _instance);
-  static void GetWindowExtent(u32& _width, u32& _height);
+  VkSurfaceKHR CreateSurface(VkInstance* _instance);
+  void GetWindowExtent(u32& _width, u32& _height);
 
 private:
   void PumpMessages();
 
 };
+
+extern IcePlatform Platform;
 
 #endif // !PLATFORM_PLATFORM_H

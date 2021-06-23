@@ -6,13 +6,15 @@
 
 // TODO : Remove all API types & references
 
-Renderer::Renderer()
+IceRenderer Renderer;
+
+void IceRenderer::Initialize()
 {
   // Get window surface
   backend = new RendererBackend();
 }
 
-Renderer::~Renderer()
+void IceRenderer::Shutdown()
 {
   //for (u32 i = 0; i < buffers.size(); i++)
   //{
@@ -38,19 +40,19 @@ Renderer::~Renderer()
   delete(backend);
 }
 
-void Renderer::RecordCommandBuffers()
+void IceRenderer::RecordCommandBuffers()
 {
   backend->RecordCommandBuffers();
 }
 
-void Renderer::RenderFrame()
+void IceRenderer::RenderFrame()
 {
   // Make draw calls
   // Present render
   backend->RenderFrame();
 }
 
-u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
+u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
 {
   // Look for an existing shader matching the description
   u32 i = 0;
@@ -73,23 +75,23 @@ u32 Renderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
   return i;
 }
 
-mesh_t Renderer::CreateMesh(const char* _model)
+mesh_t IceRenderer::CreateMesh(const char* _model)
 {
   mesh_t m = FileSystem::LoadMesh(_model);
   return m;
 }
 
-void Renderer::CreateRenderer()
+void IceRenderer::CreateRenderer()
 {
   backend->CreateComponents();
 }
 
-void Renderer::CleanupRenderer()
+void IceRenderer::CleanupRenderer()
 {
   backend->DestroyComponents();
 }
 
-void Renderer::RecreateRenderer()
+void IceRenderer::RecreateRenderer()
 {
   backend->RecreateComponents();
 }

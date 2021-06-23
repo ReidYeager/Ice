@@ -1,13 +1,13 @@
 \IceEngine\IceCore\src\core\application.cpp
 	Line    28 :--: // TODO : TEMPORARY -- Delete
 \IceEngine\IceCore\src\core\application.h
-	Line    43 :--: // TODO : Modify to fit a proper ECS system
-	Line    53 :--: // TODO : Add any game->engine API calls here
+	Line    40 :--: // TODO : Modify to fit a proper ECS system
+	Line    50 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\platform\file_system.cpp
 	Line    21 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\platform\platform.h
-	Line    40 :--: // TODO : Dirty. Find a better way to close
-	Line    43 :--: // TODO : Find a way to create the surface without including Vulkan here
+	Line    41 :--: // TODO : Dirty. Find a better way to close
+	Line    44 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
 	Line    24 :--: // TODO : Dirty. Find a better way to close
 \IceEngine\IceCore\src\profiler.h

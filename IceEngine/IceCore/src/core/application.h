@@ -13,9 +13,6 @@ class ICE_API Application
 // Variables
 //=================================================================================================
 private:
-  Platform* platform = nullptr;
-  Renderer* renderer = nullptr;
-
   void* a = nullptr;
   void* b = nullptr;
   void* c = nullptr;

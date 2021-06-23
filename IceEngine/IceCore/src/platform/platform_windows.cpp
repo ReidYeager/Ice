@@ -14,7 +14,7 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>
 
-Platform::PlatformStateInformation Platform::platState;
+IcePlatform Platform;
 
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
@@ -23,7 +23,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   case WM_CLOSE:
     // Callback to platform
     // TODO : Dirty. Find a better way to close
-    Platform::Close();
+    Platform.Close();
     break;
   default:
     break;
@@ -32,7 +32,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
-Platform::Platform(u32 _width, u32 _height, const char* _title)
+void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
 {
   ZeroMem(&platState, sizeof(PlatformStateInformation));
   LocalStateInformation& lstate = platState.internalState;
@@ -97,7 +97,7 @@ Platform::Platform(u32 _width, u32 _height, const char* _title)
   ShowWindow(lstate.hwnd, showWindowCommandFlags);
 }
 
-Platform::~Platform()
+void IcePlatform::Shutdown()
 {
   if (platState.internalState.hwnd)
   {
@@ -106,29 +106,29 @@ Platform::~Platform()
   }
 }
 
-bool Platform::Tick()
+bool IcePlatform::Tick()
 {
   PumpMessages();
 
   return !platState.shouldClose;
 }
 
-void* Platform::AllocateMem(u32 _size)
+void* IcePlatform::AllocateMem(u32 _size)
 {
   return malloc(_size);
 }
 
-void Platform::FreeMem(void* _data)
+void IcePlatform::FreeMem(void* _data)
 {
   free(_data);
 }
 
-void Platform::ZeroMem(void* _data, u32 _size)
+void IcePlatform::ZeroMem(void* _data, u32 _size)
 {
   memset(_data, 0, _size);
 }
 
-void Platform::PrintToConsole(const char* _message, ...)
+void IcePlatform::PrintToConsole(const char* _message, ...)
 {
   va_list args;
   va_start(args, _message);
@@ -136,7 +136,7 @@ void Platform::PrintToConsole(const char* _message, ...)
   va_end(args);
 }
 
-VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)
+VkSurfaceKHR IcePlatform::CreateSurface(VkInstance* _instance)
 {
   VkWin32SurfaceCreateInfoKHR createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -154,7 +154,7 @@ VkSurfaceKHR Platform::CreateSurface(VkInstance* _instance)
   return surface;
 }
 
-void Platform::GetWindowExtent(u32& _width, u32& _height)
+void IcePlatform::GetWindowExtent(u32& _width, u32& _height)
 {
   RECT rect;
 
@@ -167,7 +167,7 @@ void Platform::GetWindowExtent(u32& _width, u32& _height)
   _height = rect.bottom - rect.top;
 }
 
-void Platform::PumpMessages()
+void IcePlatform::PumpMessages()
 {
   MSG message;
   while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
