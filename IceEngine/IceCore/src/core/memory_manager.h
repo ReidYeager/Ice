@@ -35,6 +35,7 @@ public:
   void* Allocate(u32 size, IceMemoryTypeFlag flag);
   void Free(void* data, u32 size, IceMemoryTypeFlag flag);
   void Zero(void* data, u32 size);
+  void Copy(void* dst, void* src, u32 size);
 
   void PrintStats();
 };

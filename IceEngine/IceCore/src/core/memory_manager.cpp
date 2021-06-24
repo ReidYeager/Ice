@@ -1,6 +1,7 @@
 
 #include "core/memory_manager.h"
 #include "platform/platform.h"
+#include "logger.h"
 
 // TEMPORARY -- Replace with a proper logging system
 #include <stdio.h>
@@ -9,12 +10,14 @@ IceMemoryManager MemoryManager;
 
 void IceMemoryManager::Initialize()
 {
-  Zero(MemoryManager.GetStats(), sizeof(MemoryStatistics));
+  Zero(MemoryManager.GetStats(), sizeof(MemoryStatistics));\
+  IcePrint("Initialized MemoryManagement system");
 }
 
 void IceMemoryManager::Shutdown()
 {
   PrintStats();
+  IcePrint("Shutdown MemoryManagement system");
 }
 
 IceMemoryManager::MemoryStatistics* IceMemoryManager::GetStats()
@@ -56,4 +59,9 @@ void IceMemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
 void IceMemoryManager::Zero(void* data, u32 size)
 {
   Platform.ZeroMem(data, size);
+}
+
+void IceMemoryManager::Copy(void* dst, void* src, u32 size)
+{
+  Platform.CopyMem(dst, src, size);
 }

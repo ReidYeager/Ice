@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\renderer\buffer.h" />
     <ClInclude Include="src\platform\file_system.h" />
     <ClInclude Include="src\renderer\backend_context.h" />
@@ -106,9 +107,9 @@
     <ClInclude Include="src\renderer\shader_program.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\input.cpp" />
     <ClCompile Include="src\renderer\buffer.cpp" />
     <ClCompile Include="src\platform\file_system.cpp" />
-    <ClCompile Include="src\renderer\mesh.cpp" />
     <ClCompile Include="src\core\application.cpp" />
     <ClCompile Include="src\core\memory_manager.cpp" />
     <ClCompile Include="src\platform\platform_windows.cpp" />

@@ -6,6 +6,7 @@
 #include "platform/file_system.h"
 #include "core/memory_manager.h"
 #include "renderer/mesh.h"
+#include "core/input.h"
 
 void Application::Run()
 {
@@ -38,10 +39,12 @@ void Application::MainLoop()
   IcePrint("ICE LOOP =================================================");
   while (Platform.Tick())
   {
-    Renderer.RenderFrame();
     // Handle input
+    
     // Run game code
     // Render
+    Renderer.RenderFrame();
+    Input.Update();
   }
 }
 

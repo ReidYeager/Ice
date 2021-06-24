@@ -36,6 +36,7 @@ public:
   void* AllocateMem(u32 _size);
   void FreeMem(void* _data);
   void ZeroMem(void* _data, u32 _size);
+  void* CopyMem(void* _dst, void* _src, u32 _size);
 
   void PrintToConsole(const char* _message, ...);
 

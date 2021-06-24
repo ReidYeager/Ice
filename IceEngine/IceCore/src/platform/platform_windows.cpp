@@ -4,10 +4,12 @@
 #ifdef ICE_PLATFORM_WINDOWS
 #include "logger.h"
 #include "platform/platform.h"
+#include "core/input.h"
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <windows.h>
+#include <windowsx.h>
 #include <fstream>
 #include <vector>
 
@@ -16,6 +18,7 @@
 
 IcePlatform Platform;
 
+// TODO : Add controller support
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
   switch (message)
@@ -25,6 +28,69 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     // TODO : Dirty. Find a better way to close
     Platform.Close();
     break;
+  case WM_KEYDOWN:
+  case WM_SYSKEYDOWN:
+  case WM_KEYUP:
+  case WM_SYSKEYUP:
+  {
+    b8 pressed = (message == WM_KEYDOWN);
+    u32 key = (u32)wparam;
+    Input.ProcessKeyboardKey(key, pressed);
+  } break;
+  case WM_MOUSEMOVE:
+  {
+    i32 x = GET_X_LPARAM(lparam);
+    i32 y = GET_Y_LPARAM(lparam);
+    Input.ProcessMouseMove(x, y);
+  } break;
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_RBUTTONDOWN:
+  case WM_RBUTTONUP:
+  case WM_MBUTTONDOWN:
+  case WM_MBUTTONUP:
+  case WM_XBUTTONDOWN:
+  case WM_XBUTTONUP:
+  {
+    b8 pressed = message == WM_LBUTTONDOWN
+              || message == WM_RBUTTONDOWN
+              || message == WM_MBUTTONDOWN;
+
+    IceMouseButtonFlag button = ICE_INPUT_MOUSE_MAX;
+    // TODO : Add additional mouse buttons (4, 5, etc)
+    switch (message)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+      button = ICE_INPUT_MOUSE_LEFT; break;
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+      button = ICE_INPUT_MOUSE_RIGHT; break;
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+      button = ICE_INPUT_MOUSE_MIDDLE; break;
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    {
+      u32 xbutton = GET_XBUTTON_WPARAM(wparam);
+      switch (xbutton)
+      {
+      case 1:
+        button = ICE_INPUT_MOUSE_BACK; break;
+      case 2:
+        button = ICE_INPUT_MOUSE_FORWARD; break;
+      default:
+        button = ICE_INPUT_MOUSE_EXTRA; break;
+      }
+    }
+      break;
+    }
+
+    if (button != ICE_INPUT_MOUSE_MAX)
+    {
+      Input.ProcessMouseButton(button, pressed);
+    }
+  } break;
   default:
     break;
   }
@@ -95,15 +161,23 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
   ShowWindow(lstate.hwnd, showWindowCommandFlags);
+
+  IcePrint("Initialized Platform system");
+
+  Input.Initialize();
 }
 
 void IcePlatform::Shutdown()
 {
+  Input.Shutdown();
+
   if (platState.internalState.hwnd)
   {
     DestroyWindow(platState.internalState.hwnd);
     platState.internalState.hwnd = 0;
   }
+
+  IcePrint("Shutdown Platform system");
 }
 
 bool IcePlatform::Tick()
@@ -126,6 +200,11 @@ void IcePlatform::FreeMem(void* _data)
 void IcePlatform::ZeroMem(void* _data, u32 _size)
 {
   memset(_data, 0, _size);
+}
+
+void* IcePlatform::CopyMem(void* _dst, void* _src, u32 _size)
+{
+  return memcpy(_dst, _src, _size);
 }
 
 void IcePlatform::PrintToConsole(const char* _message, ...)

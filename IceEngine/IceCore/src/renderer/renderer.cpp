@@ -12,6 +12,7 @@ void IceRenderer::Initialize()
 {
   // Get window surface
   backend = new RendererBackend();
+  IcePrint("Initialized Renderer system");
 }
 
 void IceRenderer::Shutdown()
@@ -38,6 +39,8 @@ void IceRenderer::Shutdown()
   }
 
   delete(backend);
+
+  IcePrint("Shutdown Renderer system");
 }
 
 void IceRenderer::RecordCommandBuffers()
