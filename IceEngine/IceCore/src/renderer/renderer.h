@@ -8,6 +8,7 @@
 #include "renderer/shader_program.h"
 #include "renderer/mesh.h"
 
+#include <glm/glm.hpp>
 #include <vector>
 
 class IceRenderer
@@ -32,7 +33,7 @@ public:
   void Shutdown();
 
   void RecordCommandBuffers();
-  void RenderFrame();
+  void RenderFrame(IceRenderPacket* _packet);
 
   // Returns the index of the shader program
   // Creates a new shader if none match the given description

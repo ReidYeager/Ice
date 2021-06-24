@@ -48,11 +48,11 @@ void IceRenderer::RecordCommandBuffers()
   backend->RecordCommandBuffers();
 }
 
-void IceRenderer::RenderFrame()
+void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {
   // Make draw calls
   // Present render
-  backend->RenderFrame();
+  backend->RenderFrame(_packet);
 }
 
 u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)

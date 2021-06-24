@@ -63,6 +63,7 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
+// TODO : Move out of here
 #define ICE_ASSERT(vresult, errorMsg, ...)      \
 {                                               \
   VkResult vkAssertResult = vresult;         \

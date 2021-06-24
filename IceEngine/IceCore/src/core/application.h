@@ -6,6 +6,7 @@
 #include "platform/platform.h"
 #include "renderer/renderer.h"
 #include "renderer/shader_program.h"
+#include "core/camera.h"
 
 class ICE_API Application
 {
@@ -16,6 +17,8 @@ private:
   void* a = nullptr;
   void* b = nullptr;
   void* c = nullptr;
+
+  IceCamera cam;
 
 //=================================================================================================
 // Functions

@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#define NewKey(name, code) ICE_INPUT_KEY##name = code
+#define NewKey(name, code) Ice_Key_##name = code
 // TODO : Implement the rest of the input codes (Use Windows' codes)
 enum IceKeyCodeFlagBits
 {
@@ -21,16 +21,16 @@ enum IceKeyCodeFlagBits
   NewKey(9, 0x39),
 
   // Numpad numbers
-  NewKey(NUMPAD0, 0x60),
-  NewKey(NUMPAD1, 0x61),
-  NewKey(NUMPAD2, 0x62),
-  NewKey(NUMPAD3, 0x63),
-  NewKey(NUMPAD4, 0x64),
-  NewKey(NUMPAD5, 0x65),
-  NewKey(NUMPAD6, 0x66),
-  NewKey(NUMPAD7, 0x67),
-  NewKey(NUMPAD8, 0x68),
-  NewKey(NUMPAD9, 0x69),
+  NewKey(Numpad0, 0x60),
+  NewKey(Numpad1, 0x61),
+  NewKey(Numpad2, 0x62),
+  NewKey(Numpad3, 0x63),
+  NewKey(Numpad4, 0x64),
+  NewKey(Numpad5, 0x65),
+  NewKey(Numpad6, 0x66),
+  NewKey(Numpad7, 0x67),
+  NewKey(Numpad8, 0x68),
+  NewKey(Numpad9, 0x69),
 
   // Letters
   NewKey(A, 0x41),
@@ -64,13 +64,13 @@ typedef IceFlag IceKeyCodeFlag;
 
 enum IceMouseButtonFlagBits
 {
-  ICE_INPUT_MOUSE_LEFT,
-  ICE_INPUT_MOUSE_RIGHT,
-  ICE_INPUT_MOUSE_MIDDLE,
-  ICE_INPUT_MOUSE_FORWARD,
-  ICE_INPUT_MOUSE_BACK,
-  ICE_INPUT_MOUSE_EXTRA,
-  ICE_INPUT_MOUSE_MAX
+  Ice_Mouse_Left,
+  Ice_Mouse_Right,
+  Ice_Mouse_Middle,
+  Ice_Mouse_Forward,
+  Ice_Mouse_Back,
+  Ice_Mouse_Extra,
+  Ice_Mouse_Max
 };
 typedef IceFlag IceMouseButtonFlag;
 #undef NewButton
@@ -86,7 +86,7 @@ private:
   {
     i32 x;
     i32 y;
-    u8 buttons[ICE_INPUT_MOUSE_MAX];
+    u8 buttons[Ice_Mouse_Max];
   };
 
   struct InputStates

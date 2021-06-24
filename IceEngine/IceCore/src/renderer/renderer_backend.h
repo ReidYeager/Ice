@@ -21,6 +21,12 @@ struct iceImage_t
   VkSampler sampler;
 };
 
+struct IceRenderPacket
+{
+  glm::mat4 viewMatrix;
+  glm::mat4 projectionMatrix;
+};
+
 class RendererBackend
 {
 private:
@@ -98,7 +104,7 @@ public:
   void RecreateComponents();
 
   // NOTE : Temporary?
-  void RenderFrame();
+  void RenderFrame(IceRenderPacket* _packet);
 
   // Creates a new iceShader
   iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);

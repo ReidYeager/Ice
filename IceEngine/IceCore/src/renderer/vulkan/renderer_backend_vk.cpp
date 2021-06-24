@@ -72,9 +72,9 @@ RendererBackend::RendererBackend()
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
-  mvp.view = glm::lookAt(glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
-  mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
-  mvp.projection[1][1] *= -1; // flip the rendered y-axis
+  //mvp.view = glm::lookAt(glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
+  //mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
+  //mvp.projection[1][1] *= -1; // flip the rendered y-axis
   CreateMesh("Cube.obj");
   testImageIndex = CreateTexture("res/textures/TestImage.png");
 
@@ -179,13 +179,15 @@ void RendererBackend::RecreateComponents()
   CreateComponents();
 }
 
-void RendererBackend::RenderFrame()
+void RendererBackend::RenderFrame(IceRenderPacket* _packet)
 {
   vkWaitForFences(rContext.device, 1, &flightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
   mvp.model = glm::rotate(glm::mat4(1), (time += 0.001f), glm::vec3(0.0f, 1.0f, 0.0f));
   mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 0.5f) * 0.2f, 0));
+  mvp.view = _packet->viewMatrix;
+  mvp.projection = _packet->projectionMatrix;
   FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   u32 imageIndex;

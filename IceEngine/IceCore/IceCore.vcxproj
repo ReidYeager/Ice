@@ -105,8 +105,10 @@
     <ClInclude Include="src\renderer\renderer.h" />
     <ClInclude Include="src\renderer\renderer_backend.h" />
     <ClInclude Include="src\renderer\shader_program.h" />
+    <ClInclude Include="src\core\camera.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\core\camera.cpp" />
     <ClCompile Include="src\core\input.cpp" />
     <ClCompile Include="src\renderer\buffer.cpp" />
     <ClCompile Include="src\platform\file_system.cpp" />

@@ -56,19 +56,19 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
               || message == WM_RBUTTONDOWN
               || message == WM_MBUTTONDOWN;
 
-    IceMouseButtonFlag button = ICE_INPUT_MOUSE_MAX;
+    IceMouseButtonFlag button = Ice_Mouse_Max;
     // TODO : Add additional mouse buttons (4, 5, etc)
     switch (message)
     {
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
-      button = ICE_INPUT_MOUSE_LEFT; break;
+      button = Ice_Mouse_Left; break;
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
-      button = ICE_INPUT_MOUSE_RIGHT; break;
+      button = Ice_Mouse_Right; break;
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
-      button = ICE_INPUT_MOUSE_MIDDLE; break;
+      button = Ice_Mouse_Middle; break;
     case WM_XBUTTONDOWN:
     case WM_XBUTTONUP:
     {
@@ -76,17 +76,17 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
       switch (xbutton)
       {
       case 1:
-        button = ICE_INPUT_MOUSE_BACK; break;
+        button = Ice_Mouse_Back; break;
       case 2:
-        button = ICE_INPUT_MOUSE_FORWARD; break;
+        button = Ice_Mouse_Forward; break;
       default:
-        button = ICE_INPUT_MOUSE_EXTRA; break;
+        button = Ice_Mouse_Extra; break;
       }
     }
       break;
     }
 
-    if (button != ICE_INPUT_MOUSE_MAX)
+    if (button != Ice_Mouse_Max)
     {
       Input.ProcessMouseButton(button, pressed);
     }
@@ -161,6 +161,9 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
   ShowWindow(lstate.hwnd, showWindowCommandFlags);
+
+  GetWindowRect(platState.internalState.hwnd, &border_rect);
+  ClipCursor(&border_rect);
 
   IcePrint("Initialized Platform system");
 
