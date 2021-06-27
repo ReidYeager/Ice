@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "platform/platform.h"
 #include "core/input.h"
+#include "core/event.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -36,6 +37,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     b8 pressed = (message == WM_KEYDOWN);
     u32 key = (u32)wparam;
     Input.ProcessKeyboardKey(key, pressed);
+    EventManager.Fire(Ice_Event_Key_Pressed, nullptr, {});
   } break;
   case WM_MOUSEMOVE:
   {

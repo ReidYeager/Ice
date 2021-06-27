@@ -40,7 +40,7 @@ public:
 
   void Rotate(glm::vec3 _rotationAmount);
   void SetRotation(glm::vec3 _newRotation);
-  void ClampPitch(i32 _max, i32 _min);
+  void ClampPitch(f32 _max, f32 _min);
 
 };
 

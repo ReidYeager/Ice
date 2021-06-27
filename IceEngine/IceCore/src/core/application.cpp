@@ -7,6 +7,7 @@
 #include "core/memory_manager.h"
 #include "renderer/mesh.h"
 #include "core/input.h"
+#include "core/event.h"
 
 void Application::Run()
 {
@@ -18,6 +19,8 @@ void Application::Run()
 void Application::Initialize()
 {
   IcePrint("ICE INIT =================================================");
+
+  EventManager.Initialize();
 
   Platform.Initialize(800, 600, "Test ice");
 

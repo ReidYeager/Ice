@@ -75,7 +75,7 @@ void IceCamera::SetRotation(glm::vec3 _newRotation)
   rotation = _newRotation;
 }
 
-void IceCamera::ClampPitch(i32 _max, i32 _min)
+void IceCamera::ClampPitch(f32 _max, f32 _min)
 {
   if(rotation.x > _max)
     rotation.x = _max;
