@@ -26,23 +26,20 @@ enum IceEventCodes
 
 struct IceEventData
 {
-  union data
-  {
-    i64 i64[2];
-    i32 i32[4];
-    i16 i16[8];
-    i8  i8[16];
+  i64 i64[2];
+  i32 i32[4];
+  i16 i16[8];
+  i8  i8[16];
 
-    u64 u64[2];
-    u32 u32[4];
-    u16 u16[8];
-    u8  u8[16];
+  u64 u64[2];
+  u32 u32[4];
+  u16 u16[8];
+  u8  u8[16];
 
-    f64 f64[2];
-    f32 f32[4];
+  f64 f64[2];
+  f32 f32[4];
 
-    char c[16];
-  };
+  char c[16];
 };
 
 // Return true if handled
@@ -59,6 +56,7 @@ private:
 
   struct CodeEvents
   {
+    // TODO : Replace with pointer to custom array, zero the state on init
     std::vector<RegisteredEvent> registeredEvents;
   };
 

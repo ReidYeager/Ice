@@ -7,7 +7,7 @@ IceEventManager EventManager;
 
 void IceEventManager::Initialize()
 {
-  MemoryManager.Zero(state, sizeof(CodeEvents) * Ice_Event_Max);
+  //MemoryManager.Zero(state, sizeof(CodeEvents) * Ice_Event_Max);
   IcePrint("Initialized Event system");
 }
 
@@ -43,18 +43,19 @@ bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _calla
 
 bool IceEventManager::Unregister(u16 _eCode, void* _listener, EventCallback _callaback)
 {
-  for (u32 i = 0; i < state[_eCode].registeredEvents.size(); i++)
+  u32 size = state[_eCode].registeredEvents.size();
+  for (u32 i = 0; i < size; i++)
   {
-    const auto& e = state[_eCode].registeredEvents[i];
-    if (e.listener == _listener && e.callback == _callaback)
+    std::vector<RegisteredEvent>& e = state[_eCode].registeredEvents;
+    if (e[i].listener == _listener && e[i].callback == _callaback)
     {
-      RegisteredEvent back = state[_eCode].registeredEvents.back();
-      state[_eCode].registeredEvents.pop_back();
+      RegisteredEvent back = e.back();
+      e.pop_back();
 
-      // If not the final event, replace it
-      if (i != state[_eCode].registeredEvents.size())
+      // If i was not the final event, replace it
+      if (i < (size - 1))
       {
-        state[_eCode].registeredEvents[i] = back;
+        e[i] = back;
       }
       return true;
     }
@@ -74,7 +75,7 @@ bool IceEventManager::Fire(u16 _eCode, void* _sender, IceEventData _data)
 
   for (const auto& e : state[_eCode].registeredEvents)
   {
-    if (!e.callback(_eCode, _sender, e.listener, {}))
+    if (!e.callback(_eCode, _sender, e.listener, _data))
     {
       // Failed to execute the callback
       // Not necessarily fatal

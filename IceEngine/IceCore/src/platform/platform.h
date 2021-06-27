@@ -3,6 +3,7 @@
 #define PLATFORM_PLATFORM_H 1
 
 #include "defines.h"
+#include "core/event.h"
 
 #ifdef ICE_PLATFORM_WINDOWS
 #include <windows.h>
@@ -40,7 +41,6 @@ public:
 
   void PrintToConsole(const char* _message, ...);
 
-  // TODO : Dirty. Find a better way to close
   void Close() { platState.shouldClose = true; }
 
   // TODO : Find a way to create the surface without including Vulkan here
@@ -53,5 +53,11 @@ private:
 };
 
 extern IcePlatform Platform;
+
+inline bool PlatformClose(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
+{
+  static_cast<IcePlatform*>(_listener)->Close();
+  return true;
+}
 
 #endif // !PLATFORM_PLATFORM_H

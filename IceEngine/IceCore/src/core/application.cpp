@@ -46,7 +46,7 @@ void Application::MainLoop()
   while (Platform.Tick())
   {
     // Handle input
-    
+
     // Run game code
     i32 x, y;
     Input.GetMouseDelta(&x, &y);

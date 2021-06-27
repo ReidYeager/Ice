@@ -2,11 +2,14 @@
 	Line    32 :--: // TODO : TEMPORARY -- Delete
 \IceEngine\IceCore\src\core\application.h
 	Line    20 :--: // TODO : Delete
-	Line    44 :--: // TODO : Modify to fit a proper ECS system
-	Line    54 :--: // TODO : Add any game->engine API calls here
+	Line    44 :--: // TODO : Add input callbacks?
+	Line    46 :--: // TODO : Modify to fit a proper ECS system
+	Line    56 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    14 :--: // TODO : Register with input.mousemove event
 	Line    30 :--: // TODO : add roll
+\IceEngine\IceCore\src\core\event.h
+	Line    58 :--: // TODO : Replace with pointer to custom array, zero the state on init
 \IceEngine\IceCore\src\core\input.cpp
 	Line    24 :--: // TODO : Add event system callbacks in Process* functions
 \IceEngine\IceCore\src\core\input.h
@@ -16,12 +19,9 @@
 \IceEngine\IceCore\src\platform\file_system.cpp
 	Line    21 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\platform\platform.h
-	Line    42 :--: // TODO : Dirty. Find a better way to close
 	Line    45 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
 	Line    21 :--: // TODO : Add controller support
-	Line    28 :--: // TODO : Dirty. Find a better way to close
-	Line    61 :--: // TODO : Add additional mouse buttons (4, 5, etc)
 \IceEngine\IceCore\src\profiler.h
 	Line     6 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\buffer.cpp

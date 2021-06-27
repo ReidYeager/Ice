@@ -25,9 +25,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   switch (message)
   {
   case WM_CLOSE:
-    // Callback to platform
-    // TODO : Dirty. Find a better way to close
-    Platform.Close();
+    EventManager.Fire(Ice_Event_Quit, nullptr, {});
     break;
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
@@ -37,7 +35,17 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     b8 pressed = (message == WM_KEYDOWN);
     u32 key = (u32)wparam;
     Input.ProcessKeyboardKey(key, pressed);
-    EventManager.Fire(Ice_Event_Key_Pressed, nullptr, {});
+    IceEventData d;
+    d.c[0] = (char)key;
+
+    if (message == WM_KEYUP || message == WM_SYSKEYUP)
+    {
+      EventManager.Fire(Ice_Event_Key_Released, nullptr, d);
+    }
+    else
+    {
+      EventManager.Fire(Ice_Event_Key_Pressed, nullptr, d);
+    }
   } break;
   case WM_MOUSEMOVE:
   {
@@ -59,7 +67,6 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
               || message == WM_MBUTTONDOWN;
 
     IceMouseButtonFlag button = Ice_Mouse_Max;
-    // TODO : Add additional mouse buttons (4, 5, etc)
     switch (message)
     {
     case WM_LBUTTONDOWN:
@@ -170,6 +177,7 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   IcePrint("Initialized Platform system");
 
   Input.Initialize();
+  EventManager.Register(Ice_Event_Quit, this, PlatformClose);
 }
 
 void IcePlatform::Shutdown()

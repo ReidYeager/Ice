@@ -42,6 +42,8 @@ protected:
   // Used for any destruction the child application requires
   //virtual void ChildShutdown() = 0;
 
+  // TODO : Add input callbacks?
+
   // TODO : Modify to fit a proper ECS system
   // Temporarily : Adds the given model to the world
   void CreateObject();
