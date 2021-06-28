@@ -9,6 +9,8 @@
 #include "core/input.h"
 #include "core/event.h"
 
+#include <glm/glm.hpp>
+
 void Application::Run()
 {
   Initialize();
@@ -23,10 +25,13 @@ void Application::Initialize()
   EventManager.Initialize();
 
   Platform.Initialize(800, 600, "Test ice");
+  Platform.ChangeCursorState(Ice_Cursor_Locked);
 
   MemoryManager.Initialize();
 
   Renderer.Initialize();
+  cam.position = glm::vec3(0, 0, 5);
+  cam.SetRotation({0.0f, -90.0f, 0.0f});
 
   //ChildInit();
 

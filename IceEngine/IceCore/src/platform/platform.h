@@ -18,12 +18,20 @@ struct LocalStateInformation
 };
 #endif // ICE_PLATFORM_WINDOWS
 
+enum CursorStates
+{
+  Ice_Cursor_Unlocked, // Visible, not confined to window
+  Ice_Cursor_Confined, // Visible, confined to window
+  Ice_Cursor_Locked    // Not visible, confined to one spot
+};
+
 class IcePlatform
 {
 private:
   struct PlatformStateInformation
   {
     LocalStateInformation internalState; // Should use void* instead?
+    CursorStates cursorState;
     bool shouldClose;
   };
   PlatformStateInformation platState;
@@ -42,6 +50,7 @@ public:
   void PrintToConsole(const char* _message, ...);
 
   void Close() { platState.shouldClose = true; }
+  void ChangeCursorState(CursorStates _newState);
 
   // TODO : Find a way to create the surface without including Vulkan here
   VkSurfaceKHR CreateSurface(VkInstance* _instance);

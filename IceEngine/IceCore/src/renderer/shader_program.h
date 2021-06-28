@@ -17,7 +17,7 @@ typedef IceFlag IceShaderStageFlags;
 enum IceShaderBindingFlagBits
 {
   Ice_Shader_Binding_Buffer = 0x00,
-  Ice_Shader_Binding_Combined_Sampler = 0x01,
+  Ice_Shader_Binding_Image = 0x01,
 };
 typedef IceFlag IceShaderBindingFlags;
 
@@ -62,6 +62,9 @@ struct iceShaderProgram_t
 
   std::vector<u8> shaderIndices;
 
+  // Binding format:
+  // 1 uniform : Used for all data
+  // * image samplers : Arbitrary number of textures
   std::vector<IceShaderBindingFlags> bindings;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
@@ -74,6 +77,7 @@ struct iceShaderProgram_t
 };
 
 // TODO : Refactor and move to RenderBackend
+u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
 u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
                      IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
 

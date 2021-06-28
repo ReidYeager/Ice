@@ -284,7 +284,7 @@ u32 GetShader(const char* _name, IceShaderStageFlags _stage)
 void LoadShader(iceShader_t& _shader)
 {
   // TODO : Move to a constant value library
-  std::string shaderDir = "res/Shaders/compiled/";
+  std::string shaderDir = "res/shaders/compiled/";
   shaderDir.append(_shader.name);
   std::string layoutDir(shaderDir);
 
@@ -330,7 +330,7 @@ void ExtractShaderBindings(const char* _directory, iceShader_t& _shader)
       _shader.bindings.push_back(Ice_Shader_Binding_Buffer);
       break;
     case 's':
-      _shader.bindings.push_back(Ice_Shader_Binding_Combined_Sampler);
+      _shader.bindings.push_back(Ice_Shader_Binding_Image);
       break;
     }
 
@@ -358,7 +358,7 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
       case Ice_Shader_Binding_Buffer:
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         break;
-      case Ice_Shader_Binding_Combined_Sampler:
+      case Ice_Shader_Binding_Image:
         binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         break;
       }

@@ -874,40 +874,53 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   ICE_ASSERT(vkAllocateDescriptorSets(rContext.device, &allocInfo, &_shaderProgram.descriptorSet),
              "Failed to allocate descriptor set");
 
-  VkDescriptorBufferInfo mvpBufferInfo {};
+  std::vector<VkWriteDescriptorSet> writeSets(_shaderProgram.bindings.size());
+  std::vector<VkDescriptorImageInfo> imageInfos(_shaderProgram.bindings.size() - 1);
+
+  // Create the Uniform buffer
+  VkDescriptorBufferInfo mvpBufferInfo{};
   mvpBufferInfo.buffer = mvpBuffer->GetBuffer();
   mvpBufferInfo.offset = 0;
   mvpBufferInfo.range = VK_WHOLE_SIZE;
 
-  VkWriteDescriptorSet descWrites[2] = {};
+  //VkWriteDescriptorSet descWrites[2] = {};
   // MVP matrix
-  descWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descWrites[0].dstSet = _shaderProgram.descriptorSet;
-  descWrites[0].dstBinding = 0;
-  descWrites[0].dstArrayElement = 0;
-  descWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descWrites[0].descriptorCount = 1;
-  descWrites[0].pBufferInfo = &mvpBufferInfo;
-  descWrites[0].pImageInfo = nullptr;
-  descWrites[0].pTexelBufferView = nullptr;
+  writeSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeSets[0].dstSet = _shaderProgram.descriptorSet;
+  writeSets[0].dstBinding = 0;
+  writeSets[0].dstArrayElement = 0;
+  writeSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  writeSets[0].descriptorCount = 1;
+  writeSets[0].pBufferInfo = &mvpBufferInfo;
+  writeSets[0].pImageInfo = nullptr;
+  writeSets[0].pTexelBufferView = nullptr;
 
-  VkDescriptorImageInfo imageInfo {};
-  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageInfo.sampler = iceImages[testImageIndex]->sampler;
-  imageInfo.imageView = iceImages[testImageIndex]->view;
+  // Fill info for each texture
+  for (u32 i = 1, imageIdx = 0; i < _shaderProgram.bindings.size(); i++)
+  {
+    if (_shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
+    {
+      VkDescriptorImageInfo iInfo {};
+      imageInfos[imageIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      imageInfos[imageIdx].sampler = iceImages[testImageIndex]->sampler;
+      imageInfos[imageIdx].imageView = iceImages[testImageIndex]->view;
 
-  // Texture
-  descWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descWrites[1].dstSet = _shaderProgram.descriptorSet;
-  descWrites[1].dstBinding = 1;
-  descWrites[1].dstArrayElement = 0;
-  descWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  descWrites[1].descriptorCount = 1;
-  descWrites[1].pBufferInfo = nullptr;
-  descWrites[1].pImageInfo = &imageInfo;
-  descWrites[1].pTexelBufferView = nullptr;
+      // Texture
+      writeSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      writeSets[i].dstSet = _shaderProgram.descriptorSet;
+      writeSets[i].dstBinding = i;
+      writeSets[i].dstArrayElement = 0;
+      writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      writeSets[i].descriptorCount = 1;
+      writeSets[i].pBufferInfo = nullptr;
+      writeSets[i].pImageInfo = &imageInfos[imageIdx];
+      writeSets[i].pTexelBufferView = nullptr;
 
-  vkUpdateDescriptorSets(rContext.device, 2, descWrites, 0, nullptr);
+      imageIdx++;
+    }
+  }
+
+  vkUpdateDescriptorSets(rContext.device, writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
 u32 RendererBackend::GetQueueIndex(

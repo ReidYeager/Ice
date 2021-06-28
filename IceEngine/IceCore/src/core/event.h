@@ -10,15 +10,25 @@ enum IceEventCodes
   Ice_Event_Unknown = 0,
 
   // ===== Input =====
+
+  // u32[0] : The pressed keycode
   Ice_Event_Key_Pressed,
+  // u32[0] : The released keycode
   Ice_Event_Key_Released,
+  // u32[0] : The button pressed
   Ice_Event_Mouse_Button_Pressed,
+  // u32[0] : The button released
   Ice_Event_Mouse_Button_Released,
+  // i32[0] : The x-axis delta
+  // i32[1] : The y-axis delta
   Ice_Event_Mouse_Moved,
+
   Ice_Event_Mouse_Wheel,
 
   // ===== Window / Platform =====
   Ice_Event_Quit,
+  // u32[0] : The new x-axis size
+  // u32[1] : The new y-axis size
   Ice_Event_Window_Resized,
 
   Ice_Event_Max = 0xFF

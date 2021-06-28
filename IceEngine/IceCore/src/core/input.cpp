@@ -27,7 +27,6 @@ void IceInput::Update()
 void IceInput::ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed)
 {
   m_states.keyboardCurrent.keys[_key] = _pressed;
-  IcePrint("%c (%u) %s", (char)_key, _key, (_pressed? "pressed" : "released"));
 }
 
 b8 IceInput::IsKeyDown(IceKeyCodeFlag _key)
@@ -43,7 +42,6 @@ b8 IceInput::WasKeyDown(IceKeyCodeFlag _key)
 void IceInput::ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed)
 {
   m_states.mouseCurrent.buttons[_button] = _pressed;
-  IcePrint("Mouse %u %s", _button, (_pressed ? "pressed" : "released"));
 }
 
 void IceInput::ProcessMouseMove(i32 _x, i32 _y)
@@ -52,11 +50,6 @@ void IceInput::ProcessMouseMove(i32 _x, i32 _y)
   {
     m_states.mouseCurrent.x = _x;
     m_states.mouseCurrent.y = _y;
-
-    i32 x, y;
-    GetMouseDelta(&x, &y);
-    IcePrint("Mouse (%i, %i) -- Δ(%i, %i)", m_states.mouseCurrent.x, m_states.mouseCurrent.y, x, y);
-    
   }
 }
 

@@ -35,23 +35,29 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     b8 pressed = (message == WM_KEYDOWN);
     u32 key = (u32)wparam;
     Input.ProcessKeyboardKey(key, pressed);
-    IceEventData d;
-    d.c[0] = (char)key;
+    IceEventData data {};
+    data.u32[0] = (IceKeyCodeFlag)key;
 
     if (message == WM_KEYUP || message == WM_SYSKEYUP)
     {
-      EventManager.Fire(Ice_Event_Key_Released, nullptr, d);
+      EventManager.Fire(Ice_Event_Key_Released, nullptr, data);
     }
     else
     {
-      EventManager.Fire(Ice_Event_Key_Pressed, nullptr, d);
+      EventManager.Fire(Ice_Event_Key_Pressed, nullptr, data);
     }
   } break;
   case WM_MOUSEMOVE:
   {
+    // TODO : Add raw input support
+    //  https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input?redirectedfrom=MSDN
     i32 x = GET_X_LPARAM(lparam);
     i32 y = GET_Y_LPARAM(lparam);
     Input.ProcessMouseMove(x, y);
+
+    IceEventData data {};
+    Input.GetMouseDelta(&data.i32[0], &data.i32[1]);
+    EventManager.Fire(Ice_Event_Mouse_Moved, nullptr, data);
   } break;
   case WM_LBUTTONDOWN:
   case WM_LBUTTONUP:
@@ -98,6 +104,13 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     if (button != Ice_Mouse_Max)
     {
       Input.ProcessMouseButton(button, pressed);
+
+      IceEventCodes code =
+          pressed ? Ice_Event_Mouse_Button_Pressed : Ice_Event_Mouse_Button_Released;
+      IceEventData data {};
+      data.u32[0] = button;
+
+      EventManager.Fire(code, nullptr, data);
     }
   } break;
   default:
@@ -171,9 +184,6 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
   ShowWindow(lstate.hwnd, showWindowCommandFlags);
 
-  GetWindowRect(platState.internalState.hwnd, &border_rect);
-  ClipCursor(&border_rect);
-
   IcePrint("Initialized Platform system");
 
   Input.Initialize();
@@ -226,6 +236,44 @@ void IcePlatform::PrintToConsole(const char* _message, ...)
   va_start(args, _message);
   vprintf(_message, args);
   va_end(args);
+}
+
+bool CursorResetCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
+{
+  //SetCursorPos(150, 150);
+  //IcePrint("(%d, %d)", _data.i32[0], _data.i32[1]);
+  return true;
+}
+
+void IcePlatform::ChangeCursorState(CursorStates _newState)
+{
+  //if (_newState == platState.cursorState)
+  //  return;
+  //if (platState.cursorState == Ice_Cursor_Locked)
+  //  EventManager.Unregister(Ice_Event_Mouse_Moved, this, CursorResetCallback);
+
+  //switch (_newState)
+  //{
+  //case Ice_Cursor_Unlocked:
+  //{
+  //  ShowCursor(true);
+  //} break;
+  //case Ice_Cursor_Confined:
+  //{
+  //  RECT windowRect;
+  //  GetWindowRect(platState.internalState.hwnd, &windowRect);
+  //  ClipCursor(&windowRect);
+  //  ShowCursor(true);
+  //} break;
+  //case Ice_Cursor_Locked:
+  //{
+  //  SetCursorPos(150, 150);
+  //  ShowCursor(false);
+  //  EventManager.Register(Ice_Event_Mouse_Moved, this, CursorResetCallback);
+  //} break;
+  //} // End switch
+
+  //platState.cursorState = _newState;
 }
 
 VkSurfaceKHR IcePlatform::CreateSurface(VkInstance* _instance)
