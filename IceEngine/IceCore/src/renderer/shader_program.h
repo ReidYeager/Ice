@@ -66,6 +66,7 @@ struct iceShaderProgram_t
   // 1 uniform : Used for all data
   // * image samplers : Arbitrary number of textures
   std::vector<IceShaderBindingFlags> bindings;
+  std::vector<const char*> textureDirs;
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
   VkPipelineLayout pipelineLayout;
@@ -77,12 +78,12 @@ struct iceShaderProgram_t
 };
 
 // TODO : Refactor and move to RenderBackend
-u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
-u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
-                     IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+u32 GetShaderProgram(
+    const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
+    IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
 
 void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
-                         IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+                         std::vector<const char*> _texStrings, IcePipelineSettingFlags _settings);
 
 VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
                           VkPipelineLayout _layout, IcePipelineSettingFlags _settings);

@@ -35,8 +35,8 @@ void Application::Initialize()
 
   //ChildInit();
 
-  // TODO : TEMPORARY -- Delete
-  GetShaderProgramApp("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag);
+  u32 materialIndex = GetShaderProgram("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
+                                       { "AltImage.png", "TestImage.png"});
   //CreateObject();
 
   Renderer.RecordCommandBuffers();
@@ -53,10 +53,10 @@ void Application::MainLoop()
     // Handle input
 
     // Run game code
-    i32 x, y;
-    Input.GetMouseDelta(&x, &y);
-    cam.Rotate({-y, x, 0});
-    cam.ClampPitch(89.0f, -89.0f);
+    //i32 x, y;
+    //Input.GetMouseDelta(&x, &y);
+    //cam.Rotate({-y, x, 0});
+    //cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
       cam.position += cam.GetForward() * 0.002f;
@@ -93,10 +93,3 @@ void Application::CreateObject()
   //mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
 
 }
-
-void Application::GetShaderProgramApp(const char* _name, IceShaderStageFlags _stages)
-{
-  //renderer->GetShaderProgram(_name, _stages);
-  GetShaderProgram(_name, _stages, Ice_Pipeline_Cull_Mode_Back);
-}
-

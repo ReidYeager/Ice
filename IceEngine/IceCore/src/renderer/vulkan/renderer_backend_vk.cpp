@@ -29,10 +29,26 @@ void RendererBackend::CreateMesh(const char* _directory)
   indexCount = static_cast<u32>(m.indices.size());
 }
 
-u32 RendererBackend::CreateTexture(const char* _directory)
+u32 RendererBackend::GetTexture(std::string _directory)
+{
+  std::string fullDir("res/textures/");
+  fullDir.append(_directory);
+  const char* name = fullDir.c_str();
+
+  for (u32 i = 0; i < iceTextures.size(); i++)
+  {
+    if (strcmp(name, iceTextures[i]->directory) == 0)
+      return i;
+  }
+
+  // Texture not found
+  return CreateTexture(fullDir);
+}
+
+u32 RendererBackend::CreateTexture(std::string _directory)
 {
   int width, height;
-  void* imageFile = FileSystem::LoadImageFile(_directory, width, height);
+  void* imageFile = FileSystem::LoadImageFile(_directory.c_str(), width, height);
   VkDeviceSize size = static_cast<VkDeviceSize>(4 * width * height);
 
   IceBuffer stagingBuffer;
@@ -56,10 +72,13 @@ u32 RendererBackend::CreateTexture(const char* _directory)
 
   stagingBuffer.FreeBuffer();
 
+  iceTexture_t* tex = new iceTexture_t(_directory.c_str());
+  tex->imageIndex = imageIdx;
   image->view = CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, image->image);
   image->sampler = CreateSampler();
+  iceTextures.push_back(tex);
 
-  return static_cast<u32>(iceImages.size() - 1);
+  return static_cast<u32>(iceTextures.size() - 1);
 }
 
 RendererBackend::RendererBackend()
@@ -76,7 +95,7 @@ RendererBackend::RendererBackend()
   //mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
   //mvp.projection[1][1] *= -1; // flip the rendered y-axis
   CreateMesh("Cube.obj");
-  testImageIndex = CreateTexture("res/textures/TestImage.png");
+  //GetTexture("res/textures/TestImage.png");
 
   InitializeComponents();
 
@@ -118,6 +137,11 @@ RendererBackend::~RendererBackend()
       vkDestroySampler(rContext.device, i->sampler, rContext.allocator);
       i->image = VK_NULL_HANDLE;
     }
+    delete(i);
+  }
+  for (iceTexture_t* t : iceTextures)
+  {
+    delete(t);
   }
 
   vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
@@ -896,14 +920,16 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   writeSets[0].pTexelBufferView = nullptr;
 
   // Fill info for each texture
-  for (u32 i = 1, imageIdx = 0; i < _shaderProgram.bindings.size(); i++)
+  for (u32 i = 1, imageBufferIdx = 0; i < _shaderProgram.bindings.size(); i++)
   {
     if (_shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
     {
+      u32 texIndex = GetTexture(_shaderProgram.textureDirs[imageBufferIdx]);
+      u32 textureImageIdx = iceTextures[texIndex]->imageIndex;
       VkDescriptorImageInfo iInfo {};
-      imageInfos[imageIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfos[imageIdx].sampler = iceImages[testImageIndex]->sampler;
-      imageInfos[imageIdx].imageView = iceImages[testImageIndex]->view;
+      imageInfos[imageBufferIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      imageInfos[imageBufferIdx].sampler = iceImages[textureImageIdx]->sampler;
+      imageInfos[imageBufferIdx].imageView = iceImages[textureImageIdx]->view;
 
       // Texture
       writeSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -913,10 +939,10 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
       writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       writeSets[i].descriptorCount = 1;
       writeSets[i].pBufferInfo = nullptr;
-      writeSets[i].pImageInfo = &imageInfos[imageIdx];
+      writeSets[i].pImageInfo = &imageInfos[texIndex];
       writeSets[i].pTexelBufferView = nullptr;
 
-      imageIdx++;
+      imageBufferIdx++;
     }
   }
 

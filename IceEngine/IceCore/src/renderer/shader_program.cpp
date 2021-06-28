@@ -39,8 +39,9 @@ void iceShaderProgram_t::Shutdown()
   vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
 }
 
-u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
-                     IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
+u32 GetShaderProgram(
+    const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
+    IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
 {
   for (u32 i = 0; i < rContext.shaderPrograms.size(); i++)
   {
@@ -52,12 +53,12 @@ u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
   }
 
   u32 index = static_cast<u32>(rContext.shaderPrograms.size());
-  CreateShaderProgram(_name, _stages, _settings);
+  CreateShaderProgram(_name, _stages, _texStrings, _settings);
   return index;
 }
 
 void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
-                         IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
+                         std::vector<const char*> _texStrings, IcePipelineSettingFlags _settings)
 {
   std::vector<u8> indices = {};
   u32 idx = 0;
@@ -82,6 +83,7 @@ void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
 
   iceShaderProgram_t program(_name, _settings);
   program.shaderIndices = indices;
+  program.textureDirs = _texStrings;
 
   CreateDescriptorSetLayout(program);
   rContext.shaderPrograms.push_back(program);

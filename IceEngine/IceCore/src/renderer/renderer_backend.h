@@ -21,6 +21,14 @@ struct iceImage_t
   VkSampler sampler;
 };
 
+struct iceTexture_t
+{
+  u32 imageIndex;
+  const char* directory;
+
+  iceTexture_t(const char* _dir) : imageIndex(0), directory(_dir) {}
+};
+
 struct IceRenderPacket
 {
   glm::mat4 viewMatrix;
@@ -44,7 +52,9 @@ private:
   u32 indexCount = 0;
 
   void CreateMesh(const char* _directory);
-  u32 CreateTexture(const char* _directory);
+  // TODO : Replace string with const char* -- text was lost when using char*'s
+  u32 GetTexture(std::string _directory);
+  u32 CreateTexture(std::string _directory);
 
 //=================================================================================================
 // VARIABLES
@@ -71,7 +81,7 @@ private:
   VkDescriptorPool descriptorPool;
 
   std::vector<iceImage_t*> iceImages;
-  u32 testImageIndex = -1;
+  std::vector<iceTexture_t*> iceTextures;
 
   // Synchronization
   #define MAX_FLIGHT_IMAGE_COUNT 3
