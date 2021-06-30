@@ -19,9 +19,8 @@ std::vector<char> FileSystem::LoadFile(const char* _directory)
   inFile.open(_directory, std::ios::ate | std::ios::binary);
   if (!inFile)
   {
-    // TODO : Log non-Vulkan errors
     IcePrint("ERROR :: Failed to load file %s", _directory);
-    return {};
+    abort();
   }
 
   size_t fileSize = inFile.tellg();

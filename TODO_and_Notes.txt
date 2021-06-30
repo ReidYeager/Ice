@@ -4,18 +4,13 @@
 	Line    46 :--: // TODO : Modify to fit a proper ECS system
 	Line    56 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
-	Line    14 :--: // TODO : Register with input.mousemove event
-	Line    30 :--: // TODO : add roll
+	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
 	Line    68 :--: // TODO : Replace with pointer to custom array, zero the state on init
-\IceEngine\IceCore\src\core\input.cpp
-	Line    24 :--: // TODO : Add event system callbacks in Process* functions
 \IceEngine\IceCore\src\core\input.h
 	Line     7 :--: // TODO : Implement the rest of the input codes (Use Windows' codes)
 \IceEngine\IceCore\src\logger.h
 	Line    65 :--: // TODO : Move out of here
-\IceEngine\IceCore\src\platform\file_system.cpp
-	Line    21 :--: // TODO : Log non-Vulkan errors
 \IceEngine\IceCore\src\platform\platform.h
 	Line    54 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
@@ -38,12 +33,29 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    40 :--: // TODO : Delete
-	Line    54 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   115 :--: // NOTE : Temporary?
-	Line   120 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   154 :--: // TODO : Move to shader programs?
-	Line   168 :--: // TODO : Move to an image manager?
+	Line    27 :--: // TODO : Fix const char* directory being lost when texture vector expands
+	Line    42 :--: // TODO : Delete
+	Line    56 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   121 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   122 :--: // TODO : API CULL MARK
+	Line   126 :--: // TODO : API CULL MARK
+	Line   128 :--: // TODO : API CULL MARK
+	Line   131 :--: // TODO : API CULL MARK
+	Line   133 :--: // TODO : API CULL MARK
+	Line   136 :--: // TODO : API CULL MARK?
+	Line   146 :--: // TODO : API CULL MARK
+	Line   149 :--: // TODO : API CULL MARK
+	Line   153 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   164 :--: // TODO : Move to shader programs?
+	Line   169 :--: // TODO : API CULL MARK
+	Line   172 :--: // TODO : API CULL MARK
+	Line   176 :--: // TODO : API CULL MARK
+	Line   181 :--: // TODO : Move to an image manager?
+	Line   182 :--: // TODO : API CULL MARK
+	Line   185 :--: // TODO : API CULL MARK
+	Line   188 :--: // TODO : API CULL MARK
+	Line   190 :--: // TODO : API CULL MARK
+	Line   194 :--: // TODO : API CULL MARK
 \IceEngine\IceCore\src\renderer\shader_program.cpp
 	Line   287 :--: // TODO : Move to a constant value library
 	Line   322 :--: // TODO : Implement a proper parser to extract shader bindings
@@ -52,29 +64,8 @@
 	Line    79 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
 	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    91 :--: // TODO : Delete
-	Line   113 :--: // TODO : Delete
-	Line   292 :--: // TODO : Get shader bindings from its layout file
-	Line   435 :--: // TODO : Make this editable from the client
-	Line   655 :--: // TODO : Replace with clamp function calls
-\IceEngine\libraries\include\glm\detail\compute_common.hpp
-	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
-\IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
-	Line    51 :--: /// TODO: Fixme!
-\IceEngine\libraries\include\glm\simd\common.h
-	Line   136 :--: /* trunc TODO
-\IceEngine\libraries\include\stb\stb_image.h
-	Line    18 :--: QUICK NOTES:
-\IceEngine\libraries\include\tinyobjloader\tiny_obj_loader.h
-	Line    66 :--: // TODO(syoyo): Better C++11 detection for older compiler
-	Line   402 :--: // NOTE(syoyo): array index is based on the appearance order.
-	Line   724 :--: // TODO(syoyo): bspline, surface, ...
-	Line   850 :--: // NOTE: THESE MUST BE DECLARED HERE SINCE WE ARE NOT ALLOWED
-	Line   911 :--: // NOTE: Don't use powf here, it will absolutely murder precision.
-	Line  1227 :--: // TODO(syoyo): Check if arg is int type.
-	Line  1254 :--: // TODO(syoyo): Support parsing texture option flag after the filename.
-	Line  1363 :--: // TODO(syoyo): refactor function.
-	Line  1868 :--: // NOTE: Interpretation of Tr is application(exporter) dependent. For
-	Line  2306 :--: // TODO(syoyo): Add syntax check
-	Line  2317 :--: // TODO(syoyo): # of elements check
-	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.
+	Line    90 :--: // TODO : Delete
+	Line   112 :--: // TODO : Delete
+	Line   291 :--: // TODO : Get shader bindings from its layout file
+	Line   434 :--: // TODO : Make this editable from the client
+	Line   654 :--: // TODO : Replace with clamp function calls

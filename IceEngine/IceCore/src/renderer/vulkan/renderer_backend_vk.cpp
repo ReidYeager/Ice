@@ -33,11 +33,10 @@ u32 RendererBackend::GetTexture(std::string _directory)
 {
   std::string fullDir("res/textures/");
   fullDir.append(_directory);
-  const char* name = fullDir.c_str();
 
   for (u32 i = 0; i < iceTextures.size(); i++)
   {
-    if (strcmp(name, iceTextures[i]->directory) == 0)
+    if (strcmp(fullDir.c_str(), iceTextures[i]->directory.c_str()) == 0)
       return i;
   }
 
@@ -72,7 +71,7 @@ u32 RendererBackend::CreateTexture(std::string _directory)
 
   stagingBuffer.FreeBuffer();
 
-  iceTexture_t* tex = new iceTexture_t(_directory.c_str());
+  iceTexture_t* tex = new iceTexture_t(_directory);
   tex->imageIndex = imageIdx;
   image->view = CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, image->image);
   image->sampler = CreateSampler();

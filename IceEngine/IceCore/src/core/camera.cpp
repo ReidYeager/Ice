@@ -11,17 +11,9 @@ IceCamera::IceCamera()
 
   position = glm::vec3(0);
   rotation = glm::vec3(0);
-
-  // TODO : Register with input.mousemove event
-  // Input.Register(MouseMoveCallback, ICE_INPUT_MOUSE_MOVEMENT);
 }
 
 IceCamera::~IceCamera()
-{
-  
-}
-
-void IceCamera::Update()
 {
   
 }

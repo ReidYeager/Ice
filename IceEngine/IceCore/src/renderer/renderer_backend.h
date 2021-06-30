@@ -9,8 +9,9 @@
 #include "renderer/buffer.h"
 
 #include <vulkan/vulkan.h>
-#include <vector>
 #include <glm/glm.hpp>
+#include <vector>
+#include <string.h>
 
 struct iceImage_t
 {
@@ -24,9 +25,10 @@ struct iceImage_t
 struct iceTexture_t
 {
   u32 imageIndex;
-  const char* directory;
+  // TODO : Fix const char* directory being lost when texture vector expands
+  std::string directory;
 
-  iceTexture_t(const char* _dir) : imageIndex(0), directory(_dir) {}
+  iceTexture_t(std::string _dir) : imageIndex(0), directory(_dir) {}
 };
 
 struct IceRenderPacket
@@ -113,21 +115,26 @@ public:
   // Destroys and recreates rendering components
   void RecreateComponents();
 
-  // NOTE : Temporary?
   void RenderFrame(IceRenderPacket* _packet);
 
   // Creates a new iceShader
   iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
   // TODO : I don't like this. Find a better way to destroy shaders
+  // TODO : API CULL MARK
   void DestroyShaderModule(VkShaderModule& _shader);
 
   // Creates a buffer on the GPU and fills it with data
+  // TODO : API CULL MARK
   IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  // TODO : API CULL MARK
   IceBuffer* CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
   void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
+  // TODO : API CULL MARK
   void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
+  // TODO : API CULL MARK
   void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
 
+  // TODO : API CULL MARK?
   void RecordCommandBuffers();
 
 private:
@@ -137,11 +144,14 @@ private:
 
   void CreateInstance();
   void CreateDevice();
+  // TODO : API CULL MARK
   void ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
                           u32& _presentIndex, u32& _transferIndex);
+  // TODO : API CULL MARK
   void CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
                          VkCommandPoolCreateFlags _flags = 0);
 
+  // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
   // Render components
   void CreateSwapchain();
   void CreateRenderpass();
@@ -157,24 +167,32 @@ private:
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags
+  // TODO : API CULL MARK
   u32 GetQueueIndex(std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags);
   // Returns the first instance of a presentation queue
+  // TODO : API CULL MARK
   u32 GetPresentIndex(
       const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
   VkFormat FindDepthFormat();
+  // TODO : API CULL MARK
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
                                VkImageTiling _tiling, VkFormatFeatureFlags _features);
   u32 FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags);
 
   // TODO : Move to an image manager?
+  // TODO : API CULL MARK
   u32 CreateImage(u32 _width, u32 _height, VkFormat _format, VkImageTiling _tiling,
     VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps);
+  // TODO : API CULL MARK
   VkImageView CreateImageView(
     const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
+  // TODO : API CULL MARK
   VkSampler CreateSampler();
+  // TODO : API CULL MARK
   void TransitionImageLayout(
       VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
       VkPipelineStageFlagBits _shaderStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  // TODO : API CULL MARK
   void CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height);
 
 };

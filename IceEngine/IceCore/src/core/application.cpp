@@ -22,6 +22,8 @@ void Application::Initialize()
 {
   IcePrint("ICE INIT =================================================");
 
+  FileSystem::LoadFile("LSDKFJ");
+
   EventManager.Initialize();
 
   Platform.Initialize(800, 600, "Test ice");
@@ -36,7 +38,7 @@ void Application::Initialize()
   //ChildInit();
 
   u32 materialIndex = GetShaderProgram("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
-                                       { "AltImage.png", "TestImage.png"});
+                                       { "AltImage.png", "TestImage.png", "landscape.jpg"});
   //CreateObject();
 
   Renderer.RecordCommandBuffers();
