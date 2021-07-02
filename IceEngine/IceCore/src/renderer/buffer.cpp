@@ -5,7 +5,6 @@
 
 IceBuffer::~IceBuffer()
 {
-  IcePrint("Deconstruct buffer");
   if (m_buffer != VK_NULL_HANDLE)
     FreeBuffer();
 }
@@ -39,7 +38,7 @@ void IceBuffer::AllocateBuffer(
   allocInfo.memoryTypeIndex = FindMemoryTypeIndex(memRequirements.memoryTypeBits, _memProperties);
 
   ICE_ASSERT(vkAllocateMemory(rContext.device, &allocInfo, rContext.allocator, &m_memory),
-    "Failed to allocate vert memory");
+             "Failed to allocate vert memory");
 
   if (_bind)
   {

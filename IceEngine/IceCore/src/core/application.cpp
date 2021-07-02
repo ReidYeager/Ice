@@ -22,8 +22,6 @@ void Application::Initialize()
 {
   IcePrint("ICE INIT =================================================");
 
-  FileSystem::LoadFile("LSDKFJ");
-
   EventManager.Initialize();
 
   Platform.Initialize(800, 600, "Test ice");
@@ -74,6 +72,11 @@ void Application::MainLoop()
       cam.position -= glm::vec3(0.0f, 0.002f, 0.0f);
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
+
+    if (Input.IsKeyDown(Ice_Key_Escape))
+    {
+      Platform.Close();
+    }
 
     // Render
     Renderer.RenderFrame(&renderPacket);

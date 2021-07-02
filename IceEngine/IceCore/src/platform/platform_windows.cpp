@@ -25,7 +25,7 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   switch (message)
   {
   case WM_CLOSE:
-    EventManager.Fire(Ice_Event_Quit, nullptr, {});
+    Platform.Close();
     break;
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
@@ -187,7 +187,6 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   IcePrint("Initialized Platform system");
 
   Input.Initialize();
-  EventManager.Register(Ice_Event_Quit, this, PlatformClose);
 }
 
 void IcePlatform::Shutdown()
@@ -236,6 +235,12 @@ void IcePlatform::PrintToConsole(const char* _message, ...)
   va_start(args, _message);
   vprintf(_message, args);
   va_end(args);
+}
+
+void IcePlatform::Close()
+{
+  platState.shouldClose = true;
+  EventManager.Fire(Ice_Event_Quit, nullptr, {});
 }
 
 bool CursorResetCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)

@@ -124,6 +124,7 @@ public:
   void DestroyShaderModule(VkShaderModule& _shader);
 
   // Creates a buffer on the GPU and fills it with data
+  
   // TODO : API CULL MARK
   IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
   // TODO : API CULL MARK
@@ -143,10 +144,9 @@ private:
   void InitializeComponents();
 
   void CreateInstance();
-  void CreateDevice();
-  // TODO : API CULL MARK
-  void ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
-                          u32& _presentIndex, u32& _transferIndex);
+  void CreateLogicalDevice();
+  void ChoosePhysicalDevice();
+  void FillPhysicalDeviceInformation();
   // TODO : API CULL MARK
   void CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
                          VkCommandPoolCreateFlags _flags = 0);

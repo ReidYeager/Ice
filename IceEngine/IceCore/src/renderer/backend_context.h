@@ -29,9 +29,9 @@ struct IceRenderContext
   IcePhysicalDeviceInformation gpu;
   VkDevice device;
 
-  uint32_t graphicsIdx;
-  uint32_t presentIdx;
-  uint32_t transferIdx;
+  u32 graphicsIdx;
+  u32 presentIdx;
+  u32 transferIdx;
   VkQueue graphicsQueue;
   VkQueue presentQueue;
   VkQueue transferQueue;

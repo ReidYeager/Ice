@@ -58,7 +58,9 @@ enum IceKeyCodeFlagBits
   NewKey(W, 0x57),
   NewKey(X, 0x58),
   NewKey(Y, 0x59),
-  NewKey(Z, 0x5A)
+  NewKey(Z, 0x5A),
+
+  NewKey(Escape, 0x1B)
 };
 typedef IceFlag IceKeyCodeFlag;
 

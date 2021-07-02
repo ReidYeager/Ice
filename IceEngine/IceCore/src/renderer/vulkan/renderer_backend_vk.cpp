@@ -84,17 +84,15 @@ RendererBackend::RendererBackend()
 {
   CreateInstance();
   surface = Platform.CreateSurface(&instance);
-  CreateDevice();
+  ChoosePhysicalDevice();
+  FillPhysicalDeviceInformation();
+  CreateLogicalDevice();
   CreateCommandPool(rContext.graphicsCommandPool, rContext.graphicsIdx);
   CreateCommandPool(rContext.transientCommandPool, rContext.transferIdx);
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
-  //mvp.view = glm::lookAt(glm::vec3(0.0f, 3.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), {0.0f, 1.0f, 0.0f});
-  //mvp.projection = glm::perspective(glm::radians(45.0f), 1.778f, 0.1f, 50.0f);
-  //mvp.projection[1][1] *= -1; // flip the rendered y-axis
   CreateMesh("Cube.obj");
-  //GetTexture("res/textures/TestImage.png");
 
   InitializeComponents();
 
@@ -449,49 +447,16 @@ void RendererBackend::CreateInstance()
              "Failed to create instance");
 }
 
-void RendererBackend::CreateDevice()
+void RendererBackend::CreateLogicalDevice()
 {
-  // Choose a physical device
-  u32 queueIndices[3];
-  u32 queueCount = 3;
-  VkPhysicalDevice chosenPhysicalDevice = VK_NULL_HANDLE;
-  ChoosePhysicalDevice(chosenPhysicalDevice, queueIndices[0], queueIndices[1], queueIndices[2]);
-
   IcePrint("Graphics : %u\nPresent : %u\nTransfer : %u\n",
-         queueIndices[0], queueIndices[1], queueIndices[2]);
-
-  // Fill physical device details
-  rContext.gpu.device = chosenPhysicalDevice;
-  rContext.graphicsIdx = queueIndices[0];
-  rContext.presentIdx  = queueIndices[1];
-  rContext.transferIdx = queueIndices[2];
-
-  IcePhysicalDeviceInformation& dInfo = rContext.gpu;
-  VkPhysicalDevice& pDevice = rContext.gpu.device;
-
-  u32 count = 0;
-  vkGetPhysicalDeviceFeatures(pDevice, &dInfo.features);
-  vkGetPhysicalDeviceProperties(pDevice, &dInfo.properties);
-  vkGetPhysicalDeviceMemoryProperties(pDevice, &dInfo.memProperties);
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &dInfo.surfaceCapabilities);
-
-  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, nullptr);
-  dInfo.queueFamilyProperties.resize(count);
-  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, dInfo.queueFamilyProperties.data());
-
-  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, nullptr);
-  dInfo.presentModes.resize(count);
-  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, dInfo.presentModes.data());
-
-  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, nullptr);
-  dInfo.surfaceFormats.resize(count);
-  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, dInfo.surfaceFormats.data());
-
-  // Create logical device
+           rContext.graphicsIdx, rContext.presentIdx, rContext.transferIdx);
 
   VkPhysicalDeviceFeatures enabledFeatures {};
   enabledFeatures.samplerAnisotropy = VK_TRUE;
 
+  u32 queueCount = 3;
+  u32 queueIndices[3] = { rContext.graphicsIdx, rContext.presentIdx, rContext.transferIdx };
   const float priority = 1.0f;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
   for (u32 i = 0; i < queueCount; i++)
@@ -512,7 +477,7 @@ void RendererBackend::CreateDevice()
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos    = queueCreateInfos.data();
 
-  ICE_ASSERT(vkCreateDevice(pDevice, &createInfo, rContext.allocator, &rContext.device),
+  ICE_ASSERT(vkCreateDevice(rContext.gpu.device, &createInfo, rContext.allocator, &rContext.device),
              "Failed to create vkDevice");
 
   vkGetDeviceQueue(rContext.device, rContext.graphicsIdx, 0, &rContext.graphicsQueue);
@@ -520,8 +485,7 @@ void RendererBackend::CreateDevice()
   vkGetDeviceQueue(rContext.device, rContext.transferIdx, 0, &rContext.transferQueue);
 }
 
-void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u32& _graphicsIndex,
-                                         u32& _presentIndex, u32& _transferIndex)
+void RendererBackend::ChoosePhysicalDevice()
 {
   // Get all available physical devices
   u32 deviceCount;
@@ -539,6 +503,8 @@ void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u3
     u32 transferIndex;
   };
   BestGPU bestFit {};
+
+  u32 graphicsIdx, presentIdx, transferIdx;
 
   for (const auto& pdevice : physDevices)
   {
@@ -565,28 +531,32 @@ void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u3
       requiredExtensionSet.erase(ext.extensionName);
     }
 
-    _graphicsIndex = GetQueueIndex(queueProperties, VK_QUEUE_GRAPHICS_BIT);
-    _transferIndex = GetQueueIndex(queueProperties, VK_QUEUE_TRANSFER_BIT);
-    _presentIndex = GetPresentIndex(&pdevice, propertyCount, _graphicsIndex);
+    graphicsIdx = GetQueueIndex(queueProperties, VK_QUEUE_GRAPHICS_BIT);
+    transferIdx = GetQueueIndex(queueProperties, VK_QUEUE_TRANSFER_BIT);
+    presentIdx  = GetPresentIndex(&pdevice, propertyCount, graphicsIdx);
 
     if (
       features.samplerAnisotropy &&
       requiredExtensionSet.empty() &&
-      _graphicsIndex != -1 &&
-      _presentIndex != -1 &&
-      _transferIndex != -1)
+      graphicsIdx != -1 &&
+      presentIdx  != -1 &&
+      transferIdx != -1)
     {
-      if (_graphicsIndex == _presentIndex || _graphicsIndex == _transferIndex
-        || _presentIndex == _transferIndex)
+      if (graphicsIdx == presentIdx ||
+          graphicsIdx == transferIdx ||
+          presentIdx  == transferIdx)
       {
         bestFit.device = pdevice;
-        bestFit.graphicsIndex = _graphicsIndex;
-        bestFit.presentIndex = _presentIndex;
-        bestFit.transferIndex = _transferIndex;
+        bestFit.graphicsIndex = graphicsIdx;
+        bestFit.presentIndex  = presentIdx;
+        bestFit.transferIndex = transferIdx;
       }
       else
       {
-        _selectedDevice = pdevice;
+        rContext.gpu.device  = pdevice;
+        rContext.graphicsIdx = graphicsIdx;
+        rContext.presentIdx  = presentIdx;
+        rContext.transferIdx = transferIdx;
         return;
       }
     }
@@ -594,14 +564,38 @@ void RendererBackend::ChoosePhysicalDevice(VkPhysicalDevice& _selectedDevice, u3
 
   if (bestFit.device != VK_NULL_HANDLE)
   {
-    _selectedDevice = bestFit.device;
-    _graphicsIndex = bestFit.graphicsIndex;
-    _presentIndex = bestFit.presentIndex;
-    _transferIndex = bestFit.transferIndex;
+    rContext.gpu.device  = bestFit.device;
+    rContext.graphicsIdx = bestFit.graphicsIndex;
+    rContext.presentIdx  = bestFit.presentIndex;
+    rContext.transferIdx = bestFit.transferIndex;
     return;
   }
 
   IcePrint("Failed to find a suitable GPU");
+}
+
+void RendererBackend::FillPhysicalDeviceInformation()
+{
+  IcePhysicalDeviceInformation& dInfo = rContext.gpu;
+  VkPhysicalDevice& pDevice = rContext.gpu.device;
+
+  u32 count = 0;
+  vkGetPhysicalDeviceFeatures(pDevice, &dInfo.features);
+  vkGetPhysicalDeviceProperties(pDevice, &dInfo.properties);
+  vkGetPhysicalDeviceMemoryProperties(pDevice, &dInfo.memProperties);
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &dInfo.surfaceCapabilities);
+
+  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, nullptr);
+  dInfo.queueFamilyProperties.resize(count);
+  vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, dInfo.queueFamilyProperties.data());
+
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, nullptr);
+  dInfo.presentModes.resize(count);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, dInfo.presentModes.data());
+
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, nullptr);
+  dInfo.surfaceFormats.resize(count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, dInfo.surfaceFormats.data());
 }
 
 void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
