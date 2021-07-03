@@ -9,7 +9,17 @@
 #include "renderer/shader_program.h"
 #include <vulkan/vulkan.h>
 #include <vector>
-struct IcePhysicalDeviceInformation
+
+struct iceImage_t
+{
+  VkImage image;
+  VkDeviceMemory memory;
+  VkFormat format;
+  VkImageView view;
+  VkSampler sampler;
+};
+
+struct IcePhysicalDevice
 {
   VkPhysicalDevice device;
   VkPhysicalDeviceProperties properties;
@@ -22,11 +32,22 @@ struct IcePhysicalDeviceInformation
   std::vector<VkExtensionProperties> extensionProperties;
 };
 
+struct RenderSynchronization
+{
+  // Synchronization
+  #define MAX_FLIGHT_IMAGE_COUNT 3
+  std::vector<VkFence> imageIsInFlightFences;
+  std::vector<VkFence> flightFences;
+  std::vector<VkSemaphore> renderCompleteSemaphores;
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  u32 currentFrame = 0;
+};
+
 struct IceRenderContext
 {
   VkAllocationCallbacks* allocator;
 
-  IcePhysicalDeviceInformation gpu;
+  IcePhysicalDevice gpu;
   VkDevice device;
 
   u32 graphicsIdx;
@@ -43,6 +64,23 @@ struct IceRenderContext
   VkRenderPass renderPass;
   std::vector<iceShaderProgram_t> shaderPrograms;
   std::vector<iceShader_t> shaders;
+
+  RenderSynchronization syncObjects;
+
+  VkSwapchainKHR swapchain;
+  VkFormat swapchainFormat;
+
+  std::vector<VkImage> swapchainImages;
+  std::vector<VkImageView> swapchainImageViews;
+
+  iceImage_t* depthImage;
+  std::vector<VkFramebuffer> frameBuffers;
+
+  std::vector<VkCommandBuffer> commandBuffers;
+  VkDescriptorPool descriptorPool;
+
+  VkInstance instance;
+  VkSurfaceKHR surface;
 
   // Handles all setup for recording a commandBuffer to be executed once
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool& _pool)

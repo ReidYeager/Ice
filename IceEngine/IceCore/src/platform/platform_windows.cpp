@@ -25,8 +25,20 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   switch (message)
   {
   case WM_CLOSE:
+  {
     Platform.Close();
-    break;
+  } break;
+  case WM_SIZE:
+  {
+    RECT winRect;
+    GetWindowRect(hwnd, &winRect);
+
+    IceEventData data {};
+    data.u32[0] = winRect.right - winRect.left;
+    data.u32[1] = winRect.bottom - winRect.top;
+
+    EventManager.Fire(Ice_Event_Window_Resized, nullptr, data);
+  } break;
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
   case WM_KEYUP:
@@ -156,7 +168,7 @@ void IcePlatform::Initialize(u32 _width, u32 _height, const char* _title)
   u32 window_y = client_y;
   u32 window_width = client_width;
   u32 window_height = client_height;
-  u32 window_style = WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
+  u32 window_style = WS_OVERLAPPEDWINDOW; //WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
   u32 window_ex_style = WS_EX_APPWINDOW;
 
   RECT border_rect = { 0, 0, 0 , 0 };

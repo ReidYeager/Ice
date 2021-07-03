@@ -21,6 +21,18 @@
 
 IceRenderContext rContext;
 
+bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
+{
+  IcePrint("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
+
+  rContext.renderExtent = { _data.u32[0], _data.u32[1] };
+  RendererBackend* rb = static_cast<RendererBackend*>(_listener);
+
+  //rb->shouldResize = true;
+
+  return true;
+}
+
 void RendererBackend::CreateMesh(const char* _directory)
 {
   mesh_t m = FileSystem::LoadMesh(_directory);
@@ -82,8 +94,10 @@ u32 RendererBackend::CreateTexture(std::string _directory)
 
 RendererBackend::RendererBackend()
 {
+  EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
+
   CreateInstance();
-  surface = Platform.CreateSurface(&instance);
+  rContext.surface = Platform.CreateSurface(&rContext.instance);
   ChoosePhysicalDevice();
   FillPhysicalDeviceInformation();
   CreateLogicalDevice();
@@ -92,7 +106,7 @@ RendererBackend::RendererBackend()
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
-  CreateMesh("Cube.obj");
+  CreateMesh("Sphere.obj");
 
   InitializeComponents();
 
@@ -115,12 +129,14 @@ RendererBackend::~RendererBackend()
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    vkDestroySemaphore(rContext.device, imageAvailableSemaphores[i], rContext.allocator);
-    vkDestroySemaphore(rContext.device, renderCompleteSemaphores[i], rContext.allocator);
-    vkDestroyFence(rContext.device, flightFences[i], rContext.allocator);
+    vkDestroySemaphore(rContext.device, rContext.syncObjects.imageAvailableSemaphores[i],
+                       rContext.allocator);
+    vkDestroySemaphore(rContext.device, rContext.syncObjects.renderCompleteSemaphores[i],
+                       rContext.allocator);
+    vkDestroyFence(rContext.device, rContext.syncObjects.flightFences[i], rContext.allocator);
   }
 
-  vkDestroyDescriptorPool(rContext.device, descriptorPool, rContext.allocator);
+  vkDestroyDescriptorPool(rContext.device, rContext.descriptorPool, rContext.allocator);
 
   DestroyComponents();
 
@@ -141,12 +157,11 @@ RendererBackend::~RendererBackend()
     delete(t);
   }
 
-  vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
   vkDestroyCommandPool(rContext.device, rContext.transientCommandPool, rContext.allocator);
   vkDestroyCommandPool(rContext.device, rContext.graphicsCommandPool, rContext.allocator);
   vkDestroyDevice(rContext.device, rContext.allocator);
-  vkDestroySurfaceKHR(instance, surface, rContext.allocator);
-  vkDestroyInstance(instance, rContext.allocator);
+  vkDestroySurfaceKHR(rContext.instance, rContext.surface, rContext.allocator);
+  vkDestroyInstance(rContext.instance, rContext.allocator);
 }
 
 void RendererBackend::InitializeComponents()
@@ -170,31 +185,32 @@ void RendererBackend::CreateComponents()
 void RendererBackend::DestroyComponents()
 {
   // Destroy framebuffers
-  for (const auto& fb : frameBuffers)
+  for (const auto& fb : rContext.frameBuffers)
   {
     vkDestroyFramebuffer(rContext.device, fb, rContext.allocator);
   }
   // Destroy depth image
-  vkDestroyImageView(rContext.device, depthImage->view, rContext.allocator);
-  vkDestroyImage(rContext.device, depthImage->image, rContext.allocator);
-  vkFreeMemory(rContext.device, depthImage->memory, rContext.allocator);
-  depthImage->image = VK_NULL_HANDLE;
+  vkDestroyImageView(rContext.device, rContext.depthImage->view, rContext.allocator);
+  vkDestroyImage(rContext.device, rContext.depthImage->image, rContext.allocator);
+  vkFreeMemory(rContext.device, rContext.depthImage->memory, rContext.allocator);
+  rContext.depthImage->image = VK_NULL_HANDLE;
 
   // Destroy renderpass
-  vkDestroyPipeline(rContext.device, pipeline, rContext.allocator);
-  vkDestroyPipelineLayout(rContext.device, pipelineLayout, rContext.allocator);
   vkDestroyRenderPass(rContext.device, rContext.renderPass, rContext.allocator);
   // Destroy swapchain
-  for (const auto& view : swapchainImageViews)
+  for (const auto& view : rContext.swapchainImageViews)
   {
     vkDestroyImageView(rContext.device, view, rContext.allocator);
   }
-  vkDestroySwapchainKHR(rContext.device, swapchain, rContext.allocator); // Implicitly destroys swapchainImages
+
+  // Implicitly destroys swapchainImages
+  vkDestroySwapchainKHR(rContext.device, rContext.swapchain, rContext.allocator);
 }
 
 void RendererBackend::RecreateComponents()
 {
   // Wait for all frames to complete
+  vkDeviceWaitIdle(rContext.device);
 
   DestroyComponents();
   CreateComponents();
@@ -202,7 +218,15 @@ void RendererBackend::RecreateComponents()
 
 void RendererBackend::RenderFrame(IceRenderPacket* _packet)
 {
-  vkWaitForFences(rContext.device, 1, &flightFences[currentFrame], VK_TRUE, UINT64_MAX);
+  if (shouldResize)
+  {
+    RecreateComponents();
+    shouldResize = false;
+  }
+
+  u32& currentFrame = rContext.syncObjects.currentFrame;
+  vkWaitForFences(rContext.device, 1, &rContext.syncObjects.flightFences[currentFrame],
+                  VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
   mvp.model = glm::rotate(glm::mat4(1), (time += 0.001f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -212,42 +236,43 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
   FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   u32 imageIndex;
-  vkAcquireNextImageKHR(rContext.device, swapchain, UINT64_MAX,
-                        imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+  vkAcquireNextImageKHR(rContext.device, rContext.swapchain, UINT64_MAX,
+                        rContext.syncObjects.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-  if (imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
+  if (rContext.syncObjects.imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
   {
-    vkWaitForFences(rContext.device, 1, &imageIsInFlightFences[imageIndex], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(rContext.device, 1, &rContext.syncObjects.imageIsInFlightFences[imageIndex],
+                    VK_TRUE, UINT64_MAX);
   }
-  imageIsInFlightFences[imageIndex] = flightFences[currentFrame];
+  rContext.syncObjects.imageIsInFlightFences[imageIndex] = rContext.syncObjects.flightFences[currentFrame];
 
   VkSubmitInfo submitInfo {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &imageAvailableSemaphores[currentFrame];
+  submitInfo.pWaitSemaphores = &rContext.syncObjects.imageAvailableSemaphores[currentFrame];
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+  submitInfo.pCommandBuffers = &rContext.commandBuffers[imageIndex];
   submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &renderCompleteSemaphores[currentFrame];
+  submitInfo.pSignalSemaphores = &rContext.syncObjects.renderCompleteSemaphores[currentFrame];
 
-  vkResetFences(rContext.device, 1, &flightFences[currentFrame]);
-  ICE_ASSERT(vkQueueSubmit(rContext.graphicsQueue, 1, &submitInfo, flightFences[currentFrame]),
+  vkResetFences(rContext.device, 1, &rContext.syncObjects.flightFences[currentFrame]);
+  ICE_ASSERT(vkQueueSubmit(rContext.graphicsQueue, 1, &submitInfo, rContext.syncObjects.flightFences[currentFrame]),
              "Failed to submit draw command");
 
   VkPresentInfoKHR presentInfo {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &renderCompleteSemaphores[currentFrame];
+  presentInfo.pWaitSemaphores = &rContext.syncObjects.renderCompleteSemaphores[currentFrame];
   presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &swapchain;
+  presentInfo.pSwapchains = &rContext.swapchain;
   presentInfo.pImageIndices = &imageIndex;
 
   vkQueuePresentKHR(rContext.presentQueue, &presentInfo);
 
-  currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
+  rContext.syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
 iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
@@ -381,7 +406,7 @@ void RendererBackend::RecordCommandBuffers()
   CreateDescriptorSet(rContext.shaderPrograms[0]);
   iceShaderProgram_t* shaderProgram = nullptr;
 
-  u32 commandCount = static_cast<u32>(commandBuffers.size());
+  u32 commandCount = static_cast<u32>(rContext.commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -402,23 +427,23 @@ void RendererBackend::RecordCommandBuffers()
   shaderProgram = &rContext.shaderPrograms[0];
   for (u32 i = 0; i < commandCount; i++)
   {
-    rpBeginInfo.framebuffer = frameBuffers[i];
+    rpBeginInfo.framebuffer = rContext.frameBuffers[i];
 
-    ICE_ASSERT(vkBeginCommandBuffer(commandBuffers[i], &beginInfo),
+    ICE_ASSERT(vkBeginCommandBuffer(rContext.commandBuffers[i], &beginInfo),
                "Failed to being command buffer");
 
-    vkCmdBeginRenderPass(commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->GetPipeline());
-    vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->pipelineLayout,
+    vkCmdBeginRenderPass(rContext.commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(rContext.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->GetPipeline());
+    vkCmdBindDescriptorSets(rContext.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, shaderProgram->pipelineLayout,
                             0, 1, &shaderProgram->descriptorSet, 0, nullptr);
-    vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
-    vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(commandBuffers[i], indexCount, 1, 0, 0, 0);
+    vkCmdBindVertexBuffers(rContext.commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
+    vkCmdBindIndexBuffer(rContext.commandBuffers[i], indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(rContext.commandBuffers[i], indexCount, 1, 0, 0, 0);
     //vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
-    vkCmdEndRenderPass(commandBuffers[i]);
+    vkCmdEndRenderPass(rContext.commandBuffers[i]);
 
-    ICE_ASSERT(vkEndCommandBuffer(commandBuffers[i]), "Failed to record command buffer");
+    ICE_ASSERT(vkEndCommandBuffer(rContext.commandBuffers[i]), "Failed to record command buffer");
   }
 }
 
@@ -443,7 +468,7 @@ void RendererBackend::CreateInstance()
   createInfo.enabledLayerCount = (u32)deviceLayers.size();
   createInfo.ppEnabledLayerNames = deviceLayers.data();
 
-  ICE_ASSERT(vkCreateInstance(&createInfo, rContext.allocator, &instance),
+  ICE_ASSERT(vkCreateInstance(&createInfo, rContext.allocator, &rContext.instance),
              "Failed to create instance");
 }
 
@@ -489,9 +514,9 @@ void RendererBackend::ChoosePhysicalDevice()
 {
   // Get all available physical devices
   u32 deviceCount;
-  vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+  vkEnumeratePhysicalDevices(rContext.instance, &deviceCount, nullptr);
   std::vector<VkPhysicalDevice> physDevices(deviceCount);
-  vkEnumeratePhysicalDevices(instance, &deviceCount, physDevices.data());
+  vkEnumeratePhysicalDevices(rContext.instance, &deviceCount, physDevices.data());
 
   u32 propertyCount;
 
@@ -576,26 +601,26 @@ void RendererBackend::ChoosePhysicalDevice()
 
 void RendererBackend::FillPhysicalDeviceInformation()
 {
-  IcePhysicalDeviceInformation& dInfo = rContext.gpu;
+  IcePhysicalDevice& dInfo = rContext.gpu;
   VkPhysicalDevice& pDevice = rContext.gpu.device;
 
   u32 count = 0;
   vkGetPhysicalDeviceFeatures(pDevice, &dInfo.features);
   vkGetPhysicalDeviceProperties(pDevice, &dInfo.properties);
   vkGetPhysicalDeviceMemoryProperties(pDevice, &dInfo.memProperties);
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &dInfo.surfaceCapabilities);
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, rContext.surface, &dInfo.surfaceCapabilities);
 
   vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, nullptr);
   dInfo.queueFamilyProperties.resize(count);
   vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, dInfo.queueFamilyProperties.data());
 
-  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, nullptr);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, rContext.surface, &count, nullptr);
   dInfo.presentModes.resize(count);
-  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, surface, &count, dInfo.presentModes.data());
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, rContext.surface, &count, dInfo.presentModes.data());
 
-  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, nullptr);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, rContext.surface, &count, nullptr);
   dInfo.surfaceFormats.resize(count);
-  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, surface, &count, dInfo.surfaceFormats.data());
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, rContext.surface, &count, dInfo.surfaceFormats.data());
 }
 
 void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
@@ -680,7 +705,7 @@ void RendererBackend::CreateSwapchain()
 
   VkSwapchainCreateInfoKHR createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = surface;
+  createInfo.surface = rContext.surface;
   createInfo.clipped = VK_TRUE;
   createInfo.imageArrayLayers = 1;
   createInfo.imageFormat = formatInfo.format;
@@ -703,23 +728,23 @@ void RendererBackend::CreateSwapchain()
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
 
-  ICE_ASSERT(vkCreateSwapchainKHR(rContext.device, &createInfo, rContext.allocator, &swapchain),
+  ICE_ASSERT(vkCreateSwapchainKHR(rContext.device, &createInfo, rContext.allocator, &rContext.swapchain),
              "Failed to create swapchain");
 
-  swapchainFormat = formatInfo.format;
+  rContext.swapchainFormat = formatInfo.format;
   rContext.renderExtent = extent;
 
-  vkGetSwapchainImagesKHR(rContext.device, swapchain, &imageCount, nullptr);
-  swapchainImages.resize(imageCount);
-  vkGetSwapchainImagesKHR(rContext.device, swapchain, &imageCount, swapchainImages.data());
+  vkGetSwapchainImagesKHR(rContext.device, rContext.swapchain, &imageCount, nullptr);
+  rContext.swapchainImages.resize(imageCount);
+  vkGetSwapchainImagesKHR(rContext.device, rContext.swapchain, &imageCount, rContext.swapchainImages.data());
 
-  swapchainImageViews.resize(imageCount);
+  rContext.swapchainImageViews.resize(imageCount);
   for (u32 i = 0; i < imageCount; i++)
   {
-    swapchainImageViews[i] =
-        CreateImageView(swapchainFormat, VK_IMAGE_ASPECT_COLOR_BIT, swapchainImages[i]);
+    rContext.swapchainImageViews[i] =
+        CreateImageView(rContext.swapchainFormat, VK_IMAGE_ASPECT_COLOR_BIT, rContext.swapchainImages[i]);
 
-    if (swapchainImageViews[i] == VK_NULL_HANDLE)
+    if (rContext.swapchainImageViews[i] == VK_NULL_HANDLE)
     {
       IcePrint("Failed to create swapchain image view");
     }
@@ -729,7 +754,7 @@ void RendererBackend::CreateSwapchain()
 void RendererBackend::CreateRenderpass()
 {
   VkAttachmentDescription colorDesc {};
-  colorDesc.format = swapchainFormat;
+  colorDesc.format = rContext.swapchainFormat;
   colorDesc.samples = VK_SAMPLE_COUNT_1_BIT;
   colorDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -791,8 +816,8 @@ void RendererBackend::CreateDepthImage()
       rContext.renderExtent.width, rContext.renderExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  depthImage = iceImages[imageIdx];
-  depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT, depthImage->image);
+  rContext.depthImage = iceImages[imageIdx];
+  rContext.depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT, rContext.depthImage->image);
 }
 
 void RendererBackend::CreateFramebuffers()
@@ -804,16 +829,16 @@ void RendererBackend::CreateFramebuffers()
   createInfo.width = rContext.renderExtent.width;
   createInfo.height = rContext.renderExtent.height;
 
-  u32 imageCount = static_cast<u32>(swapchainImages.size());
-  frameBuffers.resize(imageCount);
+  u32 imageCount = static_cast<u32>(rContext.swapchainImages.size());
+  rContext.frameBuffers.resize(imageCount);
 
   for (u32 i = 0; i < imageCount; i++)
   {
-    VkImageView attachments[] = {swapchainImageViews[i], depthImage->view};
+    VkImageView attachments[] = {rContext.swapchainImageViews[i], rContext.depthImage->view};
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    ICE_ASSERT(vkCreateFramebuffer(rContext.device, &createInfo, rContext.allocator, &frameBuffers[i]),
+    ICE_ASSERT(vkCreateFramebuffer(rContext.device, &createInfo, rContext.allocator, &rContext.frameBuffers[i]),
                "Failed to create framebuffers");
   }
 }
@@ -832,16 +857,16 @@ void RendererBackend::CreateDescriptorPool()
   createInfo.pPoolSizes = poolSizes;
   createInfo.maxSets = 3;
 
-  ICE_ASSERT(vkCreateDescriptorPool(rContext.device, &createInfo, rContext.allocator, &descriptorPool),
+  ICE_ASSERT(vkCreateDescriptorPool(rContext.device, &createInfo, rContext.allocator, &rContext.descriptorPool),
              "Failed to create descriptor pool");
 }
 
 void RendererBackend::CreateSyncObjects()
 {
-  imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
-  renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
-  flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
-  imageIsInFlightFences.resize(swapchainImages.size(), VK_NULL_HANDLE);
+  rContext.syncObjects.imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext.syncObjects.renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext.syncObjects.flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext.syncObjects.imageIsInFlightFences.resize(rContext.swapchainImages.size(), VK_NULL_HANDLE);
 
   VkSemaphoreCreateInfo semaphoreInfo {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -852,19 +877,19 @@ void RendererBackend::CreateSyncObjects()
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    ICE_ASSERT(vkCreateFence(rContext.device, &fenceInfo, rContext.allocator, &flightFences[i]),
+    ICE_ASSERT(vkCreateFence(rContext.device, &fenceInfo, rContext.allocator, &rContext.syncObjects.flightFences[i]),
                "Failed to create fence");
     ICE_ASSERT(vkCreateSemaphore(rContext.device, &semaphoreInfo, rContext.allocator,
-               &imageAvailableSemaphores[i]), "Failed to create image semaphore");
+               &rContext.syncObjects.imageAvailableSemaphores[i]), "Failed to create image semaphore");
     ICE_ASSERT(vkCreateSemaphore(rContext.device, &semaphoreInfo, rContext.allocator,
-               &renderCompleteSemaphores[i]), "Failed to create render semaphore");
+               &rContext.syncObjects.renderCompleteSemaphores[i]), "Failed to create render semaphore");
   }
 }
 
 void RendererBackend::CreateCommandBuffers()
 {
-  u32 bufferCount = static_cast<u32>(swapchainImages.size());
-  commandBuffers.resize(bufferCount);
+  u32 bufferCount = static_cast<u32>(rContext.swapchainImages.size());
+  rContext.commandBuffers.resize(bufferCount);
 
   VkCommandBufferAllocateInfo allocInfo {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -872,7 +897,7 @@ void RendererBackend::CreateCommandBuffers()
   allocInfo.commandBufferCount = bufferCount;
   allocInfo.commandPool = rContext.graphicsCommandPool;
 
-  ICE_ASSERT(vkAllocateCommandBuffers(rContext.device, &allocInfo, commandBuffers.data()),
+  ICE_ASSERT(vkAllocateCommandBuffers(rContext.device, &allocInfo, rContext.commandBuffers.data()),
              "Failed to allocate command buffers");
 }
 
@@ -884,7 +909,7 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
 
   VkDescriptorSetAllocateInfo allocInfo {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocInfo.descriptorPool = descriptorPool;
+  allocInfo.descriptorPool = rContext.descriptorPool;
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = &_shaderProgram.descriptorSetLayout;
 
@@ -979,7 +1004,7 @@ u32 RendererBackend::GetPresentIndex(
 
   for (u32 i = 0; i < _queuePropertyCount; i++)
   {
-    vkGetPhysicalDeviceSurfaceSupportKHR(*_device, i, surface, &supported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(*_device, i, rContext.surface, &supported);
     if (supported)
     {
       // Attempt to avoid queues that share with Graphics

@@ -13,15 +13,6 @@
 #include <vector>
 #include <string.h>
 
-struct iceImage_t
-{
-  VkImage image;
-  VkDeviceMemory memory;
-  VkFormat format;
-  VkImageView view;
-  VkSampler sampler;
-};
-
 struct iceTexture_t
 {
   u32 imageIndex;
@@ -70,35 +61,12 @@ private:
       { VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_KHR_SURFACE_EXTENSION_NAME, "VK_KHR_win32_surface" };
   std::vector<const char*> deviceExtensions =
       { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-  VkInstance instance;
-  VkSurfaceKHR surface;
-
-  VkSwapchainKHR swapchain;
-  VkFormat swapchainFormat;
-  std::vector<VkImage> swapchainImages;
-  std::vector<VkImageView> swapchainImageViews;
-  iceImage_t* depthImage = nullptr;
-  std::vector<VkFramebuffer> frameBuffers;
-
-  VkDescriptorPool descriptorPool;
 
   std::vector<iceImage_t*> iceImages;
   std::vector<iceTexture_t*> iceTextures;
 
-  // Synchronization
-  #define MAX_FLIGHT_IMAGE_COUNT 3
-  std::vector<VkFence> imageIsInFlightFences;
-  std::vector<VkFence> flightFences;
-  std::vector<VkSemaphore> renderCompleteSemaphores;
-  std::vector<VkSemaphore> imageAvailableSemaphores;
-  u32 currentFrame = 0;
-
-  std::vector<VkCommandBuffer> commandBuffers;
-
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorSet descriptorSet;
-  VkPipelineLayout pipelineLayout;
-  VkPipeline pipeline;
+public:
+  bool shouldResize = false;
 
 //=================================================================================================
 // FUNCTIONS
