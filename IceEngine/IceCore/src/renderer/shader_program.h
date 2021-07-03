@@ -74,6 +74,7 @@ struct iceShaderProgram_t
 
   iceShaderProgram_t(const char* _name, IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
   VkPipeline GetPipeline();
+  void DestroyRenderComponents();
   void Shutdown();
 };
 
@@ -96,6 +97,8 @@ void LoadShader(iceShader_t& _shader);
 void ExtractShaderBindings(const char* _directory, iceShader_t& _shader);
 
 void CreateDescriptorSetLayout(iceShaderProgram_t& _program);
+
+void CreatePipelineLayout(iceShaderProgram_t& _program);
 
 size_t PadBufferForGpu(size_t _original);
 

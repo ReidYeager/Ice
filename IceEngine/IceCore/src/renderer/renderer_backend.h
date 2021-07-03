@@ -106,6 +106,9 @@ public:
   // TODO : API CULL MARK?
   void RecordCommandBuffers();
 
+  // TODO : Move to shader programs?
+  void CreateDescriptorSet(iceShaderProgram_t& _shaderProgram);
+
 private:
   // Calls CreateComponents
   // Creates components that live through recreation
@@ -129,9 +132,6 @@ private:
   void CreateDescriptorPool();
   void CreateSyncObjects();
   void CreateCommandBuffers();
-
-  // TODO : Move to shader programs?
-  void CreateDescriptorSet(iceShaderProgram_t& _shaderProgram);
 
   // ===== Helpers =====
   // Returns the first instance of a queue with the input flags

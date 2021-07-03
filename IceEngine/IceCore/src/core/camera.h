@@ -21,9 +21,9 @@ private:
   glm::vec3 m_forward;
   glm::vec3 right;
 
-  float m_vertFieldOfView = 90.0f;
-  float m_minRenderDist = 0.1f;
-  float m_maxRenderDist = 10.0f;
+  float vertFieldOfView = 90.0f;
+  float minRenderDist = 0.1f;
+  float maxRenderDist = 10.0f;
 
 public:
   IceCamera();
@@ -32,7 +32,8 @@ public:
 
   void Update();
   glm::mat4 GetViewMatrix();
-  glm::mat4 UpdateProjection(float _screenRatio, float _vertFieldOfView = 90.0f);
+  glm::mat4 GetProjectionMatrix();
+  void SetProjection(float _screenRatio, float _vertFieldOfView = 90.0f);
 
   glm::vec3 GetForward();
   glm::vec3 GetRight();

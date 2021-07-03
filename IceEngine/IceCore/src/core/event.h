@@ -53,7 +53,7 @@ struct IceEventData
 };
 
 // Return true if handled
-typedef bool (*EventCallback)(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);
+typedef bool(*EventCallback)(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);
 
 class IceEventManager
 {

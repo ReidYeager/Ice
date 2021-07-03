@@ -37,7 +37,9 @@ public:
 
   // Returns the index of the shader program
   // Creates a new shader if none match the given description
-  u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages);
+  u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
+                       std::vector<const char*> _texStrings,
+                       IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
   // Returns the index of the shader
   // Creates a new shader if none match the given description
   //u32 GetShader(const char* _name, IceShaderStageFlags _stage);

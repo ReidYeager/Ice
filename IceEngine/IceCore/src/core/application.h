@@ -18,6 +18,7 @@ private:
   void* b = nullptr;
   void* c = nullptr;
 
+public:
   // TODO : Delete
   IceCamera cam;
 

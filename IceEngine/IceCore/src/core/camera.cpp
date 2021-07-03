@@ -7,7 +7,7 @@
 IceCamera::IceCamera()
 {
   view = glm::mat4(1);
-  projection = glm::mat4(1);
+  SetProjection(4.0f/3.0f);
 
   position = glm::vec3(0);
   rotation = glm::vec3(0);
@@ -30,15 +30,18 @@ glm::mat4 IceCamera::GetViewMatrix()
   return view;
 }
 
-glm::mat4 IceCamera::UpdateProjection(float _screenRatio, float _vertFov /*= 90.0f*/)
+glm::mat4 IceCamera::GetProjectionMatrix()
 {
-  m_vertFieldOfView = _vertFov;
-
-  projection = glm::perspective(glm::radians(m_vertFieldOfView), _screenRatio,
-                                m_minRenderDist, m_maxRenderDist);
-  projection[1][1] *= -1; // Flip the rendered y-axis
-
   return projection;
+}
+
+void IceCamera::SetProjection(float _screenRatio, float _vertFov /*= 90.0f*/)
+{
+  vertFieldOfView = _vertFov;
+
+  projection = glm::perspective(glm::radians(vertFieldOfView), _screenRatio,
+                                minRenderDist, maxRenderDist);
+  projection[1][1] *= -1; // Flip the rendered y-axis
 }
 
 glm::vec3 IceCamera::GetForward()

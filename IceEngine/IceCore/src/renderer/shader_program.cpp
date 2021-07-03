@@ -12,6 +12,7 @@ iceShaderProgram_t::iceShaderProgram_t(const char* _name, IcePipelineSettingFlag
   name = _name;
   pipelineSettings = _settings;
   pipeline = VK_NULL_HANDLE;
+  pipelineLayout = VK_NULL_HANDLE;
 
   //CreateDescriptorSetLayout(this);
 }
@@ -25,6 +26,12 @@ VkPipeline iceShaderProgram_t::GetPipeline()
     {
       shaders[i] = rContext.shaders[shaderIndices[i]];
     }
+
+    if (pipelineLayout == VK_NULL_HANDLE)
+    {
+      CreatePipelineLayout(*this);
+    }
+
     pipeline = CreatePipeline(shaders.data(), static_cast<u32>(shaders.size()), stages,
                               pipelineLayout, pipelineSettings);
   }
@@ -32,11 +39,27 @@ VkPipeline iceShaderProgram_t::GetPipeline()
   return pipeline;
 }
 
-void iceShaderProgram_t::Shutdown()
+void iceShaderProgram_t::DestroyRenderComponents()
 {
   vkDestroyPipeline(rContext.device, pipeline, rContext.allocator);
+  pipeline = VK_NULL_HANDLE;
   vkDestroyPipelineLayout(rContext.device, pipelineLayout, rContext.allocator);
+  pipelineLayout = VK_NULL_HANDLE;
+}
+
+void iceShaderProgram_t::Shutdown()
+{
+  if (pipeline != VK_NULL_HANDLE)
+  {
+    DestroyRenderComponents();
+  }
+
   vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
+
+  for (u8 s : shaderIndices)
+  {
+    vkDestroyShaderModule(rContext.device, rContext.shaders[s].module, rContext.allocator);
+  }
 }
 
 u32 GetShaderProgram(
@@ -54,6 +77,7 @@ u32 GetShaderProgram(
 
   u32 index = static_cast<u32>(rContext.shaderPrograms.size());
   CreateShaderProgram(_name, _stages, _texStrings, _settings);
+
   return index;
 }
 
@@ -84,7 +108,6 @@ void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
   iceShaderProgram_t program(_name, _settings);
   program.shaderIndices = indices;
   program.textureDirs = _texStrings;
-
   CreateDescriptorSetLayout(program);
   rContext.shaderPrograms.push_back(program);
 }
@@ -252,10 +275,10 @@ VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStag
                                        rContext.allocator, &tmpPipeline),
              "Failed to create graphics pipeline");
 
-  for (u32 i = 0; i < _shaderCount; i++)
-  {
-    vkDestroyShaderModule(rContext.device, _shaders[i].module, rContext.allocator);
-  }
+  //for (u32 i = 0; i < _shaderCount; i++)
+  //{
+  //  vkDestroyShaderModule(rContext.device, _shaders[i].module, rContext.allocator);
+  //}
 
   return tmpPipeline;
 }
@@ -379,8 +402,11 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
   ICE_ASSERT(vkCreateDescriptorSetLayout(rContext.device, &createInfo, rContext.allocator,
                                          &_program.descriptorSetLayout),
              "Failed to create descriptor set layout for %s", _program.name);
+}
 
-  VkPipelineLayoutCreateInfo layoutInfo {};
+void CreatePipelineLayout(iceShaderProgram_t& _program)
+{
+  VkPipelineLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   layoutInfo.setLayoutCount = 1;
   layoutInfo.pSetLayouts = &_program.descriptorSetLayout;
@@ -388,8 +414,8 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
   layoutInfo.pPushConstantRanges = nullptr;
 
   ICE_ASSERT(vkCreatePipelineLayout(rContext.device, &layoutInfo, rContext.allocator,
-                                    &_program.pipelineLayout),
-             "Failed to create pipeline layout for %s", _program.name);
+    &_program.pipelineLayout),
+    "Failed to create pipeline layout for %s", _program.name);
 }
 
 size_t PadBufferForGpu(size_t _original)

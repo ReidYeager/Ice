@@ -22,22 +22,6 @@ void IceRenderer::Shutdown()
   //  DestroyBuffer(i);
   //}
 
-  for (const auto& sp : shaderPrograms)
-  {
-    //sp.Shutdown();
-
-    for (const auto& idx : sp.shaderIndices)
-    {
-      backend->DestroyShaderModule(shaders[idx].module);
-    }
-    //if (sp.stages & Ice_Shader_Stage_Vert)
-    //  backend->DestroyShaderModule(shaders[sp.vertIndex].module);
-    //if (sp.stages & Ice_Shader_Stage_Frag)
-    //  backend->DestroyShaderModule(shaders[sp.fragIndex].module);
-    //if (sp.stages & Ice_Shader_Stage_Comp)
-    //  backend->DestroyShaderModule(shaders[sp.compIndex].module);
-  }
-
   delete(backend);
 
   IcePrint("Shutdown Renderer system");
@@ -55,7 +39,9 @@ void IceRenderer::RenderFrame(IceRenderPacket* _packet)
   backend->RenderFrame(_packet);
 }
 
-u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages)
+u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
+                                  std::vector<const char*> _texStrings,
+                                  IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
 {
   // Look for an existing shader matching the description
   u32 i = 0;
@@ -73,7 +59,8 @@ u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages
   i = static_cast<u32>(shaderPrograms.size());
 
   iceShaderProgram_t newShaderProgram(_name);
-  shaderPrograms.push_back(newShaderProgram);
+  CreateShaderProgram(_name, _stages, _texStrings, _settings);
+  backend->CreateDescriptorSet(rContext.shaderPrograms[i]);
 
   return i;
 }

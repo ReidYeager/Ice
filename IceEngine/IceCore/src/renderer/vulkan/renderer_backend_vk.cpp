@@ -23,12 +23,12 @@ IceRenderContext rContext;
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
 {
-  IcePrint("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
+  //IcePrint("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
 
-  rContext.renderExtent = { _data.u32[0], _data.u32[1] };
+  //rContext.renderExtent = { _data.u32[0], _data.u32[1] };
   RendererBackend* rb = static_cast<RendererBackend*>(_listener);
 
-  //rb->shouldResize = true;
+  rb->shouldResize = true;
 
   return true;
 }
@@ -101,7 +101,7 @@ RendererBackend::RendererBackend()
   ChoosePhysicalDevice();
   FillPhysicalDeviceInformation();
   CreateLogicalDevice();
-  CreateCommandPool(rContext.graphicsCommandPool, rContext.graphicsIdx);
+  CreateCommandPool(rContext.graphicsCommandPool, rContext.graphicsIdx, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
   CreateCommandPool(rContext.transientCommandPool, rContext.transferIdx);
 
   // TODO : Delete
@@ -117,15 +117,10 @@ RendererBackend::~RendererBackend()
 {
   vkDeviceWaitIdle(rContext.device);
 
-  for (iceShaderProgram_t& sp : rContext.shaderPrograms)
-  {
-    sp.Shutdown();
-  }
-
   // TODO : Delete
-  vertexBuffer->FreeBuffer();
-  indexBuffer->FreeBuffer();
-  mvpBuffer->FreeBuffer();
+  delete(vertexBuffer);
+  delete(indexBuffer);
+  delete(mvpBuffer);
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -139,6 +134,11 @@ RendererBackend::~RendererBackend()
   vkDestroyDescriptorPool(rContext.device, rContext.descriptorPool, rContext.allocator);
 
   DestroyComponents();
+
+  for (iceShaderProgram_t& sp : rContext.shaderPrograms)
+  {
+    sp.Shutdown();
+  }
 
   for (iceImage_t* i : iceImages)
   {
@@ -189,12 +189,17 @@ void RendererBackend::DestroyComponents()
   {
     vkDestroyFramebuffer(rContext.device, fb, rContext.allocator);
   }
+
   // Destroy depth image
   vkDestroyImageView(rContext.device, rContext.depthImage->view, rContext.allocator);
   vkDestroyImage(rContext.device, rContext.depthImage->image, rContext.allocator);
   vkFreeMemory(rContext.device, rContext.depthImage->memory, rContext.allocator);
   rContext.depthImage->image = VK_NULL_HANDLE;
 
+  for (auto& p : rContext.shaderPrograms)
+  {
+    p.DestroyRenderComponents();
+  }
   // Destroy renderpass
   vkDestroyRenderPass(rContext.device, rContext.renderPass, rContext.allocator);
   // Destroy swapchain
@@ -213,7 +218,11 @@ void RendererBackend::RecreateComponents()
   vkDeviceWaitIdle(rContext.device);
 
   DestroyComponents();
+  // Refresh device information
+  FillPhysicalDeviceInformation();
   CreateComponents();
+
+  RecordCommandBuffers();
 }
 
 void RendererBackend::RenderFrame(IceRenderPacket* _packet)
@@ -236,8 +245,18 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
   FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   u32 imageIndex;
-  vkAcquireNextImageKHR(rContext.device, rContext.swapchain, UINT64_MAX,
+  VkResult result =  vkAcquireNextImageKHR(rContext.device, rContext.swapchain, UINT64_MAX,
                         rContext.syncObjects.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    RecreateComponents();
+    return;
+  }
+  else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+  {
+    throw "Failed to acquire swapchain image";
+  }
 
   if (rContext.syncObjects.imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
   {
@@ -270,7 +289,17 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
   presentInfo.pSwapchains = &rContext.swapchain;
   presentInfo.pImageIndices = &imageIndex;
 
-  vkQueuePresentKHR(rContext.presentQueue, &presentInfo);
+  result = vkQueuePresentKHR(rContext.presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || shouldResize)
+  {
+    shouldResize = false;
+    RecreateComponents();
+  }
+  else if (result != VK_SUCCESS)
+  {
+    throw "Failed to present swapchain";
+  }
 
   rContext.syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
@@ -403,7 +432,6 @@ void RendererBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
 
 void RendererBackend::RecordCommandBuffers()
 {
-  CreateDescriptorSet(rContext.shaderPrograms[0]);
   iceShaderProgram_t* shaderProgram = nullptr;
 
   u32 commandCount = static_cast<u32>(rContext.commandBuffers.size());
@@ -849,7 +877,7 @@ void RendererBackend::CreateDescriptorPool()
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   poolSizes[0].descriptorCount = 3;
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = 6;
+  poolSizes[1].descriptorCount = 9;
 
   VkDescriptorPoolCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

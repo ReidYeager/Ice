@@ -18,6 +18,15 @@ void Application::Run()
   Shutdown();
 }
 
+bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
+{
+  Application* app = static_cast<Application*>(_listener);
+  float x = (float)_data.u32[0];
+  float y = (float)_data.u32[1];
+  app->cam.SetProjection((x / y));
+  return true;
+}
+
 void Application::Initialize()
 {
   IcePrint("ICE INIT =================================================");
@@ -33,10 +42,12 @@ void Application::Initialize()
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({0.0f, -90.0f, 0.0f});
 
+  EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
+
   //ChildInit();
 
   //Renderer.CreateMesh("Cube.obj");
-  u32 materialIndex = GetShaderProgram("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
+  u32 materialIndex = Renderer.GetShaderProgram("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
                                        { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
   //CreateObject();
 
@@ -46,7 +57,6 @@ void Application::Initialize()
 void Application::MainLoop()
 {
   IceRenderPacket renderPacket {};
-  renderPacket.projectionMatrix = cam.UpdateProjection((800.0f/600.0f));
 
   IcePrint("ICE LOOP =================================================");
   while (Platform.Tick())
@@ -73,6 +83,7 @@ void Application::MainLoop()
       cam.position -= glm::vec3(0.0f, 0.002f, 0.0f);
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
+    renderPacket.projectionMatrix = cam.GetProjectionMatrix();
 
     if (Input.IsKeyDown(Ice_Key_Escape))
     {

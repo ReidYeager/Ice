@@ -1,14 +1,12 @@
-\.git\COMMIT_EDITMSG
-	Line    16 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
 	Line    35 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \IceEngine\IceCore\src\core\application.h
-	Line    20 :--: // TODO : Delete
-	Line    44 :--: // TODO : Add input callbacks?
-	Line    46 :--: // TODO : Modify to fit a proper ECS system
-	Line    56 :--: // TODO : Add any game->engine API calls here
+	Line    21 :--: // TODO : Delete
+	Line    45 :--: // TODO : Add input callbacks?
+	Line    47 :--: // TODO : Modify to fit a proper ECS system
+	Line    57 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
@@ -49,9 +47,9 @@
 	Line   100 :--: // TODO : API CULL MARK
 	Line   102 :--: // TODO : API CULL MARK
 	Line   105 :--: // TODO : API CULL MARK?
-	Line   117 :--: // TODO : API CULL MARK
-	Line   121 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   132 :--: // TODO : Move to shader programs?
+	Line   108 :--: // TODO : Move to shader programs?
+	Line   120 :--: // TODO : API CULL MARK
+	Line   124 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
 	Line   137 :--: // TODO : API CULL MARK
 	Line   140 :--: // TODO : API CULL MARK
 	Line   144 :--: // TODO : API CULL MARK
@@ -62,18 +60,18 @@
 	Line   158 :--: // TODO : API CULL MARK
 	Line   162 :--: // TODO : API CULL MARK
 \IceEngine\IceCore\src\renderer\shader_program.cpp
-	Line   287 :--: // TODO : Move to a constant value library
-	Line   322 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   310 :--: // TODO : Move to a constant value library
+	Line   345 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\shader_program.h
 	Line     7 :--: // NOTE : Move to defines?
-	Line    79 :--: // TODO : Refactor and move to RenderBackend
+	Line    80 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
 	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
 	Line   106 :--: // TODO : Delete
-	Line   124 :--: // TODO : Delete
-	Line   314 :--: // TODO : Get shader bindings from its layout file
-	Line   457 :--: // TODO : Make this editable from the client
-	Line   673 :--: // TODO : Replace with clamp function calls
+	Line   119 :--: // TODO : Delete
+	Line   343 :--: // TODO : Get shader bindings from its layout file
+	Line   485 :--: // TODO : Make this editable from the client
+	Line   701 :--: // TODO : Replace with clamp function calls
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
