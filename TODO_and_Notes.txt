@@ -1,3 +1,5 @@
+\.git\COMMIT_EDITMSG
+	Line    23 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -38,27 +40,27 @@
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    18 :--: // TODO : Fix const char* directory being lost when texture vector expands
-	Line    33 :--: // TODO : Delete
-	Line    47 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line    89 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line    90 :--: // TODO : API CULL MARK
-	Line    95 :--: // TODO : API CULL MARK
-	Line    97 :--: // TODO : API CULL MARK
-	Line   100 :--: // TODO : API CULL MARK
-	Line   102 :--: // TODO : API CULL MARK
-	Line   105 :--: // TODO : API CULL MARK?
-	Line   108 :--: // TODO : Move to shader programs?
-	Line   120 :--: // TODO : API CULL MARK
-	Line   124 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   137 :--: // TODO : API CULL MARK
-	Line   140 :--: // TODO : API CULL MARK
-	Line   144 :--: // TODO : API CULL MARK
-	Line   149 :--: // TODO : Move to an image manager?
-	Line   150 :--: // TODO : API CULL MARK
-	Line   153 :--: // TODO : API CULL MARK
-	Line   156 :--: // TODO : API CULL MARK
-	Line   158 :--: // TODO : API CULL MARK
+	Line    35 :--: // TODO : Delete
+	Line   104 :--: // TODO : API CULL MARK
+	Line   107 :--: // TODO : API CULL MARK?
+	Line   113 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   128 :--: // TODO : API CULL MARK
+	Line   131 :--: // TODO : API CULL MARK
+	Line   140 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   148 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   149 :--: // TODO : API CULL MARK
+	Line   151 :--: // TODO : API CULL MARK
 	Line   162 :--: // TODO : API CULL MARK
+	Line   164 :--: // TODO : API CULL MARK
+	Line   168 :--: // TODO : API CULL MARK
+	Line   170 :--: // TODO : API CULL MARK
+	Line   177 :--: // TODO : Move to an image manager?
+	Line   178 :--: // TODO : API CULL MARK
+	Line   181 :--: // TODO : API CULL MARK
+	Line   184 :--: // TODO : API CULL MARK
+	Line   186 :--: // TODO : API CULL MARK
+	Line   191 :--: // TODO : API CULL MARK
+	Line   201 :--: // TODO : Move to shader programs?
 \IceEngine\IceCore\src\renderer\shader_program.cpp
 	Line   310 :--: // TODO : Move to a constant value library
 	Line   345 :--: // TODO : Implement a proper parser to extract shader bindings
@@ -67,11 +69,11 @@
 	Line    80 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
 	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line   106 :--: // TODO : Delete
-	Line   119 :--: // TODO : Delete
-	Line   343 :--: // TODO : Get shader bindings from its layout file
-	Line   485 :--: // TODO : Make this editable from the client
-	Line   701 :--: // TODO : Replace with clamp function calls
+	Line    48 :--: // TODO : Delete
+	Line    61 :--: // TODO : Delete
+	Line   108 :--: // TODO : Split into render call & presentation steps
+	Line   315 :--: // TODO : Make this editable from the client
+	Line   469 :--: // TODO : Replace with clamp function calls
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl

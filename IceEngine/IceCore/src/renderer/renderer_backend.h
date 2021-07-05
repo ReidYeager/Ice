@@ -28,6 +28,8 @@ struct IceRenderPacket
   glm::mat4 projectionMatrix;
 };
 
+bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);
+
 class RendererBackend
 {
 private:
@@ -43,11 +45,6 @@ private:
   IceBuffer* vertexBuffer;
   IceBuffer* indexBuffer;
   u32 indexCount = 0;
-
-  void CreateMesh(const char* _directory);
-  // TODO : Replace string with const char* -- text was lost when using char*'s
-  u32 GetTexture(std::string _directory);
-  u32 CreateTexture(std::string _directory);
 
 //=================================================================================================
 // VARIABLES
@@ -76,6 +73,19 @@ public:
   RendererBackend();
   // Destroys all components used for rendering & presentation
   ~RendererBackend();
+  void Initialize();
+  void Shutdown();
+
+  void RenderFrame(IceRenderPacket* _packet);
+  void RecordCommandBuffers();
+
+  //=================================================================================================
+// Rendering component management
+//=================================================================================================
+
+  // Calls CreateComponents
+  // Creates components that live through recreation
+  void InitializeComponents();
   // Creates components required to render images
   void CreateComponents();
   // Destroys rendering components
@@ -83,44 +93,23 @@ public:
   // Destroys and recreates rendering components
   void RecreateComponents();
 
-  void RenderFrame(IceRenderPacket* _packet);
-
-  // Creates a new iceShader
-  iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
-  // TODO : I don't like this. Find a better way to destroy shaders
-  // TODO : API CULL MARK
-  void DestroyShaderModule(VkShaderModule& _shader);
-
-  // Creates a buffer on the GPU and fills it with data
-  
-  // TODO : API CULL MARK
-  IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
-  // TODO : API CULL MARK
-  IceBuffer* CreateBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
-  void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
-  // TODO : API CULL MARK
-  void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
-  // TODO : API CULL MARK
-  void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
-
-  // TODO : API CULL MARK?
-  void RecordCommandBuffers();
-
-  // TODO : Move to shader programs?
-  void CreateDescriptorSet(iceShaderProgram_t& _shaderProgram);
-
 private:
-  // Calls CreateComponents
-  // Creates components that live through recreation
-  void InitializeComponents();
+//=================================================================================================
+// Static rendering components
+//=================================================================================================
 
-  void CreateInstance();
+  void InitializeAPI();
   void CreateLogicalDevice();
-  void ChoosePhysicalDevice();
-  void FillPhysicalDeviceInformation();
+  void CreateDescriptorPool();
+  void CreateSyncObjects();
   // TODO : API CULL MARK
   void CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
-                         VkCommandPoolCreateFlags _flags = 0);
+    VkCommandPoolCreateFlags _flags = 0);
+  // TODO : API CULL MARK?
+
+//=================================================================================================
+// Rendering components
+//=================================================================================================
 
   // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
   // Render components
@@ -128,24 +117,63 @@ private:
   void CreateRenderpass();
   void CreateDepthImage();
   void CreateFramebuffers();
-
-  void CreateDescriptorPool();
-  void CreateSyncObjects();
   void CreateCommandBuffers();
 
-  // ===== Helpers =====
+//=================================================================================================
+// GPU
+//=================================================================================================
+
+  void ChoosePhysicalDevice();
+  void FillPhysicalDeviceInformation();
   // Returns the first instance of a queue with the input flags
   // TODO : API CULL MARK
   u32 GetQueueIndex(std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags);
   // Returns the first instance of a presentation queue
   // TODO : API CULL MARK
   u32 GetPresentIndex(
-      const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
-  VkFormat FindDepthFormat();
+    const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
+
+//=================================================================================================
+// NON-API HELPERS
+//=================================================================================================
+
+  void CreateMesh(const char* _directory);
+  // TODO : Replace string with const char* -- text was lost when using char*'s
+  u32 GetTexture(std::string _directory);
+  u32 CreateTexture(std::string _directory);
+
+//=================================================================================================
+// HELPERS
+//=================================================================================================
+
+  // TODO : I don't like this. Find a better way to destroy shaders
+  // TODO : API CULL MARK
+  void DestroyShaderModule(VkShaderModule& _shader);
   // TODO : API CULL MARK
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
-                               VkImageTiling _tiling, VkFormatFeatureFlags _features);
+    VkImageTiling _tiling, VkFormatFeatureFlags _features);
+  VkFormat FindDepthFormat();
   u32 FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags);
+
+//=================================================================================================
+// BUFFERS
+//=================================================================================================
+
+  // Creates a buffer on the GPU and fills it with data
+  // TODO : API CULL MARK
+  IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  // TODO : API CULL MARK
+  IceBuffer* CreateBuffer(
+      VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
+  void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
+  // TODO : API CULL MARK
+  void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
+  // TODO : API CULL MARK
+  void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
+
+//=================================================================================================
+// IMAGES
+//=================================================================================================
 
   // TODO : Move to an image manager?
   // TODO : API CULL MARK
@@ -160,8 +188,19 @@ private:
   void TransitionImageLayout(
       VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
       VkPipelineStageFlagBits _shaderStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-  // TODO : API CULL MARK
+
+    // TODO : API CULL MARK
   void CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height);
+
+//=================================================================================================
+// SHADERS
+//=================================================================================================
+  // Creates a new iceShader
+  iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
+
+  public:
+  // TODO : Move to shader programs?
+  void CreateDescriptorSet(iceShaderProgram_t& _shaderProgram);
 
 };
 
