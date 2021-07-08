@@ -49,13 +49,7 @@ public:
 
   mesh_t CreateMesh(const char* _model);
 
-private:
-  //void Initialize();
-  //void Shutdown();
-
-  void CreateRenderer();
-  void CleanupRenderer();
-  void RecreateRenderer();
+  void Resize(u32 _width = 0, u32 _height = 0);
 
 };
 

@@ -47,6 +47,9 @@ struct IceRenderContext
 {
   VkAllocationCallbacks* allocator;
 
+  VkInstance instance;
+  VkSurfaceKHR surface;
+
   IcePhysicalDevice gpu;
   VkDevice device;
 
@@ -78,9 +81,6 @@ struct IceRenderContext
 
   std::vector<VkCommandBuffer> commandBuffers;
   VkDescriptorPool descriptorPool;
-
-  VkInstance instance;
-  VkSurfaceKHR surface;
 
   // Handles all setup for recording a commandBuffer to be executed once
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool& _pool)

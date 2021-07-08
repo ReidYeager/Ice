@@ -48,7 +48,6 @@ void RendererBackend::Initialize()
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
-  CreateMesh("Sphere.obj");
 
   InitializeComponents();
 
@@ -234,6 +233,11 @@ void RendererBackend::RecordCommandBuffers()
 
     ICE_ASSERT(vkEndCommandBuffer(rContext.commandBuffers[i]), "Failed to record command buffer");
   }
+}
+
+void RendererBackend::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
+{
+  shouldResize = true;
 }
 
 //=================================================================================================
@@ -839,7 +843,7 @@ u32 RendererBackend::GetPresentIndex(
 // NON-API HELPERS
 //=================================================================================================
 
-void RendererBackend::CreateMesh(const char* _directory)
+mesh_t RendererBackend::CreateMesh(const char* _directory)
 {
   mesh_t m = FileSystem::LoadMesh(_directory);
   vertexBuffer = CreateAndFillBuffer(
@@ -847,6 +851,7 @@ void RendererBackend::CreateMesh(const char* _directory)
   indexBuffer = CreateAndFillBuffer(
       m.indices.data(), sizeof(u32) * m.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
   indexCount = static_cast<u32>(m.indices.size());
+  return m;
 }
 
 u32 RendererBackend::GetTexture(std::string _directory)
@@ -907,7 +912,7 @@ bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEve
   //rContext.renderExtent = { _data.u32[0], _data.u32[1] };
   RendererBackend* rb = static_cast<RendererBackend*>(_listener);
 
-  rb->shouldResize = true;
+  rb->Resize(_data.u32[0], _data.u32[1]);
 
   return true;
 }

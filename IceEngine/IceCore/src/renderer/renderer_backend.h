@@ -50,8 +50,6 @@ private:
 // VARIABLES
 //=================================================================================================
 private:
-  //IceRenderContext rContext;
-
   std::vector<const char*> deviceLayers =
       { "VK_LAYER_KHRONOS_validation" };
   std::vector<const char*> instanceExtensions = 
@@ -62,7 +60,6 @@ private:
   std::vector<iceImage_t*> iceImages;
   std::vector<iceTexture_t*> iceTextures;
 
-public:
   bool shouldResize = false;
 
 //=================================================================================================
@@ -78,8 +75,10 @@ public:
 
   void RenderFrame(IceRenderPacket* _packet);
   void RecordCommandBuffers();
+  void Resize(u32 _width = 0, u32 _height = 0);
 
-  //=================================================================================================
+private:
+//=================================================================================================
 // Rendering component management
 //=================================================================================================
 
@@ -93,7 +92,6 @@ public:
   // Destroys and recreates rendering components
   void RecreateComponents();
 
-private:
 //=================================================================================================
 // Static rendering components
 //=================================================================================================
@@ -137,7 +135,9 @@ private:
 // NON-API HELPERS
 //=================================================================================================
 
-  void CreateMesh(const char* _directory);
+public:
+  mesh_t CreateMesh(const char* _directory);
+private:
   // TODO : Replace string with const char* -- text was lost when using char*'s
   u32 GetTexture(std::string _directory);
   u32 CreateTexture(std::string _directory);

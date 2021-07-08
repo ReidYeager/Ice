@@ -12,6 +12,7 @@ void IceRenderer::Initialize()
 {
   // Get window surface
   backend = new RendererBackend();
+  //backend->Initialize();
   IcePrint("Initialized Renderer system");
 }
 
@@ -22,8 +23,8 @@ void IceRenderer::Shutdown()
   //  DestroyBuffer(i);
   //}
 
+  //backend->Shutdown();
   delete(backend);
-
   IcePrint("Shutdown Renderer system");
 }
 
@@ -67,21 +68,11 @@ u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages
 
 mesh_t IceRenderer::CreateMesh(const char* _model)
 {
-  mesh_t m = FileSystem::LoadMesh(_model);
+  mesh_t m = backend->CreateMesh(_model);
   return m;
 }
 
-void IceRenderer::CreateRenderer()
+void IceRenderer::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
 {
-  backend->CreateComponents();
-}
-
-void IceRenderer::CleanupRenderer()
-{
-  backend->DestroyComponents();
-}
-
-void IceRenderer::RecreateRenderer()
-{
-  backend->RecreateComponents();
+  backend->Resize();
 }
