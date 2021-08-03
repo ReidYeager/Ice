@@ -47,7 +47,7 @@ void Application::Initialize()
   //ChildInit();
 
   Renderer.CreateMesh("Sphere.obj");
-  u32 materialIndex = Renderer.GetShaderProgram("test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
+  u32 materialIndex = Renderer.GetShaderProgram(Renderer.GetContext(), "test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
                                        { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
   //CreateObject();
 

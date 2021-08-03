@@ -13,67 +13,72 @@
 	Line    68 :--: // TODO : Replace with pointer to custom array, zero the state on init
 \IceEngine\IceCore\src\core\input.h
 	Line     7 :--: // TODO : Implement the rest of the input codes (Use Windows' codes)
-\IceEngine\IceCore\src\logger.h
-	Line    65 :--: // TODO : Move out of here
 \IceEngine\IceCore\src\platform\platform.h
 	Line    54 :--: // TODO : Find a way to create the surface without including Vulkan here
 \IceEngine\IceCore\src\platform\platform_windows.cpp
 	Line    21 :--: // TODO : Add controller support
 	Line    63 :--: // TODO : Add raw input support
 \IceEngine\IceCore\src\profiler.h
-	Line     6 :--: // TODO : Add profiling tools
+	Line     5 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\buffer.cpp
-	Line    33 :--: // TODO : Replace with a GPU memory allocator call
+	Line    34 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\buffer.h
 	Line    10 :--: // NOTE : I really don't like this implementation; especially as it stands now.
 	Line    12 :--: // TODO : Make API agnostic
 	Line    15 :--: // TODO : Add alignment to better utilize GPU
-	Line    40 :--: // TODO : Move to vkMemory allocator
-	Line    45 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
+	Line    43 :--: // TODO : Move to vkMemory allocator
+	Line    48 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
-	Line     6 :--: // TODO : Remove all API types & references
+	Line     7 :--: // TODO : Remove all API types & references
+	Line    11 :--: // TODO : Add API selection parameter
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    18 :--: // TODO : Fix const char* directory being lost when texture vector expands
-	Line    35 :--: // TODO : Delete
-	Line   102 :--: // TODO : API CULL MARK
-	Line   105 :--: // TODO : API CULL MARK?
-	Line   111 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   126 :--: // TODO : API CULL MARK
+	Line    39 :--: // NOTE : Virtual functions very bad for these -- WILL affect performance when called every frame
+	Line    40 :--: // TODO : Find a way to override without using virtual functions
+	Line    46 :--: // TODO : DELETE
+\IceEngine\IceCore\src\renderer\shader_program.cpp
+	Line   326 :--: // TODO : Move to a constant value library
+	Line   361 :--: // TODO : Implement a proper parser to extract shader bindings
+\IceEngine\IceCore\src\renderer\shader_program.h
+	Line     8 :--: // NOTE : Move to defines?
+	Line    83 :--: // TODO : Refactor and move to RenderBackend
+\IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
+	Line    18 :--: // TODO : Replace with custom data type -- only used in CreateShader
+	Line    38 :--: // TODO : Delete
+	Line    50 :--: // TODO : Delete
+	Line    96 :--: // TODO : Split into render call & presentation steps
+	Line   304 :--: // TODO : Make this editable from the client
+	Line   458 :--: // TODO : Replace with clamp function calls
+\IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
+	Line    11 :--: // TODO : Delete
+	Line    80 :--: // TODO : API CULL MARK
+	Line    83 :--: // TODO : API CULL MARK?
+	Line    89 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   104 :--: // TODO : API CULL MARK
+	Line   107 :--: // TODO : API CULL MARK
+	Line   118 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   126 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   127 :--: // TODO : API CULL MARK
 	Line   129 :--: // TODO : API CULL MARK
-	Line   140 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   148 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   149 :--: // TODO : API CULL MARK
-	Line   151 :--: // TODO : API CULL MARK
+	Line   140 :--: // TODO : API CULL MARK
+	Line   142 :--: // TODO : API CULL MARK
+	Line   146 :--: // TODO : API CULL MARK
+	Line   148 :--: // TODO : API CULL MARK
+	Line   155 :--: // TODO : Move to an image manager?
+	Line   156 :--: // TODO : API CULL MARK
+	Line   159 :--: // TODO : API CULL MARK
 	Line   162 :--: // TODO : API CULL MARK
 	Line   164 :--: // TODO : API CULL MARK
-	Line   168 :--: // TODO : API CULL MARK
-	Line   170 :--: // TODO : API CULL MARK
-	Line   177 :--: // TODO : Move to an image manager?
-	Line   178 :--: // TODO : API CULL MARK
-	Line   181 :--: // TODO : API CULL MARK
-	Line   184 :--: // TODO : API CULL MARK
-	Line   186 :--: // TODO : API CULL MARK
-	Line   191 :--: // TODO : API CULL MARK
-	Line   201 :--: // TODO : Move to shader programs?
-\IceEngine\IceCore\src\renderer\shader_program.cpp
-	Line   310 :--: // TODO : Move to a constant value library
-	Line   345 :--: // TODO : Implement a proper parser to extract shader bindings
-\IceEngine\IceCore\src\renderer\shader_program.h
-	Line     7 :--: // NOTE : Move to defines?
-	Line    80 :--: // TODO : Refactor and move to RenderBackend
-\IceEngine\IceCore\src\renderer\vulkan\renderer_backend_vk.cpp
-	Line     8 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    48 :--: // TODO : Delete
-	Line    60 :--: // TODO : Delete
-	Line   107 :--: // TODO : Split into render call & presentation steps
-	Line   319 :--: // TODO : Make this editable from the client
-	Line   473 :--: // TODO : Replace with clamp function calls
+	Line   169 :--: // TODO : API CULL MARK
+	Line   179 :--: // TODO : Move to shader programs?
+	Line   182 :--: // TODO : DELETE
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
+	Line    52 :--: 
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
 	Line    51 :--: /// TODO: Fixme!
 \IceEngine\libraries\include\glm\simd\common.h

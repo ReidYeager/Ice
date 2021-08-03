@@ -3,48 +3,38 @@
 
 #if defined(ICE_VULKAN)
 
+#include "logger.h"
+#include "renderer/vulkan/vulkan_backend.h"
+#include "renderer/vulkan/vulkan_context.h"
+#include "renderer/buffer.h"
+#include "renderer/shader_program.h"
+#include "renderer/mesh.h"
+#include "renderer/buffer.h"
+#include "platform/platform.h"
+#include "platform/file_system.h"
+
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 #include <set>
 // TODO : Replace with custom data type -- only used in CreateShader
 #include <string>
 
-#include "logger.h"
-#include "platform/platform.h"
-#include "platform/file_system.h"
-#include "renderer/renderer_backend.h"
-#include "renderer/backend_context.h"
-#include "renderer/buffer.h"
-#include "renderer/shader_program.h"
-#include "renderer/mesh.h"
-#include "renderer/buffer.h"
-
-IceRenderContext rContext;
-
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);
 
-RendererBackend::RendererBackend()
+void VulkanBackend::Initialize()
 {
-  Initialize();
-}
+  rContext = new IceRenderContext();
 
-RendererBackend::~RendererBackend()
-{
-  Shutdown();
-}
-
-void RendererBackend::Initialize()
-{
   EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
 
   InitializeAPI();
-  rContext.surface = Platform.CreateSurface(&rContext.instance);
+  rContext->surface = Platform.CreateSurface(&rContext->instance);
   ChoosePhysicalDevice();
   FillPhysicalDeviceInformation();
   CreateLogicalDevice();
-  CreateCommandPool(rContext.graphicsCommandPool, rContext.graphicsIdx,
+  CreateCommandPool(rContext->graphicsCommandPool, rContext->graphicsIdx,
                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-  CreateCommandPool(rContext.transientCommandPool, rContext.transferIdx);
+  CreateCommandPool(rContext->transientCommandPool, rContext->transferIdx);
 
   // TODO : Delete
   mvp.model = glm::mat4(1);
@@ -54,9 +44,9 @@ void RendererBackend::Initialize()
   //RecordCommandBuffers();
 }
 
-void RendererBackend::Shutdown()
+void VulkanBackend::Shutdown()
 {
-  vkDeviceWaitIdle(rContext.device);
+  vkDeviceWaitIdle(rContext->device);
 
   // TODO : Delete
   delete(vertexBuffer);
@@ -65,30 +55,27 @@ void RendererBackend::Shutdown()
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    vkDestroySemaphore(rContext.device, rContext.syncObjects.imageAvailableSemaphores[i],
-      rContext.allocator);
-    vkDestroySemaphore(rContext.device, rContext.syncObjects.renderCompleteSemaphores[i],
-      rContext.allocator);
-    vkDestroyFence(rContext.device, rContext.syncObjects.flightFences[i], rContext.allocator);
+    vkDestroySemaphore(rContext->device, rContext->syncObjects.imageAvailableSemaphores[i],
+      rContext->allocator);
+    vkDestroySemaphore(rContext->device, rContext->syncObjects.renderCompleteSemaphores[i],
+      rContext->allocator);
+    vkDestroyFence(rContext->device, rContext->syncObjects.flightFences[i], rContext->allocator);
   }
 
-  vkDestroyDescriptorPool(rContext.device, rContext.descriptorPool, rContext.allocator);
+  vkDestroyDescriptorPool(rContext->device, rContext->descriptorPool, rContext->allocator);
 
   DestroyComponents();
 
-  for (iceShaderProgram_t& sp : rContext.shaderPrograms)
-  {
-    sp.Shutdown();
-  }
+  ShadersShutdown(rContext);
 
   for (iceImage_t* i : iceImages)
   {
     if (i->image != VK_NULL_HANDLE)
     {
-      vkDestroyImageView(rContext.device, i->view, rContext.allocator);
-      vkDestroyImage(rContext.device, i->image, rContext.allocator);
-      vkFreeMemory(rContext.device, i->memory, rContext.allocator);
-      vkDestroySampler(rContext.device, i->sampler, rContext.allocator);
+      vkDestroyImageView(rContext->device, i->view, rContext->allocator);
+      vkDestroyImage(rContext->device, i->image, rContext->allocator);
+      vkFreeMemory(rContext->device, i->memory, rContext->allocator);
+      vkDestroySampler(rContext->device, i->sampler, rContext->allocator);
       i->image = VK_NULL_HANDLE;
     }
     delete(i);
@@ -98,15 +85,17 @@ void RendererBackend::Shutdown()
     delete(t);
   }
 
-  vkDestroyCommandPool(rContext.device, rContext.transientCommandPool, rContext.allocator);
-  vkDestroyCommandPool(rContext.device, rContext.graphicsCommandPool, rContext.allocator);
-  vkDestroyDevice(rContext.device, rContext.allocator);
-  vkDestroySurfaceKHR(rContext.instance, rContext.surface, rContext.allocator);
-  vkDestroyInstance(rContext.instance, rContext.allocator);
+  vkDestroyCommandPool(rContext->device, rContext->transientCommandPool, rContext->allocator);
+  vkDestroyCommandPool(rContext->device, rContext->graphicsCommandPool, rContext->allocator);
+  vkDestroyDevice(rContext->device, rContext->allocator);
+  vkDestroySurfaceKHR(rContext->instance, rContext->surface, rContext->allocator);
+  vkDestroyInstance(rContext->instance, rContext->allocator);
+
+  delete(rContext);
 }
 
 // TODO : Split into render call & presentation steps
-void RendererBackend::RenderFrame(IceRenderPacket* _packet)
+void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
 {
   if (shouldResize)
   {
@@ -114,8 +103,8 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
     shouldResize = false;
   }
 
-  u32& currentFrame = rContext.syncObjects.currentFrame;
-  vkWaitForFences(rContext.device, 1, &rContext.syncObjects.flightFences[currentFrame],
+  u32& currentFrame = rContext->syncObjects.currentFrame;
+  vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightFences[currentFrame],
     VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
@@ -126,8 +115,8 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
   FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   u32 imageIndex;
-  VkResult result = vkAcquireNextImageKHR(rContext.device, rContext.swapchain, UINT64_MAX,
-    rContext.syncObjects.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+  VkResult result = vkAcquireNextImageKHR(rContext->device, rContext->swapchain, UINT64_MAX,
+    rContext->syncObjects.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
@@ -139,40 +128,40 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
     throw "Failed to acquire swapchain image";
   }
 
-  if (rContext.syncObjects.imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
+  if (rContext->syncObjects.imageIsInFlightFences[imageIndex] != VK_NULL_HANDLE)
   {
-    vkWaitForFences(rContext.device, 1, &rContext.syncObjects.imageIsInFlightFences[imageIndex],
+    vkWaitForFences(rContext->device, 1, &rContext->syncObjects.imageIsInFlightFences[imageIndex],
       VK_TRUE, UINT64_MAX);
   }
-  rContext.syncObjects.imageIsInFlightFences[imageIndex] = 
-      rContext.syncObjects.flightFences[currentFrame];
+  rContext->syncObjects.imageIsInFlightFences[imageIndex] = 
+      rContext->syncObjects.flightFences[currentFrame];
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
   VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &rContext.syncObjects.imageAvailableSemaphores[currentFrame];
+  submitInfo.pWaitSemaphores = &rContext->syncObjects.imageAvailableSemaphores[currentFrame];
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &rContext.commandBuffers[imageIndex];
+  submitInfo.pCommandBuffers = &rContext->commandBuffers[imageIndex];
   submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &rContext.syncObjects.renderCompleteSemaphores[currentFrame];
+  submitInfo.pSignalSemaphores = &rContext->syncObjects.renderCompleteSemaphores[currentFrame];
 
-  vkResetFences(rContext.device, 1, &rContext.syncObjects.flightFences[currentFrame]);
-  ICE_ASSERT(vkQueueSubmit(rContext.graphicsQueue, 1, &submitInfo,
-                           rContext.syncObjects.flightFences[currentFrame]),
+  vkResetFences(rContext->device, 1, &rContext->syncObjects.flightFences[currentFrame]);
+  IVK_ASSERT(vkQueueSubmit(rContext->graphicsQueue, 1, &submitInfo,
+                           rContext->syncObjects.flightFences[currentFrame]),
     "Failed to submit draw command");
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &rContext.syncObjects.renderCompleteSemaphores[currentFrame];
+  presentInfo.pWaitSemaphores = &rContext->syncObjects.renderCompleteSemaphores[currentFrame];
   presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &rContext.swapchain;
+  presentInfo.pSwapchains = &rContext->swapchain;
   presentInfo.pImageIndices = &imageIndex;
 
-  result = vkQueuePresentKHR(rContext.presentQueue, &presentInfo);
+  result = vkQueuePresentKHR(rContext->presentQueue, &presentInfo);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || shouldResize)
   {
@@ -184,14 +173,14 @@ void RendererBackend::RenderFrame(IceRenderPacket* _packet)
     throw "Failed to present swapchain";
   }
 
-  rContext.syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
+  rContext->syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
-void RendererBackend::RecordCommandBuffers()
+void VulkanBackend::RecordCommandBuffers()
 {
   iceShaderProgram_t* shaderProgram = nullptr;
 
-  u32 commandCount = static_cast<u32>(rContext.commandBuffers.size());
+  u32 commandCount = static_cast<u32>(rContext->commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -201,41 +190,41 @@ void RendererBackend::RecordCommandBuffers()
 
   VkRenderPassBeginInfo rpBeginInfo{};
   rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  rpBeginInfo.renderPass = rContext.renderPass;
+  rpBeginInfo.renderPass = rContext->renderPass;
   rpBeginInfo.clearValueCount = 2;
   rpBeginInfo.pClearValues = clearValues;
-  rpBeginInfo.renderArea.extent = rContext.renderExtent;
+  rpBeginInfo.renderArea.extent = rContext->renderExtent;
   rpBeginInfo.renderArea.offset = { 0, 0 };
 
   VkDeviceSize offset[] = { 0 };
 
-  shaderProgram = &rContext.shaderPrograms[0];
+  //shaderProgram = &rContext->shaderPrograms[0];
+  shaderProgram = GetShaderProgram(0);
   for (u32 i = 0; i < commandCount; i++)
   {
-    rpBeginInfo.framebuffer = rContext.frameBuffers[i];
+    rpBeginInfo.framebuffer = rContext->frameBuffers[i];
 
-    ICE_ASSERT(vkBeginCommandBuffer(rContext.commandBuffers[i], &beginInfo),
+    IVK_ASSERT(vkBeginCommandBuffer(rContext->commandBuffers[i], &beginInfo),
       "Failed to being command buffer");
 
-    vkCmdBeginRenderPass(rContext.commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(rContext.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-      shaderProgram->GetPipeline());
-    vkCmdBindDescriptorSets(rContext.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+    vkCmdBeginRenderPass(rContext->commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(rContext->commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+      shaderProgram->GetPipeline(rContext));
+    vkCmdBindDescriptorSets(rContext->commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
       shaderProgram->pipelineLayout,
       0, 1, &shaderProgram->descriptorSet, 0, nullptr);
-    vkCmdBindVertexBuffers(rContext.commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
-    vkCmdBindIndexBuffer(rContext.commandBuffers[i], indexBuffer->GetBuffer(), 0,
+    vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
+    vkCmdBindIndexBuffer(rContext->commandBuffers[i], indexBuffer->GetBuffer(), 0,
       VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(rContext.commandBuffers[i], indexCount, 1, 0, 0, 0);
-    //vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+    vkCmdDrawIndexed(rContext->commandBuffers[i], indexCount, 1, 0, 0, 0);
 
-    vkCmdEndRenderPass(rContext.commandBuffers[i]);
+    vkCmdEndRenderPass(rContext->commandBuffers[i]);
 
-    ICE_ASSERT(vkEndCommandBuffer(rContext.commandBuffers[i]), "Failed to record command buffer");
+    IVK_ASSERT(vkEndCommandBuffer(rContext->commandBuffers[i]), "Failed to record command buffer");
   }
 }
 
-void RendererBackend::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
+void VulkanBackend::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
 {
   shouldResize = true;
 }
@@ -244,7 +233,7 @@ void RendererBackend::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
 // Rendering component management
 //=================================================================================================
 
-void RendererBackend::InitializeComponents()
+void VulkanBackend::InitializeComponents()
 {
   CreateComponents();
 
@@ -253,7 +242,7 @@ void RendererBackend::InitializeComponents()
   CreateCommandBuffers();
 }
 
-void RendererBackend::CreateComponents()
+void VulkanBackend::CreateComponents()
 {
   CreateSwapchain();
   CreateRenderpass();
@@ -262,40 +251,36 @@ void RendererBackend::CreateComponents()
   CreateFramebuffers();
 }
 
-void RendererBackend::DestroyComponents()
+void VulkanBackend::DestroyComponents()
 {
   // Destroy framebuffers
-  for (const auto& fb : rContext.frameBuffers)
+  for (const auto& fb : rContext->frameBuffers)
   {
-    vkDestroyFramebuffer(rContext.device, fb, rContext.allocator);
+    vkDestroyFramebuffer(rContext->device, fb, rContext->allocator);
   }
 
   // Destroy depth image
-  vkDestroyImageView(rContext.device, rContext.depthImage->view, rContext.allocator);
-  vkDestroyImage(rContext.device, rContext.depthImage->image, rContext.allocator);
-  vkFreeMemory(rContext.device, rContext.depthImage->memory, rContext.allocator);
-  rContext.depthImage->image = VK_NULL_HANDLE;
+  vkDestroyImageView(rContext->device, rContext->depthImage->view, rContext->allocator);
+  vkDestroyImage(rContext->device, rContext->depthImage->image, rContext->allocator);
+  vkFreeMemory(rContext->device, rContext->depthImage->memory, rContext->allocator);
+  rContext->depthImage->image = VK_NULL_HANDLE;
 
-  for (auto& p : rContext.shaderPrograms)
-  {
-    p.DestroyRenderComponents();
-  }
   // Destroy renderpass
-  vkDestroyRenderPass(rContext.device, rContext.renderPass, rContext.allocator);
+  vkDestroyRenderPass(rContext->device, rContext->renderPass, rContext->allocator);
   // Destroy swapchain
-  for (const auto& view : rContext.swapchainImageViews)
+  for (const auto& view : rContext->swapchainImageViews)
   {
-    vkDestroyImageView(rContext.device, view, rContext.allocator);
+    vkDestroyImageView(rContext->device, view, rContext->allocator);
   }
 
   // Implicitly destroys swapchainImages
-  vkDestroySwapchainKHR(rContext.device, rContext.swapchain, rContext.allocator);
+  vkDestroySwapchainKHR(rContext->device, rContext->swapchain, rContext->allocator);
 }
 
-void RendererBackend::RecreateComponents()
+void VulkanBackend::RecreateComponents()
 {
   // Wait for all frames to complete
-  vkDeviceWaitIdle(rContext.device);
+  vkDeviceWaitIdle(rContext->device);
 
   DestroyComponents();
   // Refresh device information
@@ -309,7 +294,7 @@ void RendererBackend::RecreateComponents()
 // Static rendering components
 //=================================================================================================
 
-void RendererBackend::InitializeAPI()
+void VulkanBackend::InitializeAPI()
 {
   // Basic application metadata
   VkApplicationInfo appInfo{};
@@ -330,20 +315,20 @@ void RendererBackend::InitializeAPI()
   createInfo.enabledLayerCount = (u32)deviceLayers.size();
   createInfo.ppEnabledLayerNames = deviceLayers.data();
 
-  ICE_ASSERT(vkCreateInstance(&createInfo, rContext.allocator, &rContext.instance),
+  IVK_ASSERT(vkCreateInstance(&createInfo, rContext->allocator, &rContext->instance),
     "Failed to create instance");
 }
 
-void RendererBackend::CreateLogicalDevice()
+void VulkanBackend::CreateLogicalDevice()
 {
   IcePrint("Graphics : %u\nPresent : %u\nTransfer : %u\n",
-    rContext.graphicsIdx, rContext.presentIdx, rContext.transferIdx);
+    rContext->graphicsIdx, rContext->presentIdx, rContext->transferIdx);
 
   VkPhysicalDeviceFeatures enabledFeatures{};
   enabledFeatures.samplerAnisotropy = VK_TRUE;
 
   u32 queueCount = 3;
-  u32 queueIndices[3] = { rContext.graphicsIdx, rContext.presentIdx, rContext.transferIdx };
+  u32 queueIndices[3] = { rContext->graphicsIdx, rContext->presentIdx, rContext->transferIdx };
   const float priority = 1.0f;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
   for (u32 i = 0; i < queueCount; i++)
@@ -364,16 +349,16 @@ void RendererBackend::CreateLogicalDevice()
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-  ICE_ASSERT(vkCreateDevice(rContext.gpu.device, &createInfo,
-                            rContext.allocator, &rContext.device),
+  IVK_ASSERT(vkCreateDevice(rContext->gpu.device, &createInfo,
+                            rContext->allocator, &rContext->device),
     "Failed to create vkDevice");
 
-  vkGetDeviceQueue(rContext.device, rContext.graphicsIdx, 0, &rContext.graphicsQueue);
-  vkGetDeviceQueue(rContext.device, rContext.presentIdx, 0, &rContext.presentQueue);
-  vkGetDeviceQueue(rContext.device, rContext.transferIdx, 0, &rContext.transferQueue);
+  vkGetDeviceQueue(rContext->device, rContext->graphicsIdx, 0, &rContext->graphicsQueue);
+  vkGetDeviceQueue(rContext->device, rContext->presentIdx, 0, &rContext->presentQueue);
+  vkGetDeviceQueue(rContext->device, rContext->transferIdx, 0, &rContext->transferQueue);
 }
 
-void RendererBackend::CreateDescriptorPool()
+void VulkanBackend::CreateDescriptorPool()
 {
   VkDescriptorPoolSize poolSizes[2] = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -387,18 +372,18 @@ void RendererBackend::CreateDescriptorPool()
   createInfo.pPoolSizes = poolSizes;
   createInfo.maxSets = 3;
 
-  ICE_ASSERT(vkCreateDescriptorPool(rContext.device, &createInfo,
-                                    rContext.allocator, &rContext.descriptorPool),
+  IVK_ASSERT(vkCreateDescriptorPool(rContext->device, &createInfo,
+                                    rContext->allocator, &rContext->descriptorPool),
     "Failed to create descriptor pool");
 }
 
-void RendererBackend::CreateSyncObjects()
+void VulkanBackend::CreateSyncObjects()
 {
-  rContext.syncObjects.imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
-  rContext.syncObjects.renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
-  rContext.syncObjects.flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
-  rContext.syncObjects.imageIsInFlightFences.resize(
-      rContext.swapchainImages.size(), VK_NULL_HANDLE);
+  rContext->syncObjects.imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext->syncObjects.renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext->syncObjects.flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext->syncObjects.imageIsInFlightFences.resize(
+      rContext->swapchainImages.size(), VK_NULL_HANDLE);
 
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -409,24 +394,24 @@ void RendererBackend::CreateSyncObjects()
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    ICE_ASSERT(vkCreateFence(rContext.device, &fenceInfo, rContext.allocator,
-                             &rContext.syncObjects.flightFences[i]),
+    IVK_ASSERT(vkCreateFence(rContext->device, &fenceInfo, rContext->allocator,
+                             &rContext->syncObjects.flightFences[i]),
       "Failed to create fence");
-    ICE_ASSERT(vkCreateSemaphore(rContext.device, &semaphoreInfo, rContext.allocator,
-      &rContext.syncObjects.imageAvailableSemaphores[i]), "Failed to create image semaphore");
-    ICE_ASSERT(vkCreateSemaphore(rContext.device, &semaphoreInfo, rContext.allocator,
-      &rContext.syncObjects.renderCompleteSemaphores[i]), "Failed to create render semaphore");
+    IVK_ASSERT(vkCreateSemaphore(rContext->device, &semaphoreInfo, rContext->allocator,
+      &rContext->syncObjects.imageAvailableSemaphores[i]), "Failed to create image semaphore");
+    IVK_ASSERT(vkCreateSemaphore(rContext->device, &semaphoreInfo, rContext->allocator,
+      &rContext->syncObjects.renderCompleteSemaphores[i]), "Failed to create render semaphore");
   }
 }
 
-void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
+void VulkanBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
   VkCommandPoolCreateFlags _flags /*= 0*/)
 {
   VkCommandPoolCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.queueFamilyIndex = _queueIndex;
   createInfo.flags = _flags;
-  ICE_ASSERT(vkCreateCommandPool(rContext.device, &createInfo, rContext.allocator, &_pool),
+  IVK_ASSERT(vkCreateCommandPool(rContext->device, &createInfo, rContext->allocator, &_pool),
     "Failed to create command pool for queue family %u", _queueIndex);
 }
 
@@ -434,11 +419,11 @@ void RendererBackend::CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
 // Rendering components
 //=================================================================================================
 
-void RendererBackend::CreateSwapchain()
+void VulkanBackend::CreateSwapchain()
 {
   // Find the best format
-  VkSurfaceFormatKHR formatInfo = rContext.gpu.surfaceFormats[0];
-  for (const auto& sFormat : rContext.gpu.surfaceFormats)
+  VkSurfaceFormatKHR formatInfo = rContext->gpu.surfaceFormats[0];
+  for (const auto& sFormat : rContext->gpu.surfaceFormats)
   {
     if (sFormat.format == VK_FORMAT_R32G32B32A32_SFLOAT
         && sFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT)
@@ -450,7 +435,7 @@ void RendererBackend::CreateSwapchain()
 
   // Find the best present mode
   VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // FIFO guaranteed
-  for (const auto& pMode : rContext.gpu.presentModes)
+  for (const auto& pMode : rContext->gpu.presentModes)
   {
     if (pMode == VK_PRESENT_MODE_MAILBOX_KHR)
     {
@@ -460,7 +445,7 @@ void RendererBackend::CreateSwapchain()
   }
 
   // Get the device's extent
-  VkSurfaceCapabilitiesKHR& capabilities = rContext.gpu.surfaceCapabilities;
+  VkSurfaceCapabilitiesKHR& capabilities = rContext->gpu.surfaceCapabilities;
   VkExtent2D extent;
   if (capabilities.currentExtent.width != UINT32_MAX)
   {
@@ -505,7 +490,7 @@ void RendererBackend::CreateSwapchain()
 
   VkSwapchainCreateInfoKHR createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = rContext.surface;
+  createInfo.surface = rContext->surface;
   createInfo.clipped = VK_TRUE;
   createInfo.imageArrayLayers = 1;
   createInfo.imageFormat = formatInfo.format;
@@ -516,9 +501,9 @@ void RendererBackend::CreateSwapchain()
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   createInfo.presentMode = presentMode;
-  if (rContext.graphicsIdx != rContext.presentIdx)
+  if (rContext->graphicsIdx != rContext->presentIdx)
   {
-    u32 sharedIndices[] = {rContext.graphicsIdx, rContext.presentIdx};
+    u32 sharedIndices[] = {rContext->graphicsIdx, rContext->presentIdx};
     createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
     createInfo.queueFamilyIndexCount = 2;
     createInfo.pQueueFamilyIndices = sharedIndices;
@@ -528,36 +513,36 @@ void RendererBackend::CreateSwapchain()
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
 
-  ICE_ASSERT(vkCreateSwapchainKHR(rContext.device, &createInfo,
-                                  rContext.allocator, &rContext.swapchain),
+  IVK_ASSERT(vkCreateSwapchainKHR(rContext->device, &createInfo,
+                                  rContext->allocator, &rContext->swapchain),
              "Failed to create swapchain");
 
-  rContext.swapchainFormat = formatInfo.format;
-  rContext.renderExtent = extent;
+  rContext->swapchainFormat = formatInfo.format;
+  rContext->renderExtent = extent;
 
-  vkGetSwapchainImagesKHR(rContext.device, rContext.swapchain, &imageCount, nullptr);
-  rContext.swapchainImages.resize(imageCount);
-  vkGetSwapchainImagesKHR(rContext.device, rContext.swapchain, &imageCount,
-                          rContext.swapchainImages.data());
+  vkGetSwapchainImagesKHR(rContext->device, rContext->swapchain, &imageCount, nullptr);
+  rContext->swapchainImages.resize(imageCount);
+  vkGetSwapchainImagesKHR(rContext->device, rContext->swapchain, &imageCount,
+                          rContext->swapchainImages.data());
 
-  rContext.swapchainImageViews.resize(imageCount);
+  rContext->swapchainImageViews.resize(imageCount);
   for (u32 i = 0; i < imageCount; i++)
   {
-    rContext.swapchainImageViews[i] =
-        CreateImageView(rContext.swapchainFormat, VK_IMAGE_ASPECT_COLOR_BIT,
-                        rContext.swapchainImages[i]);
+    rContext->swapchainImageViews[i] =
+        CreateImageView(rContext->swapchainFormat, VK_IMAGE_ASPECT_COLOR_BIT,
+                        rContext->swapchainImages[i]);
 
-    if (rContext.swapchainImageViews[i] == VK_NULL_HANDLE)
+    if (rContext->swapchainImageViews[i] == VK_NULL_HANDLE)
     {
       IcePrint("Failed to create swapchain image view");
     }
   }
 }
 
-void RendererBackend::CreateRenderpass()
+void VulkanBackend::CreateRenderpass()
 {
   VkAttachmentDescription colorDesc {};
-  colorDesc.format = rContext.swapchainFormat;
+  colorDesc.format = rContext->swapchainFormat;
   colorDesc.samples = VK_SAMPLE_COUNT_1_BIT;
   colorDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -608,59 +593,59 @@ void RendererBackend::CreateRenderpass()
   creteInfo.dependencyCount = 1;
   creteInfo.pDependencies = &dependency;
 
-  ICE_ASSERT(vkCreateRenderPass(rContext.device, &creteInfo,
-                                rContext.allocator, &rContext.renderPass),
+  IVK_ASSERT(vkCreateRenderPass(rContext->device, &creteInfo,
+                                rContext->allocator, &rContext->renderPass),
              "Failed to create renderpass");
 }
 
-void RendererBackend::CreateDepthImage()
+void VulkanBackend::CreateDepthImage()
 {
   VkFormat format = FindDepthFormat();
   u32 imageIdx = CreateImage(
-      rContext.renderExtent.width, rContext.renderExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
+      rContext->renderExtent.width, rContext->renderExtent.height, format, VK_IMAGE_TILING_OPTIMAL,
       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  rContext.depthImage = iceImages[imageIdx];
-  rContext.depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT,
-                                              rContext.depthImage->image);
+  rContext->depthImage = iceImages[imageIdx];
+  rContext->depthImage->view = CreateImageView(format, VK_IMAGE_ASPECT_DEPTH_BIT,
+                                              rContext->depthImage->image);
 }
 
-void RendererBackend::CreateFramebuffers()
+void VulkanBackend::CreateFramebuffers()
 {
   VkFramebufferCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  createInfo.renderPass = rContext.renderPass;
+  createInfo.renderPass = rContext->renderPass;
   createInfo.layers = 1;
-  createInfo.width = rContext.renderExtent.width;
-  createInfo.height = rContext.renderExtent.height;
+  createInfo.width = rContext->renderExtent.width;
+  createInfo.height = rContext->renderExtent.height;
 
-  u32 imageCount = static_cast<u32>(rContext.swapchainImages.size());
-  rContext.frameBuffers.resize(imageCount);
+  u32 imageCount = static_cast<u32>(rContext->swapchainImages.size());
+  rContext->frameBuffers.resize(imageCount);
 
   for (u32 i = 0; i < imageCount; i++)
   {
-    VkImageView attachments[] = {rContext.swapchainImageViews[i], rContext.depthImage->view};
+    VkImageView attachments[] = {rContext->swapchainImageViews[i], rContext->depthImage->view};
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    ICE_ASSERT(vkCreateFramebuffer(rContext.device, &createInfo,
-                                   rContext.allocator, &rContext.frameBuffers[i]),
+    IVK_ASSERT(vkCreateFramebuffer(rContext->device, &createInfo,
+                                   rContext->allocator, &rContext->frameBuffers[i]),
                "Failed to create framebuffers");
   }
 }
 
-void RendererBackend::CreateCommandBuffers()
+void VulkanBackend::CreateCommandBuffers()
 {
-  u32 bufferCount = static_cast<u32>(rContext.swapchainImages.size());
-  rContext.commandBuffers.resize(bufferCount);
+  u32 bufferCount = static_cast<u32>(rContext->swapchainImages.size());
+  rContext->commandBuffers.resize(bufferCount);
 
   VkCommandBufferAllocateInfo allocInfo {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = bufferCount;
-  allocInfo.commandPool = rContext.graphicsCommandPool;
+  allocInfo.commandPool = rContext->graphicsCommandPool;
 
-  ICE_ASSERT(vkAllocateCommandBuffers(rContext.device, &allocInfo, rContext.commandBuffers.data()),
+  IVK_ASSERT(vkAllocateCommandBuffers(rContext->device, &allocInfo, rContext->commandBuffers.data()),
              "Failed to allocate command buffers");
 }
 
@@ -668,13 +653,13 @@ void RendererBackend::CreateCommandBuffers()
 // GPU
 //=================================================================================================
 
-void RendererBackend::ChoosePhysicalDevice()
+void VulkanBackend::ChoosePhysicalDevice()
 {
   // Get all available physical devices
   u32 deviceCount;
-  vkEnumeratePhysicalDevices(rContext.instance, &deviceCount, nullptr);
+  vkEnumeratePhysicalDevices(rContext->instance, &deviceCount, nullptr);
   std::vector<VkPhysicalDevice> physDevices(deviceCount);
-  vkEnumeratePhysicalDevices(rContext.instance, &deviceCount, physDevices.data());
+  vkEnumeratePhysicalDevices(rContext->instance, &deviceCount, physDevices.data());
 
   u32 propertyCount;
 
@@ -736,10 +721,10 @@ void RendererBackend::ChoosePhysicalDevice()
       }
       else
       {
-        rContext.gpu.device = pdevice;
-        rContext.graphicsIdx = graphicsIdx;
-        rContext.presentIdx = presentIdx;
-        rContext.transferIdx = transferIdx;
+        rContext->gpu.device = pdevice;
+        rContext->graphicsIdx = graphicsIdx;
+        rContext->presentIdx = presentIdx;
+        rContext->transferIdx = transferIdx;
         return;
       }
     }
@@ -747,43 +732,43 @@ void RendererBackend::ChoosePhysicalDevice()
 
   if (bestFit.device != VK_NULL_HANDLE)
   {
-    rContext.gpu.device = bestFit.device;
-    rContext.graphicsIdx = bestFit.graphicsIndex;
-    rContext.presentIdx = bestFit.presentIndex;
-    rContext.transferIdx = bestFit.transferIndex;
+    rContext->gpu.device = bestFit.device;
+    rContext->graphicsIdx = bestFit.graphicsIndex;
+    rContext->presentIdx = bestFit.presentIndex;
+    rContext->transferIdx = bestFit.transferIndex;
     return;
   }
 
   IcePrint("Failed to find a suitable GPU");
 }
 
-void RendererBackend::FillPhysicalDeviceInformation()
+void VulkanBackend::FillPhysicalDeviceInformation()
 {
-  IcePhysicalDevice& dInfo = rContext.gpu;
-  VkPhysicalDevice& pDevice = rContext.gpu.device;
+  IcePhysicalDevice& dInfo = rContext->gpu;
+  VkPhysicalDevice& pDevice = rContext->gpu.device;
 
   u32 count = 0;
   vkGetPhysicalDeviceFeatures(pDevice, &dInfo.features);
   vkGetPhysicalDeviceProperties(pDevice, &dInfo.properties);
   vkGetPhysicalDeviceMemoryProperties(pDevice, &dInfo.memProperties);
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, rContext.surface, &dInfo.surfaceCapabilities);
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, rContext->surface, &dInfo.surfaceCapabilities);
 
   vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, nullptr);
   dInfo.queueFamilyProperties.resize(count);
   vkGetPhysicalDeviceQueueFamilyProperties(pDevice, &count, dInfo.queueFamilyProperties.data());
 
-  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, rContext.surface, &count, nullptr);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, rContext->surface, &count, nullptr);
   dInfo.presentModes.resize(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(
-      pDevice, rContext.surface, &count, dInfo.presentModes.data());
+      pDevice, rContext->surface, &count, dInfo.presentModes.data());
 
-  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, rContext.surface, &count, nullptr);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(pDevice, rContext->surface, &count, nullptr);
   dInfo.surfaceFormats.resize(count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(
-      pDevice, rContext.surface, &count, dInfo.surfaceFormats.data());
+      pDevice, rContext->surface, &count, dInfo.surfaceFormats.data());
 }
 
-u32 RendererBackend::GetQueueIndex(
+u32 VulkanBackend::GetQueueIndex(
     std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags)
 {
   u32 i = 0;
@@ -811,7 +796,7 @@ u32 RendererBackend::GetQueueIndex(
   return bestfit;
 }
 
-u32 RendererBackend::GetPresentIndex(
+u32 VulkanBackend::GetPresentIndex(
   const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex)
 {
   u32 bestfit = -1;
@@ -820,7 +805,7 @@ u32 RendererBackend::GetPresentIndex(
 
   for (u32 i = 0; i < _queuePropertyCount; i++)
   {
-    vkGetPhysicalDeviceSurfaceSupportKHR(*_device, i, rContext.surface, &supported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(*_device, i, rContext->surface, &supported);
     if (supported)
     {
       // Attempt to avoid queues that share with Graphics
@@ -843,7 +828,7 @@ u32 RendererBackend::GetPresentIndex(
 // NON-API HELPERS
 //=================================================================================================
 
-mesh_t RendererBackend::CreateMesh(const char* _directory)
+mesh_t VulkanBackend::CreateMesh(const char* _directory)
 {
   mesh_t m = FileSystem::LoadMesh(_directory);
   vertexBuffer = CreateAndFillBuffer(
@@ -854,7 +839,7 @@ mesh_t RendererBackend::CreateMesh(const char* _directory)
   return m;
 }
 
-u32 RendererBackend::GetTexture(std::string _directory)
+u32 VulkanBackend::GetTexture(std::string _directory)
 {
   std::string fullDir("res/textures/");
   fullDir.append(_directory);
@@ -869,14 +854,14 @@ u32 RendererBackend::GetTexture(std::string _directory)
   return CreateTexture(fullDir);
 }
 
-u32 RendererBackend::CreateTexture(std::string _directory)
+u32 VulkanBackend::CreateTexture(std::string _directory)
 {
   int width, height;
   void* imageFile = FileSystem::LoadImageFile(_directory.c_str(), width, height);
   VkDeviceSize size = static_cast<VkDeviceSize>(4 * width * height);
 
   IceBuffer stagingBuffer;
-  stagingBuffer.AllocateBuffer(static_cast<u32>(size), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  stagingBuffer.AllocateBuffer(rContext, static_cast<u32>(size), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   FillBuffer(stagingBuffer.GetMemory(), imageFile, size);
   FileSystem::DestroyImageFile(imageFile);
@@ -894,7 +879,7 @@ u32 RendererBackend::CreateTexture(std::string _directory)
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  stagingBuffer.FreeBuffer();
+  stagingBuffer.FreeBuffer(rContext);
 
   iceTexture_t* tex = new iceTexture_t(_directory);
   tex->imageIndex = imageIdx;
@@ -909,7 +894,7 @@ bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEve
 {
   //IcePrint("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
 
-  //rContext.renderExtent = { _data.u32[0], _data.u32[1] };
+  //rContext->renderExtent = { _data.u32[0], _data.u32[1] };
   RendererBackend* rb = static_cast<RendererBackend*>(_listener);
 
   rb->Resize(_data.u32[0], _data.u32[1]);
@@ -921,18 +906,18 @@ bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEve
 // HELPERS
 //=================================================================================================
 
-void RendererBackend::DestroyShaderModule(VkShaderModule& _module)
+void VulkanBackend::DestroyShaderModule(VkShaderModule& _module)
 {
-  vkDestroyShaderModule(rContext.device, _module, rContext.allocator);
+  vkDestroyShaderModule(rContext->device, _module, rContext->allocator);
 }
 
-VkFormat RendererBackend::FindSupportedFormat(
+VkFormat VulkanBackend::FindSupportedFormat(
     const std::vector<VkFormat>& _formats, VkImageTiling _tiling, VkFormatFeatureFlags _features)
 {
   for (VkFormat format : _formats)
   {
     VkFormatProperties props;
-    vkGetPhysicalDeviceFormatProperties(rContext.gpu.device, format, &props);
+    vkGetPhysicalDeviceFormatProperties(rContext->gpu.device, format, &props);
 
     if (_tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & _features) == _features)
     {
@@ -949,16 +934,16 @@ VkFormat RendererBackend::FindSupportedFormat(
   return _formats[0];
 }
 
-VkFormat RendererBackend::FindDepthFormat()
+VkFormat VulkanBackend::FindDepthFormat()
 {
   return FindSupportedFormat(
     { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
     VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-u32 RendererBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
+u32 VulkanBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
 {
-  const VkPhysicalDeviceMemoryProperties& props = rContext.gpu.memProperties;
+  const VkPhysicalDeviceMemoryProperties& props = rContext->gpu.memProperties;
 
   for (u32 i = 0; i < props.memoryTypeCount; i++)
   {
@@ -976,7 +961,7 @@ u32 RendererBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
 // BUFFERS
 //=================================================================================================
 
-IceBuffer* RendererBackend::CreateAndFillBuffer(
+IceBuffer* VulkanBackend::CreateAndFillBuffer(
     const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
   IceBuffer* stagingBuffer = CreateBuffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -989,40 +974,40 @@ IceBuffer* RendererBackend::CreateAndFillBuffer(
 
   CopyBuffer(stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
 
-  vkFreeMemory(rContext.device, stagingBuffer->GetMemory(), rContext.allocator);
-  vkDestroyBuffer(rContext.device, stagingBuffer->GetBuffer(), rContext.allocator);
+  vkFreeMemory(rContext->device, stagingBuffer->GetMemory(), rContext->allocator);
+  vkDestroyBuffer(rContext->device, stagingBuffer->GetBuffer(), rContext->allocator);
 
   return buffer;
 }
 
-IceBuffer* RendererBackend::CreateBuffer(
+IceBuffer* VulkanBackend::CreateBuffer(
     VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
 {
   IceBuffer* buffer = new IceBuffer();
-  buffer->AllocateBuffer(static_cast<u32>(_size), _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  buffer->AllocateBuffer(rContext, static_cast<u32>(_size), _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
     _memProperties);
 
   return buffer;
 }
 
-void RendererBackend::FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size)
+void VulkanBackend::FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size)
 {
   void* tmpData;
-  vkMapMemory(rContext.device, _mem, 0, _size, 0, &tmpData);
+  vkMapMemory(rContext->device, _mem, 0, _size, 0, &tmpData);
   memcpy(tmpData, _data, static_cast<size_t>(_size));
-  vkUnmapMemory(rContext.device, _mem);
+  vkUnmapMemory(rContext->device, _mem);
 }
 
-void RendererBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)
+void VulkanBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)
 {
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = rContext.transientCommandPool;
+  allocInfo.commandPool = rContext->transientCommandPool;
   allocInfo.commandBufferCount = 1;
 
   VkCommandBuffer transferCommand;
-  ICE_ASSERT(vkAllocateCommandBuffers(rContext.device, &allocInfo, &transferCommand),
+  IVK_ASSERT(vkAllocateCommandBuffers(rContext->device, &allocInfo, &transferCommand),
     "Failed to create transient command buffer");
 
   VkCommandBufferBeginInfo beginInfo = {};
@@ -1044,23 +1029,23 @@ void RendererBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _siz
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &transferCommand;
 
-  vkQueueSubmit(rContext.transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(rContext.transferQueue);
+  vkQueueSubmit(rContext->transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(rContext->transferQueue);
 
-  vkFreeCommandBuffers(rContext.device, rContext.transientCommandPool, 1, &transferCommand);
+  vkFreeCommandBuffers(rContext->device, rContext->transientCommandPool, 1, &transferCommand);
 }
 
-void RendererBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
+void VulkanBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
 {
-  vkFreeMemory(rContext.device, _memory, rContext.allocator);
-  vkDestroyBuffer(rContext.device, _buffer, rContext.allocator);
+  vkFreeMemory(rContext->device, _memory, rContext->allocator);
+  vkDestroyBuffer(rContext->device, _buffer, rContext->allocator);
 }
 
 //=================================================================================================
 // IMAGES
 //=================================================================================================
 
-u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
+u32 VulkanBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps)
 {
   VkImageCreateInfo createInfo{};
@@ -1080,7 +1065,7 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   createInfo.flags = 0;
 
   VkImage vImage;
-  if (vkCreateImage(rContext.device, &createInfo, rContext.allocator, &vImage) != VK_SUCCESS)
+  if (vkCreateImage(rContext->device, &createInfo, rContext->allocator, &vImage) != VK_SUCCESS)
   {
     IcePrint("Failed to create vkImages");
     return -1;
@@ -1088,7 +1073,7 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
 
   // Allocate device memory for image
   VkMemoryRequirements memReqs;
-  vkGetImageMemoryRequirements(rContext.device, vImage, &memReqs);
+  vkGetImageMemoryRequirements(rContext->device, vImage, &memReqs);
 
   VkMemoryAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1096,13 +1081,13 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   allocInfo.memoryTypeIndex = FindMemoryType(memReqs.memoryTypeBits, _memProps);
 
   VkDeviceMemory vMemory;
-  if (vkAllocateMemory(rContext.device, &allocInfo, rContext.allocator, &vMemory) != VK_SUCCESS)
+  if (vkAllocateMemory(rContext->device, &allocInfo, rContext->allocator, &vMemory) != VK_SUCCESS)
   {
     IcePrint("Failed to allocate texture memory");
   }
 
   // Bind image and device memory
-  vkBindImageMemory(rContext.device, vImage, vMemory, 0);
+  vkBindImageMemory(rContext->device, vImage, vMemory, 0);
 
   iceImage_t* image = new iceImage_t();
   image->image = vImage;
@@ -1113,7 +1098,7 @@ u32 RendererBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   return static_cast<u32>(iceImages.size() - 1);
 }
 
-VkImageView RendererBackend::CreateImageView(
+VkImageView VulkanBackend::CreateImageView(
     const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image)
 {
   VkImageViewCreateInfo createInfo = {};
@@ -1132,7 +1117,7 @@ VkImageView RendererBackend::CreateImageView(
   createInfo.format = _format;
 
   VkImageView createdView;
-  if (vkCreateImageView(rContext.device, &createInfo, rContext.allocator, &createdView)
+  if (vkCreateImageView(rContext->device, &createInfo, rContext->allocator, &createdView)
       != VK_SUCCESS)
   {
     IcePrint("Failed to create image view");
@@ -1142,7 +1127,7 @@ VkImageView RendererBackend::CreateImageView(
   return createdView;
 }
 
-VkSampler RendererBackend::CreateSampler()
+VkSampler VulkanBackend::CreateSampler()
 {
   VkSamplerCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1162,20 +1147,20 @@ VkSampler RendererBackend::CreateSampler()
   createInfo.maxLod = 0.0f;
 
   createInfo.anisotropyEnable = VK_TRUE;
-  createInfo.maxAnisotropy = rContext.gpu.properties.limits.maxSamplerAnisotropy;
+  createInfo.maxAnisotropy = rContext->gpu.properties.limits.maxSamplerAnisotropy;
 
   VkSampler sampler;
-  ICE_ASSERT(vkCreateSampler(rContext.device, &createInfo, rContext.allocator, &sampler),
+  IVK_ASSERT(vkCreateSampler(rContext->device, &createInfo, rContext->allocator, &sampler),
     "Failed to create texture sampler");
 
   return sampler;
 }
 
-void RendererBackend::TransitionImageLayout(
+void VulkanBackend::TransitionImageLayout(
   VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
   VkPipelineStageFlagBits _shaderStage /*= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT*/)
 {
-  VkCommandBuffer command = rContext.BeginSingleTimeCommand(rContext.graphicsCommandPool);
+  VkCommandBuffer command = rContext->BeginSingleTimeCommand(rContext->graphicsCommandPool);
 
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1217,12 +1202,12 @@ void RendererBackend::TransitionImageLayout(
   }
 
   vkCmdPipelineBarrier(command, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  rContext.EndSingleTimeCommand(command, rContext.graphicsCommandPool, rContext.graphicsQueue);
+  rContext->EndSingleTimeCommand(command, rContext->graphicsCommandPool, rContext->graphicsQueue);
 }
 
-void RendererBackend::CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height)
+void VulkanBackend::CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height)
 {
-  VkCommandBuffer command = rContext.BeginSingleTimeCommand(rContext.transientCommandPool);
+  VkCommandBuffer command = rContext->BeginSingleTimeCommand(rContext->transientCommandPool);
 
   VkBufferImageCopy region{};
   region.bufferOffset = 0;
@@ -1239,14 +1224,14 @@ void RendererBackend::CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _w
 
   vkCmdCopyBufferToImage(
     command, _buffer, _iamge, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-  rContext.EndSingleTimeCommand(command, rContext.transientCommandPool, rContext.transferQueue);
+  rContext->EndSingleTimeCommand(command, rContext->transientCommandPool, rContext->transferQueue);
 }
 
 //=================================================================================================
 // SHADERS
 //=================================================================================================
 
-iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
+iceShader_t VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
 {
   iceShader_t s(_name, _stage);
 
@@ -1280,28 +1265,30 @@ iceShader_t RendererBackend::CreateShader(const char* _name, IceShaderStageFlags
   createInfo.codeSize = shaderCode.size();
   createInfo.pCode = reinterpret_cast<const u32*>(shaderCode.data());
 
-  ICE_ASSERT(vkCreateShaderModule(rContext.device, &createInfo, rContext.allocator, &s.module),
+  IVK_ASSERT(vkCreateShaderModule(rContext->device, &createInfo, rContext->allocator, &s.module),
     "Failed to create shader module");
   return s;
 }
 
-void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
+void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
 {
+  iceShaderProgram_t& shaderProgram = *GetShaderProgram(_programIndex);
+
   mvpBuffer = CreateBuffer(sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocInfo.descriptorPool = rContext.descriptorPool;
+  allocInfo.descriptorPool = rContext->descriptorPool;
   allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &_shaderProgram.descriptorSetLayout;
+  allocInfo.pSetLayouts = &shaderProgram.descriptorSetLayout;
 
-  ICE_ASSERT(vkAllocateDescriptorSets(rContext.device, &allocInfo, &_shaderProgram.descriptorSet),
+  IVK_ASSERT(vkAllocateDescriptorSets(rContext->device, &allocInfo, &shaderProgram.descriptorSet),
     "Failed to allocate descriptor set");
 
-  std::vector<VkWriteDescriptorSet> writeSets(_shaderProgram.bindings.size());
-  std::vector<VkDescriptorImageInfo> imageInfos(_shaderProgram.bindings.size() - 1);
+  std::vector<VkWriteDescriptorSet> writeSets(shaderProgram.bindings.size());
+  std::vector<VkDescriptorImageInfo> imageInfos(shaderProgram.bindings.size() - 1);
 
   // Create the Uniform buffer
   VkDescriptorBufferInfo mvpBufferInfo{};
@@ -1312,7 +1299,7 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   //VkWriteDescriptorSet descWrites[2] = {};
   // MVP matrix
   writeSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeSets[0].dstSet = _shaderProgram.descriptorSet;
+  writeSets[0].dstSet = shaderProgram.descriptorSet;
   writeSets[0].dstBinding = 0;
   writeSets[0].dstArrayElement = 0;
   writeSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1322,11 +1309,11 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
   writeSets[0].pTexelBufferView = nullptr;
 
   // Fill info for each texture
-  for (u32 i = 1, imageBufferIdx = 0; i < _shaderProgram.bindings.size(); i++)
+  for (u32 i = 1, imageBufferIdx = 0; i < shaderProgram.bindings.size(); i++)
   {
-    if (_shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
+    if (shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
     {
-      u32 texIndex = GetTexture(_shaderProgram.textureDirs[imageBufferIdx]);
+      u32 texIndex = GetTexture(shaderProgram.textureDirs[imageBufferIdx]);
       u32 textureImageIdx = iceTextures[texIndex]->imageIndex;
       VkDescriptorImageInfo iInfo{};
       imageInfos[imageBufferIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1335,7 +1322,7 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
 
       // Texture
       writeSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      writeSets[i].dstSet = _shaderProgram.descriptorSet;
+      writeSets[i].dstSet = shaderProgram.descriptorSet;
       writeSets[i].dstBinding = i;
       writeSets[i].dstArrayElement = 0;
       writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1348,7 +1335,7 @@ void RendererBackend::CreateDescriptorSet(iceShaderProgram_t& _shaderProgram)
     }
   }
 
-  vkUpdateDescriptorSets(rContext.device, writeSets.size(), writeSets.data(), 0, nullptr);
+  vkUpdateDescriptorSets(rContext->device, writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
 #endif // ICE_VULKAN

@@ -37,7 +37,7 @@ public:
 
   // Returns the index of the shader program
   // Creates a new shader if none match the given description
-  u32 GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
+  u32 GetShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
                        std::vector<const char*> _texStrings,
                        IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
   // Returns the index of the shader
@@ -50,6 +50,8 @@ public:
   mesh_t CreateMesh(const char* _model);
 
   void Resize(u32 _width = 0, u32 _height = 0);
+
+  IceRenderContext* GetContext() { return backend->GetContext(); }
 
 };
 

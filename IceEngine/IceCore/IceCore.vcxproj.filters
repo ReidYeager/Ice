@@ -66,6 +66,12 @@
     <ClInclude Include="src\core\object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\renderer\vulkan\vulkan_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\renderer\vulkan\vulkan_backend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
@@ -80,7 +86,7 @@
     <ClCompile Include="src\renderer\renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\renderer\vulkan\renderer_backend_vk.cpp">
+    <ClCompile Include="src\renderer\vulkan\vulkan_backend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\file_system.cpp">

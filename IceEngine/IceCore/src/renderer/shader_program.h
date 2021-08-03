@@ -1,8 +1,9 @@
 
-#ifndef RENDERER_SHADER_PROGRAM_H
-#define RENDERER_SHADER_PROGRAM_H 1
+#ifndef RENDERER_SHADER_PROGRAM_H_
+#define RENDERER_SHADER_PROGRAM_H_
 
 #include "defines.h"
+#include "renderer/vulkan/vulkan_context.h"
 #include <vector>
 
 // NOTE : Move to defines?
@@ -73,34 +74,37 @@ struct iceShaderProgram_t
   VkPipeline pipeline;
 
   iceShaderProgram_t(const char* _name, IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
-  VkPipeline GetPipeline();
-  void DestroyRenderComponents();
-  void Shutdown();
+  VkPipeline GetPipeline(IceRenderContext* rContext);
+  void DestroyRenderComponents(IceRenderContext* rContext);
+  void Shutdown(IceRenderContext* rContext);
 };
 
+void ShadersShutdown(IceRenderContext* rContext);
+
 // TODO : Refactor and move to RenderBackend
+iceShaderProgram_t* GetShaderProgram(u32 _index);
 u32 GetShaderProgram(
-    const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
+    IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
     IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
 
-void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
+void CreateShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
                          std::vector<const char*> _texStrings, IcePipelineSettingFlags _settings);
 
-VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
+VkPipeline CreatePipeline(IceRenderContext* rContext, iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
                           VkPipelineLayout _layout, IcePipelineSettingFlags _settings);
 
-u32 GetShader(const char* _name, IceShaderStageFlags _stage);
+u32 GetShader(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stage);
 
 //void LoadShader(u32 _index);
-void LoadShader(iceShader_t& _shader);
+void LoadShader(IceRenderContext* rContext, iceShader_t& _shader);
 
 void ExtractShaderBindings(const char* _directory, iceShader_t& _shader);
 
-void CreateDescriptorSetLayout(iceShaderProgram_t& _program);
+void CreateDescriptorSetLayout(IceRenderContext* rContext, iceShaderProgram_t& _program);
 
-void CreatePipelineLayout(iceShaderProgram_t& _program);
+void CreatePipelineLayout(IceRenderContext* rContext, iceShaderProgram_t& _program);
 
-size_t PadBufferForGpu(size_t _original);
+size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original);
 
 
 #endif // !RENDERER_SHADER_PROGRAM_H

@@ -1,6 +1,7 @@
 
 #include "renderer/renderer.h"
 #include "renderer/renderer_backend.h"
+#include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/shader_program.h"
 #include "platform/file_system.h"
 
@@ -8,11 +9,12 @@
 
 IceRenderer Renderer;
 
+// TODO : Add API selection parameter
 void IceRenderer::Initialize()
 {
   // Get window surface
-  backend = new RendererBackend();
-  //backend->Initialize();
+  backend = new VulkanBackend();
+  backend->Initialize();
   IcePrint("Initialized Renderer system");
 }
 
@@ -40,7 +42,7 @@ void IceRenderer::RenderFrame(IceRenderPacket* _packet)
   backend->RenderFrame(_packet);
 }
 
-u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages,
+u32 IceRenderer::GetShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
                                   std::vector<const char*> _texStrings,
                                   IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
 {
@@ -60,8 +62,8 @@ u32 IceRenderer::GetShaderProgram(const char* _name, IceShaderStageFlags _stages
   i = static_cast<u32>(shaderPrograms.size());
 
   iceShaderProgram_t newShaderProgram(_name);
-  CreateShaderProgram(_name, _stages, _texStrings, _settings);
-  backend->CreateDescriptorSet(rContext.shaderPrograms[i]);
+  CreateShaderProgram(rContext, _name, _stages, _texStrings, _settings);
+  backend->CreateDescriptorSet(i);
 
   return i;
 }

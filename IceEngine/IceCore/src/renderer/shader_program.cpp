@@ -1,11 +1,14 @@
 
 #include "logger.h"
 #include "renderer/shader_program.h"
-#include "renderer/backend_context.h"
-//#include "renderer/renderer_backend.h"
+#include "renderer/vulkan/vulkan_context.h"
 #include "platform/file_system.h"
 
 #include <string>
+#include <vector>
+
+std::vector<iceShaderProgram_t> shaderProgramList;
+std::vector<iceShader_t> shaderList;
 
 iceShaderProgram_t::iceShaderProgram_t(const char* _name, IcePipelineSettingFlags _settings)
 {
@@ -17,71 +20,84 @@ iceShaderProgram_t::iceShaderProgram_t(const char* _name, IcePipelineSettingFlag
   //CreateDescriptorSetLayout(this);
 }
 
-VkPipeline iceShaderProgram_t::GetPipeline()
+VkPipeline iceShaderProgram_t::GetPipeline(IceRenderContext* rContext)
 {
   if (pipeline == VK_NULL_HANDLE)
   {
     std::vector<iceShader_t> shaders(shaderIndices.size());
     for (u32 i = 0; i < shaderIndices.size(); i++)
     {
-      shaders[i] = rContext.shaders[shaderIndices[i]];
+      shaders[i] = shaderList[shaderIndices[i]];
     }
 
     if (pipelineLayout == VK_NULL_HANDLE)
     {
-      CreatePipelineLayout(*this);
+      CreatePipelineLayout(rContext, *this);
     }
 
-    pipeline = CreatePipeline(shaders.data(), static_cast<u32>(shaders.size()), stages,
+    pipeline = CreatePipeline(rContext, shaders.data(), static_cast<u32>(shaders.size()), stages,
                               pipelineLayout, pipelineSettings);
   }
 
   return pipeline;
 }
 
-void iceShaderProgram_t::DestroyRenderComponents()
+void iceShaderProgram_t::DestroyRenderComponents(IceRenderContext* rContext)
 {
-  vkDestroyPipeline(rContext.device, pipeline, rContext.allocator);
+  vkDestroyPipeline(rContext->device, pipeline, rContext->allocator);
   pipeline = VK_NULL_HANDLE;
-  vkDestroyPipelineLayout(rContext.device, pipelineLayout, rContext.allocator);
+  vkDestroyPipelineLayout(rContext->device, pipelineLayout, rContext->allocator);
   pipelineLayout = VK_NULL_HANDLE;
 }
 
-void iceShaderProgram_t::Shutdown()
+void iceShaderProgram_t::Shutdown(IceRenderContext* rContext)
 {
   if (pipeline != VK_NULL_HANDLE)
   {
-    DestroyRenderComponents();
+    DestroyRenderComponents(rContext);
   }
 
-  vkDestroyDescriptorSetLayout(rContext.device, descriptorSetLayout, rContext.allocator);
+  vkDestroyDescriptorSetLayout(rContext->device, descriptorSetLayout, rContext->allocator);
 
   for (u8 s : shaderIndices)
   {
-    vkDestroyShaderModule(rContext.device, rContext.shaders[s].module, rContext.allocator);
+    vkDestroyShaderModule(rContext->device, shaderList[s].module, rContext->allocator);
+  }
+}
+
+void ShadersShutdown(IceRenderContext* rContext)
+{
+  for (auto& s : shaderProgramList)
+  {
+    s.Shutdown(rContext);
   }
 }
 
 u32 GetShaderProgram(
-    const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
+    IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages, std::vector<const char*> _texStrings,
     IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
 {
-  for (u32 i = 0; i < rContext.shaderPrograms.size(); i++)
+  for (u32 i = 0; i < shaderProgramList.size(); i++)
   {
-    iceShaderProgram_t& program = rContext.shaderPrograms[i];
+    iceShaderProgram_t& program = shaderProgramList[i];
     if (program.pipelineSettings == _settings && std::strcmp(_name, program.name) == 0)
     {
       return i;
     }
   }
 
-  u32 index = static_cast<u32>(rContext.shaderPrograms.size());
-  CreateShaderProgram(_name, _stages, _texStrings, _settings);
+  u32 index = static_cast<u32>(shaderProgramList.size());
+  CreateShaderProgram(rContext, _name, _stages, _texStrings, _settings);
 
   return index;
 }
 
-void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
+iceShaderProgram_t* GetShaderProgram(u32 _index)
+{
+  return &shaderProgramList[_index];
+}
+
+void CreateShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
                          std::vector<const char*> _texStrings, IcePipelineSettingFlags _settings)
 {
   std::vector<u8> indices = {};
@@ -89,27 +105,27 @@ void CreateShaderProgram(const char* _name, IceShaderStageFlags _stages,
 
   if (_stages & Ice_Shader_Stage_Vert)
   {
-    idx = GetShader(_name, Ice_Shader_Stage_Vert);
+    idx = GetShader(rContext, _name, Ice_Shader_Stage_Vert);
     indices.push_back(idx);
   }
 
   if (_stages & Ice_Shader_Stage_Frag)
   {
-    idx = GetShader(_name, Ice_Shader_Stage_Frag);
+    idx = GetShader(rContext, _name, Ice_Shader_Stage_Frag);
     indices.push_back(idx);
   }
 
   if (_stages & Ice_Shader_Stage_Comp)
   {
-    idx = GetShader(_name, Ice_Shader_Stage_Comp);
+    idx = GetShader(rContext, _name, Ice_Shader_Stage_Comp);
     indices.push_back(idx);
   }
 
   iceShaderProgram_t program(_name, _settings);
   program.shaderIndices = indices;
   program.textureDirs = _texStrings;
-  CreateDescriptorSetLayout(program);
-  rContext.shaderPrograms.push_back(program);
+  CreateDescriptorSetLayout(rContext, program);
+  shaderProgramList.push_back(program);
 }
 
 VkShaderStageFlagBits IceToVkShaderStage(IceShaderStageFlags _stage)
@@ -130,7 +146,7 @@ VkShaderStageFlagBits IceToVkShaderStage(IceShaderStageFlags _stage)
   return VK_SHADER_STAGE_VERTEX_BIT;
 }
 
-VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
+VkPipeline CreatePipeline(IceRenderContext* rContext, iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
                           VkPipelineLayout _layout, IcePipelineSettingFlags _settings)
 {
   // Viewport State
@@ -138,13 +154,13 @@ VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStag
   VkViewport viewport;
   viewport.x = 0;
   viewport.y = 0;
-  viewport.width = (float)rContext.renderExtent.width;
-  viewport.height = (float)rContext.renderExtent.height;
+  viewport.width = (float)rContext->renderExtent.width;
+  viewport.height = (float)rContext->renderExtent.height;
   viewport.minDepth = 0;
   viewport.maxDepth = 1;
 
   VkRect2D scissor{};
-  scissor.extent = rContext.renderExtent;
+  scissor.extent = rContext->renderExtent;
   scissor.offset = { 0, 0 };
 
   VkPipelineViewportStateCreateInfo viewportStateInfo{};
@@ -268,45 +284,45 @@ VkPipeline CreatePipeline(iceShader_t* _shaders, u32 _shaderCount, IceShaderStag
   createInfo.pStages = shaderStageInfos.data();
 
   createInfo.layout = _layout;
-  createInfo.renderPass = rContext.renderPass;
+  createInfo.renderPass = rContext->renderPass;
 
   VkPipeline tmpPipeline;
-  ICE_ASSERT(vkCreateGraphicsPipelines(rContext.device, nullptr, 1, &createInfo,
-                                       rContext.allocator, &tmpPipeline),
+  IVK_ASSERT(vkCreateGraphicsPipelines(rContext->device, nullptr, 1, &createInfo,
+                                       rContext->allocator, &tmpPipeline),
              "Failed to create graphics pipeline");
 
   //for (u32 i = 0; i < _shaderCount; i++)
   //{
-  //  vkDestroyShaderModule(rContext.device, _shaders[i].module, rContext.allocator);
+  //  vkDestroyShaderModule(rContext->device, _shaders[i].module, rContext->allocator);
   //}
 
   return tmpPipeline;
 }
 
-u32 GetShader(const char* _name, IceShaderStageFlags _stage)
+u32 GetShader(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stage)
 {
   u32 i = 0;
-  for (auto& shader : rContext.shaders)
+  for (auto& shader : shaderList)
   {
     if (std::strcmp(_name, shader.name) == 0 && shader.stage == _stage)
     {
       if (shader.module == VK_NULL_HANDLE)
       {
-        LoadShader(shader);
+        LoadShader(rContext, shader);
       }
       return i;
     }
     i++;
   }
 
-  i = static_cast<u32>(rContext.shaders.size());
+  i = static_cast<u32>(shaderList.size());
   iceShader_t newShader(_name, _stage);
-  rContext.shaders.push_back(newShader);
-  LoadShader(rContext.shaders[i]);
+  shaderList.push_back(newShader);
+  LoadShader(rContext, shaderList[i]);
   return i;
 }
 
-void LoadShader(iceShader_t& _shader)
+void LoadShader(IceRenderContext* rContext, iceShader_t& _shader)
 {
   // TODO : Move to a constant value library
   std::string shaderDir = "res/shaders/compiled/";
@@ -335,7 +351,7 @@ void LoadShader(iceShader_t& _shader)
   createInfo.codeSize = sourceCode.size();
   createInfo.pCode = reinterpret_cast<const uint32_t*>(sourceCode.data());
 
-  ICE_ASSERT(vkCreateShaderModule(rContext.device, &createInfo, nullptr, &_shader.module),
+  IVK_ASSERT(vkCreateShaderModule(rContext->device, &createInfo, nullptr, &_shader.module),
              "Failed to create shader module (%s)", shaderDir.c_str());
 
   ExtractShaderBindings(layoutDir.c_str(), _shader);
@@ -363,7 +379,7 @@ void ExtractShaderBindings(const char* _directory, iceShader_t& _shader)
   }
 }
 
-void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
+void CreateDescriptorSetLayout(IceRenderContext* rContext, iceShaderProgram_t& _program)
 {
   u32 bindingIndex = 0;
   std::vector<VkDescriptorSetLayoutBinding> stageBindings;
@@ -374,7 +390,7 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
   // Add shader bindings from all the program's shaders
   for (const auto& s : _program.shaderIndices)
   {
-    iceShader_t& shader = rContext.shaders[s];
+    iceShader_t& shader = shaderList[s];
     binding.stageFlags = IceToVkShaderStage(shader.stage);
     for (u32 i = 0; i < shader.bindings.size(); i++)
     {
@@ -399,12 +415,12 @@ void CreateDescriptorSetLayout(iceShaderProgram_t& _program)
   createInfo.bindingCount = static_cast<uint32_t>(stageBindings.size());
   createInfo.pBindings = stageBindings.data();
 
-  ICE_ASSERT(vkCreateDescriptorSetLayout(rContext.device, &createInfo, rContext.allocator,
+  IVK_ASSERT(vkCreateDescriptorSetLayout(rContext->device, &createInfo, rContext->allocator,
                                          &_program.descriptorSetLayout),
              "Failed to create descriptor set layout for %s", _program.name);
 }
 
-void CreatePipelineLayout(iceShaderProgram_t& _program)
+void CreatePipelineLayout(IceRenderContext* rContext, iceShaderProgram_t& _program)
 {
   VkPipelineLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -413,14 +429,14 @@ void CreatePipelineLayout(iceShaderProgram_t& _program)
   layoutInfo.pushConstantRangeCount = 0;
   layoutInfo.pPushConstantRanges = nullptr;
 
-  ICE_ASSERT(vkCreatePipelineLayout(rContext.device, &layoutInfo, rContext.allocator,
+  IVK_ASSERT(vkCreatePipelineLayout(rContext->device, &layoutInfo, rContext->allocator,
     &_program.pipelineLayout),
     "Failed to create pipeline layout for %s", _program.name);
 }
 
-size_t PadBufferForGpu(size_t _original)
+size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
 {
-  size_t alignment = rContext.gpu.properties.limits.minUniformBufferOffsetAlignment;
+  size_t alignment = rContext->gpu.properties.limits.minUniformBufferOffsetAlignment;
   size_t alignedSize = _original;
   if (alignment > 0)
   {

@@ -26,11 +26,14 @@ public:
   //IceBuffer();
   ~IceBuffer();
 
-  void AllocateBuffer(u32 _size, VkBufferUsageFlags m_usage, VkMemoryPropertyFlags _memProperties,
+  void AllocateBuffer(IceRenderContext* rContext,
+                      u32 _size,
+                      VkBufferUsageFlags m_usage,
+                      VkMemoryPropertyFlags _memProperties,
                       bool _bind = true);
-  void FreeBuffer();
-  void Bind();
-  void Unbind();
+  void FreeBuffer(IceRenderContext* rContext);
+  void Bind(IceRenderContext* rContext);
+  void Unbind(IceRenderContext* rContext);
 
   u32 GetSize() const { return m_size; }
   VkBufferUsageFlags GetUsage() const { return m_usage; }
@@ -39,7 +42,7 @@ public:
   VkDeviceMemory GetMemory() const { return m_memory; }
 
   // TODO : Move to vkMemory allocator
-  u32 FindMemoryTypeIndex(u32 _mask, VkMemoryPropertyFlags _flags);
+  u32 FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags);
 
 };
 

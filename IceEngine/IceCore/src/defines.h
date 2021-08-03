@@ -1,6 +1,6 @@
 
-#ifndef DEFINES_H
-#define DEFINES_H 1
+#ifndef DEFINES_H_
+#define DEFINES_H_
 
 #ifdef ICE_DLL_EXPORT
 #define ICE_API __declspec(dllexport)
