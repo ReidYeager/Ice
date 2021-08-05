@@ -1,6 +1,6 @@
 
-#ifndef CORE_INPUT_H
-#define CORE_INPUT_H 1
+#ifndef ICE_CORE_INPUT_H_
+#define ICE_CORE_INPUT_H_
 
 #include "defines.h"
 

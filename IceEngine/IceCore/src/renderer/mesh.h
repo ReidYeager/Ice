@@ -1,6 +1,6 @@
 
-#ifndef RENDERER_MESH_H
-#define RENDERER_MESH_H 1
+#ifndef ICE_RENDERER_MESH_H_
+#define ICE_RENDERER_MESH_H_
 
 #include <vector>
 

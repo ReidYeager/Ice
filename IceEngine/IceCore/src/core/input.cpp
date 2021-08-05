@@ -9,12 +9,12 @@ IceInput Input;
 void IceInput::Initialize()
 {
   MemoryManager.Zero(&m_states, sizeof(InputStates));
-  IcePrint("Initialized Input system");
+  LogInfo("Initialized Input system");
 }
 
 void IceInput::Shutdown()
 {
-  IcePrint("Shutdown Input system");
+  LogInfo("Shutdown Input system");
 }
 
 void IceInput::Update()

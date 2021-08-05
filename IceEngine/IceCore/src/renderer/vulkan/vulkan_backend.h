@@ -2,6 +2,7 @@
 #ifndef ICE_RENDERER_VULKAN_VULKAN_BACKEND_H_
 #define ICE_RENDERER_VULKAN_VULKAN_BACKEND_H_
 
+#include "asserts.h"
 #include "defines.h"
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/renderer_backend.h"
@@ -81,7 +82,10 @@ private:
   // TODO : API CULL MARK
   void CreateCommandPool(VkCommandPool& _pool, u32 _queueIndex,
     VkCommandPoolCreateFlags _flags = 0);
-  // TODO : API CULL MARK?
+
+  void GetRequiredPlatformExtensions(std::vector<const char*>& _extensions);
+  void CreateSurface();
+  VkExtent2D GetWindowExtent();
 
 //=================================================================================================
 // Rendering components

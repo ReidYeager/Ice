@@ -1,6 +1,6 @@
 
-#ifndef PLATFORM_FILE_SYSTEM_H
-#define PLATFORM_FILE_SYSTEM_H 1
+#ifndef ICE_PLATFORM_FILE_SYSTEM_H_
+#define ICE_PLATFORM_FILE_SYSTEM_H_
 
 #include "defines.h"
 #include "renderer/mesh.h"

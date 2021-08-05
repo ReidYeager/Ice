@@ -3,10 +3,10 @@
 \.git\logs\refs\heads\main
 	Line    35 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \IceEngine\IceCore\src\core\application.h
-	Line    21 :--: // TODO : Delete
-	Line    45 :--: // TODO : Add input callbacks?
-	Line    47 :--: // TODO : Modify to fit a proper ECS system
-	Line    57 :--: // TODO : Add any game->engine API calls here
+	Line    24 :--: // TODO : Delete
+	Line    48 :--: // TODO : Add input callbacks?
+	Line    50 :--: // TODO : Modify to fit a proper ECS system
+	Line    60 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
@@ -14,10 +14,10 @@
 \IceEngine\IceCore\src\core\input.h
 	Line     7 :--: // TODO : Implement the rest of the input codes (Use Windows' codes)
 \IceEngine\IceCore\src\platform\platform.h
-	Line    54 :--: // TODO : Find a way to create the surface without including Vulkan here
+	Line    10 :--: // TODO : Make sure this is safe
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	Line    21 :--: // TODO : Add controller support
-	Line    63 :--: // TODO : Add raw input support
+	Line   243 :--: // TODO : Add controller support
+	Line   285 :--: // TODO : Add raw input support
 \IceEngine\IceCore\src\profiler.h
 	Line     5 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\buffer.cpp
@@ -32,7 +32,7 @@
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
 	Line     7 :--: // TODO : Remove all API types & references
-	Line    11 :--: // TODO : Add API selection parameter
+	Line     9 :--: // TODO : Add API selection parameter
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
@@ -52,33 +52,33 @@
 	Line    50 :--: // TODO : Delete
 	Line    96 :--: // TODO : Split into render call & presentation steps
 	Line   304 :--: // TODO : Make this editable from the client
-	Line   458 :--: // TODO : Replace with clamp function calls
+	Line   457 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
-	Line    11 :--: // TODO : Delete
-	Line    80 :--: // TODO : API CULL MARK
-	Line    83 :--: // TODO : API CULL MARK?
-	Line    89 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   104 :--: // TODO : API CULL MARK
-	Line   107 :--: // TODO : API CULL MARK
-	Line   118 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   126 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   127 :--: // TODO : API CULL MARK
-	Line   129 :--: // TODO : API CULL MARK
-	Line   140 :--: // TODO : API CULL MARK
-	Line   142 :--: // TODO : API CULL MARK
+	Line    12 :--: // TODO : Delete
+	Line    81 :--: // TODO : API CULL MARK
+	Line    93 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   108 :--: // TODO : API CULL MARK
+	Line   111 :--: // TODO : API CULL MARK
+	Line   122 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   130 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   131 :--: // TODO : API CULL MARK
+	Line   133 :--: // TODO : API CULL MARK
+	Line   144 :--: // TODO : API CULL MARK
 	Line   146 :--: // TODO : API CULL MARK
-	Line   148 :--: // TODO : API CULL MARK
-	Line   155 :--: // TODO : Move to an image manager?
-	Line   156 :--: // TODO : API CULL MARK
-	Line   159 :--: // TODO : API CULL MARK
-	Line   162 :--: // TODO : API CULL MARK
-	Line   164 :--: // TODO : API CULL MARK
-	Line   169 :--: // TODO : API CULL MARK
-	Line   179 :--: // TODO : Move to shader programs?
-	Line   182 :--: // TODO : DELETE
+	Line   150 :--: // TODO : API CULL MARK
+	Line   152 :--: // TODO : API CULL MARK
+	Line   159 :--: // TODO : Move to an image manager?
+	Line   160 :--: // TODO : API CULL MARK
+	Line   163 :--: // TODO : API CULL MARK
+	Line   166 :--: // TODO : API CULL MARK
+	Line   168 :--: // TODO : API CULL MARK
+	Line   173 :--: // TODO : API CULL MARK
+	Line   183 :--: // TODO : Move to shader programs?
+	Line   186 :--: // TODO : DELETE
+\IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
+	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
-	Line    52 :--: 
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
 	Line    51 :--: /// TODO: Fixme!
 \IceEngine\libraries\include\glm\simd\common.h

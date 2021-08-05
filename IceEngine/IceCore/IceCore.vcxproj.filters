@@ -72,6 +72,12 @@
     <ClInclude Include="src\renderer\vulkan\vulkan_backend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\service_hub.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\asserts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
@@ -108,6 +114,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core\object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\renderer\vulkan\vulkan_platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

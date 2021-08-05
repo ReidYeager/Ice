@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\asserts.h" />
     <ClInclude Include="src\core\event.h" />
     <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\core\object.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="src\core\camera.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_backend.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_context.h" />
+    <ClInclude Include="src\service_hub.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\event.cpp" />
@@ -124,6 +126,7 @@
     <ClCompile Include="src\renderer\renderer.cpp" />
     <ClCompile Include="src\renderer\shader_program.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_backend.cpp" />
+    <ClCompile Include="src\renderer\vulkan\vulkan_platform.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

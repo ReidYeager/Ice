@@ -5,7 +5,7 @@
 IceBuffer::~IceBuffer()
 {
   if (m_buffer != VK_NULL_HANDLE)
-    IcePrint("Failed to free buffer");
+    LogInfo("Failed to free buffer");
 }
 
 void IceBuffer::AllocateBuffer(IceRenderContext* _rContext,
@@ -78,6 +78,6 @@ u32 IceBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMem
     }
   }
 
-  IcePrint("Failed to find a suitable memory type");
+  LogInfo("Failed to find a suitable memory type");
   return -1;
 }

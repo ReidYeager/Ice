@@ -1,6 +1,6 @@
 
-#ifndef RENDERER_BUFFER_H
-#define RENDERER_BUFFER_H 1
+#ifndef ICE_RENDERER_BUFFER_H_
+#define ICE_RENDERER_BUFFER_H_
 
 #include "defines.h"
 #include "renderer/backend_context.h"

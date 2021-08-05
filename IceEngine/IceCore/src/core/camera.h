@@ -1,6 +1,6 @@
 
-#ifndef CORE_CAMERA_H
-#define CORE_CAMERA_H 1
+#ifndef ICE_CORE_CAMERA_H_
+#define ICE_CORE_CAMERA_H_
 
 #include "defines.h"
 

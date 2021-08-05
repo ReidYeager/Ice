@@ -1,6 +1,6 @@
 
-#ifndef CORE_APPLICATION_H_
-#define CORE_APPLICATION_H_ 1
+#ifndef ICE_CORE_APPLICATION_H_
+#define ICE_CORE_APPLICATION_H_
 
 #include "defines.h"
 #include "platform/platform.h"
@@ -17,6 +17,9 @@ private:
   void* a = nullptr;
   void* b = nullptr;
   void* c = nullptr;
+
+  IcePlatform* platform;
+  IceRenderer* renderer;
 
 public:
   // TODO : Delete

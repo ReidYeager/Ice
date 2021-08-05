@@ -1,6 +1,6 @@
 
-#ifndef RENDERER_RENDERER_BACKEND_H
-#define RENDERER_RENDERER_BACKEND_H 1
+#ifndef ICE_RENDERER_RENDERER_BACKEND_H_
+#define ICE_RENDERER_RENDERER_BACKEND_H_
 
 #include "defines.h"
 #include "renderer/backend_context.h"

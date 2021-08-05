@@ -11,13 +11,13 @@ IceMemoryManager MemoryManager;
 void IceMemoryManager::Initialize()
 {
   Zero(MemoryManager.GetStats(), sizeof(MemoryStatistics));\
-  IcePrint("Initialized MemoryManagement system");
+  LogInfo("Initialized MemoryManagement system");
 }
 
 void IceMemoryManager::Shutdown()
 {
   PrintStats();
-  IcePrint("Shutdown MemoryManagement system");
+  LogInfo("Shutdown MemoryManagement system");
 }
 
 IceMemoryManager::MemoryStatistics* IceMemoryManager::GetStats()
@@ -45,7 +45,7 @@ void* IceMemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)
   MemoryStatistics* stats = MemoryManager.GetStats();
   stats->totalMemoryAllocated += size;
   stats->categoryAllocations[flag] += size;
-  return Platform.AllocateMem(size);
+  return IcePlatform::AllocateMem(size);
 }
 
 void IceMemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
@@ -53,15 +53,15 @@ void IceMemoryManager::Free(void* data, u32 size, IceMemoryTypeFlag flag)
   MemoryStatistics* stats = MemoryManager.GetStats();
   stats->totalMemoryAllocated -= size;
   stats->categoryAllocations[flag] -= size;
-  Platform.FreeMem(data);
+  IcePlatform::FreeMem(data);
 }
 
 void IceMemoryManager::Zero(void* data, u32 size)
 {
-  Platform.ZeroMem(data, size);
+  IcePlatform::ZeroMem(data, size);
 }
 
 void IceMemoryManager::Copy(void* dst, void* src, u32 size)
 {
-  Platform.CopyMem(dst, src, size);
+  IcePlatform::CopyMem(dst, src, size);
 }

@@ -1,6 +1,6 @@
 
-#ifndef CORE_EVENT_H
-#define CORE_EVENT_H 1
+#ifndef ICE_CORE_EVENT_H_
+#define ICE_CORE_EVENT_H_
 
 #include "defines.h"
 #include <vector>

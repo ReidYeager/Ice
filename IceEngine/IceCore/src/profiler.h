@@ -1,6 +1,6 @@
 
-#ifndef PROFILER_H_
-#define PROFILER_H_
+#ifndef ICE_PROFILER_H_
+#define ICE_PROFILER_H_
 
 #include "defines.h"
 // TODO : Add profiling tools

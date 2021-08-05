@@ -2,7 +2,9 @@
 #ifndef ICE_RENDERER_VULKAN_VULKAN_CONTEXT_H_
 #define ICE_RENDERER_VULKAN_VULKAN_CONTEXT_H_
 
+#include "asserts.h"
 #include "defines.h"
+#include "logger.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <set>
@@ -59,15 +61,11 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-#define IVK_ASSERT(vresult, errorMsg, ...)      \
-{                                               \
-  VkResult vkAssertResult = vresult;         \
-  if (vkAssertResult != VK_SUCCESS)             \
-  {                                             \
-    IcePrint(errorMsg, __VA_ARGS__);        \
-    throw VulkanResultToString(vkAssertResult); \
-  }                                             \
+#define IVK_ASSERT(function, errorMsg, ...)                      \
+{                                                                \
+  ICE_ASSERT_MSG(function == VK_SUCCESS, errorMsg, __VA_ARGS__); \
 }
+  //throw VulkanResultToString(vkAssertResult);
 
 struct iceImage_t
 {

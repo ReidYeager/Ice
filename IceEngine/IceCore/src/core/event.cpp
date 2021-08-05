@@ -8,7 +8,7 @@ IceEventManager EventManager;
 void IceEventManager::Initialize()
 {
   //MemoryManager.Zero(state, sizeof(CodeEvents) * Ice_Event_Max);
-  IcePrint("Initialized Event system");
+  LogInfo("Initialized Event system");
 }
 
 void IceEventManager::Shutdown()
@@ -20,7 +20,7 @@ void IceEventManager::Shutdown()
       state[i].registeredEvents.clear();
     }
   }
-  IcePrint("Shutdown Event system");
+  LogInfo("Shutdown Event system");
 }
 
 bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _callaback)

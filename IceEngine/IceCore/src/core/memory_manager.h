@@ -1,6 +1,6 @@
 
-#ifndef CORE_MEMORY_MANAGER_H
-#define CORE_MEMORY_MANAGER_H 1
+#ifndef ICE_CORE_MEMORY_MANAGER_H_
+#define ICE_CORE_MEMORY_MANAGER_H_
 
 #include "defines.h"
 

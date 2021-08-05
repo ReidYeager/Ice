@@ -1,6 +1,6 @@
 
-#ifndef RENDERER_RENDERER_H
-#define RENDERER_RENDERER_H 1
+#ifndef ICE_RENDERER_RENDERER_H_
+#define ICE_RENDERER_RENDERER_H_
 // TODO : Define API agnostic calls
 
 #include "defines.h"

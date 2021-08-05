@@ -1,22 +1,17 @@
 
-#ifndef PLATFORM_PLATFORM_H
-#define PLATFORM_PLATFORM_H 1
+#ifndef ICE_PLATFORM_PLATFORM_H_
+#define ICE_PLATFORM_PLATFORM_H_
 
 #include "defines.h"
 #include "core/event.h"
 
 #ifdef ICE_PLATFORM_WINDOWS
 #include <windows.h>
-#include <vulkan/vulkan.h>
-
-#include <vector>
-
-struct LocalStateInformation
-{
-  HWND hwnd;
-  HINSTANCE hinstance;
-};
-#endif // ICE_PLATFORM_WINDOWS
+// Get rid of windows.h preprocessor definition
+// TODO : Make sure this is safe
+#undef CreateWindow
+#else
+#endif
 
 enum CursorStates
 {
@@ -27,40 +22,65 @@ enum CursorStates
 
 class IcePlatform
 {
-private:
+public:
+  #ifdef ICE_PLATFORM_WINDOWS
+  struct PlatformLocalState
+  {
+    HWND hwnd;
+    HINSTANCE hinstance;
+  };
+  #else
+  struct PlatformLocalState { };
+  #endif
+
   struct PlatformStateInformation
   {
-    LocalStateInformation internalState; // Should use void* instead?
+    b8 active;
+    PlatformLocalState localState;
     CursorStates cursorState;
-    bool shouldClose;
-  };
-  PlatformStateInformation platState;
+
+    u32 windowWidth;
+    u32 windowHeight;
+    u32 windowPositionX;
+    u32 windowPositionY;
+  } state;
 
 public:
-  
-  void Initialize(u32 _width, u32 _height, const char* _title);
+  void Initialize();
   void Shutdown();
-  bool Tick();
-
-  void* AllocateMem(u32 _size);
-  void FreeMem(void* _data);
-  void ZeroMem(void* _data, u32 _size);
-  void* CopyMem(void* _dst, void* _src, u32 _size);
-
-  void PrintToConsole(const char* _message, ...);
-
+  bool Update();
   void Close();
+
+  void CreateWindow(u32 _width, u32 _height, const char* _title);
+  void ResizeWindow(u32 _width, u32 _height);
   void ChangeCursorState(CursorStates _newState);
 
-  // TODO : Find a way to create the surface without including Vulkan here
-  VkSurfaceKHR CreateSurface(VkInstance* _instance);
-  void GetWindowExtent(u32& _width, u32& _height);
+  // Size limited to 4096 MiB
+  static void* AllocateMem(u32 _size);
+  static void FreeMem(void* _memory);
+  static void SetMem(void* _memory, u32 _size, u32 _value);
+  static void ZeroMem(void* _memory, u32 _size);
+  static void* CopyMem(void* _dst, void* _src, u32 _size);
 
-private:
-  void PumpMessages();
+  static void ConsolePrint(const char* _message, u32 _color);
+
+//  void Initialize(u32 _width, u32 _height, const char* _title);
+//  void Shutdown();
+//  bool Tick();
+//
+//  static void* AllocateMem(u32 _size);
+//  static void FreeMem(void* _data);
+//  static void ZeroMem(void* _data, u32 _size);
+//  static void* CopyMem(void* _dst, void* _src, u32 _size);
+//
+//  void PrintToConsole(const char* _message, ...);
+//
+//  void Close();
+//
+//
+//private:
+//  void PumpMessages();
 
 };
-
-extern IcePlatform Platform;
 
 #endif // !PLATFORM_PLATFORM_H

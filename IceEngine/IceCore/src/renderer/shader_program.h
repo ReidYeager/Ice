@@ -1,6 +1,6 @@
 
-#ifndef RENDERER_SHADER_PROGRAM_H_
-#define RENDERER_SHADER_PROGRAM_H_
+#ifndef ICE_RENDERER_SHADER_PROGRAM_H_
+#define ICE_RENDERER_SHADER_PROGRAM_H_
 
 #include "defines.h"
 #include "renderer/vulkan/vulkan_context.h"

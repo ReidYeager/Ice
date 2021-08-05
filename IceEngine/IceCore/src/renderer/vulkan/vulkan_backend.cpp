@@ -28,7 +28,7 @@ void VulkanBackend::Initialize()
   EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
 
   InitializeAPI();
-  rContext->surface = Platform.CreateSurface(&rContext->instance);
+  CreateSurface();
   ChoosePhysicalDevice();
   FillPhysicalDeviceInformation();
   CreateLogicalDevice();
@@ -321,7 +321,7 @@ void VulkanBackend::InitializeAPI()
 
 void VulkanBackend::CreateLogicalDevice()
 {
-  IcePrint("Graphics : %u\nPresent : %u\nTransfer : %u\n",
+  LogInfo("Graphics : %u\nPresent : %u\nTransfer : %u\n",
     rContext->graphicsIdx, rContext->presentIdx, rContext->transferIdx);
 
   VkPhysicalDeviceFeatures enabledFeatures{};
@@ -453,33 +453,29 @@ void VulkanBackend::CreateSwapchain()
   }
   else
   {
-    u32 width, height;
-    Platform.GetWindowExtent(width, height);
+    extent = GetWindowExtent();
 
     // TODO : Replace with clamp function calls
-    if (width < capabilities.minImageExtent.width)
+    if (extent.width < capabilities.minImageExtent.width)
     {
-      width = capabilities.minImageExtent.width;
+      extent.width = capabilities.minImageExtent.width;
     }
-    else if (width > capabilities.maxImageExtent.width)
+    else if (extent.width > capabilities.maxImageExtent.width)
     {
-      width = capabilities.maxImageExtent.width;
-    }
-
-    if (height < capabilities.minImageExtent.height)
-    {
-      height = capabilities.minImageExtent.height;
-    }
-    else if (height > capabilities.maxImageExtent.height)
-    {
-      height = capabilities.maxImageExtent.height;
+      extent.width = capabilities.maxImageExtent.width;
     }
 
-    extent.width = width;
-    extent.height = height;
+    if (extent.height < capabilities.minImageExtent.height)
+    {
+      extent.height = capabilities.minImageExtent.height;
+    }
+    else if (extent.height > capabilities.maxImageExtent.height)
+    {
+      extent.height = capabilities.maxImageExtent.height;
+    }
   }
 
-  IcePrint("Width: %u -- Height: %u", extent.width, extent.height);
+  LogInfo("Width: %u -- Height: %u", extent.width, extent.height);
 
   // Choose an image count
   u32 imageCount = capabilities.minImageCount + 1;
@@ -534,7 +530,7 @@ void VulkanBackend::CreateSwapchain()
 
     if (rContext->swapchainImageViews[i] == VK_NULL_HANDLE)
     {
-      IcePrint("Failed to create swapchain image view");
+      LogInfo("Failed to create swapchain image view");
     }
   }
 }
@@ -739,7 +735,7 @@ void VulkanBackend::ChoosePhysicalDevice()
     return;
   }
 
-  IcePrint("Failed to find a suitable GPU");
+  LogInfo("Failed to find a suitable GPU");
 }
 
 void VulkanBackend::FillPhysicalDeviceInformation()
@@ -892,7 +888,7 @@ u32 VulkanBackend::CreateTexture(std::string _directory)
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
 {
-  //IcePrint("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
+  //LogInfo("Window Resize: (%u, %u)", _data.u32[0], _data.u32[1]);
 
   //rContext->renderExtent = { _data.u32[0], _data.u32[1] };
   RendererBackend* rb = static_cast<RendererBackend*>(_listener);
@@ -930,7 +926,7 @@ VkFormat VulkanBackend::FindSupportedFormat(
     }
   }
 
-  IcePrint("Failed to find a suitable format");
+  LogInfo("Failed to find a suitable format");
   return _formats[0];
 }
 
@@ -953,7 +949,7 @@ u32 VulkanBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
     }
   }
 
-  IcePrint("Failed to find a suitable memory type");
+  LogInfo("Failed to find a suitable memory type");
   return -1;
 }
 
@@ -1067,7 +1063,7 @@ u32 VulkanBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   VkImage vImage;
   if (vkCreateImage(rContext->device, &createInfo, rContext->allocator, &vImage) != VK_SUCCESS)
   {
-    IcePrint("Failed to create vkImages");
+    LogInfo("Failed to create vkImages");
     return -1;
   }
 
@@ -1083,7 +1079,7 @@ u32 VulkanBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   VkDeviceMemory vMemory;
   if (vkAllocateMemory(rContext->device, &allocInfo, rContext->allocator, &vMemory) != VK_SUCCESS)
   {
-    IcePrint("Failed to allocate texture memory");
+    LogInfo("Failed to allocate texture memory");
   }
 
   // Bind image and device memory
@@ -1120,7 +1116,7 @@ VkImageView VulkanBackend::CreateImageView(
   if (vkCreateImageView(rContext->device, &createInfo, rContext->allocator, &createdView)
       != VK_SUCCESS)
   {
-    IcePrint("Failed to create image view");
+    LogInfo("Failed to create image view");
     return VK_NULL_HANDLE;
   }
 
@@ -1198,7 +1194,7 @@ void VulkanBackend::TransitionImageLayout(
   }
   else
   {
-    IcePrint("Encountered an unhandled image layout transition");
+    LogInfo("Encountered an unhandled image layout transition");
   }
 
   vkCmdPipelineBarrier(command, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);

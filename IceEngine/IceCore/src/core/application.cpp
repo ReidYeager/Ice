@@ -1,13 +1,15 @@
 
 #include "defines.h"
 #include "logger.h"
+#include "service_hub.h"
 #include "core/application.h"
-#include "platform/platform.h"
-#include "platform/file_system.h"
 #include "core/memory_manager.h"
-#include "renderer/mesh.h"
 #include "core/input.h"
 #include "core/event.h"
+#include "platform/platform.h"
+#include "platform/file_system.h"
+#include "renderer/renderer.h"
+#include "renderer/mesh.h"
 
 #include <glm/glm.hpp>
 
@@ -29,16 +31,21 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
 
 void Application::Initialize()
 {
-  IcePrint("ICE INIT =================================================");
+  LogInfo("ICE INIT =================================================");
+
+  platform = new IcePlatform();
+  renderer = new IceRenderer();
+  ServiceHub::Initialize(platform, renderer);
 
   EventManager.Initialize();
 
-  Platform.Initialize(800, 600, "Test ice");
-  Platform.ChangeCursorState(Ice_Cursor_Locked);
+  platform->Initialize();
+  platform->CreateWindow(800, 600, "Test Ice");
+  //platform->ChangeCursorState(Ice_Cursor_Locked);
 
   MemoryManager.Initialize();
 
-  Renderer.Initialize();
+  renderer->Initialize();
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({0.0f, -90.0f, 0.0f});
 
@@ -46,20 +53,20 @@ void Application::Initialize()
 
   //ChildInit();
 
-  Renderer.CreateMesh("Sphere.obj");
-  u32 materialIndex = Renderer.GetShaderProgram(Renderer.GetContext(), "test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
+  renderer->CreateMesh("Sphere.obj");
+  u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
                                        { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
   //CreateObject();
 
-  Renderer.RecordCommandBuffers();
+  renderer->RecordCommandBuffers();
 }
 
 void Application::MainLoop()
 {
   IceRenderPacket renderPacket {};
 
-  IcePrint("ICE LOOP =================================================");
-  while (Platform.Tick())
+  LogInfo("ICE LOOP =================================================");
+  while (platform->Update())
   {
     // Handle input
 
@@ -87,22 +94,24 @@ void Application::MainLoop()
 
     if (Input.IsKeyDown(Ice_Key_Escape))
     {
-      Platform.Close();
+      platform->Close();
     }
 
     // Render
-    Renderer.RenderFrame(&renderPacket);
+    renderer->RenderFrame(&renderPacket);
     Input.Update();
   }
 }
 
 void Application::Shutdown()
 {
-  IcePrint("ICE SHUTDOWN =============================================");
-  Renderer.Shutdown();
+  LogInfo("ICE SHUTDOWN =============================================");
+  renderer->Shutdown();
+  delete(renderer);
 
   MemoryManager.Shutdown();
-  Platform.Shutdown();
+  platform->Shutdown();
+  delete(platform);
 }
 
 void Application::CreateObject()

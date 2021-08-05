@@ -1,6 +1,6 @@
 
-#ifndef CORE_TRANSFORM_H
-#define CORE_TRANSFORM_H 1
+#ifndef ICE_CORE_TRANSFORM_H_
+#define ICE_CORE_TRANSFORM_H_
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
