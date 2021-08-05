@@ -4,6 +4,7 @@
 
 #include "asserts.h"
 #include "defines.h"
+
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/renderer_backend.h"
 
@@ -17,10 +18,10 @@ private:
     glm::mat4 view;
     glm::mat4 projection;
   } mvp;
-  IceBuffer* mvpBuffer;
+  IvkBuffer* mvpBuffer;
 
-  IceBuffer* vertexBuffer;
-  IceBuffer* indexBuffer;
+  IvkBuffer* vertexBuffer;
+  IvkBuffer* indexBuffer;
   u32 indexCount = 0;
 
 //=================================================================================================
@@ -28,13 +29,6 @@ private:
 //=================================================================================================
 private:
   IceRenderContext* rContext;
-
-  std::vector<const char*> deviceLayers =
-      { "VK_LAYER_KHRONOS_validation" };
-  std::vector<const char*> instanceExtensions = 
-      { VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_KHR_SURFACE_EXTENSION_NAME, "VK_KHR_win32_surface" };
-  std::vector<const char*> deviceExtensions =
-      { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
   std::vector<iceImage_t*> iceImages;
   std::vector<iceTexture_t*> iceTextures;
@@ -143,9 +137,9 @@ private:
 
   // Creates a buffer on the GPU and fills it with data
   // TODO : API CULL MARK
-  IceBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
+  IvkBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
   // TODO : API CULL MARK
-  IceBuffer* CreateBuffer(
+  IvkBuffer* CreateBuffer(
       VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
   void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
   // TODO : API CULL MARK

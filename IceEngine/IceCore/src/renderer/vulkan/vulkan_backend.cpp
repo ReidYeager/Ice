@@ -1,20 +1,19 @@
 
 #include "defines.h"
-
-#if defined(ICE_VULKAN)
-
 #include "logger.h"
+
 #include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/vulkan/vulkan_context.h"
-#include "renderer/buffer.h"
+#include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/shader_program.h"
 #include "renderer/mesh.h"
-#include "renderer/buffer.h"
 #include "platform/platform.h"
 #include "platform/file_system.h"
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
+
 #include <set>
 // TODO : Replace with custom data type -- only used in CreateShader
 #include <string>
@@ -296,6 +295,18 @@ void VulkanBackend::RecreateComponents()
 
 void VulkanBackend::InitializeAPI()
 {
+  std::vector<const char*> extensions;
+  GetRequiredPlatformExtensions(extensions);
+  extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+  #ifdef ICE_DEBUG_ONLY
+  extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  #endif
+
+  std::vector<const char*> layers;
+  #ifdef ICE_DEBUG_ONLY
+  layers.push_back("VK_LAYER_KHRONOS_validation");
+  #endif
+
   // Basic application metadata
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -310,10 +321,10 @@ void VulkanBackend::InitializeAPI()
   VkInstanceCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.pApplicationInfo = &appInfo;
-  createInfo.enabledExtensionCount = (u32)instanceExtensions.size();
-  createInfo.ppEnabledExtensionNames = instanceExtensions.data();
-  createInfo.enabledLayerCount = (u32)deviceLayers.size();
-  createInfo.ppEnabledLayerNames = deviceLayers.data();
+  createInfo.enabledExtensionCount = (u32)extensions.size();
+  createInfo.ppEnabledExtensionNames = extensions.data();
+  createInfo.enabledLayerCount = (u32)layers.size();
+  createInfo.ppEnabledLayerNames = layers.data();
 
   IVK_ASSERT(vkCreateInstance(&createInfo, rContext->allocator, &rContext->instance),
     "Failed to create instance");
@@ -339,13 +350,22 @@ void VulkanBackend::CreateLogicalDevice()
     queueCreateInfos[i].pQueuePriorities = &priority;
   }
 
+  std::vector<const char*> extensions;
+  extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+  std::vector<const char*> layers;
+  #ifdef ICE_DEBUG_ONLY
+  layers.push_back("VK_LAYER_KHRONOS_validation");
+  #endif // ICE_DEBUG_ONLY
+
+
   VkDeviceCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.pEnabledFeatures = &enabledFeatures;
-  createInfo.enabledExtensionCount = static_cast<u32>(deviceExtensions.size());
-  createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-  createInfo.enabledLayerCount = static_cast<u32>(deviceLayers.size());
-  createInfo.ppEnabledLayerNames = deviceLayers.data();
+  createInfo.enabledExtensionCount = (u32)extensions.size();
+  createInfo.ppEnabledExtensionNames = extensions.data();
+  createInfo.enabledLayerCount = (u32)layers.size();
+  createInfo.ppEnabledLayerNames = layers.data();
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
@@ -651,6 +671,9 @@ void VulkanBackend::CreateCommandBuffers()
 
 void VulkanBackend::ChoosePhysicalDevice()
 {
+  std::vector<const char*> extensions;
+  extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
   // Get all available physical devices
   u32 deviceCount;
   vkEnumeratePhysicalDevices(rContext->instance, &deviceCount, nullptr);
@@ -685,7 +708,7 @@ void VulkanBackend::ChoosePhysicalDevice()
     vkEnumerateDeviceExtensionProperties(pdevice, nullptr, &extensionCount,
       physicalDeviceExt.data());
 
-    std::set<std::string> requiredExtensionSet(deviceExtensions.begin(), deviceExtensions.end());
+    std::set<std::string> requiredExtensionSet(extensions.begin(), extensions.end());
 
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(pdevice, &features);
@@ -856,9 +879,11 @@ u32 VulkanBackend::CreateTexture(std::string _directory)
   void* imageFile = FileSystem::LoadImageFile(_directory.c_str(), width, height);
   VkDeviceSize size = static_cast<VkDeviceSize>(4 * width * height);
 
-  IceBuffer stagingBuffer;
-  stagingBuffer.AllocateBuffer(rContext, static_cast<u32>(size), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IvkBuffer stagingBuffer(
+      rContext,
+      static_cast<u32>(size),
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   FillBuffer(stagingBuffer.GetMemory(), imageFile, size);
   FileSystem::DestroyImageFile(imageFile);
 
@@ -957,15 +982,15 @@ u32 VulkanBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
 // BUFFERS
 //=================================================================================================
 
-IceBuffer* VulkanBackend::CreateAndFillBuffer(
+IvkBuffer* VulkanBackend::CreateAndFillBuffer(
     const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
-  IceBuffer* stagingBuffer = CreateBuffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  IvkBuffer* stagingBuffer = CreateBuffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   FillBuffer(stagingBuffer->GetMemory(), _data, _size);
 
-  IceBuffer* buffer = CreateBuffer(_size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  IvkBuffer* buffer = CreateBuffer(_size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   CopyBuffer(stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
@@ -976,12 +1001,11 @@ IceBuffer* VulkanBackend::CreateAndFillBuffer(
   return buffer;
 }
 
-IceBuffer* VulkanBackend::CreateBuffer(
+IvkBuffer* VulkanBackend::CreateBuffer(
     VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
 {
-  IceBuffer* buffer = new IceBuffer();
-  buffer->AllocateBuffer(rContext, static_cast<u32>(_size), _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-    _memProperties);
+  IvkBuffer* buffer = new IvkBuffer(
+      rContext, static_cast<u32>(_size), _usage|VK_BUFFER_USAGE_TRANSFER_DST_BIT, _memProperties);
 
   return buffer;
 }
@@ -1333,5 +1357,3 @@ void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
 
   vkUpdateDescriptorSets(rContext->device, writeSets.size(), writeSets.data(), 0, nullptr);
 }
-
-#endif // ICE_VULKAN

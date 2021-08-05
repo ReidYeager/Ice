@@ -8,6 +8,9 @@
 #define ICE_API __declspec(dllimport)
 #endif // ICE_DLL_EXPORT
 
+// Comment out to disable debug-only code
+#define ICE_DEBUG_ONLY
+
 //=================================================================================================
 // ice primitive definitions
 //=================================================================================================
@@ -39,13 +42,6 @@ typedef unsigned int       b32;
 #else
 #error "Only windows supported"
 #endif // defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-
-//=================================================================================================
-// Render API selection
-//=================================================================================================
-
-#define ICE_VULKAN 1
-//#define ICE_OPENGL 1
 
 //=================================================================================================
 // Ice Flags

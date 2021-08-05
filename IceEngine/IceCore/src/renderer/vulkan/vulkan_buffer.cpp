@@ -1,18 +1,20 @@
 
-#include "buffer.h"
 #include "logger.h"
+#include "renderer/vulkan/vulkan_buffer.h"
 
-IceBuffer::~IceBuffer()
+IvkBuffer::~IvkBuffer()
 {
   if (m_buffer != VK_NULL_HANDLE)
+  {
     LogInfo("Failed to free buffer");
+  }
 }
 
-void IceBuffer::AllocateBuffer(IceRenderContext* _rContext,
-                               u32 _size,
-                               VkBufferUsageFlags _usage,
-                               VkMemoryPropertyFlags _memProperties,
-                               bool _bind /*= true*/)
+IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
+                     u32 _size,
+                     VkBufferUsageFlags _usage,
+                     VkMemoryPropertyFlags _memProperties,
+                     bool _bind /*= true*/)
 {
   // Align data
 
@@ -48,7 +50,7 @@ void IceBuffer::AllocateBuffer(IceRenderContext* _rContext,
   }
 }
 
-void IceBuffer::FreeBuffer(IceRenderContext* _rContext)
+void IvkBuffer::FreeBuffer(IceRenderContext* _rContext)
 {
   vkFreeMemory(_rContext->device, m_memory, _rContext->allocator);
   vkDestroyBuffer(_rContext->device, m_buffer, _rContext->allocator);
@@ -56,17 +58,17 @@ void IceBuffer::FreeBuffer(IceRenderContext* _rContext)
   m_buffer = VK_NULL_HANDLE;
 }
 
-void IceBuffer::Bind(IceRenderContext* _rContext)
+void IvkBuffer::Bind(IceRenderContext* _rContext)
 {
   vkBindBufferMemory(_rContext->device, m_buffer, m_memory, m_offset);
 }
 
-void IceBuffer::Unbind(IceRenderContext* _rContext)
+void IvkBuffer::Unbind(IceRenderContext* _rContext)
 {
 
 }
 
-u32 IceBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags)
+u32 IvkBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags)
 {
   const VkPhysicalDeviceMemoryProperties& props = _rContext->gpu.memProperties;
 

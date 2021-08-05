@@ -35,7 +35,6 @@ enum IcePipelineSettingFlagBits
 };
 typedef IceFlagExtended IcePipelineSettingFlags;
 
-#ifdef ICE_VULKAN
 #include <vulkan/vulkan.h>
 struct iceShader_t
 {
@@ -47,13 +46,11 @@ struct iceShader_t
   iceShader_t(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
   iceShader_t() {}
 };
-#else
-struct iceShader_t
-{
-  const char* name;
-  IceShaderStageFlags stage;
-};
-#endif // ICE_VULKAN
+//struct iceShader_t
+//{
+//  const char* name;
+//  IceShaderStageFlags stage;
+//};
 
 struct iceShaderProgram_t
 {

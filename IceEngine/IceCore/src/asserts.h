@@ -2,6 +2,7 @@
 #ifndef ICE_ASSERTS_H_
 #define ICE_ASSERTS_H_
 
+// Comment this out to disable asserts
 #define ENABLE_ICE_ASSERTS
 
 #ifdef ENABLE_ICE_ASSERTS

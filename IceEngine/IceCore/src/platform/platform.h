@@ -64,23 +64,6 @@ public:
 
   static void ConsolePrint(const char* _message, u32 _color);
 
-//  void Initialize(u32 _width, u32 _height, const char* _title);
-//  void Shutdown();
-//  bool Tick();
-//
-//  static void* AllocateMem(u32 _size);
-//  static void FreeMem(void* _data);
-//  static void ZeroMem(void* _data, u32 _size);
-//  static void* CopyMem(void* _dst, void* _src, u32 _size);
-//
-//  void PrintToConsole(const char* _message, ...);
-//
-//  void Close();
-//
-//
-//private:
-//  void PumpMessages();
-
 };
 
 #endif // !PLATFORM_PLATFORM_H

@@ -1,3 +1,5 @@
+\.git\COMMIT_EDITMSG
+	Line    44 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -20,14 +22,6 @@
 	Line   285 :--: // TODO : Add raw input support
 \IceEngine\IceCore\src\profiler.h
 	Line     5 :--: // TODO : Add profiling tools
-\IceEngine\IceCore\src\renderer\buffer.cpp
-	Line    34 :--: // TODO : Replace with a GPU memory allocator call
-\IceEngine\IceCore\src\renderer\buffer.h
-	Line    10 :--: // NOTE : I really don't like this implementation; especially as it stands now.
-	Line    12 :--: // TODO : Make API agnostic
-	Line    15 :--: // TODO : Add alignment to better utilize GPU
-	Line    43 :--: // TODO : Move to vkMemory allocator
-	Line    48 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
@@ -45,36 +39,43 @@
 	Line   361 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\shader_program.h
 	Line     8 :--: // NOTE : Move to defines?
-	Line    83 :--: // TODO : Refactor and move to RenderBackend
+	Line    80 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
-	Line    18 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    38 :--: // TODO : Delete
-	Line    50 :--: // TODO : Delete
-	Line    96 :--: // TODO : Split into render call & presentation steps
-	Line   304 :--: // TODO : Make this editable from the client
-	Line   457 :--: // TODO : Replace with clamp function calls
+	Line    17 :--: // TODO : Replace with custom data type -- only used in CreateShader
+	Line    37 :--: // TODO : Delete
+	Line    49 :--: // TODO : Delete
+	Line    95 :--: // TODO : Split into render call & presentation steps
+	Line   315 :--: // TODO : Make this editable from the client
+	Line   477 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
-	Line    12 :--: // TODO : Delete
-	Line    81 :--: // TODO : API CULL MARK
-	Line    93 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   108 :--: // TODO : API CULL MARK
-	Line   111 :--: // TODO : API CULL MARK
-	Line   122 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   130 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   131 :--: // TODO : API CULL MARK
-	Line   133 :--: // TODO : API CULL MARK
+	Line    13 :--: // TODO : Delete
+	Line    75 :--: // TODO : API CULL MARK
+	Line    87 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   102 :--: // TODO : API CULL MARK
+	Line   105 :--: // TODO : API CULL MARK
+	Line   116 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   124 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   125 :--: // TODO : API CULL MARK
+	Line   127 :--: // TODO : API CULL MARK
+	Line   138 :--: // TODO : API CULL MARK
+	Line   140 :--: // TODO : API CULL MARK
 	Line   144 :--: // TODO : API CULL MARK
 	Line   146 :--: // TODO : API CULL MARK
-	Line   150 :--: // TODO : API CULL MARK
-	Line   152 :--: // TODO : API CULL MARK
-	Line   159 :--: // TODO : Move to an image manager?
+	Line   153 :--: // TODO : Move to an image manager?
+	Line   154 :--: // TODO : API CULL MARK
+	Line   157 :--: // TODO : API CULL MARK
 	Line   160 :--: // TODO : API CULL MARK
-	Line   163 :--: // TODO : API CULL MARK
-	Line   166 :--: // TODO : API CULL MARK
-	Line   168 :--: // TODO : API CULL MARK
-	Line   173 :--: // TODO : API CULL MARK
-	Line   183 :--: // TODO : Move to shader programs?
-	Line   186 :--: // TODO : DELETE
+	Line   162 :--: // TODO : API CULL MARK
+	Line   167 :--: // TODO : API CULL MARK
+	Line   177 :--: // TODO : Move to shader programs?
+	Line   180 :--: // TODO : DELETE
+\IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
+	Line    36 :--: // TODO : Replace with a GPU memory allocator call
+\IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
+	Line    11 :--: // NOTE : I really don't like this implementation; especially as it stands now.
+	Line    15 :--: // TODO : Add alignment to better utilize GPU
+	Line    42 :--: // TODO : Move to vkMemory allocator
+	Line    46 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
