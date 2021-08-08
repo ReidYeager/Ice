@@ -13,6 +13,14 @@
 
 class IceRenderer
 {
+public:
+  enum IceRenderingAPI
+  {
+    Vulkan // Ivk*
+    //OpenGL, // Igl*
+    //DirectX // Idx*
+  };
+
 //=================================================
 // Variables
 //=================================================
@@ -29,7 +37,7 @@ private:
 // Functions
 //=================================================
 public:
-  void Initialize();
+  void Initialize(IceRenderingAPI _api);
   void Shutdown();
 
   void RecordCommandBuffers();

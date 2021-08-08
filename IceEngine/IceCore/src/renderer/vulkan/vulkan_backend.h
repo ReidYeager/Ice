@@ -39,11 +39,9 @@ private:
 // FUNCTIONS
 //=================================================================================================
 public:
-  //// Initializes the fundamentals required to create renderer components
-  //VulkanBackend();
-  //// Destroys all components used for rendering & presentation
-  //~VulkanBackend();
+  // Initializes the fundamentals required to create renderer components
   void Initialize() override;
+  // Destroys all components used for rendering & presentation
   void Shutdown() override;
 
   void RenderFrame(IceRenderPacket* _packet) override;

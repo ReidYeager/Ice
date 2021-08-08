@@ -54,5 +54,4 @@ typedef u64 IceFlagExtended;
 //=================================================================================================
 #define ICE_RESOURCE_SHADER_DIR "./res/shaders/compiled/"
 
-
 #endif // !DEFINES_H

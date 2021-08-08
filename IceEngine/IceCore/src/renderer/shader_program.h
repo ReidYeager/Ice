@@ -3,24 +3,9 @@
 #define ICE_RENDERER_SHADER_PROGRAM_H_
 
 #include "defines.h"
+#include "renderer/shader.h"
 #include "renderer/vulkan/vulkan_context.h"
 #include <vector>
-
-// NOTE : Move to defines?
-enum IceShaderStageFlagBits
-{
-  Ice_Shader_Stage_Vert = 0x01, // vertex shader
-  Ice_Shader_Stage_Frag = 0x02, // fragment shader
-  Ice_Shader_Stage_Comp = 0x04  // compute shader
-};
-typedef IceFlag IceShaderStageFlags;
-
-enum IceShaderBindingFlagBits
-{
-  Ice_Shader_Binding_Buffer = 0x00,
-  Ice_Shader_Binding_Image = 0x01,
-};
-typedef IceFlag IceShaderBindingFlags;
 
 enum IcePipelineSettingFlagBits
 {
@@ -46,11 +31,6 @@ struct iceShader_t
   iceShader_t(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
   iceShader_t() {}
 };
-//struct iceShader_t
-//{
-//  const char* name;
-//  IceShaderStageFlags stage;
-//};
 
 struct iceShaderProgram_t
 {

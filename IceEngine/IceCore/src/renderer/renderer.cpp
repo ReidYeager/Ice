@@ -7,10 +7,8 @@
 
 // TODO : Remove all API types & references
 
-// TODO : Add API selection parameter
-void IceRenderer::Initialize()
+void IceRenderer::Initialize(IceRenderingAPI _api)
 {
-  // Get window surface
   backend = new VulkanBackend();
   backend->Initialize();
   LogInfo("Initialized Renderer system");
@@ -18,12 +16,7 @@ void IceRenderer::Initialize()
 
 void IceRenderer::Shutdown()
 {
-  //for (u32 i = 0; i < buffers.size(); i++)
-  //{
-  //  DestroyBuffer(i);
-  //}
-
-  //backend->Shutdown();
+  backend->Shutdown();
   delete(backend);
   LogInfo("Shutdown Renderer system");
 }

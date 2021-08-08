@@ -45,7 +45,7 @@ void Application::Initialize()
 
   MemoryManager.Initialize();
 
-  renderer->Initialize();
+  renderer->Initialize(IceRenderer::Vulkan);
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({0.0f, -90.0f, 0.0f});
 
@@ -53,8 +53,8 @@ void Application::Initialize()
 
   //ChildInit();
 
-  renderer->CreateMesh("Sphere.obj");
-  u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Stage_Vert | Ice_Shader_Stage_Frag,
+  renderer->CreateMesh("Cube.obj");
+  u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Vert | Ice_Shader_Frag,
                                        { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
   //CreateObject();
 

@@ -48,8 +48,11 @@ void VulkanBackend::Shutdown()
   vkDeviceWaitIdle(rContext->device);
 
   // TODO : Delete
+  vertexBuffer->FreeBuffer(rContext);
   delete(vertexBuffer);
+  indexBuffer->FreeBuffer(rContext);
   delete(indexBuffer);
+  mvpBuffer->FreeBuffer(rContext);
   delete(mvpBuffer);
 
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
@@ -1261,15 +1264,15 @@ iceShader_t VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _
 
   switch (_stage)
   {
-  case Ice_Shader_Stage_Vert:
+  case Ice_Shader_Vert:
     fileDir.append(".vspv");
     layoutDir.append(".vlayout");
     break;
-  case Ice_Shader_Stage_Frag:
+  case Ice_Shader_Frag:
     fileDir.append(".fspv");
     layoutDir.append(".flayout");
     break;
-  case Ice_Shader_Stage_Comp:
+  case Ice_Shader_Comp:
     fileDir.append(".cspv");
     layoutDir.append(".clayout");
     break;
@@ -1355,5 +1358,5 @@ void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
     }
   }
 
-  vkUpdateDescriptorSets(rContext->device, writeSets.size(), writeSets.data(), 0, nullptr);
+  vkUpdateDescriptorSets(rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
 }

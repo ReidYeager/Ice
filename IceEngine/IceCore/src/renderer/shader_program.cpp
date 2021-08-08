@@ -103,21 +103,21 @@ void CreateShaderProgram(IceRenderContext* rContext, const char* _name, IceShade
   std::vector<u8> indices = {};
   u32 idx = 0;
 
-  if (_stages & Ice_Shader_Stage_Vert)
+  if (_stages & Ice_Shader_Vert)
   {
-    idx = GetShader(rContext, _name, Ice_Shader_Stage_Vert);
+    idx = GetShader(rContext, _name, Ice_Shader_Vert);
     indices.push_back(idx);
   }
 
-  if (_stages & Ice_Shader_Stage_Frag)
+  if (_stages & Ice_Shader_Frag)
   {
-    idx = GetShader(rContext, _name, Ice_Shader_Stage_Frag);
+    idx = GetShader(rContext, _name, Ice_Shader_Frag);
     indices.push_back(idx);
   }
 
-  if (_stages & Ice_Shader_Stage_Comp)
+  if (_stages & Ice_Shader_Comp)
   {
-    idx = GetShader(rContext, _name, Ice_Shader_Stage_Comp);
+    idx = GetShader(rContext, _name, Ice_Shader_Comp);
     indices.push_back(idx);
   }
 
@@ -132,13 +132,13 @@ VkShaderStageFlagBits IceToVkShaderStage(IceShaderStageFlags _stage)
 {
   switch (_stage)
   {
-  case Ice_Shader_Stage_Vert:
+  case Ice_Shader_Vert:
     return VK_SHADER_STAGE_VERTEX_BIT;
     break;
-  case Ice_Shader_Stage_Frag:
+  case Ice_Shader_Frag:
     return VK_SHADER_STAGE_FRAGMENT_BIT;
     break;
-  case Ice_Shader_Stage_Comp:
+  case Ice_Shader_Comp:
     return VK_SHADER_STAGE_COMPUTE_BIT;
     break;
   }
@@ -331,15 +331,15 @@ void LoadShader(IceRenderContext* rContext, iceShader_t& _shader)
 
   switch (_shader.stage)
   {
-  case Ice_Shader_Stage_Vert:
+  case Ice_Shader_Vert:
     shaderDir.append(".vspv");
     layoutDir.append(".vlayout");
     break;
-  case Ice_Shader_Stage_Frag:
+  case Ice_Shader_Frag:
     shaderDir.append(".fspv");
     layoutDir.append(".flayout");
     break;
-  case Ice_Shader_Stage_Comp:
+  case Ice_Shader_Comp:
     shaderDir.append(".cspv");
     layoutDir.append(".clayout");
     break;

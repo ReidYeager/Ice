@@ -9,8 +9,6 @@
 
 #include <vector>
 
-// NOTE : I really don't like this implementation; especially as it stands now.
-
 class IvkBuffer
 {
   // TODO : Add alignment to better utilize GPU
