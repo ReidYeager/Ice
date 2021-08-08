@@ -3,7 +3,7 @@
 #define ICE_RENDERER_SHADER_H_
 
 #include "defines.h"
-
+#include "renderer/vulkan/vulkan_buffer.h"
 #include <vector>
 
 enum IceShaderStageFlagBits
@@ -35,7 +35,7 @@ enum IceShaderParameters
 };
 #undef ISP
 
-struct IvkShaderBufferInfo
+struct IceShaderBufferInfo
 {
   u32 size;
   u32 offset;
@@ -47,7 +47,10 @@ struct IceShaderInfo
   // TODO : Find a better way of identifying what shaders an IvkShader uses
   std::vector<const char*> sources;
   IceShaderStageFlags stages;
-  IvkShaderBufferInfo bufferInfo;
+  std::vector<IceShaderBindingFlags> bindings;
+  IceShaderBufferInfo bufferInfo;
+  // TODO : Replace with API agnostic buffer
+  IvkBuffer* buffer;
   // TODO : Replace with indices for a texture flyweight
   std::vector<const char*> textures;
 };

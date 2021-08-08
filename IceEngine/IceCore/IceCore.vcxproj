@@ -111,6 +111,7 @@
     <ClInclude Include="src\core\camera.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_backend.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_context.h" />
+    <ClInclude Include="src\renderer\vulkan\vulkan_material.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_shader.h" />
     <ClInclude Include="src\service_hub.h" />
   </ItemGroup>
@@ -127,7 +128,7 @@
     <ClCompile Include="src\renderer\shader_program.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_backend.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_platform.cpp" />
-    <ClCompile Include="src\renderer\vulkan\vulkan_shader.cpp" />
+    <ClCompile Include="src\renderer\vulkan\vulkan_material.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
