@@ -43,7 +43,7 @@ bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _calla
 
 bool IceEventManager::Unregister(u16 _eCode, void* _listener, EventCallback _callaback)
 {
-  u32 size = state[_eCode].registeredEvents.size();
+  size_t size = state[_eCode].registeredEvents.size();
   for (u32 i = 0; i < size; i++)
   {
     std::vector<RegisteredEvent>& e = state[_eCode].registeredEvents;

@@ -29,6 +29,8 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
   return true;
 }
 
+#include "renderer/vulkan/vulkan_shader.h"
+
 void Application::Initialize()
 {
   LogInfo("ICE INIT =================================================");
@@ -52,6 +54,7 @@ void Application::Initialize()
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
 
   //ChildInit();
+  IvkShader testShader(renderer->GetContext(), {"test"}, {Ice_Shader_Vert | Ice_Shader_Frag});
 
   renderer->CreateMesh("Cube.obj");
   u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Vert | Ice_Shader_Frag,
