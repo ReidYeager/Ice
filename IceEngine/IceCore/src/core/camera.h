@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-class IceCamera
+class ICE_API IceCamera
 {
 public:
   glm::vec3 position;

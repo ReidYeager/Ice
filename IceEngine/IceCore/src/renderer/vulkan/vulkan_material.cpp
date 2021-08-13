@@ -10,9 +10,10 @@
 #include <string>
 #include <vector>
 
+// NOTE : Material's payload needs to be filled before use
 IvkMaterial::IvkMaterial(IceRenderContext* _rContext,
-                     const std::vector<const char*> _shaderNames,
-                     const std::vector<IceShaderStageFlags> _shaderStages)
+                         const std::vector<const char*> _shaderNames,
+                         const std::vector<IceShaderStageFlags> _shaderStages)
 {
   LogDebug("Creating material");
   info.sources = _shaderNames;
@@ -20,7 +21,6 @@ IvkMaterial::IvkMaterial(IceRenderContext* _rContext,
 
   CreateDescriptorSetLayout(_rContext, shaders);
   CreateDescriptorSet(_rContext);
-  UpdateDescriptorSet(_rContext);
 
   CreatePipelineLayout(_rContext);
   CreatePipeline(_rContext, shaders);
@@ -37,17 +37,77 @@ IvkMaterial::IvkMaterial(IceRenderContext* _rContext,
 
 void IvkMaterial::Shutdown(IceRenderContext* _rContext)
 {
+  LogDebug("Destroying material");
+  vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
+  vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
   vkDestroyDescriptorSetLayout(_rContext->device, descriptorSetLayout, _rContext->allocator);
+  buffer->FreeBuffer(_rContext);
+  delete(buffer);
 }
 
-void IvkMaterial::UpdatePayload(std::vector<IvkBuffer*> _buffers, std::vector<const char*> _images)
+void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
+                                std::vector<const char*> _images,
+                                IvkBuffer* _buffer /*= nullptr*/)
 {
-  // Move UpdateDescriptorSet code here
+  std::vector<VkWriteDescriptorSet> writeSets(_images.size() + 1);
+  std::vector<VkDescriptorImageInfo> imageInfos(_images.size());
+  u32 writeIndex = 0;
+  u32 imageIndex = 0;
+
+  if (_buffer != nullptr)
+    buffer = _buffer;
+  if (buffer == nullptr)
+    buffer = new IvkBuffer(_rContext,
+                           1,
+                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  // Bind the buffer
+  VkDescriptorBufferInfo mvpBufferInfo{};
+  mvpBufferInfo.buffer = buffer->GetBuffer();
+  mvpBufferInfo.offset = 0;
+  mvpBufferInfo.range = VK_WHOLE_SIZE;
+
+  writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeSets[writeIndex].dstSet = descriptorSet;
+  writeSets[writeIndex].dstBinding = writeIndex;
+  writeSets[writeIndex].dstArrayElement = 0;
+  writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  writeSets[writeIndex].descriptorCount = 1;
+  writeSets[writeIndex].pBufferInfo = &mvpBufferInfo;
+  writeSets[writeIndex].pImageInfo = nullptr;
+  writeSets[writeIndex].pTexelBufferView = nullptr;
+  writeIndex++;
+
+  // Bind the images
+  for (const auto& image : _images)
+  {
+    //imageInfos[imageIndex].imageLayout = image.layout;
+    //imageInfos[imageIndex].imageView = image.view;
+    //imageInfos[imageIndex].sampler = image.sampler;
+
+    writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeSets[writeIndex].dstSet = descriptorSet;
+    writeSets[writeIndex].dstBinding = writeIndex;
+    writeSets[writeIndex].dstArrayElement = 0;
+    writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeSets[writeIndex].descriptorCount = 1;
+    writeSets[writeIndex].pBufferInfo = nullptr;
+    writeSets[writeIndex].pImageInfo = &imageInfos[imageIndex];
+    writeSets[writeIndex].pTexelBufferView = nullptr;
+
+    imageIndex++;
+    writeIndex++;
+  }
+
+  vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
-void IvkMaterial::Render()
+void IvkMaterial::Render(VkCommandBuffer& _command)
 {
-  
+  vkCmdBindPipeline(_command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  vkCmdBindDescriptorSets(
+      _command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 }
 
 std::vector<IvkShader> IvkMaterial::GetShaders(
@@ -215,64 +275,6 @@ void IvkMaterial::CreateDescriptorSet(IceRenderContext* _rContext)
 
   IVK_ASSERT(vkAllocateDescriptorSets(_rContext->device, &allocInfo, &descriptorSet),
              "Failed to allocate descriptor set");
-}
-
-IvkBuffer* mvp;
-
-void IvkMaterial::UpdateDescriptorSet(IceRenderContext* _rContext)
-{
-  //std::vector<VkWriteDescriptorSet> writeSets(info.bindings.size());
-  //std::vector<VkDescriptorImageInfo> imageInfos(info.bindings.size() - 1);
-  std::vector<VkWriteDescriptorSet> writeSets(1);
-  std::vector<VkDescriptorImageInfo> imageInfos(0);
-
-  mvp = new IvkBuffer(_rContext, 4, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-  // Create the Uniform buffer
-  VkDescriptorBufferInfo mvpBufferInfo{};
-  mvpBufferInfo.buffer = mvp->GetBuffer();
-  mvpBufferInfo.offset = 0;
-  mvpBufferInfo.range = VK_WHOLE_SIZE;
-
-  // MVP matrix
-  writeSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeSets[0].dstSet = descriptorSet;
-  writeSets[0].dstBinding = 0;
-  writeSets[0].dstArrayElement = 0;
-  writeSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  writeSets[0].descriptorCount = 1;
-  writeSets[0].pBufferInfo = &mvpBufferInfo;
-  writeSets[0].pImageInfo = nullptr;
-  writeSets[0].pTexelBufferView = nullptr;
-
-  // Fill info for each texture
-  //for (u32 i = 1, imageBufferIdx = 0; i < info.bindings.size(); i++)
-  //{
-  //  if (info.bindings[i] == Ice_Shader_Binding_Image)
-  //  {
-  //    //u32 texIndex = GetTexture(shaderProgram.textureDirs[imageBufferIdx]);
-  //    //u32 textureImageIdx = iceTextures[texIndex]->imageIndex;
-  //    //VkDescriptorImageInfo iInfo{};
-  //    //imageInfos[imageBufferIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  //    //imageInfos[imageBufferIdx].sampler = iceImages[textureImageIdx]->sampler;
-  //    //imageInfos[imageBufferIdx].imageView = iceImages[textureImageIdx]->view;
-
-  //    //// Texture
-  //    //writeSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //    //writeSets[i].dstSet = shaderProgram.descriptorSet;
-  //    //writeSets[i].dstBinding = i;
-  //    //writeSets[i].dstArrayElement = 0;
-  //    //writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  //    //writeSets[i].descriptorCount = 1;
-  //    //writeSets[i].pBufferInfo = nullptr;
-  //    //writeSets[i].pImageInfo = &imageInfos[texIndex];
-  //    //writeSets[i].pTexelBufferView = nullptr;
-
-  //    imageBufferIdx++;
-  //  }
-  //}
-
-  vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
 void IvkMaterial::CreatePipelineLayout(IceRenderContext* _rContext)

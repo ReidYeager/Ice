@@ -48,17 +48,16 @@ void Application::Initialize()
   MemoryManager.Initialize();
 
   renderer->Initialize(IceRenderer::Vulkan);
-  cam.position = glm::vec3(0, 0, 5);
-  cam.SetRotation({0.0f, -90.0f, 0.0f});
-
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
 
   //ChildInit();
-  IvkMaterial testShader(renderer->GetContext(), {"blue"}, {Ice_Shader_Vert | Ice_Shader_Frag});
-
   renderer->CreateMesh("Cube.obj");
+  IvkMaterial testShader(renderer->GetContext(), {"blue"}, {Ice_Shader_Vert | Ice_Shader_Frag});
   u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Vert | Ice_Shader_Frag,
                                        { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
+  cam.position = glm::vec3(0, 0, 5);
+  cam.SetRotation({ 0.0f, -90.0f, 0.0f });
+
   //CreateObject();
 
   renderer->RecordCommandBuffers();

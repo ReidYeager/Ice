@@ -16,6 +16,9 @@ class IvkMaterial
 private:
   IceShaderInfo info;
 
+  // TODO : Replace with handled buffer?
+  IvkBuffer* buffer;
+
   // TODO : Add pipeline settings
   VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
   VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
@@ -28,9 +31,11 @@ public:
             const std::vector<IceShaderStageFlags> _shaderStages);
   void Shutdown(IceRenderContext* _rContext);
 
-  // TODO : Replace with managed images
-  void UpdatePayload(std::vector<IvkBuffer*> _buffers, std::vector<const char*> _images);
-  void Render();
+  // TODO : Replace _images with managed image pointers
+  void UpdatePayload(IceRenderContext* _rContext,
+                     std::vector<const char*> _images,
+                     IvkBuffer* _buffer = nullptr);
+  void Render(VkCommandBuffer& _command);
 
 private:
   std::vector<IvkShader> GetShaders(
@@ -42,7 +47,6 @@ private:
   void CreateDescriptorSetLayout(
       IceRenderContext* _rContext, const std::vector<IvkShader>& _shaders);
   void CreateDescriptorSet(IceRenderContext* _rContext);
-  void UpdateDescriptorSet(IceRenderContext* _rContext);
   void CreatePipelineLayout(IceRenderContext* _rContext);
   void CreatePipeline(IceRenderContext* _rContext, std::vector<IvkShader> _shaders);
 

@@ -1,5 +1,3 @@
-\.git\COMMIT_EDITMSG
-	Line    19 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -66,11 +64,13 @@
 	Line    40 :--: // TODO : Move to vkMemory allocator
 	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line    62 :--: // TODO : Make more easily extendable?
-	Line   129 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line    12 :--: // NOTE : Material's payload needs to be filled before use
+	Line   122 :--: // TODO : Make more easily extendable?
+	Line   189 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
-	Line    18 :--: // TODO : Add pipeline settings
-	Line    30 :--: // TODO : Replace with managed images
+	Line    18 :--: // TODO : Replace with handled buffer?
+	Line    21 :--: // TODO : Add pipeline settings
+	Line    33 :--: // TODO : Replace _images with managed image pointers
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
