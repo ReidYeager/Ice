@@ -28,6 +28,10 @@ public:
             const std::vector<IceShaderStageFlags> _shaderStages);
   void Shutdown(IceRenderContext* _rContext);
 
+  // TODO : Replace with managed images
+  void UpdatePayload(std::vector<IvkBuffer*> _buffers, std::vector<const char*> _images);
+  void Render();
+
 private:
   std::vector<IvkShader> GetShaders(
       IceRenderContext* _rContext, const std::vector<IceShaderStageFlags> _shaderStages);
@@ -39,6 +43,8 @@ private:
       IceRenderContext* _rContext, const std::vector<IvkShader>& _shaders);
   void CreateDescriptorSet(IceRenderContext* _rContext);
   void UpdateDescriptorSet(IceRenderContext* _rContext);
+  void CreatePipelineLayout(IceRenderContext* _rContext);
+  void CreatePipeline(IceRenderContext* _rContext, std::vector<IvkShader> _shaders);
 
 };
 

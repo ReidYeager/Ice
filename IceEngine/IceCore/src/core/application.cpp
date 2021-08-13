@@ -54,7 +54,7 @@ void Application::Initialize()
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
 
   //ChildInit();
-  IvkMaterial testShader(renderer->GetContext(), {"test"}, {Ice_Shader_Vert | Ice_Shader_Frag});
+  IvkMaterial testShader(renderer->GetContext(), {"blue"}, {Ice_Shader_Vert | Ice_Shader_Frag});
 
   renderer->CreateMesh("Cube.obj");
   u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Vert | Ice_Shader_Frag,

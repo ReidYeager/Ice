@@ -1,5 +1,5 @@
 \.git\COMMIT_EDITMSG
-	Line    16 :--: #	modified:   TODO_and_Notes.txt
+	Line    19 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -54,24 +54,11 @@
 	Line    13 :--: // TODO : Delete
 	Line    73 :--: // TODO : API CULL MARK
 	Line    85 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   100 :--: // TODO : API CULL MARK
-	Line   103 :--: // TODO : API CULL MARK
-	Line   114 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   122 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   123 :--: // TODO : API CULL MARK
-	Line   125 :--: // TODO : API CULL MARK
-	Line   136 :--: // TODO : API CULL MARK
-	Line   138 :--: // TODO : API CULL MARK
-	Line   142 :--: // TODO : API CULL MARK
-	Line   144 :--: // TODO : API CULL MARK
-	Line   151 :--: // TODO : Move to an image manager?
-	Line   152 :--: // TODO : API CULL MARK
-	Line   155 :--: // TODO : API CULL MARK
-	Line   158 :--: // TODO : API CULL MARK
-	Line   160 :--: // TODO : API CULL MARK
-	Line   165 :--: // TODO : API CULL MARK
-	Line   175 :--: // TODO : Move to shader programs?
-	Line   178 :--: // TODO : DELETE
+	Line   112 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   120 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   143 :--: // TODO : Move to an image manager?
+	Line   162 :--: // TODO : Move to shader programs?
+	Line   165 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
 	Line    36 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
@@ -79,10 +66,11 @@
 	Line    40 :--: // TODO : Move to vkMemory allocator
 	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line    49 :--: // TODO : Make more easily extendable?
-	Line   116 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line    62 :--: // TODO : Make more easily extendable?
+	Line   129 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
 	Line    18 :--: // TODO : Add pipeline settings
+	Line    30 :--: // TODO : Replace with managed images
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp

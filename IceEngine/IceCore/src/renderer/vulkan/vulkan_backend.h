@@ -98,10 +98,8 @@ private:
   void ChoosePhysicalDevice();
   void FillPhysicalDeviceInformation();
   // Returns the first instance of a queue with the input flags
-  // TODO : API CULL MARK
   u32 GetQueueIndex(std::vector<VkQueueFamilyProperties>& _queues, VkQueueFlags _flags);
   // Returns the first instance of a presentation queue
-  // TODO : API CULL MARK
   u32 GetPresentIndex(
     const VkPhysicalDevice* _device, u32 _queuePropertyCount, u32 _graphicsIndex);
 
@@ -121,9 +119,7 @@ private:
 //=================================================================================================
 
   // TODO : I don't like this. Find a better way to destroy shaders
-  // TODO : API CULL MARK
   void DestroyShaderModule(VkShaderModule& _shader);
-  // TODO : API CULL MARK
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
     VkImageTiling _tiling, VkFormatFeatureFlags _features);
   VkFormat FindDepthFormat();
@@ -134,15 +130,11 @@ private:
 //=================================================================================================
 
   // Creates a buffer on the GPU and fills it with data
-  // TODO : API CULL MARK
   IvkBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
-  // TODO : API CULL MARK
   IvkBuffer* CreateBuffer(
       VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
   void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
-  // TODO : API CULL MARK
   void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
-  // TODO : API CULL MARK
   void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
 
 //=================================================================================================
@@ -150,20 +142,15 @@ private:
 //=================================================================================================
 
   // TODO : Move to an image manager?
-  // TODO : API CULL MARK
   u32 CreateImage(u32 _width, u32 _height, VkFormat _format, VkImageTiling _tiling,
     VkImageUsageFlags _usage, VkMemoryPropertyFlags _memProps);
-  // TODO : API CULL MARK
   VkImageView CreateImageView(
     const VkFormat _format, VkImageAspectFlags _aspect, const VkImage& _image);
-  // TODO : API CULL MARK
   VkSampler CreateSampler();
-  // TODO : API CULL MARK
   void TransitionImageLayout(
       VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout,
       VkPipelineStageFlagBits _shaderStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-    // TODO : API CULL MARK
   void CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height);
 
 //=================================================================================================
