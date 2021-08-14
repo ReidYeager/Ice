@@ -4,7 +4,7 @@
 
 IvkBuffer::~IvkBuffer()
 {
-  if (m_buffer != VK_NULL_HANDLE)
+  if (buffer != VK_NULL_HANDLE)
   {
     LogInfo("Failed to free buffer");
   }
@@ -18,21 +18,23 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
 {
   // Align data
 
-  m_size = _size;
-  m_usage = _usage;
+  LogError("Creating buffer %u", _size);
+
+  size = _size;
+  usage = _usage;
 
   VkBufferCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   createInfo.pNext = nullptr;
-  createInfo.size = m_size;
-  createInfo.usage = m_usage;
+  createInfo.size = size;
+  createInfo.usage = usage;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  IVK_ASSERT(vkCreateBuffer(_rContext->device, &createInfo, _rContext->allocator, &m_buffer),
+  IVK_ASSERT(vkCreateBuffer(_rContext->device, &createInfo, _rContext->allocator, &buffer),
              "Failed to create buffer");
 
   VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(_rContext->device, m_buffer, &memRequirements);
+  vkGetBufferMemoryRequirements(_rContext->device, buffer, &memRequirements);
 
   // TODO : Replace with a GPU memory allocator call
   VkMemoryAllocateInfo allocInfo = {};
@@ -41,7 +43,7 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
   allocInfo.memoryTypeIndex =
       FindMemoryTypeIndex(_rContext, memRequirements.memoryTypeBits, _memProperties);
 
-  IVK_ASSERT(vkAllocateMemory(_rContext->device, &allocInfo, _rContext->allocator, &m_memory),
+  IVK_ASSERT(vkAllocateMemory(_rContext->device, &allocInfo, _rContext->allocator, &memory),
              "Failed to allocate vert memory");
 
   if (_bind)
@@ -52,15 +54,17 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
 
 void IvkBuffer::FreeBuffer(IceRenderContext* _rContext)
 {
-  vkFreeMemory(_rContext->device, m_memory, _rContext->allocator);
-  vkDestroyBuffer(_rContext->device, m_buffer, _rContext->allocator);
+  LogError("Destroying buffer %u", size);
 
-  m_buffer = VK_NULL_HANDLE;
+  vkFreeMemory(_rContext->device, memory, _rContext->allocator);
+  vkDestroyBuffer(_rContext->device, buffer, _rContext->allocator);
+
+  buffer = VK_NULL_HANDLE;
 }
 
 void IvkBuffer::Bind(IceRenderContext* _rContext)
 {
-  vkBindBufferMemory(_rContext->device, m_buffer, m_memory, m_offset);
+  vkBindBufferMemory(_rContext->device, buffer, memory, offset);
 }
 
 void IvkBuffer::Unbind(IceRenderContext* _rContext)

@@ -80,6 +80,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\libraries\include\;$(VULKAN_SDK)\include\;$(ProjectDir)\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>26812;26495</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,6 +95,8 @@
     <ClInclude Include="src\asserts.h" />
     <ClInclude Include="src\core\event.h" />
     <ClInclude Include="src\core\input.h" />
+    <ClInclude Include="src\renderer\buffer.h" />
+    <ClInclude Include="src\renderer\material.h" />
     <ClInclude Include="src\renderer\shader.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_buffer.h" />
     <ClInclude Include="src\platform\file_system.h" />
@@ -119,6 +122,7 @@
     <ClCompile Include="src\core\event.cpp" />
     <ClCompile Include="src\core\camera.cpp" />
     <ClCompile Include="src\core\input.cpp" />
+    <ClCompile Include="src\renderer\buffer.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_buffer.cpp" />
     <ClCompile Include="src\platform\file_system.cpp" />
     <ClCompile Include="src\core\application.cpp" />

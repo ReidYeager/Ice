@@ -5,15 +5,17 @@
 
 #include "renderer/vulkan/vulkan_material.h"
 #include "renderer/vulkan/vulkan_context.h"
+#include "renderer/buffer.h"
 #include "platform/file_system.h"
 
 #include <string>
 #include <vector>
 
 // NOTE : Material's payload needs to be filled before use
-IvkMaterial::IvkMaterial(IceRenderContext* _rContext,
-                         const std::vector<const char*> _shaderNames,
-                         const std::vector<IceShaderStageFlags> _shaderStages)
+void IvkMaterial::Initialize(IceRenderContext* _rContext,
+                             const std::vector<const char*> _shaderNames,
+                             const std::vector<IceShaderStageFlags> _shaderStages,
+                             IvkBuffer* _buffer /*= nullptr*/)
 {
   LogDebug("Creating material");
   info.sources = _shaderNames;
@@ -30,9 +32,21 @@ IvkMaterial::IvkMaterial(IceRenderContext* _rContext,
     vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
   }
   shaders.clear();
-  LogDebug("Material created");
 
-  Shutdown(_rContext);
+  if (_buffer != nullptr)
+  {
+    info.buffer = _buffer;
+  }
+  else
+  {
+    info.buffer = new IvkBuffer(_rContext,
+                                1,
+                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  }
+
+  UpdatePayload(_rContext, {}, nullptr, 0);
+  LogDebug("Material created");
 }
 
 void IvkMaterial::Shutdown(IceRenderContext* _rContext)
@@ -41,32 +55,35 @@ void IvkMaterial::Shutdown(IceRenderContext* _rContext)
   vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
   vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
   vkDestroyDescriptorSetLayout(_rContext->device, descriptorSetLayout, _rContext->allocator);
-  buffer->FreeBuffer(_rContext);
-  delete(buffer);
+
+  //if (buffer != nullptr)
+  //{
+  //  buffer->FreeBuffer(_rContext);
+  //  delete(buffer);
+  //}
 }
 
 void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
                                 std::vector<const char*> _images,
-                                IvkBuffer* _buffer /*= nullptr*/)
+                                void* _data,
+                                u64 _dataSize)
 {
   std::vector<VkWriteDescriptorSet> writeSets(_images.size() + 1);
   std::vector<VkDescriptorImageInfo> imageInfos(_images.size());
   u32 writeIndex = 0;
   u32 imageIndex = 0;
 
-  if (_buffer != nullptr)
-    buffer = _buffer;
-  if (buffer == nullptr)
-    buffer = new IvkBuffer(_rContext,
-                           1,
-                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  if (_data != nullptr)
+  {
+    //if (_dataSize != info.buffer->GetSize())
+    FillBuffer(_rContext, info.buffer->GetMemory(), _data, _dataSize);
+  }
 
   // Bind the buffer
-  VkDescriptorBufferInfo mvpBufferInfo{};
-  mvpBufferInfo.buffer = buffer->GetBuffer();
-  mvpBufferInfo.offset = 0;
-  mvpBufferInfo.range = VK_WHOLE_SIZE;
+  VkDescriptorBufferInfo bufferInfo{};
+  bufferInfo.buffer = info.buffer->GetBuffer();
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
 
   writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeSets[writeIndex].dstSet = descriptorSet;
@@ -74,7 +91,7 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
   writeSets[writeIndex].dstArrayElement = 0;
   writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   writeSets[writeIndex].descriptorCount = 1;
-  writeSets[writeIndex].pBufferInfo = &mvpBufferInfo;
+  writeSets[writeIndex].pBufferInfo = &bufferInfo;
   writeSets[writeIndex].pImageInfo = nullptr;
   writeSets[writeIndex].pTexelBufferView = nullptr;
   writeIndex++;
@@ -113,7 +130,7 @@ void IvkMaterial::Render(VkCommandBuffer& _command)
 std::vector<IvkShader> IvkMaterial::GetShaders(
     IceRenderContext* _rContext, const std::vector<IceShaderStageFlags> _shaderStages)
 {
-  u32 count = info.sources.size();
+  u32 count = (u32)info.sources.size();
   std::vector<IvkShader> shaders;
   for (u32 i = 0; i < count; i++)
   {

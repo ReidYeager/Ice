@@ -6,8 +6,9 @@
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/vulkan/vulkan_buffer.h"
-#include "renderer/shader_program.h"
+#include "renderer/buffer.h"
 #include "renderer/mesh.h"
+#include "renderer/shader_program.h"
 #include "platform/platform.h"
 #include "platform/file_system.h"
 
@@ -36,11 +37,12 @@ void VulkanBackend::Initialize()
   CreateCommandPool(rContext->transientCommandPool, rContext->transferIdx);
 
   // TODO : Delete
+  mvpBuffer = CreateBuffer(rContext, sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
   mvp.model = glm::mat4(1);
 
   InitializeComponents();
-
-  //RecordCommandBuffers();
 }
 
 void VulkanBackend::Shutdown()
@@ -114,7 +116,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 0.5f) * 0.2f, 0));
   mvp.view = _packet->viewMatrix;
   mvp.projection = _packet->projectionMatrix;
-  FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
+  FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   u32 imageIndex;
   VkResult result = vkAcquireNextImageKHR(rContext->device, rContext->swapchain, UINT64_MAX,
@@ -178,10 +180,8 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   rContext->syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
-void VulkanBackend::RecordCommandBuffers()
+void VulkanBackend::RecordCommandBuffers(IvkMaterial* _shader)
 {
-  iceShaderProgram_t* shaderProgram = nullptr;
-
   u32 commandCount = static_cast<u32>(rContext->commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -200,8 +200,6 @@ void VulkanBackend::RecordCommandBuffers()
 
   VkDeviceSize offset[] = { 0 };
 
-  //shaderProgram = &rContext->shaderPrograms[0];
-  shaderProgram = GetShaderProgram(0);
   for (u32 i = 0; i < commandCount; i++)
   {
     rpBeginInfo.framebuffer = rContext->frameBuffers[i];
@@ -210,11 +208,7 @@ void VulkanBackend::RecordCommandBuffers()
       "Failed to being command buffer");
 
     vkCmdBeginRenderPass(rContext->commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(rContext->commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-      shaderProgram->GetPipeline(rContext));
-    vkCmdBindDescriptorSets(rContext->commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-      shaderProgram->pipelineLayout,
-      0, 1, &shaderProgram->descriptorSet, 0, nullptr);
+    _shader->Render(rContext->commandBuffers[i]);
     vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
     vkCmdBindIndexBuffer(rContext->commandBuffers[i], indexBuffer->GetBuffer(), 0,
       VK_INDEX_TYPE_UINT32);
@@ -289,7 +283,7 @@ void VulkanBackend::RecreateComponents()
   FillPhysicalDeviceInformation();
   CreateComponents();
 
-  RecordCommandBuffers();
+  //RecordCommandBuffers();
 }
 
 //=================================================================================================
@@ -853,10 +847,14 @@ u32 VulkanBackend::GetPresentIndex(
 mesh_t VulkanBackend::CreateMesh(const char* _directory)
 {
   mesh_t m = FileSystem::LoadMesh(_directory);
-  vertexBuffer = CreateAndFillBuffer(
-      m.vertices.data(), sizeof(vertex_t) * m.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-  indexBuffer = CreateAndFillBuffer(
-      m.indices.data(), sizeof(u32) * m.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+  vertexBuffer = CreateAndFillBuffer(rContext,
+                                     m.vertices.data(),
+                                     sizeof(vertex_t) * m.vertices.size(),
+                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+  indexBuffer = CreateAndFillBuffer(rContext,
+                                    m.indices.data(),
+                                    sizeof(u32) * m.indices.size(),
+                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
   indexCount = static_cast<u32>(m.indices.size());
   return m;
 }
@@ -880,14 +878,14 @@ u32 VulkanBackend::CreateTexture(std::string _directory)
 {
   int width, height;
   void* imageFile = FileSystem::LoadImageFile(_directory.c_str(), width, height);
-  VkDeviceSize size = static_cast<VkDeviceSize>(4 * width * height);
+  VkDeviceSize size = 4 * (VkDeviceSize)width * (VkDeviceSize)height;
 
-  IvkBuffer stagingBuffer(
-      rContext,
-      static_cast<u32>(size),
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  FillBuffer(stagingBuffer.GetMemory(), imageFile, size);
+  IvkBuffer stagingBuffer(rContext,
+                          static_cast<u32>(size),
+                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  FillBuffer(rContext, stagingBuffer.GetMemory(), imageFile, size);
+
   FileSystem::DestroyImageFile(imageFile);
 
   u32 imageIdx = CreateImage(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
@@ -979,89 +977,6 @@ u32 VulkanBackend::FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags)
 
   LogInfo("Failed to find a suitable memory type");
   return -1;
-}
-
-//=================================================================================================
-// BUFFERS
-//=================================================================================================
-
-IvkBuffer* VulkanBackend::CreateAndFillBuffer(
-    const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
-{
-  IvkBuffer* stagingBuffer = CreateBuffer(_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-  FillBuffer(stagingBuffer->GetMemory(), _data, _size);
-
-  IvkBuffer* buffer = CreateBuffer(_size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-  CopyBuffer(stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
-
-  vkFreeMemory(rContext->device, stagingBuffer->GetMemory(), rContext->allocator);
-  vkDestroyBuffer(rContext->device, stagingBuffer->GetBuffer(), rContext->allocator);
-
-  return buffer;
-}
-
-IvkBuffer* VulkanBackend::CreateBuffer(
-    VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties)
-{
-  IvkBuffer* buffer = new IvkBuffer(
-      rContext, static_cast<u32>(_size), _usage|VK_BUFFER_USAGE_TRANSFER_DST_BIT, _memProperties);
-
-  return buffer;
-}
-
-void VulkanBackend::FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size)
-{
-  void* tmpData;
-  vkMapMemory(rContext->device, _mem, 0, _size, 0, &tmpData);
-  memcpy(tmpData, _data, static_cast<size_t>(_size));
-  vkUnmapMemory(rContext->device, _mem);
-}
-
-void VulkanBackend::CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)
-{
-  VkCommandBufferAllocateInfo allocInfo = {};
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = rContext->transientCommandPool;
-  allocInfo.commandBufferCount = 1;
-
-  VkCommandBuffer transferCommand;
-  IVK_ASSERT(vkAllocateCommandBuffers(rContext->device, &allocInfo, &transferCommand),
-    "Failed to create transient command buffer");
-
-  VkCommandBufferBeginInfo beginInfo = {};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-  vkBeginCommandBuffer(transferCommand, &beginInfo);
-
-  VkBufferCopy region = {};
-  region.size = _size;
-  region.dstOffset = 0;
-  region.srcOffset = 0;
-
-  vkCmdCopyBuffer(transferCommand, _src, _dst, 1, &region);
-
-  vkEndCommandBuffer(transferCommand);
-
-  VkSubmitInfo submitInfo = {};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &transferCommand;
-
-  vkQueueSubmit(rContext->transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(rContext->transferQueue);
-
-  vkFreeCommandBuffers(rContext->device, rContext->transientCommandPool, 1, &transferCommand);
-}
-
-void VulkanBackend::DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory)
-{
-  vkFreeMemory(rContext->device, _memory, rContext->allocator);
-  vkDestroyBuffer(rContext->device, _buffer, rContext->allocator);
 }
 
 //=================================================================================================
@@ -1254,9 +1169,9 @@ void VulkanBackend::CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _wid
 // SHADERS
 //=================================================================================================
 
-iceShader_t VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
+IceShader VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _stage)
 {
-  iceShader_t s(_name, _stage);
+  IceShader s(_name, _stage);
 
   std::string fileDir = ICE_RESOURCE_SHADER_DIR;
   fileDir.append(_name);
@@ -1296,10 +1211,6 @@ iceShader_t VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _
 void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
 {
   iceShaderProgram_t& shaderProgram = *GetShaderProgram(_programIndex);
-
-  mvpBuffer = CreateBuffer(sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  FillBuffer(mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
 
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

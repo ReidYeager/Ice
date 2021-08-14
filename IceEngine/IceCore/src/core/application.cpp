@@ -10,6 +10,7 @@
 #include "platform/file_system.h"
 #include "renderer/renderer.h"
 #include "renderer/mesh.h"
+#include "renderer/vulkan/vulkan_backend.h"
 
 #include <glm/glm.hpp>
 
@@ -28,8 +29,6 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
   app->cam.SetProjection((x / y));
   return true;
 }
-
-#include "renderer/vulkan/vulkan_material.h"
 
 void Application::Initialize()
 {
@@ -52,15 +51,14 @@ void Application::Initialize()
 
   //ChildInit();
   renderer->CreateMesh("Cube.obj");
-  IvkMaterial testShader(renderer->GetContext(), {"blue"}, {Ice_Shader_Vert | Ice_Shader_Frag});
-  u32 materialIndex = renderer->GetShaderProgram(renderer->GetContext(), "test", Ice_Shader_Vert | Ice_Shader_Frag,
-                                       { "AltImage.png", "TestImage.png", "landscape.jpg"}, Ice_Pipeline_Cull_Mode_None);
+  u32 materialIndex = renderer->GetMaterial({"blue"}, { Ice_Shader_Vert | Ice_Shader_Frag }, {});
+
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
 
   //CreateObject();
 
-  renderer->RecordCommandBuffers();
+  renderer->RecordCommandBuffers(materialIndex);
 }
 
 void Application::MainLoop()
@@ -108,6 +106,7 @@ void Application::MainLoop()
 void Application::Shutdown()
 {
   LogInfo("ICE SHUTDOWN =============================================");
+  vkDeviceWaitIdle(renderer->GetContext()->device);
   renderer->Shutdown();
   delete(renderer);
 

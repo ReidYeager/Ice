@@ -6,6 +6,7 @@
 #include "defines.h"
 
 #include "renderer/vulkan/vulkan_context.h"
+#include "renderer/vulkan/vulkan_material.h"
 #include "renderer/renderer_backend.h"
 
 class VulkanBackend : public RendererBackend
@@ -45,8 +46,11 @@ public:
   void Shutdown() override;
 
   void RenderFrame(IceRenderPacket* _packet) override;
-  void RecordCommandBuffers() override;
+  void RecordCommandBuffers(IvkMaterial* _shader) override;
   void Resize(u32 _width = 0, u32 _height = 0) override;
+
+  IvkBuffer* GetMVPBuffer() { return mvpBuffer; }
+  mvpMatrices* GetMVP() { return &mvp; }
 
 private:
 //=================================================================================================
@@ -126,18 +130,6 @@ private:
   u32 FindMemoryType(u32 _mask, VkMemoryPropertyFlags _flags);
 
 //=================================================================================================
-// BUFFERS
-//=================================================================================================
-
-  // Creates a buffer on the GPU and fills it with data
-  IvkBuffer* CreateAndFillBuffer(const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
-  IvkBuffer* CreateBuffer(
-      VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
-  void FillBuffer(VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
-  void CopyBuffer(VkBuffer _src, VkBuffer _dst, VkDeviceSize _size);
-  void DestroyBuffer(VkBuffer _buffer, VkDeviceMemory _memory);
-
-//=================================================================================================
 // IMAGES
 //=================================================================================================
 
@@ -157,7 +149,7 @@ private:
 // SHADERS
 //=================================================================================================
   // Creates a new iceShader
-  iceShader_t CreateShader(const char* _name, IceShaderStageFlags _stage);
+  IceShader CreateShader(const char* _name, IceShaderStageFlags _stage);
 
   public:
   // TODO : Move to shader programs?

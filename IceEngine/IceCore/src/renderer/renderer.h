@@ -7,6 +7,8 @@
 #include "renderer/renderer_backend.h"
 #include "renderer/shader_program.h"
 #include "renderer/mesh.h"
+#include "renderer/vulkan/vulkan_material.h"
+#include "renderer/material.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -16,19 +18,21 @@ class IceRenderer
 public:
   enum IceRenderingAPI
   {
-    Vulkan // Ivk*
+    Vulkan, // Ivk*
     //OpenGL, // Igl*
-    //DirectX // Idx*
+    //DirectX, // Idx*
+    Invalid_API = -1
   };
 
 //=================================================
 // Variables
 //=================================================
-private:
+public:
   RendererBackend* backend = nullptr;
-
-  std::vector<iceShaderProgram_t> shaderPrograms;
-  std::vector<iceShader_t> shaders;
+private:
+  IceRenderingAPI activeAPI = Invalid_API;
+  std::vector<IceMaterial*> materials;
+  std::vector<IceShader> shaders;
 
   //std::vector<VkBuffer> buffers;
   //std::vector<VkDeviceMemory> bufferMemories;
@@ -40,14 +44,15 @@ public:
   void Initialize(IceRenderingAPI _api);
   void Shutdown();
 
-  void RecordCommandBuffers();
+  void RecordCommandBuffers(u32 _shaderIndex);
   void RenderFrame(IceRenderPacket* _packet);
 
   // Returns the index of the shader program
   // Creates a new shader if none match the given description
-  u32 GetShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
-                       std::vector<const char*> _texStrings,
-                       IcePipelineSettingFlags _settings = Ice_Pipeline_Default);
+  u32 GetMaterial(std::vector<const char*> _shaderNames,
+                  std::vector<IceShaderStageFlags> _shaderStages,
+                  std::vector<const char*> _texStrings,
+                  IceFlag _renderSettings = 0);
   // Returns the index of the shader
   // Creates a new shader if none match the given description
   //u32 GetShader(const char* _name, IceShaderStageFlags _stage);

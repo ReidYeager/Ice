@@ -6,19 +6,15 @@
 
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/vulkan/vulkan_shader.h"
-#include "renderer/shader.h"
+#include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/material.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
 
-class IvkMaterial
+class IvkMaterial : public IceMaterial
 {
 private:
-  IceShaderInfo info;
-
-  // TODO : Replace with handled buffer?
-  IvkBuffer* buffer;
-
   // TODO : Add pipeline settings
   VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
   VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
@@ -26,15 +22,17 @@ private:
   VkPipeline pipeline = VK_NULL_HANDLE;
 
 public:
-  IvkMaterial(IceRenderContext* _rContext,
-            const std::vector<const char*> _shaderNames,
-            const std::vector<IceShaderStageFlags> _shaderStages);
-  void Shutdown(IceRenderContext* _rContext);
+  void Initialize(IceRenderContext* _rContext,
+                  const std::vector<const char*> _shaderNames,
+                  const std::vector<IceShaderStageFlags> _shaderStages,
+                  IvkBuffer* _buffer = nullptr) override;
+  void Shutdown(IceRenderContext* _rContext) override;
 
   // TODO : Replace _images with managed image pointers
   void UpdatePayload(IceRenderContext* _rContext,
                      std::vector<const char*> _images,
-                     IvkBuffer* _buffer = nullptr);
+                     void* _data,
+                     u64 _dataSize) override;
   void Render(VkCommandBuffer& _command);
 
 private:

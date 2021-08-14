@@ -11,19 +11,26 @@ void IceRenderer::Initialize(IceRenderingAPI _api)
 {
   backend = new VulkanBackend();
   backend->Initialize();
+  activeAPI = Vulkan;
   LogInfo("Initialized Renderer system");
 }
 
 void IceRenderer::Shutdown()
 {
+  for (auto& m : materials)
+  {
+    m->Shutdown(backend->GetContext());
+    free(m);
+  }
+
   backend->Shutdown();
   delete(backend);
   LogInfo("Shutdown Renderer system");
 }
 
-void IceRenderer::RecordCommandBuffers()
+void IceRenderer::RecordCommandBuffers(u32 _shaderIndex)
 {
-  backend->RecordCommandBuffers();
+  backend->RecordCommandBuffers((IvkMaterial*)materials[_shaderIndex]);
 }
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
@@ -33,28 +40,40 @@ void IceRenderer::RenderFrame(IceRenderPacket* _packet)
   backend->RenderFrame(_packet);
 }
 
-u32 IceRenderer::GetShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
-                                  std::vector<const char*> _texStrings,
-                                  IcePipelineSettingFlags _settings /*= Ice_Pipeline_Default*/)
+u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
+                             std::vector<IceShaderStageFlags> _shaderStages,
+                             std::vector<const char*> _texStrings,
+                             IceFlag _renderSettings /*= 0*/)
 {
   // Look for an existing shader matching the description
   u32 i = 0;
-  for (const auto& sp : shaderPrograms)
-  {
-    if (sp.stages & _stages && std::strcmp(_name, sp.name) == 0)
-    {
-      return i;
-    }
-
-    i++;
-  }
+  // TODO : Make IceMaterials identifiable
+  //for (const auto& sp : materials)
+  //{
+  //  if ()
+  //  {
+  //    return i;
+  //  }
+  //  i++;
+  //}
 
   // Create a new shader program
-  i = static_cast<u32>(shaderPrograms.size());
+  i = static_cast<u32>(materials.size());
+  IceMaterial* material = nullptr;
+  switch (activeAPI)
+  {
+  case IceRenderer::Vulkan:
+    material = new IvkMaterial();
+    break;
+  default: break;
+  }
 
-  iceShaderProgram_t newShaderProgram(_name);
-  CreateShaderProgram(rContext, _name, _stages, _texStrings, _settings);
-  backend->CreateDescriptorSet(i);
+  material->Initialize(GetContext(),
+                       _shaderNames,
+                       _shaderStages,
+                       ((VulkanBackend*)backend)->GetMVPBuffer());
+  material->UpdatePayload(GetContext(), _texStrings);
+  materials.push_back(material);
 
   return i;
 }

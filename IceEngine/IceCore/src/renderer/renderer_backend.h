@@ -7,6 +7,7 @@
 #include "renderer/shader_program.h"
 #include "renderer/mesh.h"
 #include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/vulkan/vulkan_material.h"
 
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
@@ -40,7 +41,7 @@ public:
   // NOTE : Virtual functions very bad for these -- WILL affect performance when called every frame
   // TODO : Find a way to override without using virtual functions
   virtual void RenderFrame(IceRenderPacket* _packet) = 0;
-  virtual void RecordCommandBuffers() = 0;
+  virtual void RecordCommandBuffers(IvkMaterial* _shader) = 0;
 
   virtual void CreateDescriptorSet(u32 _programIndex) = 0;
 

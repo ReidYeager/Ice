@@ -1,6 +1,6 @@
 
-#ifndef ICE_RENDERER_BUFFER_H_
-#define ICE_RENDERER_BUFFER_H_
+#ifndef ICE_RENDERER_VULKAN_VULKAN_BUFFER_H_
+#define ICE_RENDERER_VULKAN_VULKAN_BUFFER_H_
 
 #include "defines.h"
 #include "renderer/renderer_backend_context.h"
@@ -13,12 +13,12 @@ class IvkBuffer
 {
   // TODO : Add alignment to better utilize GPU
 private:
-  VkBuffer m_buffer = VK_NULL_HANDLE;
-  VkDeviceMemory m_memory = VK_NULL_HANDLE;
-  VkBufferUsageFlags m_usage;
-  u32 m_size;
-  u32 m_offset = 0;
-  bool m_isBound = false;
+  VkBuffer buffer = VK_NULL_HANDLE;
+  VkDeviceMemory memory = VK_NULL_HANDLE;
+  VkBufferUsageFlags usage;
+  u32 size;
+  u32 offset = 0;
+  bool isBound = false;
 
 public:
   IvkBuffer(IceRenderContext* rContext,
@@ -32,11 +32,11 @@ public:
   void Bind(IceRenderContext* rContext);
   void Unbind(IceRenderContext* rContext);
 
-  u32 GetSize() const { return m_size; }
-  VkBufferUsageFlags GetUsage() const { return m_usage; }
-  VkBuffer GetBuffer() const { return m_buffer; }
-  VkBuffer* GetBufferPtr() { return &m_buffer; }
-  VkDeviceMemory GetMemory() const { return m_memory; }
+  u32 GetSize() const { return size; }
+  VkBufferUsageFlags GetUsage() const { return usage; }
+  VkBuffer GetBuffer() const { return buffer; }
+  VkBuffer* GetBufferPtr() { return &buffer; }
+  VkDeviceMemory GetMemory() const { return memory; }
 
   // TODO : Move to vkMemory allocator
   u32 FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags);

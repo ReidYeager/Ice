@@ -7,6 +7,8 @@
 #include "renderer/vulkan/vulkan_context.h"
 #include <vector>
 
+// TODO : Completely remove iceShaderProgram_t
+
 enum IcePipelineSettingFlagBits
 {
   Ice_Pipeline_Cull_Mode_None  = (0 << 0),
@@ -21,15 +23,15 @@ enum IcePipelineSettingFlagBits
 typedef IceFlagExtended IcePipelineSettingFlags;
 
 #include <vulkan/vulkan.h>
-struct iceShader_t
+struct IceShader
 {
   const char* name;
   IceShaderStageFlags stage;
   VkShaderModule module;
   std::vector<IceShaderBindingFlags> bindings;
 
-  iceShader_t(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
-  iceShader_t() {}
+  IceShader(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
+  IceShader() {}
 };
 
 struct iceShaderProgram_t
@@ -67,15 +69,15 @@ u32 GetShaderProgram(
 void CreateShaderProgram(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stages,
                          std::vector<const char*> _texStrings, IcePipelineSettingFlags _settings);
 
-VkPipeline CreatePipeline(IceRenderContext* rContext, iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
+VkPipeline CreatePipeline(IceRenderContext* rContext, IceShader* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
                           VkPipelineLayout _layout, IcePipelineSettingFlags _settings);
 
 u32 GetShader(IceRenderContext* rContext, const char* _name, IceShaderStageFlags _stage);
 
 //void LoadShader(u32 _index);
-void LoadShader(IceRenderContext* rContext, iceShader_t& _shader);
+void LoadShader(IceRenderContext* rContext, IceShader& _shader);
 
-void ExtractShaderBindings(const char* _directory, iceShader_t& _shader);
+void ExtractShaderBindings(const char* _directory, IceShader& _shader);
 
 void CreateDescriptorSetLayout(IceRenderContext* rContext, iceShaderProgram_t& _program);
 

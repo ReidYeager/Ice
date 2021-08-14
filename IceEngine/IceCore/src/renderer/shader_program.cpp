@@ -8,7 +8,7 @@
 #include <vector>
 
 std::vector<iceShaderProgram_t> shaderProgramList;
-std::vector<iceShader_t> shaderList;
+std::vector<IceShader> shaderList;
 
 iceShaderProgram_t::iceShaderProgram_t(const char* _name, IcePipelineSettingFlags _settings)
 {
@@ -24,7 +24,7 @@ VkPipeline iceShaderProgram_t::GetPipeline(IceRenderContext* rContext)
 {
   if (pipeline == VK_NULL_HANDLE)
   {
-    std::vector<iceShader_t> shaders(shaderIndices.size());
+    std::vector<IceShader> shaders(shaderIndices.size());
     for (u32 i = 0; i < shaderIndices.size(); i++)
     {
       shaders[i] = shaderList[shaderIndices[i]];
@@ -146,7 +146,7 @@ VkShaderStageFlagBits IceToVkShaderStage(IceShaderStageFlags _stage)
   return VK_SHADER_STAGE_VERTEX_BIT;
 }
 
-VkPipeline CreatePipeline(IceRenderContext* rContext, iceShader_t* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
+VkPipeline CreatePipeline(IceRenderContext* rContext, IceShader* _shaders, u32 _shaderCount, IceShaderStageFlags _stages,
                           VkPipelineLayout _layout, IcePipelineSettingFlags _settings)
 {
   // Viewport State
@@ -316,13 +316,13 @@ u32 GetShader(IceRenderContext* rContext, const char* _name, IceShaderStageFlags
   }
 
   i = static_cast<u32>(shaderList.size());
-  iceShader_t newShader(_name, _stage);
+  IceShader newShader(_name, _stage);
   shaderList.push_back(newShader);
   LoadShader(rContext, shaderList[i]);
   return i;
 }
 
-void LoadShader(IceRenderContext* rContext, iceShader_t& _shader)
+void LoadShader(IceRenderContext* rContext, IceShader& _shader)
 {
   // TODO : Move to a constant value library
   std::string shaderDir = "res/shaders/compiled/";
@@ -357,7 +357,7 @@ void LoadShader(IceRenderContext* rContext, iceShader_t& _shader)
   ExtractShaderBindings(layoutDir.c_str(), _shader);
 }
 
-void ExtractShaderBindings(const char* _directory, iceShader_t& _shader)
+void ExtractShaderBindings(const char* _directory, IceShader& _shader)
 {
   // TODO : Implement a proper parser to extract shader bindings
   std::vector<char> layoutSource = FileSystem::LoadFile(_directory);
@@ -390,7 +390,7 @@ void CreateDescriptorSetLayout(IceRenderContext* rContext, iceShaderProgram_t& _
   // Add shader bindings from all the program's shaders
   for (const auto& s : _program.shaderIndices)
   {
-    iceShader_t& shader = shaderList[s];
+    IceShader& shader = shaderList[s];
     binding.stageFlags = IceToVkShaderStage(shader.stage);
     for (u32 i = 0; i < shader.bindings.size(); i++)
     {
