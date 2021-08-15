@@ -6,19 +6,29 @@ IvkBuffer::~IvkBuffer()
 {
   if (buffer != VK_NULL_HANDLE)
   {
-    LogInfo("Failed to free buffer");
+    LogError("Failed to free buffer of size %u", size);
   }
 }
 
+//size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
+//{
+//  size_t alignment = rContext->gpu.properties.limits.minUniformBufferOffsetAlignment;
+//  size_t alignedSize = _original;
+//  if (alignment > 0)
+//  {
+//    alignedSize = (alignedSize + alignment - 1) & ~(alignment - 1);
+//  }
+//  return alignedSize;
+//}
+
 IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
-                     u32 _size,
+                     u64 _size,
                      VkBufferUsageFlags _usage,
                      VkMemoryPropertyFlags _memProperties,
                      bool _bind /*= true*/)
 {
   // Align data
 
-  LogError("Creating buffer %u", _size);
 
   size = _size;
   usage = _usage;
@@ -54,8 +64,6 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
 
 void IvkBuffer::FreeBuffer(IceRenderContext* _rContext)
 {
-  LogError("Destroying buffer %u", size);
-
   vkFreeMemory(_rContext->device, memory, _rContext->allocator);
   vkDestroyBuffer(_rContext->device, buffer, _rContext->allocator);
 

@@ -8,16 +8,12 @@
 #include "renderer/shader_program.h"
 #include "core/camera.h"
 
-class ICE_API Application
+class ICE_API IceApplication
 {
 //=================================================================================================
 // Variables
 //=================================================================================================
-private:
-  void* a = nullptr;
-  void* b = nullptr;
-  void* c = nullptr;
-
+protected:
   IcePlatform* platform;
   IceRenderer* renderer;
 
@@ -37,16 +33,15 @@ private:
   // Destroys all allocators and subsystems
   void Shutdown();
 
-
 protected:
   // Used for any initialization the child application requires
-  //virtual void ChildInit() = 0;
+  virtual void ChildInit() = 0;
   // Houses the core game code
-  //virtual void ChildLoop() = 0;
+  void (IceApplication::* ChildLoop)();
+  #define DefineChildLoop(loop) \
+      ChildLoop = static_cast<void (IceApplication::*)()>(&Application::##loop)
   // Used for any destruction the child application requires
-  //virtual void ChildShutdown() = 0;
-
-  // TODO : Add input callbacks?
+  virtual void ChildShutdown() = 0;
 
   // TODO : Modify to fit a proper ECS system
   // Temporarily : Adds the given model to the world

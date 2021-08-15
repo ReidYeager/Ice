@@ -95,6 +95,7 @@
     <ClInclude Include="src\asserts.h" />
     <ClInclude Include="src\core\event.h" />
     <ClInclude Include="src\core\input.h" />
+    <ClInclude Include="src\ice.h" />
     <ClInclude Include="src\renderer\buffer.h" />
     <ClInclude Include="src\renderer\material.h" />
     <ClInclude Include="src\renderer\shader.h" />

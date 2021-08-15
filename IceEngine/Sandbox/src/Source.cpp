@@ -1,20 +1,24 @@
 
 #include <iostream>
-#include <core\application.h>
+#include <ice.h>
 
-int main()
+class Application : public IceApplication
 {
-  printf("Sandbox\n");
-
-  try
+public:
+  void ChildInit() override
   {
-    Application* app = new Application();
-    app->Run();
-  }
-  catch (const char* e)
-  {
-    std::cout << "Ice caught " << e << "\n";
+    DefineChildLoop(loop);
   }
 
-  return 0;
-}
+  void ChildShutdown() override
+  {
+    
+  }
+
+  void loop()
+  {
+    
+  }
+};
+
+ICE_ENTRYPOINT;

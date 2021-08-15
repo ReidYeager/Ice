@@ -2,19 +2,20 @@
 #include "defines.h"
 #include "logger.h"
 #include "service_hub.h"
+
 #include "core/application.h"
-#include "core/memory_manager.h"
-#include "core/input.h"
 #include "core/event.h"
-#include "platform/platform.h"
+#include "core/input.h"
+#include "core/memory_manager.h"
 #include "platform/file_system.h"
-#include "renderer/renderer.h"
+#include "platform/platform.h"
 #include "renderer/mesh.h"
+#include "renderer/renderer.h"
 #include "renderer/vulkan/vulkan_backend.h"
 
 #include <glm/glm.hpp>
 
-void Application::Run()
+void IceApplication::Run()
 {
   Initialize();
   MainLoop();
@@ -23,14 +24,14 @@ void Application::Run()
 
 bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
 {
-  Application* app = static_cast<Application*>(_listener);
+  IceApplication* app = static_cast<IceApplication*>(_listener);
   float x = (float)_data.u32[0];
   float y = (float)_data.u32[1];
   app->cam.SetProjection((x / y));
   return true;
 }
 
-void Application::Initialize()
+void IceApplication::Initialize()
 {
   LogInfo("ICE INIT =================================================");
 
@@ -49,19 +50,20 @@ void Application::Initialize()
   renderer->Initialize(IceRenderer::Vulkan);
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
 
-  //ChildInit();
+  ChildInit();
+  ICE_ASSERT_MSG(ChildLoop != nullptr, "Failed to set an update function");
+
+  #pragma region MoveToChildLoop
   renderer->CreateMesh("Cube.obj");
   u32 materialIndex = renderer->GetMaterial({"mvp", "blue"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {});
-
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
-
-  //CreateObject();
+  #pragma endregion
 
   renderer->RecordCommandBuffers(materialIndex);
 }
 
-void Application::MainLoop()
+void IceApplication::MainLoop()
 {
   IceRenderPacket renderPacket {};
 
@@ -71,6 +73,8 @@ void Application::MainLoop()
     // Handle input
 
     // Run game code
+    (this->*ChildLoop)();
+    #pragma region MoveToChildLoop
     //i32 x, y;
     //Input.GetMouseDelta(&x, &y);
     //cam.Rotate({-y, x, 0});
@@ -96,6 +100,7 @@ void Application::MainLoop()
     {
       platform->Close();
     }
+    #pragma endregion
 
     // Render
     renderer->RenderFrame(&renderPacket);
@@ -103,9 +108,10 @@ void Application::MainLoop()
   }
 }
 
-void Application::Shutdown()
+void IceApplication::Shutdown()
 {
   LogInfo("ICE SHUTDOWN =============================================");
+  ChildShutdown();
   vkDeviceWaitIdle(renderer->GetContext()->device);
   renderer->Shutdown();
   delete(renderer);
@@ -115,7 +121,7 @@ void Application::Shutdown()
   delete(platform);
 }
 
-void Application::CreateObject()
+void IceApplication::CreateObject()
 {
   //mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
 

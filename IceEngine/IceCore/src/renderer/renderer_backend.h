@@ -38,10 +38,11 @@ public:
   virtual void Shutdown() = 0;
   virtual void Resize(u32 _width = 0, u32 _height = 0) = 0;
 
-  // NOTE : Virtual functions very bad for these -- WILL affect performance when called every frame
-  // TODO : Find a way to override without using virtual functions
-  virtual void RenderFrame(IceRenderPacket* _packet) = 0;
-  virtual void RecordCommandBuffers(IvkMaterial* _shader) = 0;
+  void RenderFrame(IceRenderPacket* _packet)
+  { (this->*RenderFramePointer)(_packet); }
+
+  void RecordCommandBuffers(IvkMaterial* _shader)
+  { (this->*RecordCommandBuffersPointer)(_shader);}
 
   virtual void CreateDescriptorSet(u32 _programIndex) = 0;
 
@@ -49,6 +50,16 @@ public:
   virtual IceRenderContext* GetContext() = 0;
   virtual mesh_t CreateMesh(const char* _directory) = 0;
   virtual void AddMaterial(IceMaterial* _material) = 0;
+
+protected:
+  typedef void (RendererBackend::* renderFramePtr)(IceRenderPacket* _packet);
+  renderFramePtr RenderFramePointer;
+  #define DefineRenderFrame(fnc) RenderFramePointer = static_cast<renderFramePtr>(&##fnc)
+
+  typedef void (RendererBackend::*RecordCommandBuffersPtr)(IvkMaterial* _shader);
+  RecordCommandBuffersPtr RecordCommandBuffersPointer;
+  #define DefineRecordCommandBuffers(fnc) \
+      RecordCommandBuffersPointer = static_cast<RecordCommandBuffersPtr>(&##fnc)
 };
 
 #endif // !RENDERER_RENDER_BACKEND_H

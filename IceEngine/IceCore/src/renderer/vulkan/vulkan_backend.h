@@ -45,8 +45,8 @@ public:
   // Destroys all components used for rendering & presentation
   void Shutdown() override;
 
-  void RenderFrame(IceRenderPacket* _packet) override;
-  void RecordCommandBuffers(IvkMaterial* _shader) override;
+  void RenderFrame(IceRenderPacket* _packet);
+  void RecordCommandBuffers(IvkMaterial* _shader);
   void Resize(u32 _width = 0, u32 _height = 0) override;
 
 // DELETE

@@ -43,6 +43,9 @@ void VulkanBackend::Initialize()
   mvp.model = glm::mat4(1);
 
   InitializeComponents();
+
+  DefineRenderFrame(VulkanBackend::RenderFrame);
+  DefineRecordCommandBuffers(VulkanBackend::RecordCommandBuffers);
 }
 
 void VulkanBackend::Shutdown()

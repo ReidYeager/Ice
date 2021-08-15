@@ -16,13 +16,13 @@ private:
   VkBuffer buffer = VK_NULL_HANDLE;
   VkDeviceMemory memory = VK_NULL_HANDLE;
   VkBufferUsageFlags usage;
-  u32 size;
-  u32 offset = 0;
+  u64 size;
+  u64 offset = 0;
   bool isBound = false;
 
 public:
   IvkBuffer(IceRenderContext* rContext,
-            u32 _size,
+            u64 _size,
             VkBufferUsageFlags m_usage,
             VkMemoryPropertyFlags _memProperties,
             bool _bind = true);
@@ -32,7 +32,7 @@ public:
   void Bind(IceRenderContext* rContext);
   void Unbind(IceRenderContext* rContext);
 
-  u32 GetSize() const { return size; }
+  u64 GetSize() const { return size; }
   VkBufferUsageFlags GetUsage() const { return usage; }
   VkBuffer GetBuffer() const { return buffer; }
   VkBuffer* GetBufferPtr() { return &buffer; }
