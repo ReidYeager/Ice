@@ -19,7 +19,8 @@ void IvkMaterial::Initialize(IceRenderContext* _rContext,
 {
   LogDebug("Creating material");
   info.sources = _shaderNames;
-  std::vector<IvkShader> shaders = GetShaders(_rContext, _shaderStages);
+  info.sourceStages = _shaderStages;
+  std::vector<IvkShader> shaders = GetShaders(_rContext);
 
   CreateDescriptorSetLayout(_rContext, shaders);
   CreateDescriptorSet(_rContext);
@@ -61,6 +62,25 @@ void IvkMaterial::Shutdown(IceRenderContext* _rContext)
   //  buffer->FreeBuffer(_rContext);
   //  delete(buffer);
   //}
+}
+
+void IvkMaterial::DestroyFragileComponents(IceRenderContext* _rContext)
+{
+  vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
+  vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
+}
+
+void IvkMaterial::CreateFragileComponents(IceRenderContext* _rContext)
+{
+  std::vector<IvkShader> shaders = GetShaders(_rContext);
+  CreatePipelineLayout(_rContext);
+  CreatePipeline(_rContext, shaders);
+
+  for (IvkShader s : shaders)
+  {
+    vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
+  }
+  shaders.clear();
 }
 
 void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
@@ -127,15 +147,14 @@ void IvkMaterial::Render(VkCommandBuffer& _command)
       _command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 }
 
-std::vector<IvkShader> IvkMaterial::GetShaders(
-    IceRenderContext* _rContext, const std::vector<IceShaderStageFlags> _shaderStages)
+std::vector<IvkShader> IvkMaterial::GetShaders(IceRenderContext* _rContext)
 {
   u32 count = (u32)info.sources.size();
   std::vector<IvkShader> shaders;
   for (u32 i = 0; i < count; i++)
   {
     LogInfo("Shader : %s", info.sources[i]);
-    IceShaderStageFlags stages = _shaderStages[i];
+    IceShaderStageFlags stages = info.sourceStages[i];
 
     // TODO : Make more easily extendable?
     if (stages & Ice_Shader_Vert)

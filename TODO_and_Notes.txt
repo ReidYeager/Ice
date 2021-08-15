@@ -1,3 +1,5 @@
+\.git\COMMIT_EDITMSG
+	Line    32 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -38,8 +40,8 @@
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
-	Line    70 :--: // TODO : Replace with API agnostic buffer
-	Line    73 :--: // TODO : Replace with indices for a texture flyweight
+	Line    71 :--: // TODO : Replace with API agnostic buffer
+	Line    74 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\shader_program.cpp
 	Line   326 :--: // TODO : Move to a constant value library
 	Line   361 :--: // TODO : Implement a proper parser to extract shader bindings
@@ -51,17 +53,17 @@
 	Line    38 :--: // TODO : Delete
 	Line    51 :--: // TODO : Delete
 	Line   100 :--: // TODO : Split into render call & presentation steps
-	Line   312 :--: // TODO : Make this editable from the client
-	Line   474 :--: // TODO : Replace with clamp function calls
+	Line   320 :--: // TODO : Make this editable from the client
+	Line   482 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    14 :--: // TODO : Delete
-	Line    77 :--: // TODO : API CULL MARK
-	Line    89 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   116 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   124 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   135 :--: // TODO : Move to an image manager?
-	Line   154 :--: // TODO : Move to shader programs?
-	Line   157 :--: // TODO : DELETE
+	Line    81 :--: // TODO : API CULL MARK
+	Line    93 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   120 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   128 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   139 :--: // TODO : Move to an image manager?
+	Line   158 :--: // TODO : Move to shader programs?
+	Line   161 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
 	Line    38 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
@@ -70,11 +72,11 @@
 	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
 	Line    13 :--: // NOTE : Material's payload needs to be filled before use
-	Line   139 :--: // TODO : Make more easily extendable?
-	Line   206 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   158 :--: // TODO : Make more easily extendable?
+	Line   225 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
 	Line    17 :--: // TODO : Add pipeline settings
-	Line    30 :--: // TODO : Replace _images with managed image pointers
+	Line    32 :--: // TODO : Replace _images with managed image pointers
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp

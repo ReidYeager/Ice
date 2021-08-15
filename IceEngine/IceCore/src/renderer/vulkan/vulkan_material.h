@@ -27,6 +27,8 @@ public:
                   const std::vector<IceShaderStageFlags> _shaderStages,
                   IvkBuffer* _buffer = nullptr) override;
   void Shutdown(IceRenderContext* _rContext) override;
+  void DestroyFragileComponents(IceRenderContext* _rContext);
+  void CreateFragileComponents(IceRenderContext* _rContext);
 
   // TODO : Replace _images with managed image pointers
   void UpdatePayload(IceRenderContext* _rContext,
@@ -36,8 +38,7 @@ public:
   void Render(VkCommandBuffer& _command);
 
 private:
-  std::vector<IvkShader> GetShaders(
-      IceRenderContext* _rContext, const std::vector<IceShaderStageFlags> _shaderStages);
+  std::vector<IvkShader> GetShaders(IceRenderContext* _rContext);
   IvkShader LoadShader(
       IceRenderContext* _rContext, const char* _name, IceShaderStageFlags _stage);
   void CreateShaderModule(IceRenderContext* _rContext, IvkShader& _shader, const char* _directory);

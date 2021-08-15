@@ -48,6 +48,7 @@ public:
   // TODO : DELETE
   virtual IceRenderContext* GetContext() = 0;
   virtual mesh_t CreateMesh(const char* _directory) = 0;
+  virtual void AddMaterial(IceMaterial* _material) = 0;
 };
 
 #endif // !RENDERER_RENDER_BACKEND_H

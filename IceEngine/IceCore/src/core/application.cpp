@@ -51,7 +51,7 @@ void Application::Initialize()
 
   //ChildInit();
   renderer->CreateMesh("Cube.obj");
-  u32 materialIndex = renderer->GetMaterial({"blue"}, { Ice_Shader_Vert | Ice_Shader_Frag }, {});
+  u32 materialIndex = renderer->GetMaterial({"mvp", "blue"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {});
 
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });

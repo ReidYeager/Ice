@@ -49,8 +49,12 @@ public:
   void RecordCommandBuffers(IvkMaterial* _shader) override;
   void Resize(u32 _width = 0, u32 _height = 0) override;
 
+// DELETE
+//=================================================================================================
+  std::vector<IceMaterial*> materials;
   IvkBuffer* GetMVPBuffer() { return mvpBuffer; }
   mvpMatrices* GetMVP() { return &mvp; }
+  void AddMaterial(IceMaterial* _material) { materials.push_back(_material); }
 
 private:
 //=================================================================================================

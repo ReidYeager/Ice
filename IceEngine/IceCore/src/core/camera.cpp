@@ -24,6 +24,7 @@ glm::mat4 IceCamera::GetViewMatrix()
   m_forward.x = (float)(glm::cos(glm::radians(rotation.y)) * glm::cos(glm::radians(rotation.x)));
   m_forward.y = (float)(glm::sin(glm::radians(rotation.x)));
   m_forward.z = (float)(glm::sin(glm::radians(rotation.y)) * glm::cos(glm::radians(rotation.x)));
+  m_forward = glm::normalize(m_forward);
 
   view = glm::lookAt(position, position + m_forward, {0.0f, 1.0f, 0.0f});
 
@@ -35,12 +36,12 @@ glm::mat4 IceCamera::GetProjectionMatrix()
   return projection;
 }
 
-void IceCamera::SetProjection(float _screenRatio, float _vertFov /*= 90.0f*/)
+void IceCamera::SetProjection(float _screenRatio, float _vertFov /*= 45.0f*/)
 {
   vertFieldOfView = _vertFov;
 
-  projection = glm::perspective(glm::radians(vertFieldOfView), _screenRatio,
-                                minRenderDist, maxRenderDist);
+  projection = glm::perspective(
+      glm::radians(vertFieldOfView), _screenRatio, minRenderDist, maxRenderDist);
   projection[1][1] *= -1; // Flip the rendered y-axis
 }
 

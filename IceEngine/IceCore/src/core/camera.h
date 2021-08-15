@@ -33,7 +33,7 @@ public:
   void Update();
   glm::mat4 GetViewMatrix();
   glm::mat4 GetProjectionMatrix();
-  void SetProjection(float _screenRatio, float _vertFieldOfView = 90.0f);
+  void SetProjection(float _screenRatio, float _vertFieldOfView = 45.0f);
 
   glm::vec3 GetForward();
   glm::vec3 GetRight();

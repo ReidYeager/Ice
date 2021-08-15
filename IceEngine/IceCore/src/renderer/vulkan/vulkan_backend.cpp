@@ -279,11 +279,19 @@ void VulkanBackend::RecreateComponents()
   vkDeviceWaitIdle(rContext->device);
 
   DestroyComponents();
+  for (IceMaterial* mat : materials)
+  {
+    ((IvkMaterial*)mat)->DestroyFragileComponents(rContext);
+  }
   // Refresh device information
   FillPhysicalDeviceInformation();
   CreateComponents();
+  for (IceMaterial* mat : materials)
+  {
+    ((IvkMaterial*)mat)->CreateFragileComponents(rContext);
+  }
 
-  //RecordCommandBuffers();
+  RecordCommandBuffers((IvkMaterial*)materials[0]);
 }
 
 //=================================================================================================
