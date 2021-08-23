@@ -1,3 +1,9 @@
+\.git\COMMIT_EDITMSG
+	Line    21 :--: #	modified:   TODO_and_Notes.txt
+\.git\logs\HEAD
+	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
+\.git\logs\refs\heads\main
+	Line    35 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \IceEngine\IceCore\src\core\application.h
 	Line    20 :--: // TODO : Delete
 	Line    45 :--: // TODO : Modify to fit a proper ECS system
@@ -27,7 +33,7 @@
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    19 :--: // TODO : Fix const char* directory being lost when texture vector expands
-	Line    48 :--: // TODO : DELETE
+	Line    49 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
@@ -70,3 +76,24 @@
 	Line    32 :--: // TODO : Replace _images with managed image pointers
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
+\IceEngine\libraries\include\glm\detail\compute_common.hpp
+	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
+\IceEngine\libraries\include\glm\gtx\matrix_decompose.inl
+	Line    51 :--: /// TODO: Fixme!
+\IceEngine\libraries\include\glm\simd\common.h
+	Line   136 :--: /* trunc TODO
+\IceEngine\libraries\include\stb\stb_image.h
+	Line    18 :--: QUICK NOTES:
+\IceEngine\libraries\include\tinyobjloader\tiny_obj_loader.h
+	Line    66 :--: // TODO(syoyo): Better C++11 detection for older compiler
+	Line   402 :--: // NOTE(syoyo): array index is based on the appearance order.
+	Line   724 :--: // TODO(syoyo): bspline, surface, ...
+	Line   850 :--: // NOTE: THESE MUST BE DECLARED HERE SINCE WE ARE NOT ALLOWED
+	Line   911 :--: // NOTE: Don't use powf here, it will absolutely murder precision.
+	Line  1227 :--: // TODO(syoyo): Check if arg is int type.
+	Line  1254 :--: // TODO(syoyo): Support parsing texture option flag after the filename.
+	Line  1363 :--: // TODO(syoyo): refactor function.
+	Line  1868 :--: // NOTE: Interpretation of Tr is application(exporter) dependent. For
+	Line  2306 :--: // TODO(syoyo): Add syntax check
+	Line  2317 :--: // TODO(syoyo): # of elements check
+	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.

@@ -115,8 +115,8 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
     VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
-  mvp.model = glm::rotate(glm::mat4(1), (time += 0.001f), glm::vec3(0.0f, 1.0f, 0.0f));
-  mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 0.5f) * 0.2f, 0));
+  mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
+  mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 2.0f) * 0.2f, 0));
   mvp.view = _packet->viewMatrix;
   mvp.projection = _packet->projectionMatrix;
   FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));

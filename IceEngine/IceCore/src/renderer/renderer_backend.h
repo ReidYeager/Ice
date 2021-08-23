@@ -27,6 +27,7 @@ struct IceRenderPacket
 {
   glm::mat4 viewMatrix;
   glm::mat4 projectionMatrix;
+  float deltaTime;
 };
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);

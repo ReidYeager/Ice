@@ -16,7 +16,6 @@
     {                                           \
       std::cout << "Ice caught " << e << "\n";  \
     }                                           \
-                                                \
     return 0;                                   \
   }                                             \
 

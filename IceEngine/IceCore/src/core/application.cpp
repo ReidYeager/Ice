@@ -14,6 +14,7 @@
 #include "renderer/vulkan/vulkan_backend.h"
 
 #include <glm/glm.hpp>
+#include <chrono>
 
 void IceApplication::Run()
 {
@@ -55,7 +56,7 @@ void IceApplication::Initialize()
 
   #pragma region MoveToChildLoop
   renderer->CreateMesh("Cube.obj");
-  u32 materialIndex = renderer->GetMaterial({"mvp", "blue"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {});
+  u32 materialIndex = renderer->GetMaterial({"mvp", "red"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {});
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
   #pragma endregion
@@ -67,31 +68,41 @@ void IceApplication::MainLoop()
 {
   IceRenderPacket renderPacket {};
 
+  auto start = std::chrono::steady_clock::now();
+  auto end = std::chrono::steady_clock::now();
+  auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+  i32 x, y;
+  float speed = 3.0f;
+  float sensitivity = 0.2f;
+
   LogInfo("ICE LOOP =================================================");
   while (platform->Update())
   {
+    start = end;
+    renderPacket.deltaTime = deltaTime.count() * 0.000001f;
+
     // Handle input
 
     // Run game code
     (this->*ChildLoop)();
     #pragma region MoveToChildLoop
-    //i32 x, y;
-    //Input.GetMouseDelta(&x, &y);
-    //cam.Rotate({-y, x, 0});
-    //cam.ClampPitch(89.0f, -89.0f);
+    Input.GetMouseDelta(&x, &y);
+    cam.Rotate({-y * sensitivity, x * sensitivity, 0});
+    cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
-      cam.position += cam.GetForward() * 0.002f;
+      cam.position += cam.GetForward() * renderPacket.deltaTime * speed;
     if (Input.IsKeyDown(Ice_Key_S))
-      cam.position -= cam.GetForward() * 0.002f;
+      cam.position -= cam.GetForward() * renderPacket.deltaTime * speed;
     if (Input.IsKeyDown(Ice_Key_D))
-      cam.position += cam.GetRight() * 0.002f;
+      cam.position += cam.GetRight() * renderPacket.deltaTime * speed;
     if (Input.IsKeyDown(Ice_Key_A))
-      cam.position -= cam.GetRight() * 0.002f;
+      cam.position -= cam.GetRight() * renderPacket.deltaTime * speed;
     if (Input.IsKeyDown(Ice_Key_E))
-      cam.position += glm::vec3(0.0f, 0.002f, 0.0f);
+      cam.position += glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * speed;
     if (Input.IsKeyDown(Ice_Key_Q))
-      cam.position -= glm::vec3(0.0f, 0.002f, 0.0f);
+      cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * speed;
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
     renderPacket.projectionMatrix = cam.GetProjectionMatrix();
@@ -105,6 +116,10 @@ void IceApplication::MainLoop()
     // Render
     renderer->RenderFrame(&renderPacket);
     Input.Update();
+
+    end = std::chrono::steady_clock::now();
+    deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    LogInfo("%6u us -- %10u fps", deltaTime.count(), 1.0f / (deltaTime.count() * 0.000001f));
   }
 }
 
