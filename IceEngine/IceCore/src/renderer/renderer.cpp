@@ -1,8 +1,9 @@
 
 #include "renderer/renderer.h"
 #include "renderer/renderer_backend.h"
-#include "renderer/vulkan/vulkan_backend.h"
+#include "renderer/image.h"
 #include "renderer/shader_program.h"
+#include "renderer/vulkan/vulkan_backend.h"
 #include "platform/file_system.h"
 
 // TODO : Remove all API types & references
@@ -45,6 +46,13 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
                              std::vector<const char*> _texStrings,
                              IceFlag _renderSettings /*= 0*/)
 {
+  std::vector<iceImage_t*> inTextures;
+  for (const char* t : _texStrings)
+  {
+    u32 index = backend->GetTexture(t)->imageIndex;
+    inTextures.push_back(backend->GetImage(index));
+  }
+
   // Look for an existing shader matching the description
   u32 i = 0;
   // TODO : Make IceMaterials identifiable
@@ -72,7 +80,7 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
                        _shaderNames,
                        _shaderStages,
                        ((VulkanBackend*)backend)->GetMVPBuffer());
-  material->UpdatePayload(GetContext(), _texStrings);
+  material->UpdatePayload(GetContext(), inTextures);
   materials.push_back(material);
   backend->AddMaterial(material);
 

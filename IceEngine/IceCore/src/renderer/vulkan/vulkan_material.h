@@ -7,6 +7,7 @@
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/vulkan/vulkan_shader.h"
 #include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/image.h"
 #include "renderer/material.h"
 
 #include <vulkan/vulkan.h>
@@ -32,7 +33,7 @@ public:
 
   // TODO : Replace _images with managed image pointers
   void UpdatePayload(IceRenderContext* _rContext,
-                     std::vector<const char*> _images,
+                     std::vector<iceImage_t*> _images,
                      void* _data,
                      u64 _dataSize) override;
   void Render(VkCommandBuffer& _command);

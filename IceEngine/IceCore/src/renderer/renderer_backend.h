@@ -3,9 +3,10 @@
 #define ICE_RENDERER_RENDERER_BACKEND_H_
 
 #include "defines.h"
-#include "renderer/renderer_backend_context.h"
-#include "renderer/shader_program.h"
+#include "renderer/image.h"
 #include "renderer/mesh.h"
+#include "renderer/shader_program.h"
+#include "renderer/renderer_backend_context.h"
 #include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/vulkan/vulkan_material.h"
 
@@ -13,15 +14,6 @@
 #include <vulkan/vulkan.h>
 #include <string.h>
 #include <vector>
-
-struct iceTexture_t
-{
-  u32 imageIndex;
-  // TODO : Fix const char* directory being lost when texture vector expands
-  std::string directory;
-
-  iceTexture_t(std::string _dir) : imageIndex(0), directory(_dir) {}
-};
 
 struct IceRenderPacket
 {
@@ -43,7 +35,7 @@ public:
   { (this->*RenderFramePointer)(_packet); }
 
   void RecordCommandBuffers(IvkMaterial* _shader)
-  { (this->*RecordCommandBuffersPointer)(_shader);}
+  { (this->*RecordCommandBuffersPointer)(_shader); }
 
   virtual void CreateDescriptorSet(u32 _programIndex) = 0;
 
@@ -51,6 +43,8 @@ public:
   virtual IceRenderContext* GetContext() = 0;
   virtual mesh_t CreateMesh(const char* _directory) = 0;
   virtual void AddMaterial(IceMaterial* _material) = 0;
+  virtual iceTexture_t* GetTexture(std::string _directory) = 0;
+  virtual iceImage_t* GetImage(u32 _index) = 0;
 
 protected:
   typedef void (RendererBackend::* renderFramePtr)(IceRenderPacket* _packet);

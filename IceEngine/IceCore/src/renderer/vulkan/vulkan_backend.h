@@ -8,6 +8,7 @@
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/vulkan/vulkan_material.h"
 #include "renderer/renderer_backend.h"
+#include "renderer/image.h"
 
 class VulkanBackend : public RendererBackend
 {
@@ -117,10 +118,11 @@ private:
 
 public:
   mesh_t CreateMesh(const char* _directory) override;
-private:
+  iceImage_t* GetImage(u32 _index) override { return iceImages[_index]; }
   // TODO : Replace string with const char* -- text was lost when using char*'s
-  u32 GetTexture(std::string _directory);
-  u32 CreateTexture(std::string _directory);
+  iceTexture_t* GetTexture(std::string _directory) override;
+private:
+  iceTexture_t* CreateTexture(std::string _directory);
 
 //=================================================================================================
 // HELPERS

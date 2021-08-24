@@ -870,7 +870,7 @@ mesh_t VulkanBackend::CreateMesh(const char* _directory)
   return m;
 }
 
-u32 VulkanBackend::GetTexture(std::string _directory)
+iceTexture_t* VulkanBackend::GetTexture(std::string _directory)
 {
   std::string fullDir("res/textures/");
   fullDir.append(_directory);
@@ -878,14 +878,14 @@ u32 VulkanBackend::GetTexture(std::string _directory)
   for (u32 i = 0; i < iceTextures.size(); i++)
   {
     if (strcmp(fullDir.c_str(), iceTextures[i]->directory.c_str()) == 0)
-      return i;
+      return iceTextures[i];
   }
 
   // Texture not found
   return CreateTexture(fullDir);
 }
 
-u32 VulkanBackend::CreateTexture(std::string _directory)
+iceTexture_t* VulkanBackend::CreateTexture(std::string _directory)
 {
   int width, height;
   void* imageFile = FileSystem::LoadImageFile(_directory.c_str(), width, height);
@@ -920,7 +920,7 @@ u32 VulkanBackend::CreateTexture(std::string _directory)
   image->sampler = CreateSampler();
   iceTextures.push_back(tex);
 
-  return static_cast<u32>(iceTextures.size() - 1);
+  return tex;
 }
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
@@ -1042,6 +1042,7 @@ u32 VulkanBackend::CreateImage(u32 _width, u32 _height, VkFormat _format,
   image->image = vImage;
   image->memory = vMemory;
   image->format = _format;
+  image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
   iceImages.push_back(image);
 
   return static_cast<u32>(iceImages.size() - 1);
@@ -1258,8 +1259,7 @@ void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
   {
     if (shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
     {
-      u32 texIndex = GetTexture(shaderProgram.textureDirs[imageBufferIdx]);
-      u32 textureImageIdx = iceTextures[texIndex]->imageIndex;
+      u32 textureImageIdx = GetTexture(shaderProgram.textureDirs[imageBufferIdx])->imageIndex;
       VkDescriptorImageInfo iInfo{};
       imageInfos[imageBufferIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       imageInfos[imageBufferIdx].sampler = iceImages[textureImageIdx]->sampler;
@@ -1273,7 +1273,7 @@ void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
       writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       writeSets[i].descriptorCount = 1;
       writeSets[i].pBufferInfo = nullptr;
-      writeSets[i].pImageInfo = &imageInfos[texIndex];
+      writeSets[i].pImageInfo = &imageInfos[imageBufferIdx];
       writeSets[i].pTexelBufferView = nullptr;
 
       imageBufferIdx++;

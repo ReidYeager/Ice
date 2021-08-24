@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #include "renderer/shader.h"
+#include "renderer/image.h"
 #include "renderer/vulkan/vulkan_buffer.h"
 
 #include <vector>
@@ -24,11 +25,11 @@ public:
   // TODO : Replace _images with managed image pointers
   // TODO : Replace IvkBuffer* with an API-agnostic counterpart
   virtual void UpdatePayload(IceRenderContext* _rContext,
-                             std::vector<const char*> _images,
+                             std::vector<iceImage_t*> _images,
                              void* _data,
                              u64 _dataSize) = 0;
 
-  void UpdatePayload(IceRenderContext* _rContext, std::vector<const char*> _images)
+  void UpdatePayload(IceRenderContext* _rContext, std::vector<iceImage_t*> _images)
   {
     UpdatePayload(_rContext, _images, nullptr, 0);
   }

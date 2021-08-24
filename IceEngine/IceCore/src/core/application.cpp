@@ -56,7 +56,7 @@ void IceApplication::Initialize()
 
   #pragma region MoveToChildLoop
   renderer->CreateMesh("Cube.obj");
-  u32 materialIndex = renderer->GetMaterial({"mvp", "red"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {});
+  u32 materialIndex = renderer->GetMaterial({"mvp", "test"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {"TestImage.png", "AltImage.png", "landscape.jpg"});
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
   #pragma endregion
@@ -72,9 +72,9 @@ void IceApplication::MainLoop()
   auto end = std::chrono::steady_clock::now();
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-  i32 x, y;
+  //i32 x, y;
   float speed = 3.0f;
-  float sensitivity = 0.2f;
+  //float sensitivity = 0.2f;
 
   LogInfo("ICE LOOP =================================================");
   while (platform->Update())
@@ -87,9 +87,9 @@ void IceApplication::MainLoop()
     // Run game code
     (this->*ChildLoop)();
     #pragma region MoveToChildLoop
-    Input.GetMouseDelta(&x, &y);
-    cam.Rotate({-y * sensitivity, x * sensitivity, 0});
-    cam.ClampPitch(89.0f, -89.0f);
+    //Input.GetMouseDelta(&x, &y);
+    //cam.Rotate({-y * sensitivity, x * sensitivity, 0});
+    //cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
       cam.position += cam.GetForward() * renderPacket.deltaTime * speed;

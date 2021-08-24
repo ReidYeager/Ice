@@ -5,6 +5,7 @@
 
 #include "renderer/vulkan/vulkan_material.h"
 #include "renderer/vulkan/vulkan_context.h"
+#include "renderer/image.h"
 #include "renderer/buffer.h"
 #include "platform/file_system.h"
 
@@ -84,7 +85,7 @@ void IvkMaterial::CreateFragileComponents(IceRenderContext* _rContext)
 }
 
 void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
-                                std::vector<const char*> _images,
+                                std::vector<iceImage_t*> _images,
                                 void* _data,
                                 u64 _dataSize)
 {
@@ -119,9 +120,9 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
   // Bind the images
   for (const auto& image : _images)
   {
-    //imageInfos[imageIndex].imageLayout = image.layout;
-    //imageInfos[imageIndex].imageView = image.view;
-    //imageInfos[imageIndex].sampler = image.sampler;
+    imageInfos[imageIndex].imageLayout = image->layout;
+    imageInfos[imageIndex].imageView = image->view;
+    imageInfos[imageIndex].sampler = image->sampler;
 
     writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeSets[writeIndex].dstSet = descriptorSet;

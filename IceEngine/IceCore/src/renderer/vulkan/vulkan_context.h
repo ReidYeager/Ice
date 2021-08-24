@@ -74,6 +74,7 @@ struct iceImage_t
   VkFormat format;
   VkImageView view;
   VkSampler sampler;
+  VkImageLayout layout;
 };
 
 struct IcePhysicalDevice
