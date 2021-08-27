@@ -45,9 +45,12 @@ protected:
 
   // TODO : Modify to fit a proper ECS system
   // Temporarily : Adds the given model to the world
-  void CreateObject();
-  // Retrieves a shader of _name in pipeline _stagess
-  void GetShaderProgramApp(const char* _name, IceShaderStageFlags _stages);
+  void* CreateObject(const char* _meshDir = nullptr);
+
+  u32 GetMaterialIndex(std::vector<const char*> _shaderNames,
+                       std::vector<IceShaderStageFlags> _shaderStages,
+                       std::vector<const char*> _texStrings,
+                       IceFlag _renderSettings = 0);
 
 public:
   // Houses the Initialize, MainLoop, and Shutdown calls

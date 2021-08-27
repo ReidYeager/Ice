@@ -5,7 +5,7 @@
 \IceEngine\IceCore\src\core\application.h
 	Line    20 :--: // TODO : Delete
 	Line    45 :--: // TODO : Modify to fit a proper ECS system
-	Line    55 :--: // TODO : Add any game->engine API calls here
+	Line    58 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
@@ -68,8 +68,8 @@
 	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
 	Line    14 :--: // NOTE : Material's payload needs to be filled before use
-	Line   159 :--: // TODO : Make more easily extendable?
-	Line   226 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   160 :--: // TODO : Make more easily extendable?
+	Line   227 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
 	Line    18 :--: // TODO : Add pipeline settings
 	Line    33 :--: // TODO : Replace _images with managed image pointers

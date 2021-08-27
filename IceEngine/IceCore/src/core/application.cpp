@@ -55,13 +55,11 @@ void IceApplication::Initialize()
   ICE_ASSERT_MSG(ChildLoop != nullptr, "Failed to set an update function");
 
   #pragma region MoveToChildLoop
-  renderer->CreateMesh("Cube.obj");
-  u32 materialIndex = renderer->GetMaterial({"mvp", "test"}, { Ice_Shader_Vert, Ice_Shader_Frag }, {"TestImage.png", "AltImage.png", "landscape.jpg"});
   cam.position = glm::vec3(0, 0, 5);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
   #pragma endregion
 
-  renderer->RecordCommandBuffers(materialIndex);
+  renderer->RecordCommandBuffers(0);
 }
 
 void IceApplication::MainLoop()
@@ -136,8 +134,18 @@ void IceApplication::Shutdown()
   delete(platform);
 }
 
-void IceApplication::CreateObject()
+void* IceApplication::CreateObject(const char* _meshDir /*= nullptr*/)
 {
-  //mesh_t m = renderer->CreateMesh("Cube.obj"); /*FileSystem::LoadMesh("Cube.obj");*/
+  if (_meshDir != nullptr)
+    renderer->CreateMesh(_meshDir);
 
+  return nullptr;
+}
+
+u32 IceApplication::GetMaterialIndex(std::vector<const char*> _shaderNames,
+                                     std::vector<IceShaderStageFlags> _shaderStages,
+                                     std::vector<const char*> _texStrings,
+                                     IceFlag _renderSettings /*= 0*/)
+{
+  return renderer->GetMaterial(_shaderNames, _shaderStages, _texStrings, _renderSettings);
 }

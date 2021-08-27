@@ -1,9 +1,0 @@
-b
-# buffer struct -- spacing for buffer data
-buffer {
-}
-
-# uniforms -- buffer and samplers
-uniforms {
-}
-

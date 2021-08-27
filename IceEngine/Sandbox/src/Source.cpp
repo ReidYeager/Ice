@@ -8,6 +8,12 @@ public:
   void ChildInit() override
   {
     DefineChildLoop(loop);
+
+    GetMaterialIndex({ "mvp", "test" },
+                     { Ice_Shader_Vert, Ice_Shader_Frag },
+                     { "TestImage.png", "AltImage.png", "landscape.jpg" });
+
+    CreateObject("Cube.obj");
   }
 
   void ChildShutdown() override

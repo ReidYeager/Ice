@@ -89,8 +89,9 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
                                 void* _data,
                                 u64 _dataSize)
 {
-  std::vector<VkWriteDescriptorSet> writeSets(_images.size() + 1);
-  std::vector<VkDescriptorImageInfo> imageInfos(_images.size());
+  u32 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
+  std::vector<VkWriteDescriptorSet> writeSets(imageCount + 1);
+  std::vector<VkDescriptorImageInfo> imageInfos(imageCount);
   u32 writeIndex = 0;
   u32 imageIndex = 0;
 
@@ -118,11 +119,12 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
   writeIndex++;
 
   // Bind the images
-  for (const auto& image : _images)
+  for (u32 imageIndex = 0; imageIndex < imageCount; imageIndex++, writeIndex++)
   {
-    imageInfos[imageIndex].imageLayout = image->layout;
-    imageInfos[imageIndex].imageView = image->view;
-    imageInfos[imageIndex].sampler = image->sampler;
+    info.textures[imageIndex] = _images[imageIndex];
+    imageInfos[imageIndex].imageLayout = info.textures[imageIndex]->layout;
+    imageInfos[imageIndex].imageView = info.textures[imageIndex]->view;
+    imageInfos[imageIndex].sampler = info.textures[imageIndex]->sampler;
 
     writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeSets[writeIndex].dstSet = descriptorSet;
@@ -134,8 +136,7 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
     writeSets[writeIndex].pImageInfo = &imageInfos[imageIndex];
     writeSets[writeIndex].pTexelBufferView = nullptr;
 
-    imageIndex++;
-    writeIndex++;
+    //writeIndex++;
   }
 
   vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
@@ -263,6 +264,7 @@ void IvkMaterial::CreateDescriptorSetLayout(
     IceRenderContext* _rContext, const std::vector<IvkShader>& _shaders)
 {
   u32 bindingIndex = 0;
+  u32 imageCount = 0;
   std::vector<VkDescriptorSetLayoutBinding> stageBindings;
   VkDescriptorSetLayoutBinding binding{};
   binding.descriptorCount = 1;
@@ -281,6 +283,7 @@ void IvkMaterial::CreateDescriptorSetLayout(
         break;
       case Ice_Shader_Binding_Image:
         binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        imageCount++;
         break;
       }
 
@@ -289,6 +292,8 @@ void IvkMaterial::CreateDescriptorSetLayout(
       info.bindings.push_back(s.bindings[i]);
     }
   }
+
+  info.textures.resize(imageCount);
 
   VkDescriptorSetLayoutCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

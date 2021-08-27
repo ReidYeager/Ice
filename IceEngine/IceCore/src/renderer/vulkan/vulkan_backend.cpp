@@ -918,6 +918,7 @@ iceTexture_t* VulkanBackend::CreateTexture(std::string _directory)
   tex->imageIndex = imageIdx;
   image->view = CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, image->image);
   image->sampler = CreateSampler();
+  image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   iceTextures.push_back(tex);
 
   return tex;

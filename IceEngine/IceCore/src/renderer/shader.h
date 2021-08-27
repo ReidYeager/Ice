@@ -73,7 +73,7 @@ struct IceShaderInfo
   IvkBuffer* buffer;
   IceShaderBufferParameterFlags bufferContentFlags;
   // TODO : Replace with indices for a texture flyweight
-  std::vector<const char*> textures;
+  std::vector<iceImage_t*> textures;
 };
 
 #endif // !ICE_RENDERER_SHADER_H_

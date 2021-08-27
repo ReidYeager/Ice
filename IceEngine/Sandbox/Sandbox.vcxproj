@@ -95,8 +95,11 @@
   <ItemGroup>
     <None Include="res\shaders\blue.frag" />
     <None Include="res\shaders\blue.vert" />
+    <None Include="res\shaders\mvp.vert" />
+    <None Include="res\shaders\red.frag" />
     <None Include="res\shaders\test.frag" />
     <None Include="res\shaders\test.vert" />
+    <None Include="res\shaders\texture.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
