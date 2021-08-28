@@ -31,6 +31,7 @@ void VulkanBackend::Initialize()
   CreateSurface();
   ChoosePhysicalDevice();
   FillPhysicalDeviceInformation();
+  LogInfo("GPU : %s", rContext->gpu.properties.deviceName);
   CreateLogicalDevice();
   CreateCommandPool(rContext->graphicsCommandPool, rContext->graphicsIdx,
                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -44,8 +45,8 @@ void VulkanBackend::Initialize()
 
   InitializeComponents();
 
-  DefineRenderFrame(VulkanBackend::RenderFrame);
-  DefineRecordCommandBuffers(VulkanBackend::RecordCommandBuffers);
+  IceRenderBackendDefineRenderFrame(VulkanBackend::RenderFrame);
+  IceRenderBackendDefineRecordCommandBuffers(VulkanBackend::RecordCommandBuffers);
 }
 
 void VulkanBackend::Shutdown()

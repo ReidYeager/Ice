@@ -1,3 +1,5 @@
+\.git\COMMIT_EDITMSG
+	Line    22 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -46,11 +48,11 @@
 	Line    62 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
 	Line    18 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    38 :--: // TODO : Delete
-	Line    54 :--: // TODO : Delete
-	Line   103 :--: // TODO : Split into render call & presentation steps
-	Line   323 :--: // TODO : Make this editable from the client
-	Line   485 :--: // TODO : Replace with clamp function calls
+	Line    39 :--: // TODO : Delete
+	Line    55 :--: // TODO : Delete
+	Line   104 :--: // TODO : Split into render call & presentation steps
+	Line   324 :--: // TODO : Make this editable from the client
+	Line   486 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
 	Line    82 :--: // TODO : API CULL MARK

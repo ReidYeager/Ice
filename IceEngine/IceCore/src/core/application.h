@@ -38,7 +38,7 @@ protected:
   virtual void ChildInit() = 0;
   // Houses the core game code
   void (IceApplication::* ChildLoop)();
-  #define DefineChildLoop(loop) \
+  #define IceApplicationDefineChildLoop(loop) \
       ChildLoop = static_cast<void (IceApplication::*)()>(&Application::##loop)
   // Used for any destruction the child application requires
   virtual void ChildShutdown() = 0;

@@ -7,7 +7,7 @@ class Application : public IceApplication
 public:
   void ChildInit() override
   {
-    DefineChildLoop(loop);
+    IceApplicationDefineChildLoop(loop);
 
     GetMaterialIndex({ "mvp", "test" },
                      { Ice_Shader_Vert, Ice_Shader_Frag },

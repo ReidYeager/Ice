@@ -71,8 +71,13 @@ void IceApplication::MainLoop()
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
   //i32 x, y;
-  float speed = 3.0f;
-  //float sensitivity = 0.2f;
+  const float camMoveSpeed = 3.0f;
+  //const float sensitivity = 0.2f;
+
+  float deltasSum = 0.0f;
+  int deltasCount = 0;
+  float fpsPrintFrequency = 0.5f;  // Seconds
+  fpsPrintFrequency *= 1000000.0f; // To microseconds
 
   LogInfo("ICE LOOP =================================================");
   while (platform->Update())
@@ -90,17 +95,17 @@ void IceApplication::MainLoop()
     //cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
-      cam.position += cam.GetForward() * renderPacket.deltaTime * speed;
+      cam.position += cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;
     if (Input.IsKeyDown(Ice_Key_S))
-      cam.position -= cam.GetForward() * renderPacket.deltaTime * speed;
+      cam.position -= cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;
     if (Input.IsKeyDown(Ice_Key_D))
-      cam.position += cam.GetRight() * renderPacket.deltaTime * speed;
+      cam.position += cam.GetRight() * renderPacket.deltaTime * camMoveSpeed;
     if (Input.IsKeyDown(Ice_Key_A))
-      cam.position -= cam.GetRight() * renderPacket.deltaTime * speed;
+      cam.position -= cam.GetRight() * renderPacket.deltaTime * camMoveSpeed;
     if (Input.IsKeyDown(Ice_Key_E))
-      cam.position += glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * speed;
+      cam.position += glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
     if (Input.IsKeyDown(Ice_Key_Q))
-      cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * speed;
+      cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
     renderPacket.projectionMatrix = cam.GetProjectionMatrix();
@@ -117,7 +122,19 @@ void IceApplication::MainLoop()
 
     end = std::chrono::steady_clock::now();
     deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    LogInfo("%6u us -- %10u fps", deltaTime.count(), 1.0f / (deltaTime.count() * 0.000001f));
+
+    deltasSum += deltaTime.count();
+    deltasCount++;
+
+    if (deltasSum >= fpsPrintFrequency)
+    {
+      float avg = deltasSum / deltasCount;
+      LogInfo(" %8.0f us -- %4.0f fps", avg, 1.0f / (avg * 0.000001f));
+
+      deltasSum = 0;
+      deltasCount = 0;
+    }
+
   }
 }
 

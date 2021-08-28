@@ -49,11 +49,12 @@ public:
 protected:
   typedef void (RendererBackend::* renderFramePtr)(IceRenderPacket* _packet);
   renderFramePtr RenderFramePointer;
-  #define DefineRenderFrame(fnc) RenderFramePointer = static_cast<renderFramePtr>(&##fnc)
+  #define IceRenderBackendDefineRenderFrame(fnc) \
+      RenderFramePointer = static_cast<renderFramePtr>(&##fnc)
 
   typedef void (RendererBackend::*RecordCommandBuffersPtr)(IvkMaterial* _shader);
   RecordCommandBuffersPtr RecordCommandBuffersPointer;
-  #define DefineRecordCommandBuffers(fnc) \
+  #define IceRenderBackendDefineRecordCommandBuffers(fnc) \
       RecordCommandBuffersPointer = static_cast<RecordCommandBuffersPtr>(&##fnc)
 };
 
