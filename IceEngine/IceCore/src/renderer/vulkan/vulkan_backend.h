@@ -20,10 +20,10 @@ private:
     glm::mat4 view;
     glm::mat4 projection;
   } mvp;
-  IvkBuffer* mvpBuffer;
+  IceBuffer mvpBuffer;
 
-  IvkBuffer* vertexBuffer;
-  IvkBuffer* indexBuffer;
+  IceBuffer vertexBuffer;
+  IceBuffer indexBuffer;
   u32 indexCount = 0;
 
 //=================================================================================================
@@ -47,15 +47,15 @@ public:
   void Shutdown() override;
 
   void RenderFrame(IceRenderPacket* _packet);
-  void RecordCommandBuffers(IvkMaterial* _shader);
+  void RecordCommandBuffers(IvkMaterial_T* _shader);
   void Resize(u32 _width = 0, u32 _height = 0) override;
 
 // DELETE
 //=================================================================================================
-  std::vector<IceMaterial*> materials;
-  IvkBuffer* GetMVPBuffer() { return mvpBuffer; }
+  std::vector<IceMaterial> materials;
+  IceBuffer GetMVPBuffer() { return mvpBuffer; }
   mvpMatrices* GetMVP() { return &mvp; }
-  void AddMaterial(IceMaterial* _material) { materials.push_back(_material); }
+  void AddMaterial(IceMaterial _material) { materials.push_back(_material); }
 
 private:
 //=================================================================================================

@@ -31,7 +31,7 @@ public:
   RendererBackend* backend = nullptr;
 private:
   IceRenderingAPI activeAPI = Invalid_API;
-  std::vector<IceMaterial*> materials;
+  std::vector<IceMaterial> materials;
   std::vector<IceShader> shaders;
 
   //std::vector<VkBuffer> buffers;

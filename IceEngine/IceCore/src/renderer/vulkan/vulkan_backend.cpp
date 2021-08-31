@@ -4,8 +4,6 @@
 
 #include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/vulkan/vulkan_context.h"
-#include "renderer/vulkan/vulkan_buffer.h"
-#include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/buffer.h"
 #include "renderer/mesh.h"
 #include "renderer/shader_program.h"
@@ -184,7 +182,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   rContext->syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
-void VulkanBackend::RecordCommandBuffers(IvkMaterial* _shader)
+void VulkanBackend::RecordCommandBuffers(IvkMaterial_T* _shader)
 {
   u32 commandCount = static_cast<u32>(rContext->commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo{};
@@ -283,19 +281,19 @@ void VulkanBackend::RecreateComponents()
   vkDeviceWaitIdle(rContext->device);
 
   DestroyComponents();
-  for (IceMaterial* mat : materials)
+  for (IceMaterial mat : materials)
   {
-    ((IvkMaterial*)mat)->DestroyFragileComponents(rContext);
+    ((IvkMaterial_T*)mat)->DestroyFragileComponents(rContext);
   }
   // Refresh device information
   FillPhysicalDeviceInformation();
   CreateComponents();
-  for (IceMaterial* mat : materials)
+  for (IceMaterial mat : materials)
   {
-    ((IvkMaterial*)mat)->CreateFragileComponents(rContext);
+    ((IvkMaterial_T*)mat)->CreateFragileComponents(rContext);
   }
 
-  RecordCommandBuffers((IvkMaterial*)materials[0]);
+  RecordCommandBuffers((IvkMaterial_T*)materials[0]);
 }
 
 //=================================================================================================

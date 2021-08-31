@@ -5,9 +5,9 @@
 #include "defines.h"
 #include "renderer/image.h"
 #include "renderer/mesh.h"
+#include "renderer/buffer.h"
 #include "renderer/shader_program.h"
 #include "renderer/renderer_backend_context.h"
-#include "renderer/vulkan/vulkan_buffer.h"
 #include "renderer/vulkan/vulkan_material.h"
 
 #include <glm/glm.hpp>
@@ -34,7 +34,7 @@ public:
   void RenderFrame(IceRenderPacket* _packet)
   { (this->*RenderFramePointer)(_packet); }
 
-  void RecordCommandBuffers(IvkMaterial* _shader)
+  void RecordCommandBuffers(IvkMaterial_T* _shader)
   { (this->*RecordCommandBuffersPointer)(_shader); }
 
   virtual void CreateDescriptorSet(u32 _programIndex) = 0;
@@ -42,7 +42,7 @@ public:
   // TODO : DELETE
   virtual IceRenderContext* GetContext() = 0;
   virtual mesh_t CreateMesh(const char* _directory) = 0;
-  virtual void AddMaterial(IceMaterial* _material) = 0;
+  virtual void AddMaterial(IceMaterial _material) = 0;
   virtual iceTexture_t* GetTexture(std::string _directory) = 0;
   virtual iceImage_t* GetImage(u32 _index) = 0;
 
@@ -52,7 +52,7 @@ protected:
   #define IceRenderBackendDefineRenderFrame(fnc) \
       RenderFramePointer = static_cast<renderFramePtr>(&##fnc)
 
-  typedef void (RendererBackend::*RecordCommandBuffersPtr)(IvkMaterial* _shader);
+  typedef void (RendererBackend::*RecordCommandBuffersPtr)(IvkMaterial_T* _shader);
   RecordCommandBuffersPtr RecordCommandBuffersPointer;
   #define IceRenderBackendDefineRecordCommandBuffers(fnc) \
       RecordCommandBuffersPointer = static_cast<RecordCommandBuffersPtr>(&##fnc)

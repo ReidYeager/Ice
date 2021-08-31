@@ -6,11 +6,11 @@
 
 #include "renderer/shader.h"
 #include "renderer/image.h"
-#include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/buffer.h"
 
 #include <vector>
 
-class IceMaterial
+class IceMaterial_T
 {
 protected:
   IceShaderInfo info;
@@ -19,11 +19,11 @@ public:
   virtual void Initialize(IceRenderContext* _rContext,
                           const std::vector<const char*> _shaderNames,
                           const std::vector<IceShaderStageFlags> _shaderStages,
-                          IvkBuffer* _buffer = nullptr) = 0;
+                          IceBuffer _buffer = nullptr) = 0;
   virtual void Shutdown(IceRenderContext* _rContext) = 0;
 
   // TODO : Replace _images with managed image pointers
-  // TODO : Replace IvkBuffer* with an API-agnostic counterpart
+  // TODO : Replace IceBuffer with an API-agnostic counterpart
   virtual void UpdatePayload(IceRenderContext* _rContext,
                              std::vector<iceImage_t*> _images,
                              void* _data,
@@ -39,5 +39,7 @@ public:
     UpdatePayload(_rContext, {}, _data, _dataSize);
   }
 };
+
+typedef IceMaterial_T* IceMaterial;
 
 #endif // !define ICE_RENDERER_MATERIAL_H_

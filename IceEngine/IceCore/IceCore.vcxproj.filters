@@ -96,6 +96,9 @@
     <ClInclude Include="src\renderer\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp">
@@ -138,6 +141,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\renderer\buffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

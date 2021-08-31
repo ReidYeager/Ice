@@ -4,15 +4,15 @@
 #include "renderer/buffer.h"
 
 
-IvkBuffer* CreateAndFillBuffer(
+IceBuffer CreateAndFillBuffer(
     IceRenderContext* rContext, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
-  IvkBuffer* stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  IceBuffer stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);
 
-  IvkBuffer* buffer = CreateBuffer(rContext, _size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+  IceBuffer buffer = CreateBuffer(rContext, _size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   CopyBuffer(rContext, stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
@@ -22,12 +22,12 @@ IvkBuffer* CreateAndFillBuffer(
   return buffer;
 }
 
-IvkBuffer* CreateBuffer(IceRenderContext* rContext,
+IceBuffer CreateBuffer(IceRenderContext* rContext,
                         VkDeviceSize _size,
                         VkBufferUsageFlags _usage,
                         VkMemoryPropertyFlags _memProperties)
 {
-  IvkBuffer* buffer = new IvkBuffer(
+  IceBuffer buffer = new IvkBuffer(
       rContext, static_cast<u32>(_size), _usage|VK_BUFFER_USAGE_TRANSFER_DST_BIT, _memProperties);
 
   return buffer;
@@ -43,9 +43,9 @@ void FillBuffer(
 }
 
 void FillBuffer(
-  IceRenderContext* rContext, IvkBuffer* _buffer, const void* _data, VkDeviceSize _size)
+  IceRenderContext* rContext, IceBuffer _buffer, const void* _data, VkDeviceSize _size)
 {
-  IvkBuffer* stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  IceBuffer stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);

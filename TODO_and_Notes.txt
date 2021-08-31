@@ -1,5 +1,3 @@
-\.git\COMMIT_EDITMSG
-	Line    22 :--: #	modified:   TODO_and_Notes.txt
 \.git\logs\HEAD
 	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \.git\logs\refs\heads\main
@@ -25,7 +23,7 @@
 	Line    16 :--: // TODO : Fix const char* directory being lost when texture vector expands
 \IceEngine\IceCore\src\renderer\material.h
 	Line    24 :--: // TODO : Replace _images with managed image pointers
-	Line    25 :--: // TODO : Replace IvkBuffer* with an API-agnostic counterpart
+	Line    25 :--: // TODO : Replace IceBuffer with an API-agnostic counterpart
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
@@ -47,12 +45,12 @@
 	Line     9 :--: // TODO : Completely remove iceShaderProgram_t
 	Line    62 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
-	Line    18 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    39 :--: // TODO : Delete
-	Line    55 :--: // TODO : Delete
-	Line   104 :--: // TODO : Split into render call & presentation steps
-	Line   324 :--: // TODO : Make this editable from the client
-	Line   486 :--: // TODO : Replace with clamp function calls
+	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
+	Line    37 :--: // TODO : Delete
+	Line    53 :--: // TODO : Delete
+	Line   102 :--: // TODO : Split into render call & presentation steps
+	Line   322 :--: // TODO : Make this editable from the client
+	Line   484 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
 	Line    82 :--: // TODO : API CULL MARK

@@ -3,7 +3,7 @@
 #define ICE_RENDERER_SHADER_H_
 
 #include "defines.h"
-#include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/buffer.h"
 #include <vector>
 
 enum IceShaderStageFlagBits
@@ -70,7 +70,7 @@ struct IceShaderInfo
   IceShaderStageFlags stages;
   std::vector<IceShaderBindingFlags> bindings;
   // TODO : Replace with API agnostic buffer
-  IvkBuffer* buffer;
+  IceBuffer buffer;
   IceShaderBufferParameterFlags bufferContentFlags;
   // TODO : Replace with indices for a texture flyweight
   std::vector<iceImage_t*> textures;

@@ -13,10 +13,10 @@
 #include <vector>
 
 // NOTE : Material's payload needs to be filled before use
-void IvkMaterial::Initialize(IceRenderContext* _rContext,
+void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
                              const std::vector<const char*> _shaderNames,
                              const std::vector<IceShaderStageFlags> _shaderStages,
-                             IvkBuffer* _buffer /*= nullptr*/)
+                             IceBuffer _buffer /*= nullptr*/)
 {
   LogDebug("Creating material");
   info.sources = _shaderNames;
@@ -51,7 +51,7 @@ void IvkMaterial::Initialize(IceRenderContext* _rContext,
   LogDebug("Material created");
 }
 
-void IvkMaterial::Shutdown(IceRenderContext* _rContext)
+void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
 {
   LogDebug("Destroying material");
   vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
@@ -65,13 +65,13 @@ void IvkMaterial::Shutdown(IceRenderContext* _rContext)
   //}
 }
 
-void IvkMaterial::DestroyFragileComponents(IceRenderContext* _rContext)
+void IvkMaterial_T::DestroyFragileComponents(IceRenderContext* _rContext)
 {
   vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
   vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
 }
 
-void IvkMaterial::CreateFragileComponents(IceRenderContext* _rContext)
+void IvkMaterial_T::CreateFragileComponents(IceRenderContext* _rContext)
 {
   std::vector<IvkShader> shaders = GetShaders(_rContext);
   CreatePipelineLayout(_rContext);
@@ -84,12 +84,12 @@ void IvkMaterial::CreateFragileComponents(IceRenderContext* _rContext)
   shaders.clear();
 }
 
-void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
+void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
                                 std::vector<iceImage_t*> _images,
                                 void* _data,
                                 u64 _dataSize)
 {
-  u32 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
+  u64 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
   std::vector<VkWriteDescriptorSet> writeSets(imageCount + 1);
   std::vector<VkDescriptorImageInfo> imageInfos(imageCount);
   u32 writeIndex = 0;
@@ -142,14 +142,14 @@ void IvkMaterial::UpdatePayload(IceRenderContext* _rContext,
   vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
-void IvkMaterial::Render(VkCommandBuffer& _command)
+void IvkMaterial_T::Render(VkCommandBuffer& _command)
 {
   vkCmdBindPipeline(_command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
   vkCmdBindDescriptorSets(
       _command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 }
 
-std::vector<IvkShader> IvkMaterial::GetShaders(IceRenderContext* _rContext)
+std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
 {
   u32 count = (u32)info.sources.size();
   std::vector<IvkShader> shaders;
@@ -170,7 +170,7 @@ std::vector<IvkShader> IvkMaterial::GetShaders(IceRenderContext* _rContext)
   return shaders;
 }
 
-IvkShader IvkMaterial::LoadShader(
+IvkShader IvkMaterial_T::LoadShader(
     IceRenderContext* _rContext, const char* _name, IceShaderStageFlags _stage)
 {
   IvkShader shader;
@@ -207,7 +207,7 @@ IvkShader IvkMaterial::LoadShader(
   return shader;
 }
 
-void IvkMaterial::CreateShaderModule(
+void IvkMaterial_T::CreateShaderModule(
     IceRenderContext* _rContext, IvkShader& _shader, const char* _directory)
 {
   std::vector<char> source = FileSystem::LoadFile(_directory);
@@ -223,7 +223,7 @@ void IvkMaterial::CreateShaderModule(
     "Failed to create shader module %s", _directory);
 }
 
-void IvkMaterial::FillShaderBindings(IvkShader& _shader, const char* _directory)
+void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _directory)
 {
   // TODO : Implement a proper parser to extract shader bindings
   std::vector<char> layoutSource = FileSystem::LoadFile(_directory);
@@ -260,7 +260,7 @@ VkShaderStageFlagBits ivkstage(IceShaderStageFlags _stage)
   }
 }
 
-void IvkMaterial::CreateDescriptorSetLayout(
+void IvkMaterial_T::CreateDescriptorSetLayout(
     IceRenderContext* _rContext, const std::vector<IvkShader>& _shaders)
 {
   u32 bindingIndex = 0;
@@ -307,7 +307,7 @@ void IvkMaterial::CreateDescriptorSetLayout(
              "Failed to create descriptor set layout");
 }
 
-void IvkMaterial::CreateDescriptorSet(IceRenderContext* _rContext)
+void IvkMaterial_T::CreateDescriptorSet(IceRenderContext* _rContext)
 {
   VkDescriptorSetAllocateInfo allocInfo {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -319,7 +319,7 @@ void IvkMaterial::CreateDescriptorSet(IceRenderContext* _rContext)
              "Failed to allocate descriptor set");
 }
 
-void IvkMaterial::CreatePipelineLayout(IceRenderContext* _rContext)
+void IvkMaterial_T::CreatePipelineLayout(IceRenderContext* _rContext)
 {
   VkPipelineLayoutCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -333,7 +333,7 @@ void IvkMaterial::CreatePipelineLayout(IceRenderContext* _rContext)
              "Failed to create pipeline layout");
 }
 
-void IvkMaterial::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkShader> _shaders)
+void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkShader> _shaders)
 {
   // Viewport State
   //=================================================

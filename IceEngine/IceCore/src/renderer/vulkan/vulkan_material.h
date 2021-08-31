@@ -6,14 +6,14 @@
 
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/vulkan/vulkan_shader.h"
-#include "renderer/vulkan/vulkan_buffer.h"
+#include "renderer/buffer.h"
 #include "renderer/image.h"
 #include "renderer/material.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
 
-class IvkMaterial : public IceMaterial
+class IvkMaterial_T : public IceMaterial_T
 {
 private:
   // TODO : Add pipeline settings
@@ -26,7 +26,7 @@ public:
   void Initialize(IceRenderContext* _rContext,
                   const std::vector<const char*> _shaderNames,
                   const std::vector<IceShaderStageFlags> _shaderStages,
-                  IvkBuffer* _buffer = nullptr) override;
+                  IceBuffer _buffer = nullptr) override;
   void Shutdown(IceRenderContext* _rContext) override;
   void DestroyFragileComponents(IceRenderContext* _rContext);
   void CreateFragileComponents(IceRenderContext* _rContext);

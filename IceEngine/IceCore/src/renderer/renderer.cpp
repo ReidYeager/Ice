@@ -31,7 +31,7 @@ void IceRenderer::Shutdown()
 
 void IceRenderer::RecordCommandBuffers(u32 _shaderIndex)
 {
-  backend->RecordCommandBuffers((IvkMaterial*)materials[_shaderIndex]);
+  backend->RecordCommandBuffers((IvkMaterial_T*)materials[_shaderIndex]);
 }
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
@@ -67,11 +67,11 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
 
   // Create a new shader program
   i = static_cast<u32>(materials.size());
-  IceMaterial* material = nullptr;
+  IceMaterial material = nullptr;
   switch (activeAPI)
   {
   case IceRenderer::Vulkan:
-    material = new IvkMaterial();
+    material = new IvkMaterial_T();
     break;
   default: break;
   }
