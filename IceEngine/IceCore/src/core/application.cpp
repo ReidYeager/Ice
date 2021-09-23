@@ -38,6 +38,7 @@ void IceApplication::Initialize()
 
   platform = new IcePlatform();
   renderer = new IceRenderer();
+  ecsController = new IceEcsController();
   ServiceHub::Initialize(platform, renderer);
 
   EventManager.Initialize();
@@ -151,12 +152,14 @@ void IceApplication::Shutdown()
   delete(platform);
 }
 
-void* IceApplication::CreateObject(const char* _meshDir /*= nullptr*/)
+GameObject IceApplication::CreateObject(const char* _meshDir /*= nullptr*/)
 {
   if (_meshDir != nullptr)
     renderer->CreateMesh(_meshDir);
 
-  return nullptr;
+  GameObject g(ecsController);
+
+  return g;
 }
 
 u32 IceApplication::GetMaterialIndex(std::vector<const char*> _shaderNames,

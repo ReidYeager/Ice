@@ -8,6 +8,9 @@
 #include "renderer/shader_program.h"
 #include "core/camera.h"
 
+#include "core/ecs_controller.h"
+#include "core/gameobject.h"
+
 class ICE_API IceApplication
 {
 //=================================================================================================
@@ -16,6 +19,7 @@ class ICE_API IceApplication
 protected:
   IcePlatform* platform;
   IceRenderer* renderer;
+  IceEcsController* ecsController;
 
 public:
   // TODO : Delete
@@ -45,7 +49,7 @@ protected:
 
   // TODO : Modify to fit a proper ECS system
   // Temporarily : Adds the given model to the world
-  void* CreateObject(const char* _meshDir = nullptr);
+  GameObject CreateObject(const char* _meshDir = nullptr);
 
   u32 GetMaterialIndex(std::vector<const char*> _shaderNames,
                        std::vector<IceShaderStageFlags> _shaderStages,

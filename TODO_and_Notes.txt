@@ -1,11 +1,7 @@
-\.git\logs\HEAD
-	Line    42 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
-\.git\logs\refs\heads\main
-	Line    35 :--: b0ff43c3a4e91052c971c1a7253de3380dcc6e87 6dbdb76009dd3d4787b3586fcf345e1999c93fa4 reidyeager <reidyeager@gmail.com> 1625023788 -0500	commit: Handled some TODOs, Begun planning RendererBackend refactor
 \IceEngine\IceCore\src\core\application.h
-	Line    20 :--: // TODO : Delete
-	Line    45 :--: // TODO : Modify to fit a proper ECS system
-	Line    58 :--: // TODO : Add any game->engine API calls here
+	Line    24 :--: // TODO : Delete
+	Line    49 :--: // TODO : Modify to fit a proper ECS system
+	Line    62 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h

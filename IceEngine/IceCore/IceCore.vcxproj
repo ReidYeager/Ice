@@ -93,8 +93,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\asserts.h" />
+    <ClInclude Include="src\core\ecs_controller.h" />
     <ClInclude Include="src\core\event.h" />
-    <ClInclude Include="src\core\object.h" />
+    <ClInclude Include="src\core\gameobject.h" />
     <ClInclude Include="src\renderer\image.h" />
     <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\ice.h" />
@@ -125,7 +126,6 @@
     <ClCompile Include="src\core\event.cpp" />
     <ClCompile Include="src\core\camera.cpp" />
     <ClCompile Include="src\core\input.cpp" />
-    <ClCompile Include="src\core\object.cpp" />
     <ClCompile Include="src\renderer\buffer.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_buffer.cpp" />
     <ClCompile Include="src\platform\file_system.cpp" />
