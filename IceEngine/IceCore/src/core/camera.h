@@ -23,7 +23,7 @@ private:
 
   float vertFieldOfView = 90.0f;
   float minRenderDist = 0.1f;
-  float maxRenderDist = 10.0f;
+  float maxRenderDist = 100.0f;
 
 public:
   IceCamera();

@@ -1,8 +1,8 @@
-\IceEngine\IceCore\src\core\application.cpp
-	Line   121 :--: // TODO : --For Resume-- ECS is not returning any renderable components after its creation
+\.git\COMMIT_EDITMSG
+	Line    30 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
-	Line    65 :--: // TODO : Add any game->engine API calls here
+	Line    67 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
@@ -22,10 +22,10 @@
 	Line    24 :--: // TODO : Replace _images with managed image pointers
 	Line    25 :--: // TODO : Replace IceBuffer with an API-agnostic counterpart
 \IceEngine\IceCore\src\renderer\mesh.h
-	Line    60 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+	Line    61 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
 	Line     9 :--: // TODO : Remove all API types & references
-	Line    58 :--: // TODO : Make IceMaterials identifiable
+	Line    59 :--: // TODO : Make IceMaterials identifiable
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
@@ -45,19 +45,19 @@
 	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
 	Line    37 :--: // TODO : Delete
 	Line    53 :--: // TODO : Delete
-	Line   102 :--: // TODO : Split into render call & presentation steps?
-	Line   213 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
-	Line   339 :--: // TODO : Make this editable from the client
-	Line   501 :--: // TODO : Replace with clamp function calls
+	Line    98 :--: // TODO : Split into render call & presentation steps?
+	Line   206 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+	Line   333 :--: // TODO : Make this editable from the client
+	Line   495 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
-	Line    82 :--: // TODO : API CULL MARK
-	Line    94 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   121 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   130 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   141 :--: // TODO : Move to an image manager?
-	Line   160 :--: // TODO : Move to shader programs?
-	Line   163 :--: // TODO : DELETE
+	Line    78 :--: // TODO : API CULL MARK
+	Line    90 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
+	Line   117 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
+	Line   126 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   137 :--: // TODO : Move to an image manager?
+	Line   156 :--: // TODO : Move to shader programs?
+	Line   159 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
 	Line    48 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
@@ -94,3 +94,5 @@
 	Line  2306 :--: // TODO(syoyo): Add syntax check
 	Line  2317 :--: // TODO(syoyo): # of elements check
 	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.
+\IceEngine\Sandbox\src\Source.cpp
+	Line    27 :--: // TODO : ---Resume--- Render objects at unique transforms

@@ -53,15 +53,15 @@ void IceApplication::Initialize()
   renderer->Initialize(IceRenderer::Vulkan);
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
 
+  ecsController->registry.on_construct<RenderableComponent>().connect<&IceApplication::RenderableCallback>(this);
+
   ChildInit();
   ICE_ASSERT_MSG(ChildLoop != nullptr, "Failed to set an update function");
 
   #pragma region MoveToChildLoop
-  cam.position = glm::vec3(0, 0, 5);
+  cam.position = glm::vec3(0.0f, 0.0f, 5.0f);
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
   #pragma endregion
-
-  //renderer->RecordCommandBuffers();
 }
 
 void IceApplication::MainLoop()
@@ -78,8 +78,6 @@ void IceApplication::MainLoop()
   int deltasCount = 0;
   float fpsPrintFrequency = 0.5f;  // Seconds
   fpsPrintFrequency *= 1000000.0f; // To microseconds
-
-  renderPacket.material = (IvkMaterial_T*)renderer->materials[0];
 
   LogInfo("ICE LOOP =================================================");
   while (platform->Update())
@@ -119,15 +117,6 @@ void IceApplication::MainLoop()
     }
     #pragma endregion
 
-    // TODO : --For Resume-- ECS is not returning any renderable components after its creation
-    //      : Returns 2 when queried in ChildInit in Source
-    //      : TEMPORARILY adding a mesh manually at the top of VulkanBackend::RenderFrame
-    // Fill renderables
-    renderPacket.renderables.clear();
-    auto v = ecsController->registry.view<RenderableComponent>();
-    //LogInfo("Renderable count %u", v.size()); // Commented for clean test log -- uncomment when fixing
-
-
     // Render
     renderer->RenderFrame(&renderPacket);
     Input.Update();
@@ -154,6 +143,9 @@ void IceApplication::Shutdown()
 {
   LogInfo("ICE SHUTDOWN =============================================");
   ChildShutdown();
+
+  ecsController->registry.on_construct<RenderableComponent>().disconnect<&IceApplication::RenderableCallback>(this);
+
   vkDeviceWaitIdle(renderer->GetContext()->device);
   renderer->Shutdown();
   delete(renderer);
@@ -161,6 +153,17 @@ void IceApplication::Shutdown()
   MemoryManager.Shutdown();
   platform->Shutdown();
   delete(platform);
+}
+
+void IceApplication::RenderableCallback()
+{
+  auto v = ecsController->registry.view<RenderableComponent>();
+  for (auto e : v)
+  {
+    RenderableComponent rc = ecsController->GetComponent<RenderableComponent>(e);
+    renderPacket.renderables.push_back(&(renderer->meshes[rc.meshIndex]));
+    renderPacket.materialIndices.push_back(rc.materialIndex);
+  }
 }
 
 GameObject IceApplication::CreateObject()

@@ -22,6 +22,11 @@ public:
     return registry.create();
   }
 
+  void DestroyEntity(const entt::entity& _entity)
+  {
+    registry.destroy(_entity);
+  }
+
   template <typename T, typename... Args>
   T& AddComponent(const entt::entity& _entity, Args &&... args)
   {
@@ -39,6 +44,12 @@ public:
   {
     registry.remove<T>(_entity);
   }
+
+  //template <typename T>
+  //entt::basic_view<T> GetEntitiesWithComponent()
+  //{
+  //  return registry.view<T>();
+  //}
 
 };
 

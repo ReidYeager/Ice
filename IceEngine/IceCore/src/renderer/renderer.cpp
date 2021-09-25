@@ -25,15 +25,16 @@ void IceRenderer::Shutdown()
     free(m);
   }
 
+  for (auto& mes : meshes)
+  {
+    mes.indexBuffer->FreeBuffer(backend->GetContext());
+    mes.vertexBuffer->FreeBuffer(backend->GetContext());
+  }
+
   backend->Shutdown();
   delete(backend);
   LogInfo("Shutdown Renderer system");
 }
-
-//void IceRenderer::RecordCommandBuffers()
-//{
-//  backend->RecordCommandBuffers((IvkMaterial_T*)materials[0]);
-//}
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {

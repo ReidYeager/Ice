@@ -22,7 +22,7 @@ struct IceRenderPacket
   float deltaTime;
 
   std::vector<mesh_t*> renderables;
-  IvkMaterial_T* material;
+  std::vector<u32> materialIndices;
 };
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);

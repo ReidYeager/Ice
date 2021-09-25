@@ -26,6 +26,11 @@ public:
     controller->AddComponent<TransformComponent>(entity, 0.0f, 0.0f, 0.0f);
   }
 
+  void Destroy()
+  {
+    controller->DestroyEntity(entity);
+  }
+
   template <typename T, typename... Args>
   T& AddComponent(Args &&... args)
   {

@@ -41,6 +41,8 @@ private:
   // Destroys all allocators and subsystems
   void Shutdown();
 
+  void RenderableCallback();
+
 protected:
   // Used for any initialization the child application requires
   virtual void ChildInit() = 0;

@@ -52,10 +52,6 @@ void VulkanBackend::Shutdown()
   vkDeviceWaitIdle(rContext->device);
 
   // TODO : Delete
-  vertexBuffer->FreeBuffer(rContext);
-  delete(vertexBuffer);
-  indexBuffer->FreeBuffer(rContext);
-  delete(indexBuffer);
   mvpBuffer->FreeBuffer(rContext);
   delete(mvpBuffer);
 
@@ -103,12 +99,6 @@ void VulkanBackend::Shutdown()
 // TODO : Split into render call & presentation steps?
 void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
 {
-  mesh_t m;
-  m.vertexBuffer = vertexBuffer->GetBuffer();
-  m.indexBuffer = indexBuffer->GetBuffer();
-  m.indices.resize(indexCount);
-  _packet->renderables.push_back(&m);
-
   if (shouldResize)
   {
     RecreateComponents();
@@ -209,6 +199,9 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
 
   VkDeviceSize offset[] = { 0 };
 
+  u32 renderableIndex = 0;
+  u32 materialIndex = 0;
+
   for (u32 i = 0; i < commandCount; i++)
   {
     // NOTE : Prevents writing to command buffer being used to render, probably affects performance
@@ -221,19 +214,20 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
       "Failed to being command buffer");
 
     vkCmdBeginRenderPass(rContext->commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    _packet->material->Render(rContext->commandBuffers[i]);
 
+    renderableIndex = 0;
     for (auto m : _packet->renderables)
     {
-      vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, &(m->vertexBuffer), offset);
-      vkCmdBindIndexBuffer(rContext->commandBuffers[i], m->indexBuffer, 0,
+      materialIndex = _packet->materialIndices[renderableIndex];
+      ((IvkMaterial_T*)materials[materialIndex])->Render(rContext->commandBuffers[i]);
+
+      vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
+      vkCmdBindIndexBuffer(rContext->commandBuffers[i], m->indexBuffer->GetBuffer(), 0,
         VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(rContext->commandBuffers[i], m->indices.size(), 1, 0, 0, 0);
+
+      renderableIndex++;
     }
-    //vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
-    //vkCmdBindIndexBuffer(rContext->commandBuffers[i], indexBuffer->GetBuffer(), 0,
-    //  VK_INDEX_TYPE_UINT32);
-    //vkCmdDrawIndexed(rContext->commandBuffers[i], indexCount, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(rContext->commandBuffers[i]);
 
@@ -874,15 +868,15 @@ u32 VulkanBackend::GetPresentIndex(
 mesh_t VulkanBackend::CreateMesh(const char* _directory)
 {
   mesh_t m = FileSystem::LoadMesh(_directory);
-  vertexBuffer = CreateAndFillBuffer(rContext,
-                                     m.vertices.data(),
-                                     sizeof(vertex_t) * m.vertices.size(),
-                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-  indexBuffer = CreateAndFillBuffer(rContext,
-                                    m.indices.data(),
-                                    sizeof(u32) * m.indices.size(),
-                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-  indexCount = static_cast<u32>(m.indices.size());
+  m.vertexBuffer = CreateAndFillBuffer(rContext,
+                                       m.vertices.data(),
+                                       sizeof(vertex_t) * m.vertices.size(),
+                                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+  m.indexBuffer = CreateAndFillBuffer(rContext,
+                                      m.indices.data(),
+                                      sizeof(u32) * m.indices.size(),
+                                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+  //indexCount = static_cast<u32>(m.indices.size());
   return m;
 }
 
