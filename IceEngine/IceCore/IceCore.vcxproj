@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\asserts.h" />
+    <ClInclude Include="src\core\ecs_components.h" />
     <ClInclude Include="src\core\ecs_controller.h" />
     <ClInclude Include="src\core\event.h" />
     <ClInclude Include="src\core\gameobject.h" />

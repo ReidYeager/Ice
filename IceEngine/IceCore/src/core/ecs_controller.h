@@ -9,9 +9,9 @@
 class ICE_API IceEcsController
 {
 private:
+public:
   entt::registry registry;
 
-public:
   //IceEcsController() = delete;
   //IceEcsController(IceEcsController&&) = delete;
   //IceEcsController(const IceEcsController&) = delete;
@@ -22,10 +22,10 @@ public:
     return registry.create();
   }
 
-  template <typename T>
-  T& AddComponent(const entt::entity& _entity)
+  template <typename T, typename... Args>
+  T& AddComponent(const entt::entity& _entity, Args &&... args)
   {
-    return registry.get_or_emplace<T>(_entity);
+    return registry.get_or_emplace<T>(_entity, std::forward<Args>(args)...);
   }
 
   template<typename T>

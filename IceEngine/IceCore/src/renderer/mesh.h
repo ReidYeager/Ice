@@ -3,6 +3,7 @@
 #define ICE_RENDERER_MESH_H_
 
 #include <vector>
+#include <string>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -71,6 +72,8 @@ namespace std {
 
 struct mesh_t
 {
+  std::string directory;
+
   std::vector<vertex_t> vertices;
   std::vector<u32> indices;
 

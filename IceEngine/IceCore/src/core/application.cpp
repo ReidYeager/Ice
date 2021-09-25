@@ -15,6 +15,7 @@
 
 #include <glm/glm.hpp>
 #include <chrono>
+#include <iostream>
 
 void IceApplication::Run()
 {
@@ -60,13 +61,11 @@ void IceApplication::Initialize()
   cam.SetRotation({ 0.0f, -90.0f, 0.0f });
   #pragma endregion
 
-  renderer->RecordCommandBuffers(0);
+  //renderer->RecordCommandBuffers();
 }
 
 void IceApplication::MainLoop()
 {
-  IceRenderPacket renderPacket {};
-
   auto start = std::chrono::steady_clock::now();
   auto end = std::chrono::steady_clock::now();
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -80,6 +79,8 @@ void IceApplication::MainLoop()
   float fpsPrintFrequency = 0.5f;  // Seconds
   fpsPrintFrequency *= 1000000.0f; // To microseconds
 
+  renderPacket.material = (IvkMaterial_T*)renderer->materials[0];
+
   LogInfo("ICE LOOP =================================================");
   while (platform->Update())
   {
@@ -91,8 +92,9 @@ void IceApplication::MainLoop()
     // Run game code
     (this->*ChildLoop)();
     #pragma region MoveToChildLoop
+    //int x, y;
     //Input.GetMouseDelta(&x, &y);
-    //cam.Rotate({-y * sensitivity, x * sensitivity, 0});
+    //cam.Rotate({-y * 0.1f, x * 0.1f, 0});
     //cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
@@ -116,6 +118,15 @@ void IceApplication::MainLoop()
       platform->Close();
     }
     #pragma endregion
+
+    // TODO : --For Resume-- ECS is not returning any renderable components after its creation
+    //      : Returns 2 when queried in ChildInit in Source
+    //      : TEMPORARILY adding a mesh manually at the top of VulkanBackend::RenderFrame
+    // Fill renderables
+    renderPacket.renderables.clear();
+    auto v = ecsController->registry.view<RenderableComponent>();
+    //LogInfo("Renderable count %u", v.size()); // Commented for clean test log -- uncomment when fixing
+
 
     // Render
     renderer->RenderFrame(&renderPacket);
@@ -152,14 +163,19 @@ void IceApplication::Shutdown()
   delete(platform);
 }
 
-GameObject IceApplication::CreateObject(const char* _meshDir /*= nullptr*/)
+GameObject IceApplication::CreateObject()
 {
-  if (_meshDir != nullptr)
-    renderer->CreateMesh(_meshDir);
-
   GameObject g(ecsController);
 
   return g;
+}
+
+u32 IceApplication::GetMeshIndex(const char* _meshDir /*= nullptr*/)
+{
+  if (_meshDir != nullptr)
+    return renderer->CreateMesh(_meshDir);
+
+  return -1;
 }
 
 u32 IceApplication::GetMaterialIndex(std::vector<const char*> _shaderNames,

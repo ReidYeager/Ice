@@ -44,7 +44,7 @@ void VulkanBackend::Initialize()
   InitializeComponents();
 
   IceRenderBackendDefineRenderFrame(VulkanBackend::RenderFrame);
-  IceRenderBackendDefineRecordCommandBuffers(VulkanBackend::RecordCommandBuffers);
+  //IceRenderBackendDefineRecordCommandBuffers(VulkanBackend::RecordCommandBuffers);
 }
 
 void VulkanBackend::Shutdown()
@@ -100,14 +100,21 @@ void VulkanBackend::Shutdown()
   delete(rContext);
 }
 
-// TODO : Split into render call & presentation steps
+// TODO : Split into render call & presentation steps?
 void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
 {
+  mesh_t m;
+  m.vertexBuffer = vertexBuffer->GetBuffer();
+  m.indexBuffer = indexBuffer->GetBuffer();
+  m.indices.resize(indexCount);
+  _packet->renderables.push_back(&m);
+
   if (shouldResize)
   {
     RecreateComponents();
     shouldResize = false;
   }
+  RecordCommandBuffers(_packet);
 
   u32& currentFrame = rContext->syncObjects.currentFrame;
   vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightFences[currentFrame],
@@ -182,7 +189,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   rContext->syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
-void VulkanBackend::RecordCommandBuffers(IvkMaterial_T* _shader)
+void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
 {
   u32 commandCount = static_cast<u32>(rContext->commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo{};
@@ -204,17 +211,29 @@ void VulkanBackend::RecordCommandBuffers(IvkMaterial_T* _shader)
 
   for (u32 i = 0; i < commandCount; i++)
   {
+    // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+    vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightFences[i],
+      VK_TRUE, UINT64_MAX);
+
     rpBeginInfo.framebuffer = rContext->frameBuffers[i];
 
     IVK_ASSERT(vkBeginCommandBuffer(rContext->commandBuffers[i], &beginInfo),
       "Failed to being command buffer");
 
     vkCmdBeginRenderPass(rContext->commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    _shader->Render(rContext->commandBuffers[i]);
-    vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
-    vkCmdBindIndexBuffer(rContext->commandBuffers[i], indexBuffer->GetBuffer(), 0,
-      VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(rContext->commandBuffers[i], indexCount, 1, 0, 0, 0);
+    _packet->material->Render(rContext->commandBuffers[i]);
+
+    for (auto m : _packet->renderables)
+    {
+      vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, &(m->vertexBuffer), offset);
+      vkCmdBindIndexBuffer(rContext->commandBuffers[i], m->indexBuffer, 0,
+        VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(rContext->commandBuffers[i], m->indices.size(), 1, 0, 0, 0);
+    }
+    //vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, vertexBuffer->GetBufferPtr(), offset);
+    //vkCmdBindIndexBuffer(rContext->commandBuffers[i], indexBuffer->GetBuffer(), 0,
+    //  VK_INDEX_TYPE_UINT32);
+    //vkCmdDrawIndexed(rContext->commandBuffers[i], indexCount, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(rContext->commandBuffers[i]);
 
@@ -292,8 +311,6 @@ void VulkanBackend::RecreateComponents()
   {
     ((IvkMaterial_T*)mat)->CreateFragileComponents(rContext);
   }
-
-  RecordCommandBuffers((IvkMaterial_T*)materials[0]);
 }
 
 //=================================================================================================

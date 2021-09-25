@@ -5,44 +5,43 @@
 #include "defines.h"
 
 #include "core/ecs_controller.h"
+#include "core/ecs_components.h"
 
-struct dummyComponent
-{
-  int x;
-  float y;
-  char z;
-};
+#include <cstdarg>
 
 class ICE_API GameObject
 {
 private:
   entt::entity entity;
-  IceEcsController* controller;
+  IceEcsController* controller = nullptr;
 
 public:
+  GameObject() {}
+
   GameObject(IceEcsController* _controller)
   {
     controller = _controller;
 
     entity = controller->CreteEnity();
+    controller->AddComponent<TransformComponent>(entity, 0.0f, 0.0f, 0.0f);
   }
 
-  template <typename T>
-  T& AddComponent()
+  template <typename T, typename... Args>
+  T& AddComponent(Args &&... args)
   {
-    return controller->AddComponent<T>(entity);
+    return controller->AddComponent<T>(entity, std::forward<Args>(args)...);
   }
 
   template <typename T>
   T& GetComponent()
   {
-     return controller->GetComponent<dummyComponent>(entity);
+     return controller->GetComponent<T>(entity);
   }
 
   template <typename T>
   void RemoveComponent()
   {
-    controller->RemoveComponent<dummyComponent>(entity);
+    controller->RemoveComponent<T>(entity);
   }
 
 };

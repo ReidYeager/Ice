@@ -9,6 +9,7 @@
 #include "core/camera.h"
 
 #include "core/ecs_controller.h"
+#include "core/ecs_components.h"
 #include "core/gameobject.h"
 
 class ICE_API IceApplication
@@ -16,6 +17,9 @@ class ICE_API IceApplication
 //=================================================================================================
 // Variables
 //=================================================================================================
+private:
+  IceRenderPacket renderPacket;
+
 protected:
   IcePlatform* platform;
   IceRenderer* renderer;
@@ -47,10 +51,9 @@ protected:
   // Used for any destruction the child application requires
   virtual void ChildShutdown() = 0;
 
-  // TODO : Modify to fit a proper ECS system
-  // Temporarily : Adds the given model to the world
-  GameObject CreateObject(const char* _meshDir = nullptr);
+  GameObject CreateObject();
 
+  u32 GetMeshIndex(const char* _meshDir = nullptr);
   u32 GetMaterialIndex(std::vector<const char*> _shaderNames,
                        std::vector<IceShaderStageFlags> _shaderStages,
                        std::vector<const char*> _texStrings,

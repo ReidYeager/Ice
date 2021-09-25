@@ -86,6 +86,9 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
   // Create vertex buffer
   // Create index buffer
 
+  std::string fileDir(_directory);
+  mesh.directory = fileDir;
+
   LogInfo("Loaded %s -- %u verts, %u indices",
            _directory, mesh.vertices.size(), mesh.indices.size());
 

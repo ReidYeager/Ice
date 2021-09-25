@@ -1,7 +1,8 @@
+\IceEngine\IceCore\src\core\application.cpp
+	Line   121 :--: // TODO : --For Resume-- ECS is not returning any renderable components after its creation
 \IceEngine\IceCore\src\core\application.h
-	Line    24 :--: // TODO : Delete
-	Line    49 :--: // TODO : Modify to fit a proper ECS system
-	Line    62 :--: // TODO : Add any game->engine API calls here
+	Line    28 :--: // TODO : Delete
+	Line    65 :--: // TODO : Add any game->engine API calls here
 \IceEngine\IceCore\src\core\camera.cpp
 	Line    22 :--: // TODO : add roll
 \IceEngine\IceCore\src\core\event.h
@@ -21,14 +22,14 @@
 	Line    24 :--: // TODO : Replace _images with managed image pointers
 	Line    25 :--: // TODO : Replace IceBuffer with an API-agnostic counterpart
 \IceEngine\IceCore\src\renderer\mesh.h
-	Line    59 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+	Line    60 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
-	Line     8 :--: // TODO : Remove all API types & references
-	Line    57 :--: // TODO : Make IceMaterials identifiable
+	Line     9 :--: // TODO : Remove all API types & references
+	Line    58 :--: // TODO : Make IceMaterials identifiable
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    41 :--: // TODO : DELETE
+	Line    44 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
@@ -44,9 +45,10 @@
 	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
 	Line    37 :--: // TODO : Delete
 	Line    53 :--: // TODO : Delete
-	Line   102 :--: // TODO : Split into render call & presentation steps
-	Line   322 :--: // TODO : Make this editable from the client
-	Line   484 :--: // TODO : Replace with clamp function calls
+	Line   102 :--: // TODO : Split into render call & presentation steps?
+	Line   213 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+	Line   339 :--: // TODO : Make this editable from the client
+	Line   501 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
 	Line    82 :--: // TODO : API CULL MARK

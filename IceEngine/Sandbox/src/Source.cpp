@@ -2,41 +2,34 @@
 #include <iostream>
 #include <ice.h>
 
-//struct dummyComponent
-//{
-//  int x;
-//  float y;
-//  char z;
-//};
+struct dummyComponent
+{
+  int x;
+  float y;
+  char z;
+};
 
 class Application : public IceApplication
 {
+private:
+  GameObject testGameObject;
+
 public:
   void ChildInit() override
   {
     IceApplicationDefineChildLoop(loop);
 
-    GetMaterialIndex({ "mvp", "blue" },
-                     { Ice_Shader_Vert, Ice_Shader_Frag },
-                     { "TestImage.png", "AltImage.png", "landscape.jpg" });
+    testGameObject = CreateObject();
 
-    //IceMaterial m = GetMaterialIndex({ "mvp", "test" },
-    //                                 { Ice_Shader_Vert, Ice_Shader_Frag },
-    //                                 { "TestImage.png", "AltImage.png", "landscape.jpg" });
+    u32 materialIndex = GetMaterialIndex(
+        { "mvp", "test" },
+        { Ice_Shader_Vert, Ice_Shader_Frag },
+        { "TestImage.png", "AltImage.png", "landscape.jpg" });
+    u32 meshIndex = GetMeshIndex("Sphere.obj");
 
-    GameObject o = CreateObject("Cube.obj");
+    testGameObject = CreateObject();
 
-    dummyComponent& d = o.AddComponent<dummyComponent>();
-    d.x = 1234;
-    dummyComponent& e = o.AddComponent<dummyComponent>();
-
-    o.RemoveComponent<dummyComponent>();
-    o.RemoveComponent<dummyComponent>();
-
-    //IceObject o = CreateObject();
-    //IceRenderable r = o.AddComponent<IceRenderable>();
-    //r.SetMesh("Cube.obj");
-    //r.SetMaterial(m);
+    testGameObject.AddComponent<RenderableComponent>(meshIndex, materialIndex);
   }
 
   void ChildShutdown() override

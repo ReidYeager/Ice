@@ -20,6 +20,9 @@ struct IceRenderPacket
   glm::mat4 viewMatrix;
   glm::mat4 projectionMatrix;
   float deltaTime;
+
+  std::vector<mesh_t*> renderables;
+  IvkMaterial_T* material;
 };
 
 bool WindowResizeCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data);
@@ -34,8 +37,8 @@ public:
   void RenderFrame(IceRenderPacket* _packet)
   { (this->*RenderFramePointer)(_packet); }
 
-  void RecordCommandBuffers(IvkMaterial_T* _shader)
-  { (this->*RecordCommandBuffersPointer)(_shader); }
+  //void RecordCommandBuffers(IceRenderPacket* _packet)
+  //{ (this->*RecordCommandBuffersPointer)(_packet); }
 
   virtual void CreateDescriptorSet(u32 _programIndex) = 0;
 

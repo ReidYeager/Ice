@@ -5,6 +5,7 @@
 #include "renderer/shader_program.h"
 #include "renderer/vulkan/vulkan_backend.h"
 #include "platform/file_system.h"
+#include "core/ecs_components.h"
 
 // TODO : Remove all API types & references
 
@@ -29,10 +30,10 @@ void IceRenderer::Shutdown()
   LogInfo("Shutdown Renderer system");
 }
 
-void IceRenderer::RecordCommandBuffers(u32 _shaderIndex)
-{
-  backend->RecordCommandBuffers((IvkMaterial_T*)materials[_shaderIndex]);
-}
+//void IceRenderer::RecordCommandBuffers()
+//{
+//  backend->RecordCommandBuffers((IvkMaterial_T*)materials[0]);
+//}
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {
@@ -87,10 +88,22 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
   return i;
 }
 
-mesh_t IceRenderer::CreateMesh(const char* _model)
+u32 IceRenderer::CreateMesh(const char* _model)
 {
+  u32 i = 0;
+  for (const auto& m : meshes)
+  {
+    if (strcmp(_model, m.directory.c_str()) == 0)
+    {
+      return i;
+    }
+
+    i++;
+  }
+
   mesh_t m = backend->CreateMesh(_model);
-  return m;
+  meshes.push_back(m);
+  return i;
 }
 
 void IceRenderer::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
