@@ -1,5 +1,3 @@
-\.git\COMMIT_EDITMSG
-	Line    21 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
 	Line    67 :--: // TODO : Add any game->engine API calls here
@@ -41,8 +39,8 @@
 	Line    53 :--: // TODO : Delete
 	Line    98 :--: // TODO : Split into render call & presentation steps?
 	Line   206 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
-	Line   333 :--: // TODO : Make this editable from the client
-	Line   495 :--: // TODO : Replace with clamp function calls
+	Line   332 :--: // TODO : Make this editable from the client
+	Line   494 :--: // TODO : Replace with clamp function calls
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
 	Line    78 :--: // TODO : API CULL MARK

@@ -61,7 +61,7 @@ void VulkanBackend::Shutdown()
       rContext->allocator);
     vkDestroySemaphore(rContext->device, rContext->syncObjects.renderCompleteSemaphores[i],
       rContext->allocator);
-    vkDestroyFence(rContext->device, rContext->syncObjects.flightFences[i], rContext->allocator);
+    vkDestroyFence(rContext->device, rContext->syncObjects.flightSlotAvailableFences[i], rContext->allocator);
   }
 
   vkDestroyDescriptorPool(rContext->device, rContext->descriptorPool, rContext->allocator);
@@ -104,15 +104,15 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
     RecreateComponents();
     shouldResize = false;
   }
-  RecordCommandBuffers(_packet);
 
   u32& currentFrame = rContext->syncObjects.currentFrame;
-  vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightFences[currentFrame],
+
+  vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightSlotAvailableFences[currentFrame],
     VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
-  //mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
-  mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 2.0f) * 0.2f, 0));
+  mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
+  //mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 2.0f) * 0.2f, 0));
   mvp.view = _packet->viewMatrix;
   mvp.projection = _packet->projectionMatrix;
   FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
@@ -120,6 +120,8 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   u32 imageIndex;
   VkResult result = vkAcquireNextImageKHR(rContext->device, rContext->swapchain, UINT64_MAX,
     rContext->syncObjects.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+  RecordCommandBuffers(_packet, imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
@@ -137,7 +139,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
       VK_TRUE, UINT64_MAX);
   }
   rContext->syncObjects.imageIsInFlightFences[imageIndex] = 
-      rContext->syncObjects.flightFences[currentFrame];
+      rContext->syncObjects.flightSlotAvailableFences[currentFrame];
 
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -151,9 +153,9 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = &rContext->syncObjects.renderCompleteSemaphores[currentFrame];
 
-  vkResetFences(rContext->device, 1, &rContext->syncObjects.flightFences[currentFrame]);
+  vkResetFences(rContext->device, 1, &rContext->syncObjects.flightSlotAvailableFences[currentFrame]);
   IVK_ASSERT(vkQueueSubmit(rContext->graphicsQueue, 1, &submitInfo,
-                           rContext->syncObjects.flightFences[currentFrame]),
+                           rContext->syncObjects.flightSlotAvailableFences[currentFrame]),
     "Failed to submit draw command");
 
   VkPresentInfoKHR presentInfo{};
@@ -179,7 +181,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   rContext->syncObjects.currentFrame = (currentFrame + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
-void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
+void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandIndex)
 {
   u32 commandCount = static_cast<u32>(rContext->commandBuffers.size());
   VkCommandBufferBeginInfo beginInfo{};
@@ -202,37 +204,34 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
   u32 renderableIndex = 0;
   u32 materialIndex = 0;
 
-  for (u32 i = 0; i < commandCount; i++)
+  // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+  if (rContext->syncObjects.imageIsInFlightFences[_commandIndex] != VK_NULL_HANDLE)
+    vkWaitForFences(rContext->device, 1, &rContext->syncObjects.imageIsInFlightFences[_commandIndex], VK_TRUE, UINT64_MAX);
+
+  rpBeginInfo.framebuffer = rContext->frameBuffers[_commandIndex];
+
+  IVK_ASSERT(vkBeginCommandBuffer(rContext->commandBuffers[_commandIndex], &beginInfo),
+    "Failed to being command buffer");
+
+  vkCmdBeginRenderPass(rContext->commandBuffers[_commandIndex], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  renderableIndex = 0;
+  for (auto m : _packet->renderables)
   {
-    // NOTE : Prevents writing to command buffer being used to render, probably affects performance
-    vkWaitForFences(rContext->device, 1, &rContext->syncObjects.flightFences[i],
-      VK_TRUE, UINT64_MAX);
+    materialIndex = _packet->materialIndices[renderableIndex];
+    ((IvkMaterial_T*)materials[materialIndex])->Render(rContext->commandBuffers[_commandIndex]);
 
-    rpBeginInfo.framebuffer = rContext->frameBuffers[i];
+    vkCmdBindVertexBuffers(rContext->commandBuffers[_commandIndex], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
+    vkCmdBindIndexBuffer(rContext->commandBuffers[_commandIndex], m->indexBuffer->GetBuffer(), 0,
+      VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(rContext->commandBuffers[_commandIndex], m->indices.size(), 3, 0, 0, 0);
 
-    IVK_ASSERT(vkBeginCommandBuffer(rContext->commandBuffers[i], &beginInfo),
-      "Failed to being command buffer");
-
-    vkCmdBeginRenderPass(rContext->commandBuffers[i], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    renderableIndex = 0;
-    for (auto m : _packet->renderables)
-    {
-      materialIndex = _packet->materialIndices[renderableIndex];
-      ((IvkMaterial_T*)materials[materialIndex])->Render(rContext->commandBuffers[i]);
-
-      vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
-      vkCmdBindIndexBuffer(rContext->commandBuffers[i], m->indexBuffer->GetBuffer(), 0,
-        VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(rContext->commandBuffers[i], m->indices.size(), 3, 0, 0, 0);
-
-      renderableIndex++;
-    }
-
-    vkCmdEndRenderPass(rContext->commandBuffers[i]);
-
-    IVK_ASSERT(vkEndCommandBuffer(rContext->commandBuffers[i]), "Failed to record command buffer");
+    renderableIndex++;
   }
+
+  vkCmdEndRenderPass(rContext->commandBuffers[_commandIndex]);
+
+  IVK_ASSERT(vkEndCommandBuffer(rContext->commandBuffers[_commandIndex]), "Failed to record command buffer");
 }
 
 void VulkanBackend::Resize(u32 _width /*= 0*/, u32 _height /*= 0*/)
@@ -419,7 +418,7 @@ void VulkanBackend::CreateSyncObjects()
 {
   rContext->syncObjects.imageAvailableSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
   rContext->syncObjects.renderCompleteSemaphores.resize(MAX_FLIGHT_IMAGE_COUNT);
-  rContext->syncObjects.flightFences.resize(MAX_FLIGHT_IMAGE_COUNT);
+  rContext->syncObjects.flightSlotAvailableFences.resize(MAX_FLIGHT_IMAGE_COUNT);
   rContext->syncObjects.imageIsInFlightFences.resize(
       rContext->swapchainImages.size(), VK_NULL_HANDLE);
 
@@ -433,7 +432,7 @@ void VulkanBackend::CreateSyncObjects()
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
   {
     IVK_ASSERT(vkCreateFence(rContext->device, &fenceInfo, rContext->allocator,
-                             &rContext->syncObjects.flightFences[i]),
+                             &rContext->syncObjects.flightSlotAvailableFences[i]),
       "Failed to create fence");
     IVK_ASSERT(vkCreateSemaphore(rContext->device, &semaphoreInfo, rContext->allocator,
       &rContext->syncObjects.imageAvailableSemaphores[i]), "Failed to create image semaphore");

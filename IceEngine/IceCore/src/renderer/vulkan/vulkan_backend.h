@@ -43,7 +43,7 @@ public:
   void Shutdown() override;
 
   void RenderFrame(IceRenderPacket* _packet);
-  void RecordCommandBuffers(IceRenderPacket* _packet);
+  void RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandIndex);
   void Resize(u32 _width = 0, u32 _height = 0) override;
 
 // DELETE

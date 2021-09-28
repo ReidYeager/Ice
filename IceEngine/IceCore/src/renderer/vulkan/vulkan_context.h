@@ -95,7 +95,7 @@ struct RenderSynchronization
   // Synchronization
   #define MAX_FLIGHT_IMAGE_COUNT 3
   std::vector<VkFence> imageIsInFlightFences;
-  std::vector<VkFence> flightFences;
+  std::vector<VkFence> flightSlotAvailableFences;
   std::vector<VkSemaphore> renderCompleteSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
   u32 currentFrame = 0;
