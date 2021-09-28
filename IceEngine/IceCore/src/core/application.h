@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "platform/platform.h"
 #include "renderer/renderer.h"
-#include "renderer/shader_program.h"
+#include "renderer/shader.h"
 #include "core/camera.h"
 
 #include "core/ecs_controller.h"

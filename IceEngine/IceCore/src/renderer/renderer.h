@@ -5,7 +5,7 @@
 
 #include "defines.h"
 #include "renderer/renderer_backend.h"
-#include "renderer/shader_program.h"
+#include "renderer/shader.h"
 #include "renderer/mesh.h"
 #include "renderer/vulkan/vulkan_material.h"
 #include "renderer/material.h"

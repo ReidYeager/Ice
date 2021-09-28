@@ -15,7 +15,13 @@ layout(location = 0) out vec3 outNormal;
 layout(location = 1) out vec2 outUV;
 
 void main() {
-	gl_Position = mvp.proj * mvp.view * mvp.model * vec4(position, 1.0);
+	mat4 pos;
+	pos[0] = vec4(1.0, 0.0, 0.0, 0.0);
+	pos[1] = vec4(0.0, 1.0, 0.0, 0.0);
+	pos[2] = vec4(0.0, 0.0, 1.0, 0.0);
+	pos[3] = vec4(gl_InstanceIndex * 2.0, gl_InstanceIndex * 2.0, 0.0, 1.0);
+
+	gl_Position = mvp.proj * mvp.view * pos * vec4(position, 1.0);
 	outNormal = (mvp.model * vec4(normal, 1.0)).xyz;
 	outUV = uv;
 }

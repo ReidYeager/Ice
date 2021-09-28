@@ -6,7 +6,6 @@
 #include "renderer/image.h"
 #include "renderer/mesh.h"
 #include "renderer/buffer.h"
-#include "renderer/shader_program.h"
 #include "renderer/renderer_backend_context.h"
 #include "renderer/vulkan/vulkan_material.h"
 
@@ -36,11 +35,6 @@ public:
 
   void RenderFrame(IceRenderPacket* _packet)
   { (this->*RenderFramePointer)(_packet); }
-
-  //void RecordCommandBuffers(IceRenderPacket* _packet)
-  //{ (this->*RecordCommandBuffersPointer)(_packet); }
-
-  virtual void CreateDescriptorSet(u32 _programIndex) = 0;
 
   // TODO : DELETE
   virtual IceRenderContext* GetContext() = 0;

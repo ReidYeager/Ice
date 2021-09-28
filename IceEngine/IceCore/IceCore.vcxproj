@@ -115,7 +115,6 @@
     <ClInclude Include="src\renderer\renderer.h" />
     <ClInclude Include="src\renderer\renderer_backend.h" />
     <ClInclude Include="src\renderer\renderer_backend_context.h" />
-    <ClInclude Include="src\renderer\shader_program.h" />
     <ClInclude Include="src\core\camera.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_backend.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_context.h" />
@@ -134,7 +133,6 @@
     <ClCompile Include="src\core\memory_manager.cpp" />
     <ClCompile Include="src\platform\platform_windows.cpp" />
     <ClCompile Include="src\renderer\renderer.cpp" />
-    <ClCompile Include="src\renderer\shader_program.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_backend.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_platform.cpp" />
     <ClCompile Include="src\renderer\vulkan\vulkan_material.cpp" />

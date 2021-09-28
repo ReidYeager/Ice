@@ -2,7 +2,7 @@
 #include "renderer/renderer.h"
 #include "renderer/renderer_backend.h"
 #include "renderer/image.h"
-#include "renderer/shader_program.h"
+#include "renderer/shader.h"
 #include "renderer/vulkan/vulkan_backend.h"
 #include "platform/file_system.h"
 #include "core/ecs_components.h"

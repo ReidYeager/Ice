@@ -154,9 +154,6 @@ private:
   IceShader CreateShader(const char* _name, IceShaderStageFlags _stage);
 
   public:
-  // TODO : Move to shader programs?
-  void CreateDescriptorSet(u32 _programIndex);
-
   // TODO : DELETE
   IceRenderContext* GetContext() override
   {

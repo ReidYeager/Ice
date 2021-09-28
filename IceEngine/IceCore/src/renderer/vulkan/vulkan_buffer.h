@@ -42,6 +42,4 @@ public:
   u32 FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags);
 };
 
-// TODO : Add specialized implementations for vertex, index, and uniform buffers?
-
 #endif // !RENDERER_BUFFER_H

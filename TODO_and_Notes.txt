@@ -1,5 +1,5 @@
 \.git\COMMIT_EDITMSG
-	Line    30 :--: #	modified:   TODO_and_Notes.txt
+	Line    21 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
 	Line    67 :--: // TODO : Add any game->engine API calls here
@@ -29,18 +29,12 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    44 :--: // TODO : DELETE
+	Line    38 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
 	Line    71 :--: // TODO : Replace with API agnostic buffer
 	Line    74 :--: // TODO : Replace with indices for a texture flyweight
-\IceEngine\IceCore\src\renderer\shader_program.cpp
-	Line   326 :--: // TODO : Move to a constant value library
-	Line   361 :--: // TODO : Implement a proper parser to extract shader bindings
-\IceEngine\IceCore\src\renderer\shader_program.h
-	Line     9 :--: // TODO : Completely remove iceShaderProgram_t
-	Line    62 :--: // TODO : Refactor and move to RenderBackend
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
 	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
 	Line    37 :--: // TODO : Delete
@@ -56,14 +50,12 @@
 	Line   117 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
 	Line   126 :--: // TODO : I don't like this. Find a better way to destroy shaders
 	Line   137 :--: // TODO : Move to an image manager?
-	Line   156 :--: // TODO : Move to shader programs?
-	Line   159 :--: // TODO : DELETE
+	Line   156 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
 	Line    48 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
 	Line    13 :--: // TODO : Add alignment to better utilize GPU
 	Line    40 :--: // TODO : Move to vkMemory allocator
-	Line    44 :--: // TODO : Add specialized implementations for vertex, index, and uniform buffers?
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
 	Line    14 :--: // NOTE : Material's payload needs to be filled before use
 	Line   160 :--: // TODO : Make more easily extendable?

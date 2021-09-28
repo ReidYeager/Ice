@@ -3,6 +3,16 @@
 
 #include "renderer/buffer.h"
 
+size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
+{
+  size_t alignment = rContext->gpu.properties.limits.minUniformBufferOffsetAlignment;
+  size_t alignedSize = _original;
+  if (alignment > 0)
+  {
+    alignedSize = (alignedSize + alignment - 1) & ~(alignment - 1);
+  }
+  return alignedSize;
+}
 
 IceBuffer CreateAndFillBuffer(
     IceRenderContext* rContext, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)

@@ -76,4 +76,29 @@ struct IceShaderInfo
   std::vector<iceImage_t*> textures;
 };
 
+enum IcePipelineSettingFlagBits
+{
+  Ice_Pipeline_Cull_Mode_None = (0 << 0),
+  Ice_Pipeline_Cull_Mode_Front = (1 << 0),
+  Ice_Pipeline_Cull_Mode_Back = (2 << 0),
+  Ice_Pipeline_Cull_Mode_Both = (3 << 0),
+  Ice_Pipeline_Cull_Mode_Bits = (3 << 0),
+
+  // Default values
+  Ice_Pipeline_Default = Ice_Pipeline_Cull_Mode_Back
+};
+typedef IceFlagExtended IcePipelineSettingFlags;
+
+#include <vulkan/vulkan.h>
+struct IceShader
+{
+  const char* name;
+  IceShaderStageFlags stage;
+  VkShaderModule module;
+  std::vector<IceShaderBindingFlags> bindings;
+
+  IceShader(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
+  IceShader() {}
+};
+
 #endif // !ICE_RENDERER_SHADER_H_

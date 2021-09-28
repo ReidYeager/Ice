@@ -28,10 +28,10 @@ public:
     // TODO : ---Resume--- Render objects at unique transforms
 
     testGameObject = CreateObject();
-    testGameObject.AddComponent<RenderableComponent>(meshIndex, materialIndex);
+    testGameObject.AddComponent<RenderableComponent>(altMesh, materialIndex);
 
-    testGameObjectB = CreateObject();
-    testGameObjectB.AddComponent<RenderableComponent>(altMesh, altMat);
+    //testGameObjectB = CreateObject();
+    //testGameObjectB.AddComponent<RenderableComponent>(altMesh, altMat);
   }
 
   void ChildShutdown() override

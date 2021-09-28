@@ -6,7 +6,7 @@
 #include "renderer/vulkan/vulkan_context.h"
 #include "renderer/buffer.h"
 #include "renderer/mesh.h"
-#include "renderer/shader_program.h"
+#include "renderer/shader.h"
 #include "platform/platform.h"
 #include "platform/file_system.h"
 
@@ -68,7 +68,7 @@ void VulkanBackend::Shutdown()
 
   DestroyComponents();
 
-  ShadersShutdown(rContext);
+  //ShadersShutdown(rContext);
 
   for (iceImage_t* i : iceImages)
   {
@@ -111,7 +111,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
     VK_TRUE, UINT64_MAX);
 
   static float time = 0.0f;
-  mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
+  //mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
   mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 2.0f) * 0.2f, 0));
   mvp.view = _packet->viewMatrix;
   mvp.projection = _packet->projectionMatrix;
@@ -224,7 +224,7 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet)
       vkCmdBindVertexBuffers(rContext->commandBuffers[i], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
       vkCmdBindIndexBuffer(rContext->commandBuffers[i], m->indexBuffer->GetBuffer(), 0,
         VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(rContext->commandBuffers[i], m->indices.size(), 1, 0, 0, 0);
+      vkCmdDrawIndexed(rContext->commandBuffers[i], m->indices.size(), 3, 0, 0, 0);
 
       renderableIndex++;
     }
@@ -1231,65 +1231,3 @@ IceShader VulkanBackend::CreateShader(const char* _name, IceShaderStageFlags _st
   return s;
 }
 
-void VulkanBackend::CreateDescriptorSet(u32 _programIndex)
-{
-  iceShaderProgram_t& shaderProgram = *GetShaderProgram(_programIndex);
-
-  VkDescriptorSetAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocInfo.descriptorPool = rContext->descriptorPool;
-  allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &shaderProgram.descriptorSetLayout;
-
-  IVK_ASSERT(vkAllocateDescriptorSets(rContext->device, &allocInfo, &shaderProgram.descriptorSet),
-    "Failed to allocate descriptor set");
-
-  std::vector<VkWriteDescriptorSet> writeSets(shaderProgram.bindings.size());
-  std::vector<VkDescriptorImageInfo> imageInfos(shaderProgram.bindings.size() - 1);
-
-  // Create the Uniform buffer
-  VkDescriptorBufferInfo mvpBufferInfo{};
-  mvpBufferInfo.buffer = mvpBuffer->GetBuffer();
-  mvpBufferInfo.offset = 0;
-  mvpBufferInfo.range = VK_WHOLE_SIZE;
-
-  //VkWriteDescriptorSet descWrites[2] = {};
-  // MVP matrix
-  writeSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeSets[0].dstSet = shaderProgram.descriptorSet;
-  writeSets[0].dstBinding = 0;
-  writeSets[0].dstArrayElement = 0;
-  writeSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  writeSets[0].descriptorCount = 1;
-  writeSets[0].pBufferInfo = &mvpBufferInfo;
-  writeSets[0].pImageInfo = nullptr;
-  writeSets[0].pTexelBufferView = nullptr;
-
-  // Fill info for each texture
-  for (u32 i = 1, imageBufferIdx = 0; i < shaderProgram.bindings.size(); i++)
-  {
-    if (shaderProgram.bindings[i] == Ice_Shader_Binding_Image)
-    {
-      u32 textureImageIdx = GetTexture(shaderProgram.textureDirs[imageBufferIdx])->imageIndex;
-      VkDescriptorImageInfo iInfo{};
-      imageInfos[imageBufferIdx].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfos[imageBufferIdx].sampler = iceImages[textureImageIdx]->sampler;
-      imageInfos[imageBufferIdx].imageView = iceImages[textureImageIdx]->view;
-
-      // Texture
-      writeSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      writeSets[i].dstSet = shaderProgram.descriptorSet;
-      writeSets[i].dstBinding = i;
-      writeSets[i].dstArrayElement = 0;
-      writeSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      writeSets[i].descriptorCount = 1;
-      writeSets[i].pBufferInfo = nullptr;
-      writeSets[i].pImageInfo = &imageInfos[imageBufferIdx];
-      writeSets[i].pTexelBufferView = nullptr;
-
-      imageBufferIdx++;
-    }
-  }
-
-  vkUpdateDescriptorSets(rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
-}
