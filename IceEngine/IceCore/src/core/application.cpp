@@ -76,7 +76,7 @@ void IceApplication::MainLoop()
 
   float deltasSum = 0.0f;
   int deltasCount = 0;
-  float fpsPrintFrequency = 0.5f;  // Seconds
+  float fpsPrintFrequency = 1.0f;  // Seconds
   fpsPrintFrequency *= 1000000.0f; // To microseconds
 
   LogInfo("ICE LOOP =================================================");

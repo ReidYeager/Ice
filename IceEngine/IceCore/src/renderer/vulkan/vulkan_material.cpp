@@ -19,7 +19,7 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
                              IceBuffer _buffer /*= nullptr*/)
 {
   LogDebug("Creating material");
-  info.sources = _shaderNames;
+  info.sourceNames = _shaderNames;
   info.sourceStages = _shaderStages;
   std::vector<IvkShader> shaders = GetShaders(_rContext);
 
@@ -82,6 +82,44 @@ void IvkMaterial_T::CreateFragileComponents(IceRenderContext* _rContext)
     vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
   }
   shaders.clear();
+}
+
+#include <sys/stat.h>
+
+void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
+{
+  for (u32 i = 0; i < info.sourceNames.size();i++)
+  {
+    std::string shaderDir(ICE_RESOURCE_SHADER_DIR);
+    shaderDir.append(info.sourceNames[i]);
+
+    switch (info.sourceStages[i])
+    {
+    case Ice_Shader_Vert:
+      shaderDir.append(".vspv");
+      break;
+    case Ice_Shader_Frag:
+      shaderDir.append(".fspv");
+      break;
+    case Ice_Shader_Comp:
+      shaderDir.append(".cspv");
+      break;
+    default:
+      LogError("Shader stage %u not recognized", info.sourceStages[i]);
+    }
+
+    struct _stat result;
+    if (_stat(shaderDir.c_str(), &result) == 0 && result.st_mtime != info.sourceLastModifiedTimes[i])
+    {
+      LogInfo("Shader --- %20s --- loaded: %u, new: %u",
+          shaderDir.c_str(), info.sourceLastModifiedTimes[i], result.st_mtime);
+      info.sourceLastModifiedTimes[i] = result.st_mtime;
+
+      vkDeviceWaitIdle(_rContext->device);
+      DestroyFragileComponents(_rContext);
+      CreateFragileComponents(_rContext);
+    }
+  }
 }
 
 void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
@@ -151,20 +189,20 @@ void IvkMaterial_T::Render(VkCommandBuffer& _command)
 
 std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
 {
-  u32 count = (u32)info.sources.size();
+  u32 count = (u32)info.sourceNames.size();
   std::vector<IvkShader> shaders;
   for (u32 i = 0; i < count; i++)
   {
-    LogInfo("Shader : %s", info.sources[i]);
+    LogInfo("Shader : %s", info.sourceNames[i]);
     IceShaderStageFlags stages = info.sourceStages[i];
 
     // TODO : Make more easily extendable?
     if (stages & Ice_Shader_Vert)
-      shaders.push_back(LoadShader(_rContext, info.sources[i], Ice_Shader_Vert));
+      shaders.push_back(LoadShader(_rContext, info.sourceNames[i], Ice_Shader_Vert));
     if (stages & Ice_Shader_Frag)
-      shaders.push_back(LoadShader(_rContext, info.sources[i], Ice_Shader_Frag));
+      shaders.push_back(LoadShader(_rContext, info.sourceNames[i], Ice_Shader_Frag));
     if (stages & Ice_Shader_Comp)
-      shaders.push_back(LoadShader(_rContext, info.sources[i], Ice_Shader_Comp));
+      shaders.push_back(LoadShader(_rContext, info.sourceNames[i], Ice_Shader_Comp));
   }
 
   return shaders;
@@ -203,6 +241,12 @@ IvkShader IvkMaterial_T::LoadShader(
   CreateShaderModule(_rContext, shader, shaderDir.c_str());
   FillShaderBindings(shader, layoutDir.c_str());
   shader.stage = _stage;
+
+  struct _stat result;
+  if (_stat(shaderDir.c_str(), &result) == 0)
+  {
+    info.sourceLastModifiedTimes.push_back(result.st_mtime);
+  }
 
   return shader;
 }

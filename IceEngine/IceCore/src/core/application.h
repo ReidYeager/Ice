@@ -64,9 +64,6 @@ protected:
 public:
   // Houses the Initialize, MainLoop, and Shutdown calls
   void Run();
-
-  // TODO : Add any game->engine API calls here
-
 };
 
 #endif // !CORE_APPLICATION_H_

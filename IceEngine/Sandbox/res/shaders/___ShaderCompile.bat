@@ -21,6 +21,6 @@ for /R %%f in (*.comp) do (
 	%VULKAN_SDK%\Bin\glslc.exe %%f -o compiled\%%~nf.cspv
 )
 
-pause
+@REM pause
 
 	

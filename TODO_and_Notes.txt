@@ -1,10 +1,7 @@
+\.git\COMMIT_EDITMSG
+	Line    25 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
-	Line    67 :--: // TODO : Add any game->engine API calls here
-\IceEngine\IceCore\src\core\camera.cpp
-	Line    22 :--: // TODO : add roll
-\IceEngine\IceCore\src\core\event.h
-	Line    68 :--: // TODO : Replace with pointer to custom array, zero the state on init
 \IceEngine\IceCore\src\core\input.h
 	Line     7 :--: // TODO : Implement the rest of the input codes (Use Windows' codes)
 \IceEngine\IceCore\src\platform\platform.h
@@ -23,7 +20,7 @@
 	Line    61 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
 	Line     9 :--: // TODO : Remove all API types & references
-	Line    59 :--: // TODO : Make IceMaterials identifiable
+	Line    64 :--: // TODO : Make IceMaterials identifiable
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
@@ -31,8 +28,8 @@
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
-	Line    71 :--: // TODO : Replace with API agnostic buffer
-	Line    74 :--: // TODO : Replace with indices for a texture flyweight
+	Line    72 :--: // TODO : Replace with API agnostic buffer
+	Line    75 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
 	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
 	Line    37 :--: // TODO : Delete
@@ -56,11 +53,11 @@
 	Line    40 :--: // TODO : Move to vkMemory allocator
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
 	Line    14 :--: // NOTE : Material's payload needs to be filled before use
-	Line   160 :--: // TODO : Make more easily extendable?
-	Line   227 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   198 :--: // TODO : Make more easily extendable?
+	Line   271 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
 	Line    18 :--: // TODO : Add pipeline settings
-	Line    33 :--: // TODO : Replace _images with managed image pointers
+	Line    34 :--: // TODO : Replace _images with managed image pointers
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    64 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp

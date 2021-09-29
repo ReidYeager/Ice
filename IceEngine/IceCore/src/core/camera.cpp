@@ -20,7 +20,6 @@ IceCamera::~IceCamera()
 
 glm::mat4 IceCamera::GetViewMatrix()
 {
-  // TODO : add roll
   m_forward.x = (float)(glm::cos(glm::radians(rotation.y)) * glm::cos(glm::radians(rotation.x)));
   m_forward.y = (float)(glm::sin(glm::radians(rotation.x)));
   m_forward.z = (float)(glm::sin(glm::radians(rotation.y)) * glm::cos(glm::radians(rotation.x)));

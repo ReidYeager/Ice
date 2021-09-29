@@ -38,6 +38,11 @@ void IceRenderer::Shutdown()
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {
+  for (auto s : materials)
+  {
+    ((IvkMaterial_T*)s)->UpdateSources(backend->GetContext());
+  }
+
   // Make draw calls
   // Present render
   backend->RenderFrame(_packet);

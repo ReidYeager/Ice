@@ -66,7 +66,6 @@ private:
 
   struct CodeEvents
   {
-    // TODO : Replace with pointer to custom array, zero the state on init
     std::vector<RegisteredEvent> registeredEvents;
   };
 

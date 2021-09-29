@@ -30,6 +30,7 @@ public:
   void Shutdown(IceRenderContext* _rContext) override;
   void DestroyFragileComponents(IceRenderContext* _rContext);
   void CreateFragileComponents(IceRenderContext* _rContext);
+  void UpdateSources(IceRenderContext* _rContext);
 
   // TODO : Replace _images with managed image pointers
   void UpdatePayload(IceRenderContext* _rContext,
