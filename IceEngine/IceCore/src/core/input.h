@@ -77,6 +77,7 @@ enum IceMouseButtonFlagBits
 typedef IceFlag IceMouseButtonFlag;
 #undef NewButton
 
+// Handles signals from the platform's physical input events
 class IceInput
 {
 private:
@@ -88,37 +89,43 @@ private:
   {
     i32 x;
     i32 y;
+    i32 wheel; // Positive is up-scroll
     u8 buttons[Ice_Mouse_Max];
   };
 
   struct InputStates
   {
     keyboardState keyboardCurrent;
-    keyboardState keyboardPrevious;
+    keyboardState keyboardPrevious; // TODO : Rework to be a signal bit within the current state
     mouseState mouseCurrent;
     mouseState mousePrevious;
-  };
-
-  InputStates m_states;
+  } m_states;
 
 public:
+  // Clears all input data
   void Initialize();
+  // Does nothing
   void Shutdown();
+  // Moves the current state into the previous state
   void Update();
 
+  // Updates the keyboard state regarding the input keycode
   void ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed);
   b8 IsKeyDown(IceKeyCodeFlag _key);
   b8 WasKeyDown(IceKeyCodeFlag _key);
+  b8 OnKeyPressed(IceKeyCodeFlag _key);
+  b8 OnKeyReleased(IceKeyCodeFlag _key);
+  b8 OnKeyHold(IceKeyCodeFlag _key);
 
+  // Updates the mouse state regarding the inputs
   void ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed);
   void ProcessMouseMove(i32 _x, i32 _y);
-  // Mouse wheel
+  void ProcessMouseWheel(i32 _magnitude);
   b8 IsMouseButtonDown(IceMouseButtonFlag _button);
   b8 WasMouseButtonDown(IceMouseButtonFlag _button);
   void GetMousePosition(i32* _x, i32* _y);
   void GetMousePreviousPosition(i32* _x, i32* _y);
   void GetMouseDelta(i32* _x, i32* _y);
-
 };
 
 extern IceInput Input;

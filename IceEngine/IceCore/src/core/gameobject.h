@@ -4,11 +4,12 @@
 
 #include "defines.h"
 
-#include "core/ecs_controller.h"
 #include "core/ecs_components.h"
+#include "core/ecs_controller.h"
 
 #include <cstdarg>
 
+// Used to wrap ENTT calls for use in user applications
 class ICE_API GameObject
 {
 private:

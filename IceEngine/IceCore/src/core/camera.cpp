@@ -37,10 +37,12 @@ glm::mat4 IceCamera::GetProjectionMatrix()
 
 void IceCamera::SetProjection(float _screenRatio, float _vertFov /*= 45.0f*/)
 {
-  vertFieldOfView = _vertFov;
+  verticalFieldOfView = _vertFov;
 
-  projection = glm::perspective(
-      glm::radians(vertFieldOfView), _screenRatio, minRenderDist, maxRenderDist);
+  projection = glm::perspective(glm::radians(verticalFieldOfView),
+                                _screenRatio,
+                                minRenderDist,
+                                maxRenderDist);
   projection[1][1] *= -1; // Flip the rendered y-axis
 }
 
@@ -51,13 +53,12 @@ glm::vec3 IceCamera::GetForward()
 
 glm::vec3 IceCamera::GetRight()
 {
-  return glm::normalize(glm::cross(m_forward, { 0.f, 1.f, 0.f }));
-  //return right;
+  return glm::normalize(glm::cross(m_forward, m_up));
 }
 
 glm::vec3 IceCamera::GetUp()
 {
-  return glm::cross(m_forward, right);
+  return m_up;
 }
 
 void IceCamera::Rotate(glm::vec3 _rotationAmount)

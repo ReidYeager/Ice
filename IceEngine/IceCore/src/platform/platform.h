@@ -3,14 +3,14 @@
 #define ICE_PLATFORM_PLATFORM_H_
 
 #include "defines.h"
+
 #include "core/event.h"
 
 #ifdef ICE_PLATFORM_WINDOWS
 #include <windows.h>
-// Get rid of windows.h preprocessor definition
-// TODO : Make sure this is safe
-#undef CreateWindow
+#undef CreateWindow // Gets rid of the windows.h preprocessor definition
 #else
+// Non-windows platform includes
 #endif
 
 enum CursorStates
@@ -23,6 +23,7 @@ enum CursorStates
 class IcePlatform
 {
 public:
+  // Stores platform-specific window data
   #ifdef ICE_PLATFORM_WINDOWS
   struct PlatformLocalState
   {
@@ -33,6 +34,7 @@ public:
   struct PlatformLocalState { };
   #endif
 
+  // Stores platform generic window data
   struct PlatformStateInformation
   {
     b8 active;
@@ -46,22 +48,32 @@ public:
   } state;
 
 public:
+  // Initializes platform specific sub-layers
   void Initialize();
+  // Shuts down platform specific sub-layers, destroys all active windows
   void Shutdown();
+  // Handles updating platform information
   bool Update();
+  // Triggers the Ice_Event_Quit event
   void Close();
 
+  // Creates a new window
   void CreateWindow(u32 _width, u32 _height, const char* _title);
-  void ResizeWindow(u32 _width, u32 _height);
+  // Changes the platform settings required to accomplish the new cursor state
   void ChangeCursorState(CursorStates _newState);
 
-  // Size limited to 4096 MiB
-  static void* AllocateMem(u32 _size);
+  // Dynamically allocates memory
+  static void* AllocateMem(u64 _size);
+  // Frees allocated memory
   static void FreeMem(void* _memory);
-  static void SetMem(void* _memory, u32 _size, u32 _value);
-  static void ZeroMem(void* _memory, u32 _size);
-  static void* CopyMem(void* _dst, void* _src, u32 _size);
+  // Sets an entire block of memory to _value
+  static void SetMem(void* _memory, u64 _size, u64 _value);
+  // Sets a block of memory to 0
+  static void ZeroMem(void* _memory, u64 _size);
+  // Copies data from _src to _dst
+  static void* CopyMem(void* _dst, void* _src, u64 _size);
 
+  // Prints text to the platform's console
   static void ConsolePrint(const char* _message, u32 _color);
 
 };

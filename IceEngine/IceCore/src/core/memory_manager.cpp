@@ -1,10 +1,8 @@
 
-#include "core/memory_manager.h"
-#include "platform/platform.h"
 #include "logger.h"
 
-// TEMPORARY -- Replace with a proper logging system
-#include <stdio.h>
+#include "core/memory_manager.h"
+#include "platform/platform.h"
 
 IceMemoryManager MemoryManager;
 
@@ -35,9 +33,9 @@ void IceMemoryManager::PrintStats()
 
   for (u32 i = 0; i < IMEM_TYPE_COUNT; i++)
   {
-    printf("%-25s : %llu %s\n", categoryNames[i], stats->categoryAllocations[i], "B");
+    LogInfo("%-25s : %llu %s", categoryNames[i], stats->categoryAllocations[i], "B");
   }
-  printf("%-25s : %llu %s\n", "Total", stats->totalMemoryAllocated, "B");
+  LogInfo("%-25s : %llu %s", "Total", stats->totalMemoryAllocated, "B");
 }
 
 void* IceMemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)

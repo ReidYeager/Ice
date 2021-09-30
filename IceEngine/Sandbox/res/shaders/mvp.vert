@@ -19,7 +19,7 @@ void main() {
 	pos[0] = vec4(1.0, 0.0, 0.0, 0.0);
 	pos[1] = vec4(0.0, 1.0, 0.0, 0.0);
 	pos[2] = vec4(0.0, 0.0, 1.0, 0.0);
-	pos[3] = vec4(gl_InstanceIndex * 2.0, gl_InstanceIndex * 2.0, 0.0, 1.0);
+	pos[3] = vec4(gl_InstanceIndex * 2.0, gl_InstanceIndex, 0.0, 1.0);
 
 	gl_Position = mvp.proj * mvp.view * mvp.model * pos * vec4(position, 1.0); // Rotate around world center
 	// gl_Position = mvp.proj * mvp.view * pos * mvp.model * vec4(position, 1.0); // Rotate around object center

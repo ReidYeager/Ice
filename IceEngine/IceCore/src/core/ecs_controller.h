@@ -10,12 +10,7 @@ class ICE_API IceEcsController
 {
 private:
 public:
-  entt::registry registry;
-
-  //IceEcsController() = delete;
-  //IceEcsController(IceEcsController&&) = delete;
-  //IceEcsController(const IceEcsController&) = delete;
-  //void* operator new() = delete;
+  entt::registry registry; // Used to work with the ENTT library
 
   entt::entity CreteEnity()
   {

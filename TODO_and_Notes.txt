@@ -1,14 +1,16 @@
 \.git\COMMIT_EDITMSG
-	Line    25 :--: #	modified:   TODO_and_Notes.txt
+	Line    22 :--: #	modified:   TODO_and_Notes.txt
+\IceEngine\IceCore\src\core\application.cpp
+	Line   173 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
+\IceEngine\IceCore\src\core\camera.h
+	Line     8 :--: // TODO : Create a camera (projection) component to replace this
 \IceEngine\IceCore\src\core\input.h
 	Line     7 :--: // TODO : Implement the rest of the input codes (Use Windows' codes)
-\IceEngine\IceCore\src\platform\platform.h
-	Line    10 :--: // TODO : Make sure this is safe
+	Line    98 :--: keyboardState keyboardPrevious; // TODO : Rework to be a signal bit within the current state
 \IceEngine\IceCore\src\platform\platform_windows.cpp
-	Line   243 :--: // TODO : Add controller support
-	Line   285 :--: // TODO : Add raw input support
+	Line   289 :--: // TODO : Add raw input support
 \IceEngine\IceCore\src\profiler.h
 	Line     5 :--: // TODO : Add profiling tools
 \IceEngine\IceCore\src\renderer\image.h
@@ -24,7 +26,7 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    38 :--: // TODO : DELETE
+	Line    40 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
@@ -52,9 +54,9 @@
 	Line    13 :--: // TODO : Add alignment to better utilize GPU
 	Line    40 :--: // TODO : Move to vkMemory allocator
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line    14 :--: // NOTE : Material's payload needs to be filled before use
-	Line   198 :--: // TODO : Make more easily extendable?
-	Line   271 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line    15 :--: // NOTE : Material's payload needs to be filled before use
+	Line   204 :--: // TODO : Make more easily extendable?
+	Line   277 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
 	Line    18 :--: // TODO : Add pipeline settings
 	Line    34 :--: // TODO : Replace _images with managed image pointers

@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 // NOTE : Material's payload needs to be filled before use
 void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
@@ -84,10 +85,10 @@ void IvkMaterial_T::CreateFragileComponents(IceRenderContext* _rContext)
   shaders.clear();
 }
 
-#include <sys/stat.h>
-
 void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
 {
+  bool shouldUpdate = false;
+
   for (u32 i = 0; i < info.sourceNames.size();i++)
   {
     std::string shaderDir(ICE_RESOURCE_SHADER_DIR);
@@ -96,13 +97,13 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
     switch (info.sourceStages[i])
     {
     case Ice_Shader_Vert:
-      shaderDir.append(".vspv");
+      shaderDir.append(".vert.spv");
       break;
     case Ice_Shader_Frag:
-      shaderDir.append(".fspv");
+      shaderDir.append(".frag.spv");
       break;
     case Ice_Shader_Comp:
-      shaderDir.append(".cspv");
+      shaderDir.append(".comp.spv");
       break;
     default:
       LogError("Shader stage %u not recognized", info.sourceStages[i]);
@@ -115,10 +116,15 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
           shaderDir.c_str(), info.sourceLastModifiedTimes[i], result.st_mtime);
       info.sourceLastModifiedTimes[i] = result.st_mtime;
 
-      vkDeviceWaitIdle(_rContext->device);
-      DestroyFragileComponents(_rContext);
-      CreateFragileComponents(_rContext);
+      shouldUpdate = true;
     }
+  }
+
+  if (shouldUpdate)
+  {
+    vkDeviceWaitIdle(_rContext->device);
+    DestroyFragileComponents(_rContext);
+    CreateFragileComponents(_rContext);
   }
 }
 
@@ -220,15 +226,15 @@ IvkShader IvkMaterial_T::LoadShader(
   switch (_stage)
   {
   case Ice_Shader_Vert:
-    shaderDir.append(".vspv");
+    shaderDir.append(".vert.spv");
     layoutDir.append(".vlayout");
     break;
   case Ice_Shader_Frag:
-    shaderDir.append(".fspv");
+    shaderDir.append(".frag.spv");
     layoutDir.append(".flayout");
     break;
   case Ice_Shader_Comp:
-    shaderDir.append(".cspv");
+    shaderDir.append(".comp.spv");
     layoutDir.append(".clayout");
     break;
   default:

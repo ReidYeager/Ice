@@ -12,6 +12,7 @@ enum IceMemoryTypeBits
 };
 typedef IceFlag IceMemoryTypeFlag;
 
+// A foundation to handle memory categorized by use
 class IceMemoryManager
 {
 public:
@@ -24,19 +25,27 @@ public:
 private:
   MemoryStatistics stats{};
 
-  //=================================================================================================
-  // Functions
-  //=================================================================================================
+//=================================================================================================
+// Functions
+//=================================================================================================
 public:
+  // Ensures the memory statistics are 0
   void Initialize();
+  // Logs amount of unfreed memory
+  // (Used primarily to help track leaks)
   void Shutdown();
   MemoryStatistics* GetStats();
 
+  // Allocates memory under the input category
   void* Allocate(u32 size, IceMemoryTypeFlag flag);
+  // Frees memory under the input category
   void Free(void* data, u32 size, IceMemoryTypeFlag flag);
+  // Sets a block of memory to 0
   void Zero(void* data, u32 size);
+  // Copies the data in src to dst
   void Copy(void* dst, void* src, u32 size);
 
+  // Logs the current amount of memory allocated for each category
   void PrintStats();
 };
 

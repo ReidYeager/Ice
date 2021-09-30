@@ -67,7 +67,7 @@ struct IceShaderInfo
   // TODO : Find a better way of identifying what shaders an IvkShader uses
   std::vector<const char*> sourceNames;
   std::vector<IceShaderStageFlags> sourceStages;
-  std::vector<u32> sourceLastModifiedTimes;
+  std::vector<u64> sourceLastModifiedTimes;
   IceShaderStageFlags stages;
   std::vector<IceShaderBindingFlags> bindings;
   // TODO : Replace with API agnostic buffer

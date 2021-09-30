@@ -13,9 +13,9 @@
 #include "renderer/renderer.h"
 #include "renderer/vulkan/vulkan_backend.h"
 
-#include <glm/glm.hpp>
 #include <chrono>
 #include <iostream>
+#include <glm/glm.hpp>
 
 void IceApplication::Run()
 {
@@ -24,6 +24,7 @@ void IceApplication::Run()
   Shutdown();
 }
 
+// Registered to the window resize event
 bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
 {
   IceApplication* app = static_cast<IceApplication*>(_listener);
@@ -37,6 +38,7 @@ void IceApplication::Initialize()
 {
   LogInfo("ICE INIT =================================================");
 
+  // Create components
   platform = new IcePlatform();
   renderer = new IceRenderer();
   ecsController = new IceEcsController();
@@ -51,10 +53,13 @@ void IceApplication::Initialize()
   MemoryManager.Initialize();
 
   renderer->Initialize(IceRenderer::Vulkan);
+
+  // Register callbacks
   EventManager.Register(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
+  ecsController->registry.
+      on_construct<RenderableComponent>().connect<&IceApplication::RenderableCallback>(this);
 
-  ecsController->registry.on_construct<RenderableComponent>().connect<&IceApplication::RenderableCallback>(this);
-
+  // Initialize user's application
   ChildInit();
   ICE_ASSERT_MSG(ChildLoop != nullptr, "Failed to set an update function");
 
@@ -70,9 +75,9 @@ void IceApplication::MainLoop()
   auto end = std::chrono::steady_clock::now();
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-  //i32 x, y;
+  i32 x, y;
   const float camMoveSpeed = 3.0f;
-  //const float sensitivity = 0.2f;
+  const float sensitivity = 0.2f;
 
   float deltasSum = 0.0f;
   int deltasCount = 0;
@@ -85,15 +90,12 @@ void IceApplication::MainLoop()
     start = end;
     renderPacket.deltaTime = deltaTime.count() * 0.000001f;
 
-    // Handle input
-
     // Run game code
     (this->*ChildLoop)();
     #pragma region MoveToChildLoop
-    //int x, y;
-    //Input.GetMouseDelta(&x, &y);
-    //cam.Rotate({-y * 0.1f, x * 0.1f, 0});
-    //cam.ClampPitch(89.0f, -89.0f);
+    Input.GetMouseDelta(&x, &y);
+    cam.Rotate({-y * sensitivity, x * sensitivity, 0});
+    cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
       cam.position += cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;
@@ -108,6 +110,11 @@ void IceApplication::MainLoop()
     if (Input.IsKeyDown(Ice_Key_Q))
       cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
 
+    if (Input.OnKeyPressed(Ice_Key_K))
+      LogDebug("TEST KEY PRESS ------------------------");
+    if (Input.OnKeyReleased(Ice_Key_K))
+      LogDebug("TEST KEY RELEASE ----------------------");
+
     renderPacket.viewMatrix = cam.GetViewMatrix();
     renderPacket.projectionMatrix = cam.GetProjectionMatrix();
 
@@ -117,10 +124,13 @@ void IceApplication::MainLoop()
     }
     #pragma endregion
 
-    // Render
-    renderer->RenderFrame(&renderPacket);
+    // Handle input
     Input.Update();
 
+    // Render
+    renderer->RenderFrame(&renderPacket);
+
+    // Calculate times
     end = std::chrono::steady_clock::now();
     deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
@@ -144,8 +154,11 @@ void IceApplication::Shutdown()
   LogInfo("ICE SHUTDOWN =============================================");
   ChildShutdown();
 
-  ecsController->registry.on_construct<RenderableComponent>().disconnect<&IceApplication::RenderableCallback>(this);
+  EventManager.Unregister(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
+  ecsController->registry.
+      on_construct<RenderableComponent>().disconnect<&IceApplication::RenderableCallback>(this);
 
+  // Shutdown components
   vkDeviceWaitIdle(renderer->GetContext()->device);
   renderer->Shutdown();
   delete(renderer);
@@ -157,6 +170,9 @@ void IceApplication::Shutdown()
 
 void IceApplication::RenderableCallback()
 {
+  // Refresh the list of objects to render
+  // NOTE : Should find a more efficient way of accomplishing this goal
+  renderPacket.renderables.clear();
   auto v = ecsController->registry.view<RenderableComponent>();
   for (auto e : v)
   {
@@ -169,7 +185,6 @@ void IceApplication::RenderableCallback()
 GameObject IceApplication::CreateObject()
 {
   GameObject g(ecsController);
-
   return g;
 }
 

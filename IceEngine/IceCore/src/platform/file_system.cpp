@@ -1,17 +1,18 @@
 
-#include <fstream>
-#include <string>
-#include <unordered_map>
+#include "logger.h"
+
+#include "platform/file_system.h"
+#include "platform/platform.h"
+#include "renderer/mesh.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include <stb/stb_image.h>
 
-#include "logger.h"
-#include "platform/file_system.h"
-#include "platform/platform.h"
-#include "renderer/mesh.h"
+#include <fstream>
+#include <string>
+#include <unordered_map>
 
 std::vector<char> FileSystem::LoadFile(const char* _directory)
 {

@@ -3,17 +3,19 @@
 #define ICE_RENDERER_RENDERER_BACKEND_H_
 
 #include "defines.h"
+
+#include "renderer/buffer.h"
 #include "renderer/image.h"
 #include "renderer/mesh.h"
-#include "renderer/buffer.h"
 #include "renderer/renderer_backend_context.h"
 #include "renderer/vulkan/vulkan_material.h"
 
 #include <glm/glm.hpp>
-#include <vulkan/vulkan.h>
 #include <string.h>
 #include <vector>
+#include <vulkan/vulkan.h>
 
+// Used to pass data to the renderer
 struct IceRenderPacket
 {
   glm::mat4 viewMatrix;

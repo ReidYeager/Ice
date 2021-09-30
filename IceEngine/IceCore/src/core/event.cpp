@@ -1,5 +1,7 @@
 
+#include "asserts.h"
 #include "logger.h"
+
 #include "core/event.h"
 #include "core/memory_manager.h"
 
@@ -7,7 +9,6 @@ IceEventManager EventManager;
 
 void IceEventManager::Initialize()
 {
-  //MemoryManager.Zero(state, sizeof(CodeEvents) * Ice_Event_Max);
   LogInfo("Initialized Event system");
 }
 
@@ -25,12 +26,14 @@ void IceEventManager::Shutdown()
 
 bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _callaback)
 {
-  // Ensure no duplicate
+  // Ensure not already registered
   for (const auto& e : state[_eCode].registeredEvents)
   {
     if (e.listener == _listener && e.callback == _callaback)
     {
-      // Warn of duplicate
+      // Warn of duplicate register attempt
+      ICE_ASSERT_MSG(e.listener != _listener && e.callback != _callaback,
+                     "Event already registered");
       return false;
     }
   }
@@ -44,6 +47,7 @@ bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _calla
 bool IceEventManager::Unregister(u16 _eCode, void* _listener, EventCallback _callaback)
 {
   size_t size = state[_eCode].registeredEvents.size();
+  // Locate the desired registered event
   for (u32 i = 0; i < size; i++)
   {
     std::vector<RegisteredEvent>& e = state[_eCode].registeredEvents;
@@ -79,6 +83,7 @@ bool IceEventManager::Fire(u16 _eCode, void* _sender, IceEventData _data)
     {
       // Failed to execute the callback
       // Not necessarily fatal
+      LogError("Failed to execute a %su event", _eCode);
     }
   }
 

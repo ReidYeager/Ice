@@ -3,6 +3,7 @@
 #define ICE_CORE_EVENT_H_
 
 #include "defines.h"
+
 #include <vector>
 
 enum IceEventCodes
@@ -11,9 +12,9 @@ enum IceEventCodes
 
   // ===== Input =====
 
-  // u32[0] : The pressed keycode
+  // u32[0] : The pressed key's keycode
   Ice_Event_Key_Pressed,
-  // u32[0] : The released keycode
+  // u32[0] : The released key's keycode
   Ice_Event_Key_Released,
   // u32[0] : The button pressed
   Ice_Event_Mouse_Button_Pressed,
@@ -22,7 +23,7 @@ enum IceEventCodes
   // i32[0] : The x-axis delta
   // i32[1] : The y-axis delta
   Ice_Event_Mouse_Moved,
-
+  // i32[0] : Magnitude
   Ice_Event_Mouse_Wheel,
 
   // ===== Window / Platform =====
@@ -34,22 +35,13 @@ enum IceEventCodes
   Ice_Event_Max = 0xFF
 };
 
+// 64 bytes (4*128 bits)
 struct IceEventData
 {
-  i64 i64[2];
-  i32 i32[4];
-  i16 i16[8];
-  i8  i8[16];
-
   u64 u64[2];
   u32 u32[4];
   u16 u16[8];
   u8  u8[16];
-
-  f64 f64[2];
-  f32 f32[4];
-
-  char c[16];
 };
 
 // Return true if handled
@@ -74,6 +66,7 @@ private:
 
 public:
   void Initialize();
+  // Clears the registered events
   void Shutdown();
 
   bool Register(u16 _code, void* _listener, EventCallback _callaback);

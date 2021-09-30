@@ -12,9 +12,9 @@ struct TransformComponent
   f32 z;
 };
 
+// Required to render a mesh
 struct RenderableComponent
 {
-  // Mesh
   u32 meshIndex;
   u32 materialIndex;
 };

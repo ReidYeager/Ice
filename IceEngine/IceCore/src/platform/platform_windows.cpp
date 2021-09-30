@@ -14,10 +14,14 @@
 #include <fstream>
 #include <vector>
 
+// Offsets window extents to make the render area fit the input extent
 void PlatformAdjustWindowForBorder(IcePlatform* _platform);
+// Registers the window with Windows
 void PlatformRegisterWindow(IcePlatform* _platform);
+// Handles Windows event messages
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam);
 
+// Ice callback to allow escape from the main loop
 bool QuitEventCallback(u16 _eventCode, void* _sender, void* _listener, IceEventData _data)
 {
   ((IcePlatform*)_listener)->state.active = false;
@@ -26,6 +30,7 @@ bool QuitEventCallback(u16 _eventCode, void* _sender, void* _listener, IceEventD
 
 void IcePlatform::Initialize()
 {
+  // Ensure singleton
   if (state.active)
   {
     LogDebug("Platform already initialized");
@@ -45,6 +50,7 @@ void IcePlatform::Shutdown()
 {
   Input.Shutdown();
 
+  // Destroy remaining windows
   if (state.localState.hwnd)
   {
     DestroyWindow(state.localState.hwnd);
@@ -140,11 +146,6 @@ void PlatformAdjustWindowForBorder(IcePlatform* _platform)
   state->windowHeight += borderRect.bottom - borderRect.top;
 }
 
-void IcePlatform::ResizeWindow(u32 _width, u32 _height)
-{
-  
-}
-
 bool IcePlatform::Update()
 {
   MSG message;
@@ -157,7 +158,7 @@ bool IcePlatform::Update()
   return state.active;
 }
 
-void* IcePlatform::AllocateMem(u32 _size)
+void* IcePlatform::AllocateMem(u64 _size)
 {
   return malloc(_size);
 }
@@ -167,17 +168,17 @@ void IcePlatform::FreeMem(void* _data)
   free(_data);
 }
 
-void IcePlatform::SetMem(void* _memory, u32 _size, u32 _value)
+void IcePlatform::SetMem(void* _memory, u64 _size, u64 _value)
 {
   memset(_memory, _value, _size);
 }
 
-void IcePlatform::ZeroMem(void* _data, u32 _size)
+void IcePlatform::ZeroMem(void* _data, u64 _size)
 {
   memset(_data, 0, _size);
 }
 
-void* IcePlatform::CopyMem(void* _dst, void* _src, u32 _size)
+void* IcePlatform::CopyMem(void* _dst, void* _src, u64 _size)
 {
   return memcpy(_dst, _src, _size);
 }
@@ -241,7 +242,6 @@ void IcePlatform::ChangeCursorState(CursorStates _newState)
   //platState.cursorState = _newState;
 }
 
-// TODO : Add controller support
 LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
   switch (message)
@@ -266,20 +266,24 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   case WM_KEYUP:
   case WM_SYSKEYUP:
   {
-    b8 pressed = (message == WM_KEYDOWN);
+    b8 pressed = 0;
     u32 key = (u32)wparam;
-    Input.ProcessKeyboardKey(key, pressed);
-    IceEventData data{};
-    data.u32[0] = (IceKeyCodeFlag)key;
 
-    if (message == WM_KEYUP || message == WM_SYSKEYUP)
-    {
-      EventManager.Fire(Ice_Event_Key_Released, nullptr, data);
-    }
-    else
-    {
-      EventManager.Fire(Ice_Event_Key_Pressed, nullptr, data);
-    }
+    pressed = (message == WM_KEYDOWN);
+    Input.ProcessKeyboardKey(key, pressed);
+
+    // Using pressed/released flags prevents hitching from key press events
+
+    //IceEventData data{};
+    //data.u32[0] = (IceKeyCodeFlag)key;
+    //if (message == WM_KEYUP || message == WM_SYSKEYUP)
+    //{
+    //  EventManager.Fire(Ice_Event_Key_Released, nullptr, data);
+    //}
+    //else
+    //{
+    //  EventManager.Fire(Ice_Event_Key_Pressed, nullptr, data);
+    //}
   } break;
   case WM_MOUSEMOVE:
   {
@@ -288,10 +292,6 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
     i32 x = GET_X_LPARAM(lparam);
     i32 y = GET_Y_LPARAM(lparam);
     Input.ProcessMouseMove(x, y);
-
-    IceEventData data{};
-    Input.GetMouseDelta(&data.i32[0], &data.i32[1]);
-    EventManager.Fire(Ice_Event_Mouse_Moved, nullptr, data);
   } break;
   case WM_LBUTTONDOWN:
   case WM_LBUTTONUP:
