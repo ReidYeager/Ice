@@ -20,7 +20,6 @@ private:
     glm::mat4 view;
     glm::mat4 projection;
   } mvp;
-  IceBuffer mvpBuffer;
 
 //=================================================================================================
 // VARIABLES
@@ -55,7 +54,6 @@ public:
 //=================================================================================================
   // Required for command buffer recording
   std::vector<IceMaterial> materials;
-  IceBuffer GetMVPBuffer() { return mvpBuffer; }
   mvpMatrices* GetMVP() { return &mvp; }
   void AddMaterial(IceMaterial _material) { materials.push_back(_material); }
 

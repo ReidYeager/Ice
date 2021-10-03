@@ -47,9 +47,9 @@ protected:
   // Used for any initialization the child application requires
   virtual void ChildInit() = 0;
   // Houses the core game code
-  void (IceApplication::* ChildLoop)();
+  void (IceApplication::* ChildLoop)(float);
   #define IceApplicationDefineChildLoop(loop) \
-      ChildLoop = static_cast<void (IceApplication::*)()>(&Application::##loop)
+      ChildLoop = static_cast<void (IceApplication::*)(float)>(&Application::##loop)
   // Used for any destruction the child application requires
   virtual void ChildShutdown() = 0;
   // Creates a new ecs entity and returns a wrapper for it

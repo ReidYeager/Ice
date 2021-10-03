@@ -85,8 +85,7 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
 
   material->Initialize(GetContext(),
                        _shaderNames,
-                       _shaderStages,
-                       ((VulkanBackend*)backend)->GetMVPBuffer());
+                       _shaderStages);
   material->UpdatePayload(GetContext(), inTextures);
   materials.push_back(material);
   backend->AddMaterial(material);

@@ -7,41 +7,61 @@ class Application : public IceApplication
 private:
   GameObject testGameObject;
   GameObject testGameObjectB;
+  u32 testMat, blueMat;
 
 public:
   void ChildInit() override
   {
     IceApplicationDefineChildLoop(loop);
 
-    u32 materialIndex = GetMaterialIndex(
+    u32 testMat = GetMaterialIndex(
         { "mvp", "test" },
         { Ice_Shader_Vert, Ice_Shader_Frag },
         { "TestImage.png", "AltImage.png", "landscape.jpg" });
-    u32 meshIndex = GetMeshIndex("BadCactus.obj");
+    u32 cactusMesh = GetMeshIndex("BadCactus.obj");
 
-    u32 altMat = GetMaterialIndex(
+    u32 blueMat = GetMaterialIndex(
       { "mvp", "blue" },
       { Ice_Shader_Vert, Ice_Shader_Frag },
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
-    u32 altMesh = GetMeshIndex("Cube.obj");
+    u32 cubeMesh = GetMeshIndex("Cube.obj");
 
     // TODO : ---Resume--- Render objects at unique transforms
 
     testGameObject = CreateObject();
-    testGameObject.AddComponent<RenderableComponent>(altMesh, materialIndex);
+    testGameObject.AddComponent<RenderableComponent>(cubeMesh, testMat);
 
-    //testGameObjectB = CreateObject();
-    //testGameObjectB.AddComponent<RenderableComponent>(altMesh, altMat);
+    testGameObjectB = CreateObject();
+    testGameObjectB.AddComponent<RenderableComponent>(cactusMesh, blueMat);
+
+    testGameObjectB.transform->position[0] = 2.0f;
+    testGameObject.transform->rotation[2] = 30.0f;
   }
 
   void ChildShutdown() override
   {
     testGameObject.Destroy();
+    testGameObjectB.Destroy();
   }
 
-  void loop()
+  float time = 0.0f;
+  int direction = 1.0f;
+
+  void loop(float _deltaTime)
   {
-    
+    time += _deltaTime;
+
+    if (testGameObjectB.transform->position[1] <= -3.0f ||
+        testGameObjectB.transform->position[1] >= 3.0f)
+    {
+      direction *= -1.0f;
+    }
+
+    testGameObjectB.transform->position[1] += direction * _deltaTime;
+
+    testGameObjectB.transform->rotation[0] += 90.0f * _deltaTime;
+    testGameObject.transform->scale[1] += 0.25f * _deltaTime;
+
   }
 };
 

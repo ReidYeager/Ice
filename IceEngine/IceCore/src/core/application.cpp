@@ -89,7 +89,7 @@ void IceApplication::MainLoop()
     renderPacket.deltaTime = deltaTime.count() * 0.000001f;
 
     // Run game code
-    (this->*ChildLoop)();
+    (this->*ChildLoop)(renderPacket.deltaTime);
     #pragma region MoveToChildLoop
 
     //i32 x, y;
@@ -127,6 +127,14 @@ void IceApplication::MainLoop()
 
     // Handle input
     Input.Update();
+
+    // NOTE : Should find a more efficient way of accomplishing this goal
+    renderPacket.transforms.clear();
+    auto v = ecsController->registry.view<RenderableComponent>(); // Guaranteed to have a transform
+    for (auto e : v)
+    {
+      renderPacket.transforms.push_back(ecsController->GetComponent<TransformComponent>(e));
+    }
 
     // Render
     renderer->RenderFrame(&renderPacket);
@@ -174,6 +182,7 @@ void IceApplication::RenderableCallback()
   // Refresh the list of objects to render
   // NOTE : Should find a more efficient way of accomplishing this goal
   renderPacket.renderables.clear();
+  renderPacket.materialIndices.clear();
   auto v = ecsController->registry.view<RenderableComponent>();
   for (auto e : v)
   {

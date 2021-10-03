@@ -1,7 +1,6 @@
-\.git\COMMIT_EDITMSG
-	Line    13 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.cpp
-	Line   174 :--: // NOTE : Should find a more efficient way of accomplishing this goal
+	Line   130 :--: // NOTE : Should find a more efficient way of accomplishing this goal
+	Line   182 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
 \IceEngine\IceCore\src\core\camera.h
@@ -26,31 +25,29 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    53 :--: // TODO : DELETE
+	Line    55 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
 	Line    72 :--: // TODO : Replace with API agnostic buffer
 	Line    75 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
-	Line    36 :--: // TODO : Delete -- Need to give each TransformComponent its own model matrix
-	Line    53 :--: // TODO : Delete
-	Line    72 :--: // TODO : DELETE --- Need to create a dedicated image management system
-	Line   228 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
-	Line   365 :--: // TODO : Make this editable from the client
-	Line   545 :--: // TODO : Replace with clamp function calls
-	Line   953 :--: // NOTE : Clear vertex and index vectors to save memory (Unnecessary at the current use scale)
+	Line    62 :--: // TODO : DELETE --- Need to create a dedicated image management system
+	Line   214 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+	Line   367 :--: // TODO : Make this editable from the client
+	Line   547 :--: // TODO : Replace with clamp function calls
+	Line   955 :--: // NOTE : Clear vertex and index vectors to save memory (Unnecessary at the current use scale)
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
-	Line   151 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   188 :--: // TODO : DELETE -- External classes should not need to get the backend context
+	Line   149 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   186 :--: // TODO : DELETE -- External classes should not need to get the backend context
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
 	Line    36 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
 	Line    13 :--: // TODO : Add alignment to better utilize GPU
 	Line    47 :--: // TODO : Move to a vkMemory allocator
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line   302 :--: // TODO : Implement a proper parser to extract shader bindings
+	Line   306 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    69 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
@@ -75,4 +72,4 @@
 	Line  2317 :--: // TODO(syoyo): # of elements check
 	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.
 \IceEngine\Sandbox\src\Source.cpp
-	Line    27 :--: // TODO : ---Resume--- Render objects at unique transforms
+	Line    28 :--: // TODO : ---Resume--- Render objects at unique transforms

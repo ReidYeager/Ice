@@ -10,6 +10,7 @@
 #include "renderer/mesh.h"
 #include "renderer/renderer_backend_context.h"
 #include "renderer/vulkan/vulkan_material.h"
+#include "core/ecs_components.h"
 #include "core/event.h"
 
 #include <glm/glm.hpp>
@@ -26,6 +27,7 @@ struct IceRenderPacket
 
   std::vector<mesh_t*> renderables;
   std::vector<u32> materialIndices;
+  std::vector<TransformComponent> transforms;
 };
 
 // Calls the backend's resize function on resize events

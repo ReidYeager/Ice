@@ -44,7 +44,7 @@ public:
                      void* _data,
                      u64 _dataSize) override;
   // Records commands on how to render this material
-  void Render(VkCommandBuffer& _command);
+  void Render(VkCommandBuffer& _command, const void* _modelMatrix, const void* _viewProjMatrix);
 
 private:
   // Loads all the material's shaders

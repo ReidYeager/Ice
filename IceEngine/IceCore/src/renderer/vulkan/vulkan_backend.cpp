@@ -34,12 +34,6 @@ void VulkanBackend::Initialize()
                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
   CreateCommandPool(rContext->transientCommandPool, rContext->transferIdx);
 
-  // TODO : Delete -- Need to give each TransformComponent its own model matrix
-  mvpBuffer = CreateBuffer(rContext, sizeof(mvpMatrices), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
-  mvp.model = glm::mat4(1);
-
   // Initialize the fragile rendering components
   InitializeComponents();
 
@@ -50,10 +44,6 @@ void VulkanBackend::Initialize()
 void VulkanBackend::Shutdown()
 {
   vkDeviceWaitIdle(rContext->device);
-
-  // TODO : Delete
-  mvpBuffer->Free(rContext);
-  delete(mvpBuffer);
 
   // Destroy all sync objects
   for (u32 i = 0; i < MAX_FLIGHT_IMAGE_COUNT; i++)
@@ -116,10 +106,6 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   #pragma region Move Or Delete
   static float time = 0.0f;
   mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
-  //mvp.model = glm::translate(mvp.model, glm::vec3(0, glm::sin(time * 2.0f) * 0.2f, 0));
-  mvp.view = _packet->viewMatrix;
-  mvp.projection = _packet->projectionMatrix;
-  FillBuffer(rContext, mvpBuffer->GetMemory(), &mvp, sizeof(mvp));
   #pragma endregion
 
   // Retrieve which swapchain image to draw to and present
@@ -242,18 +228,34 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
 
   vkCmdBeginRenderPass(rContext->commandBuffers[_commandIndex], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+  glm::mat4 viewProj = _packet->projectionMatrix * _packet->viewMatrix;
+  static float time = 0.0f;
+  time += _packet->deltaTime;
+
   // Render each object with the "Renderable" component
   renderableIndex = 0;
   for (auto m : _packet->renderables)
   {
+    TransformComponent& tc = _packet->transforms[renderableIndex];
+
+    glm::vec3 position = glm::vec3(tc.position[0], tc.position[1], tc.position[2]);
+    glm::vec3 rotation = glm::vec3(tc.rotation[0], tc.rotation[1], tc.rotation[2]);
+    glm::vec3 scale = glm::vec3(tc.scale[0], tc.scale[1], tc.scale[2]);
+
+    // GLM matrix multiplication order is backwards and I have no idea why
+    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
+    glm::fquat rotationQuaternion = { glm::radians(rotation) }; // Rotation to quaternion
+    modelMatrix *= glm::mat4_cast(rotationQuaternion);          // Quaternion to matrix
+    modelMatrix = glm::scale(modelMatrix, scale);
+
     // Bind material
     materialIndex = _packet->materialIndices[renderableIndex];
-    ((IvkMaterial_T*)materials[materialIndex])->Render(rContext->commandBuffers[_commandIndex]);
+    IvkMaterial_T* mat = ((IvkMaterial_T*)materials[materialIndex]);
+    mat->Render(rContext->commandBuffers[_commandIndex], &modelMatrix, &viewProj);
 
     // Draw mesh
     vkCmdBindVertexBuffers(rContext->commandBuffers[_commandIndex], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
-    vkCmdBindIndexBuffer(rContext->commandBuffers[_commandIndex], m->indexBuffer->GetBuffer(), 0,
-      VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(rContext->commandBuffers[_commandIndex], m->indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(rContext->commandBuffers[_commandIndex], m->indices.size(), 3, 0, 0, 0);
 
     renderableIndex++;

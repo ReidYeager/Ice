@@ -63,11 +63,11 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
   }
   shaders.clear();
 
-  //if (buffer != nullptr)
-  //{
-  //  buffer->FreeBuffer(_rContext);
-  //  delete(buffer);
-  //}
+  if (info.buffer != nullptr)
+  {
+    info.buffer->Free(_rContext);
+    delete(info.buffer);
+  }
 }
 
 void IvkMaterial_T::DestroyFragileComponents(IceRenderContext* _rContext)
@@ -198,7 +198,9 @@ void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
   vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
 }
 
-void IvkMaterial_T::Render(VkCommandBuffer& _command)
+void IvkMaterial_T::Render(VkCommandBuffer& _command,
+                           const void* _modelMatrix,
+                           const void* _viewProjMatrix)
 {
   vkCmdBindPipeline(_command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
   vkCmdBindDescriptorSets(_command,
@@ -209,6 +211,8 @@ void IvkMaterial_T::Render(VkCommandBuffer& _command)
                           &descriptorSet,
                           0,
                           nullptr);
+  vkCmdPushConstants(_command, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 64, _modelMatrix);
+  vkCmdPushConstants(_command, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 64, 64, _viewProjMatrix);
 }
 
 std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
@@ -400,12 +404,17 @@ void IvkMaterial_T::CreateDescriptorSet(IceRenderContext* _rContext)
 
 void IvkMaterial_T::CreatePipelineLayout(IceRenderContext* _rContext)
 {
+  VkPushConstantRange mvpMatricesPushConstant;
+  mvpMatricesPushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  mvpMatricesPushConstant.size = 128; // model matrix (64) + view&projection matrix (64)
+  mvpMatricesPushConstant.offset = 0;
+
   VkPipelineLayoutCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   createInfo.setLayoutCount = 1;
   createInfo.pSetLayouts = &descriptorSetLayout;
-  createInfo.pushConstantRangeCount = 0;
-  createInfo.pPushConstantRanges = nullptr;
+  createInfo.pushConstantRangeCount = 1;
+  createInfo.pPushConstantRanges = &mvpMatricesPushConstant;
 
   IVK_ASSERT(vkCreatePipelineLayout(
                  _rContext->device, &createInfo, _rContext->allocator, &pipelineLayout),

@@ -7,9 +7,9 @@
 struct TransformComponent
 {
   // Position only
-  f32 x;
-  f32 y;
-  f32 z;
+  float position[3];
+  float rotation[3];
+  float scale[3];
 };
 
 // Required to render a mesh
