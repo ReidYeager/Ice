@@ -5,15 +5,15 @@
 #include "asserts.h"
 #include "defines.h"
 #include "logger.h"
-#include <vulkan/vulkan.h>
-#include <vector>
+
 #include <set>
 #include <string>
+#include <vector>
+#include <vulkan/vulkan.h>
 
 inline const char* VulkanResultToString(VkResult _result)
 {
-  #define RTS(x) case x: return #x;
-
+  #define RTS(x) case x: return #x
   switch (_result)
   {
     RTS(VK_SUCCESS);
@@ -61,11 +61,12 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-#define IVK_ASSERT(function, errorMsg, ...)                      \
-{                                                                \
-  ICE_ASSERT_MSG(function == VK_SUCCESS, errorMsg, __VA_ARGS__); \
+#define IVK_ASSERT(function, errorMsg, ...)                    \
+{                                                              \
+  VkResult result = function;                                  \
+  ICE_ASSERT_MSG(result == VK_SUCCESS, errorMsg, __VA_ARGS__); \
 }
-  //throw VulkanResultToString(vkAssertResult);
+  //LogError("Result = %s", VulkanResultToString(result));       \
 
 struct iceImage_t
 {
@@ -92,13 +93,12 @@ struct IcePhysicalDevice
 
 struct RenderSynchronization
 {
-  // Synchronization
   #define MAX_FLIGHT_IMAGE_COUNT 3
   std::vector<VkFence> imageIsInFlightFences;
   std::vector<VkFence> flightSlotAvailableFences;
   std::vector<VkSemaphore> renderCompleteSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
-  u32 currentFrame = 0;
+  u32 currentFlightSlot = 0;
 };
 
 struct IceRenderContext
@@ -141,6 +141,7 @@ struct IceRenderContext
   // Handles all setup for recording a commandBuffer to be executed once
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool& _pool)
   {
+    // Allocate the command buffer
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -149,8 +150,9 @@ struct IceRenderContext
 
     VkCommandBuffer singleCommand;
     IVK_ASSERT(vkAllocateCommandBuffers(device, &allocInfo, &singleCommand),
-      "Failed to create transient command buffer");
+               "Failed to create transient command buffer");
 
+    // Begin recording
     VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -159,11 +161,13 @@ struct IceRenderContext
     return singleCommand;
   }
 
-  // Handles the execution and destruction of a commandBuffer
+  // Handles the execution and destruction of a commandBuffer executed once
   void EndSingleTimeCommand(VkCommandBuffer _command, VkCommandPool& _pool, VkQueue& _queue)
   {
+    // Complete recording
     vkEndCommandBuffer(_command);
 
+    // Execute the command buffer
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
@@ -172,6 +176,7 @@ struct IceRenderContext
     vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(_queue);
 
+    // Destory the command buffer
     vkFreeCommandBuffers(device, _pool, 1, &_command);
   }
 };

@@ -3,9 +3,11 @@
 #define ICE_RENDERER_VULKAN_VULKAN_SHADER_H_
 
 #include "defines.h"
+
 #include "renderer/shader.h"
-#include <vulkan/vulkan.h>
+
 #include <vector>
+#include <vulkan/vulkan.h>
 
 struct IvkShader
 {

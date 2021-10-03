@@ -28,7 +28,9 @@ public:
     renderer = nullptr;
   }
 
+  // Only used twice in vulkan_platform
   static IcePlatform* GetPlatform() { return platform; }
+  // Completely unused
   static IceRenderer* GetRenderer() { return renderer; }
 };
 

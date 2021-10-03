@@ -27,7 +27,7 @@ IceBuffer CreateAndFillBuffer(
 
   CopyBuffer(rContext, stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
 
-  stagingBuffer->FreeBuffer(rContext);
+  stagingBuffer->Free(rContext);
 
   return buffer;
 }
@@ -62,7 +62,7 @@ void FillBuffer(
 
   CopyBuffer(rContext, stagingBuffer->GetBuffer(), _buffer->GetBuffer(), _size);
 
-  stagingBuffer->FreeBuffer(rContext);
+  stagingBuffer->Free(rContext);
 }
 
 void CopyBuffer(IceRenderContext* rContext, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)

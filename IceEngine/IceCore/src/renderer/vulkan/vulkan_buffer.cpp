@@ -10,29 +10,16 @@ IvkBuffer::~IvkBuffer()
   }
 }
 
-//size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
-//{
-//  size_t alignment = rContext->gpu.properties.limits.minUniformBufferOffsetAlignment;
-//  size_t alignedSize = _original;
-//  if (alignment > 0)
-//  {
-//    alignedSize = (alignedSize + alignment - 1) & ~(alignment - 1);
-//  }
-//  return alignedSize;
-//}
-
 IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
                      u64 _size,
                      VkBufferUsageFlags _usage,
                      VkMemoryPropertyFlags _memProperties,
                      bool _bind /*= true*/)
 {
-  // Align data
-
-
-  size = _size;
+  size = PadBufferForGpu(_rContext, _size);
   usage = _usage;
 
+  // Create the vkBuffer itself
   VkBufferCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   createInfo.pNext = nullptr;
@@ -43,6 +30,7 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
   IVK_ASSERT(vkCreateBuffer(_rContext->device, &createInfo, _rContext->allocator, &buffer),
              "Failed to create buffer");
 
+  // Allocate memory for the buffer on the GPU
   VkMemoryRequirements memRequirements;
   vkGetBufferMemoryRequirements(_rContext->device, buffer, &memRequirements);
 
@@ -50,8 +38,9 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex =
-      FindMemoryTypeIndex(_rContext, memRequirements.memoryTypeBits, _memProperties);
+  allocInfo.memoryTypeIndex =FindMemoryTypeIndex(_rContext,
+                                                 memRequirements.memoryTypeBits,
+                                                 _memProperties);
 
   IVK_ASSERT(vkAllocateMemory(_rContext->device, &allocInfo, _rContext->allocator, &memory),
              "Failed to allocate vert memory");
@@ -62,7 +51,7 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
   }
 }
 
-void IvkBuffer::FreeBuffer(IceRenderContext* _rContext)
+void IvkBuffer::Free(IceRenderContext* _rContext)
 {
   vkFreeMemory(_rContext->device, memory, _rContext->allocator);
   vkDestroyBuffer(_rContext->device, buffer, _rContext->allocator);
@@ -77,16 +66,21 @@ void IvkBuffer::Bind(IceRenderContext* _rContext)
 
 void IvkBuffer::Unbind(IceRenderContext* _rContext)
 {
-
+  // Remove the binding by replacing it with null
+  vkBindBufferMemory(_rContext->device, buffer, VK_NULL_HANDLE, offset);
 }
 
-u32 IvkBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags)
+u32 IvkBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext,
+                                   u32 _supportedMemoryTypes,
+                                   VkMemoryPropertyFlags _flags)
 {
   const VkPhysicalDeviceMemoryProperties& props = _rContext->gpu.memProperties;
 
   for (u32 i = 0; i < props.memoryTypeCount; i++)
   {
-    if (_mask & (1 << i) && (props.memoryTypes[i].propertyFlags & _flags) == _flags)
+    // if this memory type is supported and it has all the properties required
+    if (_supportedMemoryTypes & (1 << i) &&
+        (props.memoryTypes[i].propertyFlags & _flags) == _flags)
     {
       return i;
     }
@@ -94,4 +88,16 @@ u32 IvkBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMem
 
   LogInfo("Failed to find a suitable memory type");
   return -1;
+}
+
+u64 IvkBuffer::PadBufferForGpu(IceRenderContext* rContext, u64 _size)
+{
+  u64 alignment = rContext->gpu.properties.limits.minUniformBufferOffsetAlignment - 1;
+  u64 alignedSize = _size;
+  if (alignment > 0)
+  {
+    // Ceils the aligned size to the next alignment increment
+    alignedSize = (alignedSize + alignment) & ~(alignment);
+  }
+  return alignedSize;
 }

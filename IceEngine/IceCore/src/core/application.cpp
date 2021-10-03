@@ -75,9 +75,7 @@ void IceApplication::MainLoop()
   auto end = std::chrono::steady_clock::now();
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-  i32 x, y;
   const float camMoveSpeed = 3.0f;
-  const float sensitivity = 0.2f;
 
   float deltasSum = 0.0f;
   int deltasCount = 0;
@@ -93,9 +91,12 @@ void IceApplication::MainLoop()
     // Run game code
     (this->*ChildLoop)();
     #pragma region MoveToChildLoop
-    Input.GetMouseDelta(&x, &y);
-    cam.Rotate({-y * sensitivity, x * sensitivity, 0});
-    cam.ClampPitch(89.0f, -89.0f);
+
+    //i32 x, y;
+    //const float sensitivity = 0.2f;
+    //Input.GetMouseDelta(&x, &y);
+    //cam.Rotate({-y * sensitivity, x * sensitivity, 0});
+    //cam.ClampPitch(89.0f, -89.0f);
 
     if (Input.IsKeyDown(Ice_Key_W))
       cam.position += cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;

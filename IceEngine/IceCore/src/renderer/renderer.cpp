@@ -27,8 +27,8 @@ void IceRenderer::Shutdown()
 
   for (auto& mes : meshes)
   {
-    mes.indexBuffer->FreeBuffer(backend->GetContext());
-    mes.vertexBuffer->FreeBuffer(backend->GetContext());
+    mes.indexBuffer->Free(backend->GetContext());
+    mes.vertexBuffer->Free(backend->GetContext());
   }
 
   backend->Shutdown();

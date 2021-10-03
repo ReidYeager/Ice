@@ -21,7 +21,7 @@ void main() {
   else if (uv.x > 0.33)
     color = tb;
 
-  color = vec4(color.xyyw);
+  color = vec4(color.xyzw);
 
   outColor = color;
 }

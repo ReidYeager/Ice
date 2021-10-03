@@ -1,7 +1,7 @@
 \.git\COMMIT_EDITMSG
-	Line    22 :--: #	modified:   TODO_and_Notes.txt
+	Line    13 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.cpp
-	Line   173 :--: // NOTE : Should find a more efficient way of accomplishing this goal
+	Line   174 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 \IceEngine\IceCore\src\core\application.h
 	Line    28 :--: // TODO : Delete
 \IceEngine\IceCore\src\core\camera.h
@@ -26,42 +26,33 @@
 \IceEngine\IceCore\src\renderer\renderer.h
 	Line     3 :--: // TODO : Define API agnostic calls
 \IceEngine\IceCore\src\renderer\renderer_backend.h
-	Line    40 :--: // TODO : DELETE
+	Line    53 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
 	Line    24 :--: // TODO : Pre-define information that the shaders might need
 	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
 	Line    72 :--: // TODO : Replace with API agnostic buffer
 	Line    75 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
-	Line    16 :--: // TODO : Replace with custom data type -- only used in CreateShader
-	Line    37 :--: // TODO : Delete
+	Line    36 :--: // TODO : Delete -- Need to give each TransformComponent its own model matrix
 	Line    53 :--: // TODO : Delete
-	Line    98 :--: // TODO : Split into render call & presentation steps?
-	Line   206 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
-	Line   332 :--: // TODO : Make this editable from the client
-	Line   494 :--: // TODO : Replace with clamp function calls
+	Line    72 :--: // TODO : DELETE --- Need to create a dedicated image management system
+	Line   228 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+	Line   365 :--: // TODO : Make this editable from the client
+	Line   545 :--: // TODO : Replace with clamp function calls
+	Line   953 :--: // NOTE : Clear vertex and index vectors to save memory (Unnecessary at the current use scale)
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // TODO : Delete
-	Line    78 :--: // TODO : API CULL MARK
-	Line    90 :--: // TODO : API CULL MARK? -- Ignore if OpenGL/DirectX utilize similar objects
-	Line   117 :--: // TODO : Replace string with const char* -- text was lost when using char*'s
-	Line   126 :--: // TODO : I don't like this. Find a better way to destroy shaders
-	Line   137 :--: // TODO : Move to an image manager?
-	Line   156 :--: // TODO : DELETE
+	Line   151 :--: // TODO : I don't like this. Find a better way to destroy shaders
+	Line   188 :--: // TODO : DELETE -- External classes should not need to get the backend context
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.cpp
-	Line    48 :--: // TODO : Replace with a GPU memory allocator call
+	Line    36 :--: // TODO : Replace with a GPU memory allocator call
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
 	Line    13 :--: // TODO : Add alignment to better utilize GPU
-	Line    40 :--: // TODO : Move to vkMemory allocator
+	Line    47 :--: // TODO : Move to a vkMemory allocator
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line    15 :--: // NOTE : Material's payload needs to be filled before use
-	Line   204 :--: // TODO : Make more easily extendable?
-	Line   277 :--: // TODO : Implement a proper parser to extract shader bindings
-\IceEngine\IceCore\src\renderer\vulkan\vulkan_material.h
-	Line    18 :--: // TODO : Add pipeline settings
-	Line    34 :--: // TODO : Replace _images with managed image pointers
+	Line   302 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
-	Line    64 :--: // TODO : Replace with a clamp function
+	Line    69 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp
 	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
 \IceEngine\libraries\include\glm\gtx\matrix_decompose.inl

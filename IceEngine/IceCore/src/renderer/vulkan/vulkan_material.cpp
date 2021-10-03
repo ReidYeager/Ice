@@ -13,29 +13,24 @@
 #include <vector>
 #include <sys/stat.h>
 
-// NOTE : Material's payload needs to be filled before use
 void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
-                             const std::vector<const char*> _shaderNames,
-                             const std::vector<IceShaderStageFlags> _shaderStages,
-                             IceBuffer _buffer /*= nullptr*/)
+                               const std::vector<const char*> _shaderNames,
+                               const std::vector<IceShaderStageFlags> _shaderStages,
+                               IceBuffer _buffer /*= nullptr*/)
 {
   LogDebug("Creating material");
   info.sourceNames = _shaderNames;
   info.sourceStages = _shaderStages;
-  std::vector<IvkShader> shaders = GetShaders(_rContext);
+
+  // Create components
+  shaders = GetShaders(_rContext);
 
   CreateDescriptorSetLayout(_rContext, shaders);
   CreateDescriptorSet(_rContext);
 
-  CreatePipelineLayout(_rContext);
-  CreatePipeline(_rContext, shaders);
+  CreateFragileComponents(_rContext);
 
-  for (auto& s : shaders)
-  {
-    vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
-  }
-  shaders.clear();
-
+  // Create a buffer if none exists
   if (_buffer != nullptr)
   {
     info.buffer = _buffer;
@@ -48,16 +43,25 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   }
 
+  // Forces an update of the the descriptor set
   UpdatePayload(_rContext, {}, nullptr, 0);
+
   LogDebug("Material created");
 }
 
 void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
 {
   LogDebug("Destroying material");
-  vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
-  vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
+
+  DestroyFragileComponents(_rContext);
   vkDestroyDescriptorSetLayout(_rContext->device, descriptorSetLayout, _rContext->allocator);
+
+  // Clear shader modules
+  for (IvkShader s : shaders)
+  {
+    vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
+  }
+  shaders.clear();
 
   //if (buffer != nullptr)
   //{
@@ -74,23 +78,18 @@ void IvkMaterial_T::DestroyFragileComponents(IceRenderContext* _rContext)
 
 void IvkMaterial_T::CreateFragileComponents(IceRenderContext* _rContext)
 {
-  std::vector<IvkShader> shaders = GetShaders(_rContext);
   CreatePipelineLayout(_rContext);
   CreatePipeline(_rContext, shaders);
-
-  for (IvkShader s : shaders)
-  {
-    vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
-  }
-  shaders.clear();
 }
 
+// Need to move to a dedicated shader module manager
 void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
 {
   bool shouldUpdate = false;
 
   for (u32 i = 0; i < info.sourceNames.size();i++)
   {
+    // Construct the file name
     std::string shaderDir(ICE_RESOURCE_SHADER_DIR);
     shaderDir.append(info.sourceNames[i]);
 
@@ -109,21 +108,34 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
       LogError("Shader stage %u not recognized", info.sourceStages[i]);
     }
 
+    // If the time modified is more recent than time loaded
     struct _stat result;
-    if (_stat(shaderDir.c_str(), &result) == 0 && result.st_mtime != info.sourceLastModifiedTimes[i])
+    if (_stat(shaderDir.c_str(), &result) == 0 &&
+        result.st_mtime != info.sourceLastModifiedTimes[i])
     {
       LogInfo("Shader --- %20s --- loaded: %u, new: %u",
-          shaderDir.c_str(), info.sourceLastModifiedTimes[i], result.st_mtime);
-      info.sourceLastModifiedTimes[i] = result.st_mtime;
+              shaderDir.c_str(),
+              info.sourceLastModifiedTimes[i],
+              result.st_mtime);
 
+      info.sourceLastModifiedTimes[i] = result.st_mtime;
       shouldUpdate = true;
     }
   }
 
+  // Reload shaders
   if (shouldUpdate)
   {
     vkDeviceWaitIdle(_rContext->device);
     DestroyFragileComponents(_rContext);
+
+    for (IvkShader s : shaders)
+    {
+      vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
+    }
+    shaders.clear();
+    shaders = GetShaders(_rContext);
+
     CreateFragileComponents(_rContext);
   }
 }
@@ -189,12 +201,19 @@ void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
 void IvkMaterial_T::Render(VkCommandBuffer& _command)
 {
   vkCmdBindPipeline(_command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-  vkCmdBindDescriptorSets(
-      _command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+  vkCmdBindDescriptorSets(_command,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          pipelineLayout,
+                          0,
+                          1,
+                          &descriptorSet,
+                          0,
+                          nullptr);
 }
 
 std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
 {
+  // Load all input shaders
   u32 count = (u32)info.sourceNames.size();
   std::vector<IvkShader> shaders;
   for (u32 i = 0; i < count; i++)
@@ -202,7 +221,7 @@ std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
     LogInfo("Shader : %s", info.sourceNames[i]);
     IceShaderStageFlags stages = info.sourceStages[i];
 
-    // TODO : Make more easily extendable?
+    // Load each stage of the shader
     if (stages & Ice_Shader_Vert)
       shaders.push_back(LoadShader(_rContext, info.sourceNames[i], Ice_Shader_Vert));
     if (stages & Ice_Shader_Frag)
@@ -214,11 +233,13 @@ std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
   return shaders;
 }
 
-IvkShader IvkMaterial_T::LoadShader(
-    IceRenderContext* _rContext, const char* _name, IceShaderStageFlags _stage)
+IvkShader IvkMaterial_T::LoadShader(IceRenderContext* _rContext,
+                                    const char* _name,
+                                    IceShaderStageFlags _stage)
 {
   IvkShader shader;
 
+  // Construct the filename
   std::string shaderDir(ICE_RESOURCE_SHADER_DIR);
   shaderDir.append(_name);
   std::string layoutDir = shaderDir;
@@ -244,10 +265,12 @@ IvkShader IvkMaterial_T::LoadShader(
 
   LogInfo("Load Shader : %s", shaderDir.c_str());
 
+  // Load and process the shader and its bindings
   CreateShaderModule(_rContext, shader, shaderDir.c_str());
   FillShaderBindings(shader, layoutDir.c_str());
   shader.stage = _stage;
 
+  // Set last modified time
   struct _stat result;
   if (_stat(shaderDir.c_str(), &result) == 0)
   {
@@ -257,9 +280,11 @@ IvkShader IvkMaterial_T::LoadShader(
   return shader;
 }
 
-void IvkMaterial_T::CreateShaderModule(
-    IceRenderContext* _rContext, IvkShader& _shader, const char* _directory)
+void IvkMaterial_T::CreateShaderModule(IceRenderContext* _rContext,
+                                       IvkShader& _shader,
+                                       const char* _directory)
 {
+  // Retrieve the shader's source code
   std::vector<char> source = FileSystem::LoadFile(_directory);
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -267,18 +292,21 @@ void IvkMaterial_T::CreateShaderModule(
   createInfo.pCode = reinterpret_cast<uint32_t*>(source.data());
 
   IVK_ASSERT(vkCreateShaderModule(_rContext->device,
-    &createInfo,
-    _rContext->allocator,
-    &_shader.module),
-    "Failed to create shader module %s", _directory);
+                                  &createInfo,
+                                  _rContext->allocator,
+                                  &_shader.module),
+             "Failed to create shader module %s", _directory);
 }
 
 void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _directory)
 {
   // TODO : Implement a proper parser to extract shader bindings
+  // Load the shader's layout file
   std::vector<char> layoutSource = FileSystem::LoadFile(_directory);
   std::string layout(layoutSource.data());
   u32 i = 0;
+
+  // Parse the file for bindings
   while (layout[i] == 'b' || layout[i] == 's')
   {
     switch (layout[i])
@@ -295,7 +323,8 @@ void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _director
   }
 }
 
-VkShaderStageFlagBits ivkstage(IceShaderStageFlags _stage)
+// Transforms an Ice shader stage to a vulkan shader stage
+VkShaderStageFlagBits ivkShaderStage(IceShaderStageFlags _stage)
 {
   switch (_stage)
   {
@@ -310,8 +339,8 @@ VkShaderStageFlagBits ivkstage(IceShaderStageFlags _stage)
   }
 }
 
-void IvkMaterial_T::CreateDescriptorSetLayout(
-    IceRenderContext* _rContext, const std::vector<IvkShader>& _shaders)
+void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
+                                              const std::vector<IvkShader>& _shaders)
 {
   u32 bindingIndex = 0;
   u32 imageCount = 0;
@@ -323,7 +352,7 @@ void IvkMaterial_T::CreateDescriptorSetLayout(
   // Add shader bindings from all the program's shaders
   for (const auto& s : _shaders)
   {
-    binding.stageFlags = ivkstage(s.stage);
+    binding.stageFlags = ivkShaderStage(s.stage);
     for (u32 i = 0; i < s.bindings.size(); i++)
     {
       switch (s.bindings[i])
@@ -387,6 +416,7 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 {
   // Viewport State
   //=================================================
+  // Defines the screen settings used during rasterization
   VkViewport viewport;
   viewport.x = 0;
   viewport.y = 0;
@@ -408,6 +438,7 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 
   // Vertex Input State
   //=================================================
+  // Defines how vertex buffers are to be traversed
   const auto vertexInputBindingDesc = vertex_t::GetBindingDescription();
   const auto vertexInputAttribDesc = vertex_t::GetAttributeDescriptions();
 
@@ -422,6 +453,7 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 
   // Input Assembly State
   //=================================================
+  // Defines how meshes are to be rendered
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
   inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -429,6 +461,7 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 
   // Rasterization State
   //=================================================
+  // Defines how the pipeline will rasterize the image
   VkPipelineRasterizationStateCreateInfo rasterStateInfo{};
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
@@ -475,6 +508,9 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 
   // Dynamic States
   //=================================================
+  // States included here are capable of being set by dynamic state setting functions
+  // When binding the pipeline, if these states are not set via one of the state setting functions
+  //    the state's settings bound from the previous bound pipeline shall be used
   VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
   dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
   dynamicStateInfo.dynamicStateCount = 0;
@@ -482,12 +518,13 @@ void IvkMaterial_T::CreatePipeline(IceRenderContext* _rContext, std::vector<IvkS
 
   // Shader Stages State
   //=================================================
+  // Insert shader modules
   std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos(_shaders.size());
 
   for (u32 i = 0; i < _shaders.size(); i++)
   {
     shaderStageInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStageInfos[i].stage = ivkstage(_shaders[i].stage);
+    shaderStageInfos[i].stage = ivkShaderStage(_shaders[i].stage);
     shaderStageInfos[i].module = _shaders[i].module;
     shaderStageInfos[i].pName = "main";
   }
