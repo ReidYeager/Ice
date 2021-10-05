@@ -1,6 +1,10 @@
 b
 # buffer struct -- spacing for buffer data
 buffer {
+    Ice_Shader_Param_ModelMatrix_X
+Ice_Shader_Param_ModelMatrix_Y
+Ice_Shader_Param_ModelMatrix_Z
+    Ice_Shader_Param_ModelMatrix_W
 }
 
 # uniforms -- buffer and samplers

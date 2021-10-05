@@ -27,10 +27,9 @@
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    55 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
-	Line    24 :--: // TODO : Pre-define information that the shaders might need
-	Line    66 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
-	Line    72 :--: // TODO : Replace with API agnostic buffer
-	Line    75 :--: // TODO : Replace with indices for a texture flyweight
+	Line    73 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
+	Line    79 :--: // TODO : Replace with API agnostic buffer
+	Line    82 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
 	Line    62 :--: // TODO : DELETE --- Need to create a dedicated image management system
 	Line   214 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
@@ -46,8 +45,6 @@
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_buffer.h
 	Line    13 :--: // TODO : Add alignment to better utilize GPU
 	Line    47 :--: // TODO : Move to a vkMemory allocator
-\IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line   306 :--: // TODO : Implement a proper parser to extract shader bindings
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_platform.cpp
 	Line    69 :--: // TODO : Replace with a clamp function
 \IceEngine\libraries\include\glm\detail\compute_common.hpp

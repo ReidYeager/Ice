@@ -302,28 +302,108 @@ void IvkMaterial_T::CreateShaderModule(IceRenderContext* _rContext,
              "Failed to create shader module %s", _directory);
 }
 
+void SkipWhiteSpace(u64& _place, std::string& _layout)
+{
+  while (_place < _layout.length() && (_layout[_place] == ' ' ||
+    _layout[_place] == '\t' ||
+    _layout[_place] == '\n' ||
+    _layout[_place] == '\r'))
+  {
+    _place++;
+  }
+}
+
+IceShaderBufferParameterFlags StringToBufferParam(std::string& _str)
+{
+  if (std::strcmp("Ice_Shader_Param_ModelMatrix_X", _str.c_str()) == 0)
+    return Ice_Shader_Param_ModelMatrix_X;
+  if (std::strcmp("Ice_Shader_Param_ModelMatrix_Y", _str.c_str()) == 0)
+    return Ice_Shader_Param_ModelMatrix_Y;
+  if (std::strcmp("Ice_Shader_Param_ModelMatrix_Z", _str.c_str()) == 0)
+    return Ice_Shader_Param_ModelMatrix_Z;
+  if (std::strcmp("Ice_Shader_Param_ModelMatrix_W", _str.c_str()) == 0)
+    return Ice_Shader_Param_ModelMatrix_W;
+
+  return 0;
+}
+
+IceShaderBufferParameterFlags GetNextBufferParameter(u64& _place, std::string& _layout)
+{
+  SkipWhiteSpace(_place, _layout);
+
+  std::string n;
+
+  while (_place < _layout.length() &&
+         _layout[_place] != '\n' &&
+         _layout[_place] != '\r' &&
+         _layout[_place] != ' '  &&
+         _layout[_place] != ','  &&
+         _layout[_place] != '}')
+  {
+    n.push_back(_layout[_place]);
+    _place++;
+  }
+
+  return StringToBufferParam(n);
+}
+
+IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _layout)
+{
+  while (_place < _layout.length() && _layout[_place] != '{')
+  {
+    _place++;
+  }
+  _place++;
+
+  IceShaderBufferParameterFlags requiredParameters = 0;
+
+  while (_place < _layout.length() && _layout[_place] != '}')
+  {
+    requiredParameters |= GetNextBufferParameter(_place, _layout);
+  }
+
+  return requiredParameters;
+}
+
+i32 GetNextBinding(u64& _place, std::string& _layout, IceShaderBufferParameterFlags& _parameters)
+{
+  SkipWhiteSpace(_place, _layout);
+  assert(_place < _layout.size());
+
+  // Parse the file for bindings
+  switch (_layout[_place])
+  {
+  case 'b':
+  {
+    _parameters = GetBufferParameters(_place, _layout);
+    _place++;
+    return Ice_Shader_Binding_Buffer;
+  }
+  case 's':
+  {
+    _place++;
+    return Ice_Shader_Binding_Image;
+  }
+  }
+  _place++;
+
+  // End of file
+  return Ice_Shader_Binding_Invalid;
+}
+
 void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _directory)
 {
-  // TODO : Implement a proper parser to extract shader bindings
   // Load the shader's layout file
   std::vector<char> layoutSource = FileSystem::LoadFile(_directory);
   std::string layout(layoutSource.data());
-  u32 i = 0;
 
-  // Parse the file for bindings
-  while (layout[i] == 'b' || layout[i] == 's')
+  IceShaderBindingFlags bindInput = 0;
+  IceShaderBufferParameterFlags bufferParameters = 0;
+  u64 place = 0;
+
+  while ((bindInput = GetNextBinding(place, layout, info.bufferParameterFlags)) != Ice_Shader_Binding_Invalid)
   {
-    switch (layout[i])
-    {
-    case 'b':
-      _shader.bindings.push_back(Ice_Shader_Binding_Buffer);
-      break;
-    case 's':
-      _shader.bindings.push_back(Ice_Shader_Binding_Image);
-      break;
-    }
-
-    i++;
+    _shader.bindings.push_back((IceShaderBindingFlagBits)bindInput);
   }
 }
 
