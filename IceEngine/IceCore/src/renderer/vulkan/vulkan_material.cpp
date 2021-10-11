@@ -33,14 +33,14 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
   // Create a buffer if none exists
   if (_buffer != nullptr)
   {
-    info.buffer = _buffer;
+    materialBuffer = _buffer;
   }
   else
   {
-    info.buffer = new IvkBuffer(_rContext,
-                                1,
-                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    materialBuffer = new IvkBuffer(_rContext,
+                                   1,
+                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   }
 
   // Forces an update of the the descriptor set
@@ -63,10 +63,10 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
   }
   shaders.clear();
 
-  if (info.buffer != nullptr)
+  if (materialBuffer != nullptr)
   {
-    info.buffer->Free(_rContext);
-    delete(info.buffer);
+    materialBuffer->Free(_rContext);
+    delete(materialBuffer);
   }
 }
 
@@ -153,13 +153,13 @@ void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
 
   if (_data != nullptr)
   {
-    //if (_dataSize != info.buffer->GetSize())
-    FillBuffer(_rContext, info.buffer->GetMemory(), _data, _dataSize);
+    //if (_dataSize != materialBuffer->GetSize())
+    FillBuffer(_rContext, materialBuffer->GetMemory(), _data, _dataSize);
   }
 
   // Bind the buffer
   VkDescriptorBufferInfo bufferInfo{};
-  bufferInfo.buffer = info.buffer->GetBuffer();
+  bufferInfo.buffer = materialBuffer->GetBuffer();
   bufferInfo.offset = 0;
   bufferInfo.range = VK_WHOLE_SIZE;
 
@@ -365,7 +365,9 @@ IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _lay
   return requiredParameters;
 }
 
-i32 GetNextBinding(u64& _place, std::string& _layout, IceShaderBufferParameterFlags& _parameters)
+IceShaderBinding GetNextBinding(u64& _place,
+                                std::string& _layout,
+                                IceShaderBufferParameterFlags& _parameters)
 {
   SkipWhiteSpace(_place, _layout);
   assert(_place < _layout.size());
@@ -397,13 +399,15 @@ void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _director
   std::vector<char> layoutSource = FileSystem::LoadFile(_directory);
   std::string layout(layoutSource.data());
 
-  IceShaderBindingFlags bindInput = 0;
+  IceShaderBinding bindInput;
   IceShaderBufferParameterFlags bufferParameters = 0;
   u64 place = 0;
 
-  while ((bindInput = GetNextBinding(place, layout, info.bufferParameterFlags)) != Ice_Shader_Binding_Invalid)
+  while ((bindInput = GetNextBinding(place, layout, info.bufferParameterFlags)) !=
+         Ice_Shader_Binding_Invalid)
   {
-    _shader.bindings.push_back((IceShaderBindingFlagBits)bindInput);
+    
+    _shader.bindings.push_back(bindInput);
   }
 }
 

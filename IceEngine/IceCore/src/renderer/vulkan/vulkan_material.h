@@ -21,6 +21,8 @@ private:
   VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
   VkPipeline pipeline = VK_NULL_HANDLE;
 
+  IceShaderBufferParameterFlags materialUniformInputs;
+
   std::vector<IvkShader> shaders;
 
 public:

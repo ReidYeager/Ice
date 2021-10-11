@@ -13,7 +13,7 @@ struct IvkShader
 {
   IceShaderStageFlags stage;
   VkShaderModule module;
-  std::vector<IceShaderBindingFlagBits> bindings;
+  std::vector<IceShaderBinding> bindings;
 };
 
 #endif // !ICE_RENDERER_VULKAN_VULKAN_SHADER_H_

@@ -1,3 +1,5 @@
+\.git\COMMIT_EDITMSG
+	Line    24 :--: #	modified:   TODO_and_Notes.txt
 \IceEngine\IceCore\src\core\application.cpp
 	Line   130 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 	Line   182 :--: // NOTE : Should find a more efficient way of accomplishing this goal
@@ -15,8 +17,8 @@
 \IceEngine\IceCore\src\renderer\image.h
 	Line    16 :--: // TODO : Fix const char* directory being lost when texture vector expands
 \IceEngine\IceCore\src\renderer\material.h
-	Line    24 :--: // TODO : Replace _images with managed image pointers
-	Line    25 :--: // TODO : Replace IceBuffer with an API-agnostic counterpart
+	Line    25 :--: // TODO : Replace _images with managed image pointers
+	Line    26 :--: // TODO : Replace IceBuffer with an API-agnostic counterpart
 \IceEngine\IceCore\src\renderer\mesh.h
 	Line    61 :--: // TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceEngine\IceCore\src\renderer\renderer.cpp
@@ -27,9 +29,8 @@
 \IceEngine\IceCore\src\renderer\renderer_backend.h
 	Line    55 :--: // TODO : DELETE
 \IceEngine\IceCore\src\renderer\shader.h
-	Line    73 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
-	Line    79 :--: // TODO : Replace with API agnostic buffer
-	Line    82 :--: // TODO : Replace with indices for a texture flyweight
+	Line    72 :--: // TODO : Find a better way of identifying what shaders an IvkShader uses
+	Line    79 :--: // TODO : Replace with indices for a texture flyweight
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
 	Line    62 :--: // TODO : DELETE --- Need to create a dedicated image management system
 	Line   214 :--: // NOTE : Prevents writing to command buffer being used to render, probably affects performance
@@ -70,3 +71,37 @@
 	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.
 \IceEngine\Sandbox\src\Source.cpp
 	Line    28 :--: // TODO : ---Resume--- Render objects at unique transforms
+\IceVault\.obsidian\plugins\cm-editor-syntax-highlight-obsidian\main.js
+	Line  8521 :--: // TODO indenter:
+	Line 16538 :--: var RXmodifiers=/[goseximacplud]/;              // NOTE: "m", "s", "y" and "tr" need to correct real modifiers for each regexp type
+	Line 16540 :--: function tokenChain(stream,state,chain,style,tail){     // NOTE: chain.length > 2 is not working now (it's for s[...][...]geos;)
+	Line 16576 :--: if(stream.match(/^<<(?=\w)/)){                  // NOTE: <<SOMETHING\n...\nSOMETHING\n
+	Line 16579 :--: if(stream.sol()&&stream.match(/^\=item(?!\w)/)){// NOTE: \n=item...\n=cut\n
+	Line 16582 :--: if(ch=='"'||ch=="'"){                           // NOTE: ' or " or <<'SOMETHING'\n...\nSOMETHING\n or <<"SOMETHING"\n...\nSOMETHING\n
+	Line 18768 :--: // TODO - Can you have imaginary longs?
+	Line 20359 :--: // TODO
+	Line 21833 :--: // TODO: add multi line support
+	Line 25877 :--: if (ch == "@") {    // check for space link. TODO fix @@...@@ highlighting
+	Line 27458 :--: // TODO - Can you have imaginary longs?
+	Line 27783 :--: // TODO - Can you have imaginary longs?
+	Line 28614 :--: var depth = indentation / tlvIndentUnit;  // TODO: Pass this in instead.
+\IceVault\.obsidian\plugins\obsidian-outliner\main.js
+	Line   732 :--: // TODO: lines could be different because of deletetion
+\IceVault\.obsidian\plugins\obsidian-plugin-todo\main.js
+	Line   297 :--: // TODO: persist index & last sync timestamp; only parse files that changed since then.
+	Line   310 :--: console.log(`[obsidian-plugin-todo] Parsed ${numberOfTodos} TODOs from ${markdownFiles.length} markdown files in (${totalTimeMs / 1000.0}s)`);
+	Line   345 :--: // TODO: Does it make sense to index completed TODOs at all?
+	Line   345 :--: // TODO: Does it make sense to index completed TODOs at all?
+\IceVault\.obsidian\plugins\obsidian-plugin-todo\manifest.json
+	Line     2 :--: "name": "Obsidian TODO | Text-based GTD",
+	Line     5 :--: "description": "Text-based GTD in Obsidian. Collects all outstanding TODOs from your vault and presents them in lists Today, Scheduled, Inbox and Someday/Maybe.",
+\IceVault\.obsidian\plugins\table-editor-obsidian\main.js
+	Line 20310 :--: // TODO: Determine how to return errors when a formula-like string
+	Line 22386 :--: // TODO: Validate this for correctness
+	Line 22493 :--: // @ts-expect-error TODO
+	Line 23025 :--: // @ts-expect-error TODO
+	Line 23027 :--: // @ts-expect-error TODO
+	Line 23031 :--: // @ts-expect-error TODO
+	Line 23033 :--: // @ts-expect-error TODO
+	Line 23038 :--: // @ts-expect-error TODO
+	Line 23212 :--: // TODO: What does this function want?

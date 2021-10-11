@@ -14,6 +14,7 @@ class IceMaterial_T
 {
 protected:
   IceShaderInfo info;
+  IceBuffer materialBuffer;
 
 public:
   virtual void Initialize(IceRenderContext* _rContext,

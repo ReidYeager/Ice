@@ -14,7 +14,7 @@ enum IceShaderStageFlagBits
 };
 typedef IceFlag IceShaderStageFlags;
 
-enum IceShaderBindingFlagBits
+enum IceShaderBinding
 {
   Ice_Shader_Binding_Buffer,
   Ice_Shader_Binding_Image,
@@ -22,7 +22,6 @@ enum IceShaderBindingFlagBits
   Ice_Shader_Binding_Count,
   Ice_Shader_Binding_Invalid = -1
 };
-typedef IceFlag IceShaderBindingFlags;
 
 #define ISP(name, bit) Ice_Shader_Param_##name = (u64)1 << bit
 // Represents information that the shaders may require as input
@@ -76,9 +75,7 @@ struct IceShaderInfo
   std::vector<IceShaderStageFlags> sourceStages;
   std::vector<u64> sourceLastModifiedTimes;
   IceShaderStageFlags stages;
-  std::vector<IceShaderBindingFlags> bindings;
-  // TODO : Replace with API agnostic buffer
-  IceBuffer buffer;
+  std::vector<IceShaderBinding> bindings;
   IceShaderBufferParameterFlags bufferParameterFlags;
   // TODO : Replace with indices for a texture flyweight
   std::vector<iceImage_t*> textures;
@@ -103,7 +100,7 @@ struct IceShader
   const char* name;
   IceShaderStageFlags stage;
   VkShaderModule module;
-  std::vector<IceShaderBindingFlags> bindings;
+  std::vector<IceShaderBinding> bindings;
 
   IceShader(const char* _name, IceShaderStageFlags _stage) : name(_name), stage(_stage) {}
   IceShader() {}
