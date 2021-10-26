@@ -23,8 +23,6 @@ public:
                           IceBuffer _buffer = nullptr) = 0;
   virtual void Shutdown(IceRenderContext* _rContext) = 0;
 
-  // TODO : Replace _images with managed image pointers
-  // TODO : Replace IceBuffer with an API-agnostic counterpart
   virtual void UpdatePayload(IceRenderContext* _rContext,
                              std::vector<iceImage_t*> _images,
                              void* _data,

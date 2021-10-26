@@ -26,7 +26,7 @@ protected:
   IceEcsController* ecsController;
 
 public:
-  // TODO : Delete
+  // NOTE : Delete
   IceCamera cam;
 
 //=================================================================================================

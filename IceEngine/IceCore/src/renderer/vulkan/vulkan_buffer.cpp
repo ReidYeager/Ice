@@ -34,7 +34,7 @@ IvkBuffer::IvkBuffer(IceRenderContext* _rContext,
   VkMemoryRequirements memRequirements;
   vkGetBufferMemoryRequirements(_rContext->device, buffer, &memRequirements);
 
-  // TODO : Replace with a GPU memory allocator call
+  // Replace with a GPU memory allocator call?
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.allocationSize = memRequirements.size;

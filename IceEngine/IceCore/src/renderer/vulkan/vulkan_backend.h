@@ -13,7 +13,7 @@
 class VulkanBackend : public RendererBackend
 {
 private:
-  // TODO : Delete
+  // NOTE : Delete
   struct mvpMatrices
   {
     glm::mat4 model;
@@ -147,7 +147,6 @@ private:
 //=================================================================================================
 
   // Wrapper for vulkan's shader module destructor
-  // TODO : I don't like this. Find a better way to destroy shaders
   void DestroyShaderModule(VkShaderModule& _shader);
   VkFormat FindSupportedFormat(const std::vector<VkFormat>& _formats,
                                VkImageTiling _tiling,
@@ -184,7 +183,7 @@ private:
   void CopyBufferToImage(VkBuffer _buffer, VkImage _iamge, u32 _width, u32 _height);
 
   public:
-  // TODO : DELETE -- External classes should not need to get the backend context
+  // NOTE : DELETE -- External classes should not need to get the backend context
   IceRenderContext* GetContext() override
   {
     return rContext;

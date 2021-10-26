@@ -6,6 +6,8 @@
 #include "platform/platform.h"
 
 #include <vector>
+#include <algorithm>
+
 #include <vulkan/vulkan.h>
 #ifdef ICE_PLATFORM_WINDOWS
 #include <vulkan/vulkan_win32.h>
@@ -67,16 +69,13 @@ VkExtent2D VulkanBackend::GetWindowExtent()
     extent.width = rect.right - rect.left;
     extent.height = rect.bottom - rect.top;
 
-    // TODO : Replace with a clamp function
-    if (extent.width < capabilities.minImageExtent.width)
-      extent.width = capabilities.minImageExtent.width;
-    else if (extent.width > capabilities.maxImageExtent.width)
-      extent.width = capabilities.maxImageExtent.width;
+    extent.width = std::clamp(extent.width,
+                              capabilities.minImageExtent.width,
+                              capabilities.maxImageExtent.width);
 
-    if (extent.height < capabilities.minImageExtent.height)
-      extent.height = capabilities.minImageExtent.height;
-    else if (extent.height > capabilities.maxImageExtent.height)
-      extent.height = capabilities.maxImageExtent.height;
+    extent.height = std::clamp(extent.height,
+                               capabilities.minImageExtent.height,
+                               capabilities.maxImageExtent.height);
   }
 
   LogInfo("Renderer : Window at (%u, %u)", extent.width, extent.height);

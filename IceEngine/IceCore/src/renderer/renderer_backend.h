@@ -53,7 +53,7 @@ public:
   void RenderFrame(IceRenderPacket* _packet)
   { (this->*RenderFramePointer)(_packet); }
 
-  // TODO : DELETE
+  // NOTE : DELETE
   virtual IceRenderContext* GetContext() = 0;
   virtual mesh_t CreateMesh(const char* _directory) = 0;
   virtual void AddMaterial(IceMaterial _material) = 0;

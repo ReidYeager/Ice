@@ -7,8 +7,6 @@
 #include "platform/file_system.h"
 #include "core/ecs_components.h"
 
-// TODO : Remove all API types & references
-
 void IceRenderer::Initialize(IceRenderingAPI _api)
 {
   backend = new VulkanBackend();
@@ -62,7 +60,6 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
 
   // Look for an existing shader matching the description
   u32 i = 0;
-  // TODO : Make IceMaterials identifiable
   //for (const auto& sp : materials)
   //{
   //  if ()

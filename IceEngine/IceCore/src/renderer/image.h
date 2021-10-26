@@ -14,7 +14,7 @@
 struct iceTexture_t
 {
   u32 imageIndex;
-  // TODO : Fix const char* directory being lost when texture vector expands
+  // const char* directory is lost when texture vector expands, using a string fixes this
   std::string directory;
 
   iceTexture_t(std::string _dir) : imageIndex(0), directory(_dir) {}

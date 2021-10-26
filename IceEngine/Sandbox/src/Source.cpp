@@ -26,8 +26,6 @@ public:
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cubeMesh = GetMeshIndex("Cube.obj");
 
-    // TODO : ---Resume--- Render objects at unique transforms
-
     testGameObject = CreateObject();
     testGameObject.AddComponent<RenderableComponent>(cubeMesh, testMat);
 
@@ -47,6 +45,9 @@ public:
   float time = 0.0f;
   int direction = 1.0f;
 
+  float r = 1.0f, g = 0.0f, b = 0.0f;
+  float* add, sub;
+
   void loop(float _deltaTime)
   {
     time += _deltaTime;
@@ -61,6 +62,8 @@ public:
 
     testGameObjectB.transform->rotation[0] += 90.0f * _deltaTime;
     testGameObject.transform->scale[1] += 0.25f * _deltaTime;
+
+
 
   }
 };

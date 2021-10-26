@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-// TODO : Create a camera (projection) component to replace this
+// NOTE : Create a camera (projection) component to replace this
 class IceCamera
 {
 public:

@@ -15,6 +15,7 @@
 
 #include <set>
 #include <string> // Only used in CreateShader
+#include <algorithm>
 
 void VulkanBackend::Initialize()
 {
@@ -60,7 +61,6 @@ void VulkanBackend::Shutdown()
   DestroyFragileComponents();
 
   // Destroy all created images
-  // TODO : DELETE --- Need to create a dedicated image management system
   for (iceImage_t* i : iceImages)
   {
     if (i->image != VK_NULL_HANDLE)
@@ -212,7 +212,8 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
   u32 renderableIndex = 0;
   u32 materialIndex = 0;
 
-  // NOTE : Prevents writing to command buffer being used to render, probably affects performance
+  // Prevents writing to command buffer being used to render
+  // Probably affects performance
   if (rContext->syncObjects.imageIsInFlightFences[_commandIndex] != VK_NULL_HANDLE)
     vkWaitForFences(rContext->device,
                     1,
@@ -365,7 +366,6 @@ void VulkanBackend::InitializeAPI()
   appInfo.apiVersion = VK_API_VERSION_1_2;
   appInfo.pEngineName = "Ice";
   appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
-  // TODO : Make this editable from the client
   appInfo.pApplicationName = "Ice Application";
   appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
 
@@ -545,24 +545,13 @@ void VulkanBackend::CreateSwapchain()
   {
     extent = GetWindowExtent();
 
-    // TODO : Replace with clamp function calls
-    if (extent.width < capabilities.minImageExtent.width)
-    {
-      extent.width = capabilities.minImageExtent.width;
-    }
-    else if (extent.width > capabilities.maxImageExtent.width)
-    {
-      extent.width = capabilities.maxImageExtent.width;
-    }
+    extent.width = std::clamp(extent.width,
+                              capabilities.minImageExtent.width,
+                              capabilities.maxImageExtent.width);
 
-    if (extent.height < capabilities.minImageExtent.height)
-    {
-      extent.height = capabilities.minImageExtent.height;
-    }
-    else if (extent.height > capabilities.maxImageExtent.height)
-    {
-      extent.height = capabilities.maxImageExtent.height;
-    }
+    extent.height = std::clamp(extent.height,
+                              capabilities.minImageExtent.height,
+                              capabilities.maxImageExtent.height);
   }
   LogInfo("Width: %u -- Height: %u", extent.width, extent.height);
 
@@ -953,7 +942,7 @@ mesh_t VulkanBackend::CreateMesh(const char* _directory)
                                       m.indices.data(),
                                       sizeof(u32) * m.indices.size(),
                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-  // NOTE : Clear vertex and index vectors to save memory (Unnecessary at the current use scale)
+  // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
   return m;
 }
 

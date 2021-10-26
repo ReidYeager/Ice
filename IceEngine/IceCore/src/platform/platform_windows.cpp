@@ -287,8 +287,8 @@ LRESULT CALLBACK WindowsProcessInputMessage(HWND hwnd, u32 message, WPARAM wpara
   } break;
   case WM_MOUSEMOVE:
   {
-    // TODO : Add raw input support
-    //  https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input?redirectedfrom=MSDN
+    // Raw input support
+    // https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input?redirectedfrom=MSDN
     i32 x = GET_X_LPARAM(lparam);
     i32 y = GET_Y_LPARAM(lparam);
     Input.ProcessMouseMove(x, y);

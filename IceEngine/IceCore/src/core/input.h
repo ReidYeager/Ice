@@ -5,7 +5,6 @@
 #include "defines.h"
 
 #define NewKey(name, code) Ice_Key_##name = code
-// TODO : Implement the rest of the input codes (Use Windows' codes)
 enum IceKeyCodeFlagBits
 {
   // Top row numbers
@@ -96,7 +95,7 @@ private:
   struct InputStates
   {
     keyboardState keyboardCurrent;
-    keyboardState keyboardPrevious; // TODO : Rework to be a signal bit within the current state
+    keyboardState keyboardPrevious; // Rework to be a signal bit within the current state?
     mouseState mouseCurrent;
     mouseState mousePrevious;
   } m_states;

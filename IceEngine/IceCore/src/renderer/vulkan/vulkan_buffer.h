@@ -11,7 +11,6 @@
 
 class IvkBuffer
 {
-  // TODO : Add alignment to better utilize GPU
 private:
   VkBuffer buffer = VK_NULL_HANDLE;
   VkDeviceMemory memory = VK_NULL_HANDLE;
@@ -45,7 +44,7 @@ public:
   VkBuffer* GetBufferPtr() { return &buffer; }
   VkDeviceMemory GetMemory() const { return memory; }
 
-  // TODO : Move to a vkMemory allocator
+  // Move to a vkMemory allocator?
   u32 FindMemoryTypeIndex(IceRenderContext* _rContext, u32 _mask, VkMemoryPropertyFlags _flags);
 
 private:

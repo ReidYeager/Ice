@@ -70,14 +70,12 @@ typedef IceFlagExtended IceShaderBufferParameterFlags;
 
 struct IceShaderInfo
 {
-  // TODO : Find a better way of identifying what shaders an IvkShader uses
   std::vector<const char*> sourceNames;
   std::vector<IceShaderStageFlags> sourceStages;
   std::vector<u64> sourceLastModifiedTimes;
   IceShaderStageFlags stages;
   std::vector<IceShaderBinding> bindings;
   IceShaderBufferParameterFlags bufferParameterFlags;
-  // TODO : Replace with indices for a texture flyweight
   std::vector<iceImage_t*> textures;
 };
 

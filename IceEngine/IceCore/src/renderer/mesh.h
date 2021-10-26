@@ -59,7 +59,7 @@ struct vertex_t
   }
 };
 
-// TODO : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+// NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 // Used to map vertices into an unordered array during mesh building
 namespace std {
   template<> struct hash<vertex_t> {
