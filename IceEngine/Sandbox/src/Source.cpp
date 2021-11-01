@@ -14,14 +14,14 @@ public:
   {
     IceApplicationDefineChildLoop(loop);
 
-    u32 testMat = GetMaterialIndex(
+    testMat = GetMaterialIndex(
         { "mvp", "test" },
         { Ice_Shader_Vert, Ice_Shader_Frag },
         { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cactusMesh = GetMeshIndex("BadCactus.obj");
 
-    u32 blueMat = GetMaterialIndex(
-      { "mvp", "blue" },
+    blueMat = GetMaterialIndex(
+      { "bluemvp", "blue" },
       { Ice_Shader_Vert, Ice_Shader_Frag },
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cubeMesh = GetMeshIndex("Cube.obj");
@@ -43,6 +43,7 @@ public:
   }
 
   float time = 0.0f;
+  float smalltime = 0.0f;
   int direction = 1.0f;
 
   float r = 1.0f, g = 0.0f, b = 0.0f;
@@ -52,18 +53,11 @@ public:
   {
     time += _deltaTime;
 
-    if (testGameObjectB.transform->position[1] <= -3.0f ||
-        testGameObjectB.transform->position[1] >= 3.0f)
-    {
-      direction *= -1.0f;
-    }
+    float fragdata[4] = { glm::sin(time), 0.0f, 0.0f, 0.0f };
+    float vertdata[4] = {time, glm::sin(time), 0.0f, 0.0f};
 
-    testGameObjectB.transform->position[1] += direction * _deltaTime;
-
-    testGameObjectB.transform->rotation[0] += 90.0f * _deltaTime;
-    testGameObject.transform->scale[1] += 0.25f * _deltaTime;
-
-
+    MaterialUpdateBuffer(blueMat, vertdata, Ice_Shader_Param_User1);
+    MaterialUpdateBuffer(blueMat, fragdata, Ice_Shader_Param_User0);
 
   }
 };

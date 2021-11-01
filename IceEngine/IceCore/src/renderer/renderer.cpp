@@ -60,9 +60,9 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
 
   // Look for an existing shader matching the description
   u32 i = 0;
-  //for (const auto& sp : materials)
+  //for (IceMaterial const& sp : materials)
   //{
-  //  if ()
+  //  if (sp->)
   //  {
   //    return i;
   //  }
@@ -83,11 +83,21 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
   material->Initialize(GetContext(),
                        _shaderNames,
                        _shaderStages);
-  material->UpdatePayload(GetContext(), inTextures);
+  material->UpdateImages(GetContext(), inTextures);
   materials.push_back(material);
   backend->AddMaterial(material);
 
   return i;
+}
+
+void IceRenderer::UpdateMaterialBuffer(u32 _material, void* _userData, IceShaderBufferParameterFlags _userParameterFlags)
+{
+  materials[_material]->UpdateBuffer(backend->GetContext(), _userData, _userParameterFlags);
+}
+
+void IceRenderer::UpdateMaterialImages(u32 _material, std::vector<iceImage_t*> _images)
+{
+  //materials[_material]->UpdateImages(backend->GetContext(), _images, nullptr, 0);
 }
 
 u32 IceRenderer::CreateMesh(const char* _model)

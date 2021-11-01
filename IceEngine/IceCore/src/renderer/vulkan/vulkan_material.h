@@ -9,6 +9,7 @@
 #include "renderer/buffer.h"
 #include "renderer/image.h"
 #include "renderer/material.h"
+#include "renderer/shader_parameters.h"
 
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -40,11 +41,14 @@ public:
   // Reloads shader source code if changes were made since loading
   void UpdateSources(IceRenderContext* _rContext);
 
+  void UpdateBuffer(IceRenderContext* _rContext,
+                    void* _userData,
+                    IceShaderBufferParameterFlags _userParameterFlags) override;
   // Binds the data and images to update the descriptor set
-  void UpdatePayload(IceRenderContext* _rContext,
+  void UpdateImages(IceRenderContext* _rContext,
                      std::vector<iceImage_t*> _images,
-                     void* _data,
-                     u64 _dataSize) override;
+                     void* _userData,
+                     IceShaderBufferParameterFlags _userParameterFlags) override;
   // Records commands on how to render this material
   void Render(VkCommandBuffer& _command, const void* _modelMatrix, const void* _viewProjMatrix);
 

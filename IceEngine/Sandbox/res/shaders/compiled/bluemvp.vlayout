@@ -1,8 +1,17 @@
-
+b
 # buffer struct -- spacing for buffer data
 buffer {
+    User0
+    User1
+}
+
+# Only has 128 bytes guaranteed
+push {
+    ModelMatrix
+	VpMatrix
 }
 
 # uniforms -- buffer and samplers
 uniforms {
 }
+

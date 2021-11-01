@@ -163,7 +163,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
                            1,
                            &submitInfo,
                            rContext->syncObjects.flightSlotAvailableFences[currentFlightSlot]),
-             "Failed to submit draw command");
+             "Failed to submit RenderFrame draw command");
 
   // Present call
   VkPresentInfoKHR presentInfo{};

@@ -62,6 +62,11 @@ protected:
       std::vector<IceShaderStageFlags> _shaderStages, // The stage(s) to use each shader
       std::vector<const char*> _texStrings,           // Texture directories to use (if any)
       IceFlag _renderSettings = 0);                   // Render pipeline settings
+  void MaterialUpdateBuffer(u32 _material,
+                            void* _userData,
+                            IceShaderBufferParameterFlags _userParameterFlags);
+  void MaterialUpdateTextures(u32 _material,
+                              std::vector<const char*> _textureNames);
 
 public:
   // Houses the Initialize, MainLoop, and Shutdown calls

@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #include "renderer/shader.h"
+#include "renderer/shader_parameters.h"
 #include "renderer/image.h"
 #include "renderer/buffer.h"
 
@@ -23,19 +24,22 @@ public:
                           IceBuffer _buffer = nullptr) = 0;
   virtual void Shutdown(IceRenderContext* _rContext) = 0;
 
-  virtual void UpdatePayload(IceRenderContext* _rContext,
+  virtual void UpdateBuffer(IceRenderContext* _rContext,
+                            void* _userData,
+                            IceShaderBufferParameterFlags _userParameterFlags) = 0;
+  virtual void UpdateImages(IceRenderContext* _rContext,
                              std::vector<iceImage_t*> _images,
-                             void* _data,
-                             u64 _dataSize) = 0;
+                             void* _userData,
+                             IceShaderBufferParameterFlags _userParameterFlags) = 0;
 
-  void UpdatePayload(IceRenderContext* _rContext, std::vector<iceImage_t*> _images)
+  void UpdateImages(IceRenderContext* _rContext, std::vector<iceImage_t*> _images)
   {
-    UpdatePayload(_rContext, _images, nullptr, 0);
+    UpdateImages(_rContext, _images, nullptr, 0);
   }
 
-  void UpdatePayload(IceRenderContext* _rContext, void* _data, u64 _dataSize)
+  void UpdateImages(IceRenderContext* _rContext, void* _data, u64 _dataSize)
   {
-    UpdatePayload(_rContext, {}, _data, _dataSize);
+    UpdateImages(_rContext, {}, _data, _dataSize);
   }
 };
 

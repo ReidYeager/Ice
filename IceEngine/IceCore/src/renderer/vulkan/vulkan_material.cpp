@@ -37,14 +37,23 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
   }
   else
   {
+    u64 size;
+    u64 RequiredBuffers = info.bufferParameterFlags;
+    // Count the number of set buffer parameter flags
+    for (size = 0; RequiredBuffers; size++)
+    {
+      RequiredBuffers &= RequiredBuffers - 1;
+    }
+
     materialBuffer = new IvkBuffer(_rContext,
-                                   1,
-                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                   size * 16,
+                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   }
 
   // Forces an update of the the descriptor set
-  UpdatePayload(_rContext, {}, nullptr, 0);
+  UpdateImages(_rContext, {}, nullptr, 0);
 
   LogDebug("Material created");
 }
@@ -140,10 +149,20 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
   }
 }
 
-void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
-                                std::vector<iceImage_t*> _images,
-                                void* _data,
-                                u64 _dataSize)
+void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext, void* _userData, IceShaderBufferParameterFlags _userParameterFlags)
+{
+  // Update user data
+  if (_userData != nullptr)
+  {
+    // Update selected user parameters
+    FillShaderBuffer(_rContext, materialBuffer, _userData, _userParameterFlags, info.bufferParameterFlags);
+  }
+}
+
+void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext,
+                                  std::vector<iceImage_t*> _images,
+                                  void* _userData,
+                                  IceShaderBufferParameterFlags _userParameterFlags)
 {
   u64 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
   std::vector<VkWriteDescriptorSet> writeSets(imageCount + 1);
@@ -151,11 +170,10 @@ void IvkMaterial_T::UpdatePayload(IceRenderContext* _rContext,
   u32 writeIndex = 0;
   u32 imageIndex = 0;
 
-  if (_data != nullptr)
-  {
-    //if (_dataSize != materialBuffer->GetSize())
-    FillBuffer(_rContext, materialBuffer->GetMemory(), _data, _dataSize);
-  }
+  // Update user data
+  UpdateBuffer(_rContext, _userData, _userParameterFlags);
+
+  // Update non-user parameters
 
   // Bind the buffer
   VkDescriptorBufferInfo bufferInfo{};
@@ -202,6 +220,8 @@ void IvkMaterial_T::Render(VkCommandBuffer& _command,
                            const void* _modelMatrix,
                            const void* _viewProjMatrix)
 {
+  //LogInfo("Rendering %s, %s", info.sourceNames[0], info.sourceNames[1]);
+
   vkCmdBindPipeline(_command, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
   vkCmdBindDescriptorSets(_command,
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -313,16 +333,42 @@ void SkipWhiteSpace(u64& _place, std::string& _layout)
   }
 }
 
-IceShaderBufferParameterFlags StringToBufferParam(std::string& _str)
+IceShaderBufferParameterFlags StringToBufferParam(const char* _str)
 {
-  if (std::strcmp("Ice_Shader_Param_ModelMatrix_X", _str.c_str()) == 0)
-    return Ice_Shader_Param_ModelMatrix_X;
-  if (std::strcmp("Ice_Shader_Param_ModelMatrix_Y", _str.c_str()) == 0)
-    return Ice_Shader_Param_ModelMatrix_Y;
-  if (std::strcmp("Ice_Shader_Param_ModelMatrix_Z", _str.c_str()) == 0)
-    return Ice_Shader_Param_ModelMatrix_Z;
-  if (std::strcmp("Ice_Shader_Param_ModelMatrix_W", _str.c_str()) == 0)
-    return Ice_Shader_Param_ModelMatrix_W;
+  if (std::strcmp("ModelMatrix", _str) == 0)
+    return Ice_Shader_Param_ModelMatrix;
+  if (std::strcmp("VpMatrix", _str) == 0)
+    return Ice_Shader_Param_VpMatrix;
+  if (std::strcmp("ViewMatrix", _str) == 0)
+    return Ice_Shader_Param_ViewMatrix;
+  if (std::strcmp("ProjectionMatrix", _str) == 0)
+    return Ice_Shader_Param_ProjectionMatrix;
+
+
+  if (std::strcmp("User0", _str) == 0)
+    return Ice_Shader_Param_User0;
+  if (std::strcmp("User1", _str) == 0)
+    return Ice_Shader_Param_User1;
+  if (std::strcmp("User2", _str) == 0)
+    return Ice_Shader_Param_User2;
+  if (std::strcmp("User3", _str) == 0)
+    return Ice_Shader_Param_User3;
+  if (std::strcmp("User4", _str) == 0)
+    return Ice_Shader_Param_User4;
+  if (std::strcmp("User5", _str) == 0)
+    return Ice_Shader_Param_User5;
+  if (std::strcmp("User6", _str) == 0)
+    return Ice_Shader_Param_User6;
+  if (std::strcmp("User7", _str) == 0)
+    return Ice_Shader_Param_User7;
+  if (std::strcmp("User8", _str) == 0)
+    return Ice_Shader_Param_User8;
+  if (std::strcmp("User9", _str) == 0)
+    return Ice_Shader_Param_User9;
+  if (std::strcmp("User10", _str) == 0)
+    return Ice_Shader_Param_User10;
+  if (std::strcmp("User11", _str) == 0)
+    return Ice_Shader_Param_User11;
 
   return 0;
 }
@@ -331,7 +377,7 @@ IceShaderBufferParameterFlags GetNextBufferParameter(u64& _place, std::string& _
 {
   SkipWhiteSpace(_place, _layout);
 
-  std::string n;
+  u64 start = _place;
 
   while (_place < _layout.length() &&
          _layout[_place] != '\n' &&
@@ -340,11 +386,10 @@ IceShaderBufferParameterFlags GetNextBufferParameter(u64& _place, std::string& _
          _layout[_place] != ','  &&
          _layout[_place] != '}')
   {
-    n.push_back(_layout[_place]);
     _place++;
   }
 
-  return StringToBufferParam(n);
+  return StringToBufferParam(_layout.substr(start, _place - start).c_str());
 }
 
 IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _layout)
@@ -437,18 +482,24 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
   binding.descriptorCount = 1;
   binding.pImmutableSamplers = nullptr;
 
+  u32 nameint = 0;
+
   // Add shader bindings from all the program's shaders
   for (const auto& s : _shaders)
   {
+    LogError("%s", info.sourceNames[nameint++]);
+
     binding.stageFlags = ivkShaderStage(s.stage);
     for (u32 i = 0; i < s.bindings.size(); i++)
     {
       switch (s.bindings[i])
       {
       case Ice_Shader_Binding_Buffer:
+        LogDebug("Buffer");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         break;
       case Ice_Shader_Binding_Image:
+        LogDebug("Image");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         imageCount++;
         break;
@@ -459,6 +510,7 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
       info.bindings.push_back(s.bindings[i]);
     }
   }
+  LogError("End shader descriptors");
 
   info.textures.resize(imageCount);
 

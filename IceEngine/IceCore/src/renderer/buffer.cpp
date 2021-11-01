@@ -65,7 +65,42 @@ void FillBuffer(
   stagingBuffer->Free(rContext);
 }
 
-void CopyBuffer(IceRenderContext* rContext, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size)
+void FillShaderBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void* _data, IceShaderBufferParameterFlags _flags, IceShaderBufferParameterFlags _shaderParams)
+{
+  u64 offset = 0;
+  u64 size = 0;
+
+  // Find the first contiguous group of set bits
+  for (u64 position = 0, value = 0; !size || value; position++)
+  {
+    value = (_flags >> position) & 1;
+
+    size += value;
+    offset += !size ? ((_shaderParams >> position) & 1) : 0;
+
+  }
+
+  offset *= 16;
+  size *= 16; // Convert to # bytes
+
+  // Stage the data
+  IceBuffer stagingBuffer = CreateBuffer(rContext,
+                                         size,
+                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  void* tmpData;
+  vkMapMemory(rContext->device, stagingBuffer->GetMemory(), offset, size, 0, &tmpData);
+  memcpy(tmpData, _data, static_cast<size_t>(size));
+  vkUnmapMemory(rContext->device, stagingBuffer->GetMemory());
+
+  // Copy staged buffer
+  CopyBuffer(rContext, stagingBuffer->GetBuffer(), _buffer->GetBuffer(), size, offset);
+  stagingBuffer->Free(rContext);
+}
+
+void CopyBuffer(IceRenderContext* rContext, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size, VkDeviceSize _offsets /*= 0*/)
 {
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -84,8 +119,8 @@ void CopyBuffer(IceRenderContext* rContext, VkBuffer _src, VkBuffer _dst, VkDevi
 
   VkBufferCopy region = {};
   region.size = _size;
-  region.dstOffset = 0;
-  region.srcOffset = 0;
+  region.dstOffset = _offsets;
+  region.srcOffset = _offsets;
 
   vkCmdCopyBuffer(transferCommand, _src, _dst, 1, &region);
 

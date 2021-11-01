@@ -103,6 +103,7 @@
     <ClInclude Include="src\renderer\buffer.h" />
     <ClInclude Include="src\renderer\material.h" />
     <ClInclude Include="src\renderer\shader.h" />
+    <ClInclude Include="src\renderer\shader_parameters.h" />
     <ClInclude Include="src\renderer\vulkan\vulkan_buffer.h" />
     <ClInclude Include="src\platform\file_system.h" />
     <ClInclude Include="src\renderer\mesh.h" />

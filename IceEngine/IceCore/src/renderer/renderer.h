@@ -50,6 +50,11 @@ public:
                   std::vector<IceShaderStageFlags> _shaderStages,
                   std::vector<const char*> _texStrings,
                   IceFlag _renderSettings = 0);
+  void UpdateMaterialBuffer(u32 _material,
+                             void* _userData,
+                             IceShaderBufferParameterFlags _userParameterFlags);
+  void UpdateMaterialImages(u32 _material,
+                             std::vector<iceImage_t*> _images);
 
 
   u32 CreateMesh(const char* _model);

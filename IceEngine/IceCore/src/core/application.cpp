@@ -213,3 +213,15 @@ u32 IceApplication::GetMaterialIndex(std::vector<const char*> _shaderNames,
 {
   return renderer->GetMaterial(_shaderNames, _shaderStages, _texStrings, _renderSettings);
 }
+
+void IceApplication::MaterialUpdateBuffer(u32 _material,
+                                           void* _userData,
+                                           IceShaderBufferParameterFlags _userParameterFlags)
+{
+  renderer->UpdateMaterialBuffer(_material, _userData, _userParameterFlags);
+}
+
+void IceApplication::MaterialUpdateTextures(u32 _material, std::vector<const char*> _textureNames)
+{
+  //renderer->UpdateMaterialImages(_material, _textureNames);
+}
