@@ -18,7 +18,8 @@ class IvkMaterial_T : public IceMaterial_T
 {
 private:
   VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-  VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+  std::vector<VkDescriptorSetLayout> dSetLayouts;
+  std::vector<VkDescriptorSet> descriptorSets;
   VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
   VkPipeline pipeline = VK_NULL_HANDLE;
 
@@ -30,13 +31,14 @@ public:
   // Initializes all components required to use in rendering
   void Initialize(IceRenderContext* _rContext,
                   const std::vector<const char*> _shaderNames,
-                  const std::vector<IceShaderStageFlags> _shaderStages) override;
+                  const std::vector<IceShaderStageFlags> _shaderStages,
+                  std::vector<iceImage_t*> _images = {}) override;
   // Destroys its rendering components
   void Shutdown(IceRenderContext* _rContext) override;
-  // Destroys components that may change at runtime
-  void DestroyFragileComponents(IceRenderContext* _rContext);
-  // Creates components that may change at runtime
-  void CreateFragileComponents(IceRenderContext* _rContext);
+  // Pipeline components separated as they may change at runtime
+  void DestroyPipelineComponents(IceRenderContext* _rContext);
+  // Pipeline components separated as they may change at runtime
+  void CreatePipelineComponents(IceRenderContext* _rContext);
   // Reloads shader source code if changes were made since loading
   void UpdateSources(IceRenderContext* _rContext);
 
@@ -46,9 +48,7 @@ public:
                     void* _userData) override;
   // Binds the data and images to update the descriptor set
   void UpdateImages(IceRenderContext* _rContext,
-                     std::vector<iceImage_t*> _images,
-                     void* _userData,
-                     IceShaderBufferParameterFlags _userParameterFlags) override;
+                     std::vector<iceImage_t*> _images) override;
   // Records commands on how to render this material
   void Render(VkCommandBuffer& _command, const void* _modelMatrix, const void* _viewProjMatrix);
 
@@ -64,7 +64,7 @@ private:
 
   void CreateDescriptorSetLayout(IceRenderContext* _rContext,
                                  const std::vector<IvkShader>& _shaders);
-  void CreateDescriptorSet(IceRenderContext* _rContext);
+  void CreateDescriptorSets(IceRenderContext* _rContext);
   void CreatePipelineLayout(IceRenderContext* _rContext);
   void CreatePipeline(IceRenderContext* _rContext, std::vector<IvkShader> _shaders);
 

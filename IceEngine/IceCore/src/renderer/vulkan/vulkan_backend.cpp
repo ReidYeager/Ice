@@ -330,14 +330,14 @@ void VulkanBackend::RecreateFragileComponents()
   DestroyFragileComponents();
   for (IceMaterial mat : materials)
   {
-    ((IvkMaterial_T*)mat)->DestroyFragileComponents(rContext);
+    ((IvkMaterial_T*)mat)->DestroyPipelineComponents(rContext);
   }
   // Refresh device information
   FillPhysicalDeviceInformation();
   CreateFragileComponents();
   for (IceMaterial mat : materials)
   {
-    ((IvkMaterial_T*)mat)->CreateFragileComponents(rContext);
+    ((IvkMaterial_T*)mat)->CreatePipelineComponents(rContext);
   }
 }
 
@@ -444,7 +444,7 @@ void VulkanBackend::CreateDescriptorPool()
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   createInfo.poolSizeCount = 2;
   createInfo.pPoolSizes = poolSizes;
-  createInfo.maxSets = 3;
+  createInfo.maxSets = 16; // Max total shaders across all material instances
 
   IVK_ASSERT(vkCreateDescriptorPool(rContext->device,
                                     &createInfo,

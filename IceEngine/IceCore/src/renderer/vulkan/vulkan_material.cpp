@@ -15,22 +15,24 @@
 
 void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
                                const std::vector<const char*> _shaderNames,
-                               const std::vector<IceShaderStageFlags> _shaderStages)
+                               const std::vector<IceShaderStageFlags> _shaderStages,
+                               std::vector<iceImage_t*> _images /*= {}*/)
 {
   IceLogDebug("Creating material");
   info.sourceNames = _shaderNames;
   info.sourceStages = _shaderStages;
 
-  // Create components
+  // Load the shaders and fill their bindings
   shaders = GetShaders(_rContext);
 
+  // Define descriptor set
   CreateDescriptorSetLayout(_rContext, shaders);
-  CreateDescriptorSet(_rContext);
+  CreateDescriptorSets(_rContext);
 
-  CreateFragileComponents(_rContext);
+  // Binds any included images, and updates the descriptor sets
+  UpdateImages(_rContext, _images);
 
-  // Forces an update of the the descriptor set
-  UpdateImages(_rContext, {}, nullptr, 0);
+  CreatePipelineComponents(_rContext);
 
   IceLogDebug("Material created");
 }
@@ -39,8 +41,15 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
 {
   IceLogDebug("Destroying material");
 
-  DestroyFragileComponents(_rContext);
-  vkDestroyDescriptorSetLayout(_rContext->device, descriptorSetLayout, _rContext->allocator);
+  DestroyPipelineComponents(_rContext);
+
+  // NOTE : This does not remove descriptor sets from the descriptor pool
+  //        If materials are re-loaded enough times, the max-sets will be reached
+  //        This will trigger a breakpoint at "vkAllocateDescriptorSets" on material re-creation
+  for (VkDescriptorSetLayout& dsLayout : dSetLayouts)
+  {
+    vkDestroyDescriptorSetLayout(_rContext->device, dsLayout, _rContext->allocator);
+  }
 
   // Clear shader modules
   for (IvkShader s : shaders)
@@ -54,15 +63,16 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
     buffer->Free(_rContext);
     delete(buffer);
   }
+  shaderBuffers.clear();
 }
 
-void IvkMaterial_T::DestroyFragileComponents(IceRenderContext* _rContext)
+void IvkMaterial_T::DestroyPipelineComponents(IceRenderContext* _rContext)
 {
   vkDestroyPipeline(_rContext->device, pipeline, _rContext->allocator);
   vkDestroyPipelineLayout(_rContext->device, pipelineLayout, _rContext->allocator);
 }
 
-void IvkMaterial_T::CreateFragileComponents(IceRenderContext* _rContext)
+void IvkMaterial_T::CreatePipelineComponents(IceRenderContext* _rContext)
 {
   CreatePipelineLayout(_rContext);
   CreatePipeline(_rContext, shaders);
@@ -113,16 +123,9 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
   if (shouldUpdate)
   {
     vkDeviceWaitIdle(_rContext->device);
-    DestroyFragileComponents(_rContext);
 
-    for (IvkShader s : shaders)
-    {
-      vkDestroyShaderModule(_rContext->device, s.module, _rContext->allocator);
-    }
-    shaders.clear();
-    shaders = GetShaders(_rContext);
-
-    CreateFragileComponents(_rContext);
+    Shutdown(_rContext);
+    Initialize(_rContext, info.sourceNames, info.sourceStages, info.textures);
   }
 }
 
@@ -138,6 +141,9 @@ void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext,
       break;
   }
 
+  IceShaderBufferParameterFlags params = shaders[i].bufferParameters;
+  i = shaders[i].bufferIndex;
+
   if (i >= shaderBuffers.size())
     return;
 
@@ -145,61 +151,87 @@ void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext,
   if (_userData != nullptr)
   {
     // Update selected user parameters
-    FillShaderBuffer(_rContext, shaderBuffers[i], _userData, _userParameterFlags, shaders[i].bufferParameters);
+    FillShaderBuffer(_rContext, shaderBuffers[i], _userData, _userParameterFlags, params);
   }
 }
 
 void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext,
-                                  std::vector<iceImage_t*> _images,
-                                  void* _userData,
-                                  IceShaderBufferParameterFlags _userParameterFlags)
+                                  std::vector<iceImage_t*> _images)
 {
   u64 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
   u64 bufferCount = shaderBuffers.size();
   std::vector<VkWriteDescriptorSet> writeSets(imageCount + bufferCount);
   std::vector<VkDescriptorBufferInfo> bufferInfos(bufferCount);
   std::vector<VkDescriptorImageInfo> imageInfos(imageCount);
+
+  u32 bufferIndex = 0;
   u32 writeIndex = 0;
+  u32 bindIndex = 0;
   u32 imageIndex = 0;
 
   // TODO : ~!!~ Push renderer information to the respective parameters
   //        As a test: send the VP matrix via only parameters
 
-  for (u32 bufferIndex = 0; bufferIndex < bufferCount; bufferIndex++, writeIndex++)
+  u32 setIndex = 0;
+  for (IvkShader const& shader : shaders)
   {
-    // Bind the buffer
-    bufferInfos[bufferIndex].buffer = shaderBuffers[bufferIndex]->GetBuffer();
-    bufferInfos[bufferIndex].offset = 0;
-    bufferInfos[bufferIndex].range = VK_WHOLE_SIZE;
+    bindIndex = 0;
 
-    writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeSets[writeIndex].dstSet = descriptorSet;
-    writeSets[writeIndex].dstBinding = writeIndex;
-    writeSets[writeIndex].dstArrayElement = 0;
-    writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writeSets[writeIndex].descriptorCount = 1;
-    writeSets[writeIndex].pBufferInfo = &bufferInfos[bufferIndex];
-    writeSets[writeIndex].pImageInfo = nullptr;
-    writeSets[writeIndex].pTexelBufferView = nullptr;
-  }
+    for (IceShaderBinding bindingType : shader.bindings)
+    {
+      switch (bindingType)
+      {
+      case Ice_Shader_Binding_Buffer:
+      {
+        bufferInfos[bufferIndex].buffer = shaderBuffers[shader.bufferIndex]->GetBuffer();
+        bufferInfos[bufferIndex].offset = 0;
+        bufferInfos[bufferIndex].range = VK_WHOLE_SIZE;
 
-  // Bind the images
-  for (u32 imageIndex = 0; imageIndex < imageCount; imageIndex++, writeIndex++)
-  {
-    info.textures[imageIndex] = _images[imageIndex];
-    imageInfos[imageIndex].imageLayout = info.textures[imageIndex]->layout;
-    imageInfos[imageIndex].imageView = info.textures[imageIndex]->view;
-    imageInfos[imageIndex].sampler = info.textures[imageIndex]->sampler;
+        writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeSets[writeIndex].dstSet = descriptorSets[setIndex];
+        writeSets[writeIndex].dstBinding = bindIndex;
+        writeSets[writeIndex].dstArrayElement = 0;
+        writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writeSets[writeIndex].descriptorCount = 1;
+        writeSets[writeIndex].pBufferInfo = &bufferInfos[bufferIndex];
+        writeSets[writeIndex].pImageInfo = nullptr;
+        writeSets[writeIndex].pTexelBufferView = nullptr;
 
-    writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeSets[writeIndex].dstSet = descriptorSet;
-    writeSets[writeIndex].dstBinding = writeIndex;
-    writeSets[writeIndex].dstArrayElement = 0;
-    writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writeSets[writeIndex].descriptorCount = 1;
-    writeSets[writeIndex].pBufferInfo = nullptr;
-    writeSets[writeIndex].pImageInfo = &imageInfos[imageIndex];
-    writeSets[writeIndex].pTexelBufferView = nullptr;
+        bufferIndex++;
+        break;
+      }
+      case Ice_Shader_Binding_Image:
+      {
+        if (_images.size() == 0)
+          break;
+
+        info.textures[imageIndex] = _images[imageIndex];
+        imageInfos[imageIndex].imageLayout = info.textures[imageIndex]->layout;
+        imageInfos[imageIndex].imageView = info.textures[imageIndex]->view;
+        imageInfos[imageIndex].sampler = info.textures[imageIndex]->sampler;
+
+        writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeSets[writeIndex].dstSet = descriptorSets[setIndex];
+        writeSets[writeIndex].dstBinding = bindIndex;
+        writeSets[writeIndex].dstArrayElement = 0;
+        writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writeSets[writeIndex].descriptorCount = 1;
+        writeSets[writeIndex].pBufferInfo = nullptr;
+        writeSets[writeIndex].pImageInfo = &imageInfos[imageIndex];
+        writeSets[writeIndex].pTexelBufferView = nullptr;
+
+        imageIndex++;
+        break;
+      }
+      default:
+        break;
+      }
+
+      bindIndex++;
+      writeIndex++;
+    }
+
+    setIndex++;
   }
 
   vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
@@ -216,8 +248,8 @@ void IvkMaterial_T::Render(VkCommandBuffer& _command,
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipelineLayout,
                           0,
-                          1,
-                          &descriptorSet,
+                          descriptorSets.size(),
+                          descriptorSets.data(),
                           0,
                           nullptr);
   vkCmdPushConstants(_command, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 64, _modelMatrix);
@@ -292,14 +324,17 @@ IvkShader IvkMaterial_T::LoadShader(IceRenderContext* _rContext,
     RequiredBuffers &= RequiredBuffers - 1;
   }
 
+  shader.bufferIndex = -1;
   if (size > 0)
   {
     IceBuffer sb = new IvkBuffer(_rContext,
                                  size * 16,
                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-      shaderBuffers.push_back(sb);
+
+    shader.bufferIndex = (u32)shaderBuffers.size();
+    shaderBuffers.push_back(sb);
   }
 
   // Set last modified time
@@ -514,18 +549,25 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
 {
   u32 bindingIndex = 0;
   u32 imageCount = 0;
-  std::vector<VkDescriptorSetLayoutBinding> stageBindings;
+  std::vector<std::vector<VkDescriptorSetLayoutBinding>> shaderBindings(info.sourceNames.size());
   VkDescriptorSetLayoutBinding binding{};
   binding.descriptorCount = 1;
   binding.pImmutableSamplers = nullptr;
 
-  u32 nameint = 0;
+  u32 shaderIndex = 0;
+
+  std::vector<VkDescriptorSetLayoutCreateInfo> createInfos(info.sourceNames.size());
+  dSetLayouts.resize(info.sourceNames.size());
 
   // Add shader bindings from all the program's shaders
   for (const auto& shader : _shaders)
   {
-    IceLogError("%s", info.sourceNames[nameint++]);
+    IceLogDebug("%s", info.sourceNames[shaderIndex]);
     u32 shaderBufferBindings = 0;
+    bindingIndex = 0;
+    //shaderBindings[shaderIndex].clear();
+
+    std::vector<VkDescriptorSetLayoutBinding>& shaderBinding = shaderBindings[shaderIndex];
 
     binding.stageFlags = ivkShaderStage(shader.stage);
     for (u32 i = 0; i < shader.bindings.size(); i++)
@@ -533,46 +575,47 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
       switch (shader.bindings[i])
       {
       case Ice_Shader_Binding_Buffer:
-        IceLogDebug("Buffer");
+        IceLogInfo("Buffer");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         break;
       case Ice_Shader_Binding_Image:
-        IceLogDebug("Image");
+        IceLogInfo("Image");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         imageCount++;
         break;
       }
 
       binding.binding = bindingIndex++;
-      stageBindings.push_back(binding);
+      shaderBinding.push_back(binding);
       info.bindings.push_back(shader.bindings[i]);
     }
+
+    createInfos[shaderIndex].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    createInfos[shaderIndex].bindingCount = static_cast<uint32_t>(shaderBinding.size());
+    createInfos[shaderIndex].pBindings = shaderBinding.data();
+
+    IVK_ASSERT(vkCreateDescriptorSetLayout(_rContext->device,
+                                           &createInfos[shaderIndex],
+                                           _rContext->allocator,
+                                           &dSetLayouts[shaderIndex]),
+                                           "Failed to create descriptor set layout");
+
+    shaderIndex++;
   }
-  IceLogError("End shader descriptors");
-
   info.textures.resize(imageCount);
-
-  VkDescriptorSetLayoutCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  createInfo.bindingCount = static_cast<uint32_t>(stageBindings.size());
-  createInfo.pBindings = stageBindings.data();
-
-  IVK_ASSERT(vkCreateDescriptorSetLayout(_rContext->device,
-                                         &createInfo,
-                                         _rContext->allocator,
-                                         &descriptorSetLayout),
-             "Failed to create descriptor set layout");
 }
 
-void IvkMaterial_T::CreateDescriptorSet(IceRenderContext* _rContext)
+void IvkMaterial_T::CreateDescriptorSets(IceRenderContext* _rContext)
 {
   VkDescriptorSetAllocateInfo allocInfo {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = _rContext->descriptorPool;
-  allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &descriptorSetLayout;
+  allocInfo.descriptorSetCount = dSetLayouts.size(); // Create a set for each shader
+  allocInfo.pSetLayouts = dSetLayouts.data();
 
-  IVK_ASSERT(vkAllocateDescriptorSets(_rContext->device, &allocInfo, &descriptorSet),
+  descriptorSets.resize(dSetLayouts.size());
+
+  IVK_ASSERT(vkAllocateDescriptorSets(_rContext->device, &allocInfo, descriptorSets.data()),
              "Failed to allocate descriptor set");
 }
 
@@ -585,13 +628,15 @@ void IvkMaterial_T::CreatePipelineLayout(IceRenderContext* _rContext)
 
   VkPipelineLayoutCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  createInfo.setLayoutCount = 1;
-  createInfo.pSetLayouts = &descriptorSetLayout;
+  createInfo.setLayoutCount = dSetLayouts.size();
+  createInfo.pSetLayouts = dSetLayouts.data();
   createInfo.pushConstantRangeCount = 1;
   createInfo.pPushConstantRanges = &mvpMatricesPushConstant;
 
-  IVK_ASSERT(vkCreatePipelineLayout(
-                 _rContext->device, &createInfo, _rContext->allocator, &pipelineLayout),
+  IVK_ASSERT(vkCreatePipelineLayout(_rContext->device,
+                                    &createInfo,
+                                    _rContext->allocator,
+                                    &pipelineLayout),
              "Failed to create pipeline layout");
 }
 

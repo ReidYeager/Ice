@@ -15,6 +15,7 @@ struct IvkShader
   IceShaderStageFlags stage;
   VkShaderModule module;
   std::vector<IceShaderBinding> bindings;
+  u32 bufferIndex;
   IceShaderBufferParameterFlags bufferParameters;
   IceShaderImageParameterFlags imageParameters;
 };

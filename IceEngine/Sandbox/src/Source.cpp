@@ -17,13 +17,13 @@ public:
     IceApplicationDefineChildLoop(loop);
 
     testMat = GetMaterialIndex(
-        { "mvp", "test" },
+        { "bluemvp", "test" },
         { Ice_Shader_Vert, Ice_Shader_Frag },
         { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cactusMesh = GetMeshIndex("BadCactus.obj");
 
     blueMat = GetMaterialIndex(
-      { "bluemvp", "blue" },
+      { "mvp", "blue" },
       { Ice_Shader_Vert, Ice_Shader_Frag },
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cubeMesh = GetMeshIndex("Cube.obj");
@@ -61,7 +61,7 @@ public:
     float sin = glm::sin(time);
     vertdata[1] = *(int*)(&sin);
 
-    MaterialUpdateBuffer(blueMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, vertdata);
+    MaterialUpdateBuffer(testMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, vertdata);
     MaterialUpdateBuffer(blueMat, Ice_Shader_Frag, Ice_Shader_Buffer_Param_User0, fragdata);
 
   }

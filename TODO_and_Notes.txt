@@ -17,4 +17,5 @@
 	Line    15 :--: // NOTE : Delete
 	Line   185 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
-	Line   164 :--: // TODO : ~!!~ Push renderer information to the respective parameters
+	Line    45 :--: // NOTE : This does not remove descriptor sets from the descriptor pool
+	Line   171 :--: // TODO : ~!!~ Push renderer information to the respective parameters

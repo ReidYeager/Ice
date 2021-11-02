@@ -82,8 +82,8 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
 
   material->Initialize(GetContext(),
                        _shaderNames,
-                       _shaderStages);
-  material->UpdateImages(GetContext(), inTextures);
+                       _shaderStages,
+                       inTextures);
   materials.push_back(material);
   backend->AddMaterial(material);
 
