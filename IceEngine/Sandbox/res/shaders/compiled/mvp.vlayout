@@ -1,15 +1,11 @@
-b
-# buffer struct -- spacing for buffer data
+
 buffer {
-    VpMatrix
 }
 
-# Only has 128 bytes guaranteed
+sampler {
+}
+
 push {
     ModelMatrix
+    VpMatrix
 }
-
-# uniforms -- buffer and samplers
-uniforms {
-}
-

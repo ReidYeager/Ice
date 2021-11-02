@@ -1,9 +1,12 @@
-sss
-# buffer struct -- spacing for buffer data
+
 buffer {
 }
 
-# uniforms -- buffer and samplers
-uniforms {
+sampler {
+    User0
+    User1
+    User2
 }
 
+push {
+}

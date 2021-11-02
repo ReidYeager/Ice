@@ -90,9 +90,15 @@ u32 IceRenderer::GetMaterial(std::vector<const char*> _shaderNames,
   return i;
 }
 
-void IceRenderer::UpdateMaterialBuffer(u32 _material, void* _userData, IceShaderBufferParameterFlags _userParameterFlags)
+void IceRenderer::UpdateMaterialBuffer(u32 _material,
+                                       IceShaderStageFlags _stage,
+                                       IceShaderBufferParameterFlags _userParameterFlags,
+                                       void* _userData)
 {
-  materials[_material]->UpdateBuffer(backend->GetContext(), _userData, _userParameterFlags);
+  materials[_material]->UpdateBuffer(backend->GetContext(),
+                                     _stage,
+                                     _userParameterFlags,
+                                     _userData);
 }
 
 void IceRenderer::UpdateMaterialImages(u32 _material, std::vector<iceImage_t*> _images)

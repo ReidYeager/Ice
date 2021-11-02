@@ -51,8 +51,9 @@ public:
                   std::vector<const char*> _texStrings,
                   IceFlag _renderSettings = 0);
   void UpdateMaterialBuffer(u32 _material,
-                             void* _userData,
-                             IceShaderBufferParameterFlags _userParameterFlags);
+                            IceShaderStageFlags _stage,
+                            IceShaderBufferParameterFlags _userParameterFlags,
+                            void* _userData);
   void UpdateMaterialImages(u32 _material,
                              std::vector<iceImage_t*> _images);
 

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <ice.h>
 
+#include <math.h>
+
 class Application : public IceApplication
 {
 private:
@@ -54,10 +56,13 @@ public:
     time += _deltaTime;
 
     float fragdata[4] = { glm::sin(time), 0.0f, 0.0f, 0.0f };
-    float vertdata[4] = {time, glm::sin(time), 0.0f, 0.0f};
+    int vertdata[4] = {glm::floor(time), 0.0f, 0.0f, 0.0f};
 
-    MaterialUpdateBuffer(blueMat, vertdata, Ice_Shader_Param_User1);
-    MaterialUpdateBuffer(blueMat, fragdata, Ice_Shader_Param_User0);
+    float sin = glm::sin(time);
+    vertdata[1] = *(int*)(&sin);
+
+    MaterialUpdateBuffer(blueMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, vertdata);
+    MaterialUpdateBuffer(blueMat, Ice_Shader_Frag, Ice_Shader_Buffer_Param_User0, fragdata);
 
   }
 };

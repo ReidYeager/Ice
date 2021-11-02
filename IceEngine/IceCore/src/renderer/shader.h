@@ -11,7 +11,7 @@ enum IceShaderStageFlagBits
 {
   Ice_Shader_Vert = 0x01, // vertex shader
   Ice_Shader_Frag = 0x02, // fragment shader
-  Ice_Shader_Comp = 0x04  // compute shader
+  Ice_Shader_Comp = 0x04, // compute shader
 };
 typedef IceFlag IceShaderStageFlags;
 
@@ -19,6 +19,7 @@ enum IceShaderBinding
 {
   Ice_Shader_Binding_Buffer,
   Ice_Shader_Binding_Image,
+  Ice_Shader_Binding_PushConstant,
 
   Ice_Shader_Binding_Count,
   Ice_Shader_Binding_Invalid = -1
@@ -32,6 +33,7 @@ struct IceShaderInfo
   IceShaderStageFlags stages;
   std::vector<IceShaderBinding> bindings;
   IceShaderBufferParameterFlags bufferParameterFlags;
+  IceShaderImageParameterFlags imageParameterFlags;
   std::vector<iceImage_t*> textures;
 };
 

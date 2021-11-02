@@ -29,21 +29,6 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
 
   CreateFragileComponents(_rContext);
 
-  // Create a buffer if none exists
-  u64 size;
-  u64 RequiredBuffers = info.bufferParameterFlags;
-  // Count the number of set buffer parameter flags
-  for (size = 0; RequiredBuffers; size++)
-  {
-    RequiredBuffers &= RequiredBuffers - 1;
-  }
-
-  materialBuffer = new IvkBuffer(_rContext,
-                                 size * 16,
-                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
   // Forces an update of the the descriptor set
   UpdateImages(_rContext, {}, nullptr, 0);
 
@@ -64,10 +49,10 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
   }
   shaders.clear();
 
-  if (materialBuffer != nullptr)
+  for (IceBuffer& buffer : shaderBuffers)
   {
-    materialBuffer->Free(_rContext);
-    delete(materialBuffer);
+    buffer->Free(_rContext);
+    delete(buffer);
   }
 }
 
@@ -141,13 +126,26 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
   }
 }
 
-void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext, void* _userData, IceShaderBufferParameterFlags _userParameterFlags)
+void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext,
+                                 IceShaderStageFlags _stage,
+                                 IceShaderBufferParameterFlags _userParameterFlags,
+                                 void* _userData)
 {
+  u32 i;
+  for (i = 0; i < 3; i++)
+  {
+    if ((1 << i) == _stage)
+      break;
+  }
+
+  if (i >= shaderBuffers.size())
+    return;
+
   // Update user data
   if (_userData != nullptr)
   {
     // Update selected user parameters
-    FillShaderBuffer(_rContext, materialBuffer, _userData, _userParameterFlags, info.bufferParameterFlags);
+    FillShaderBuffer(_rContext, shaderBuffers[i], _userData, _userParameterFlags, shaders[i].bufferParameters);
   }
 }
 
@@ -157,32 +155,33 @@ void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext,
                                   IceShaderBufferParameterFlags _userParameterFlags)
 {
   u64 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();
-  std::vector<VkWriteDescriptorSet> writeSets(imageCount + 1);
+  u64 bufferCount = shaderBuffers.size();
+  std::vector<VkWriteDescriptorSet> writeSets(imageCount + bufferCount);
+  std::vector<VkDescriptorBufferInfo> bufferInfos(bufferCount);
   std::vector<VkDescriptorImageInfo> imageInfos(imageCount);
   u32 writeIndex = 0;
   u32 imageIndex = 0;
 
-  // Update user data
-  UpdateBuffer(_rContext, _userData, _userParameterFlags);
+  // TODO : ~!!~ Push renderer information to the respective parameters
+  //        As a test: send the VP matrix via only parameters
 
-  // Update non-user parameters
+  for (u32 bufferIndex = 0; bufferIndex < bufferCount; bufferIndex++, writeIndex++)
+  {
+    // Bind the buffer
+    bufferInfos[bufferIndex].buffer = shaderBuffers[bufferIndex]->GetBuffer();
+    bufferInfos[bufferIndex].offset = 0;
+    bufferInfos[bufferIndex].range = VK_WHOLE_SIZE;
 
-  // Bind the buffer
-  VkDescriptorBufferInfo bufferInfo{};
-  bufferInfo.buffer = materialBuffer->GetBuffer();
-  bufferInfo.offset = 0;
-  bufferInfo.range = VK_WHOLE_SIZE;
-
-  writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeSets[writeIndex].dstSet = descriptorSet;
-  writeSets[writeIndex].dstBinding = writeIndex;
-  writeSets[writeIndex].dstArrayElement = 0;
-  writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  writeSets[writeIndex].descriptorCount = 1;
-  writeSets[writeIndex].pBufferInfo = &bufferInfo;
-  writeSets[writeIndex].pImageInfo = nullptr;
-  writeSets[writeIndex].pTexelBufferView = nullptr;
-  writeIndex++;
+    writeSets[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeSets[writeIndex].dstSet = descriptorSet;
+    writeSets[writeIndex].dstBinding = writeIndex;
+    writeSets[writeIndex].dstArrayElement = 0;
+    writeSets[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeSets[writeIndex].descriptorCount = 1;
+    writeSets[writeIndex].pBufferInfo = &bufferInfos[bufferIndex];
+    writeSets[writeIndex].pImageInfo = nullptr;
+    writeSets[writeIndex].pTexelBufferView = nullptr;
+  }
 
   // Bind the images
   for (u32 imageIndex = 0; imageIndex < imageCount; imageIndex++, writeIndex++)
@@ -201,8 +200,6 @@ void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext,
     writeSets[writeIndex].pBufferInfo = nullptr;
     writeSets[writeIndex].pImageInfo = &imageInfos[imageIndex];
     writeSets[writeIndex].pTexelBufferView = nullptr;
-
-    //writeIndex++;
   }
 
   vkUpdateDescriptorSets(_rContext->device, (u32)writeSets.size(), writeSets.data(), 0, nullptr);
@@ -286,6 +283,25 @@ IvkShader IvkMaterial_T::LoadShader(IceRenderContext* _rContext,
   FillShaderBindings(shader, layoutDir.c_str());
   shader.stage = _stage;
 
+  // Create buffer based on required buffer parameters
+  u64 size;
+  u64 RequiredBuffers = shader.bufferParameters;
+  // Count the number of set buffer parameter flags
+  for (size = 0; RequiredBuffers; size++)
+  {
+    RequiredBuffers &= RequiredBuffers - 1;
+  }
+
+  if (size > 0)
+  {
+    IceBuffer sb = new IvkBuffer(_rContext,
+                                 size * 16,
+                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      shaderBuffers.push_back(sb);
+  }
+
   // Set last modified time
   struct _stat result;
   if (_stat(shaderDir.c_str(), &result) == 0)
@@ -325,47 +341,57 @@ void SkipWhiteSpace(u64& _place, std::string& _layout)
   }
 }
 
-IceShaderBufferParameterFlags StringToBufferParam(const char* _str)
+IceShaderBufferParameterFlags StringToParam(b8 _isBuffer, const char* _str)
 {
-  if (std::strcmp("ModelMatrix", _str) == 0)
-    return Ice_Shader_Param_ModelMatrix;
-  if (std::strcmp("VpMatrix", _str) == 0)
-    return Ice_Shader_Param_VpMatrix;
-  if (std::strcmp("ViewMatrix", _str) == 0)
-    return Ice_Shader_Param_ViewMatrix;
-  if (std::strcmp("ProjectionMatrix", _str) == 0)
-    return Ice_Shader_Param_ProjectionMatrix;
+  #define STP(string, param)                    \
+  {                                             \
+    if (std::strcmp(string, _str) == 0)  \
+    return param; \
+  }
 
+  if (_isBuffer)
+  {
+    STP("ModelMatrix", Ice_Shader_Buffer_Param_ModelMatrix);
+    STP("VpMatrix", Ice_Shader_Buffer_Param_VpMatrix);
+    STP("ViewMatrix", Ice_Shader_Buffer_Param_ViewMatrix);
+    STP("ProjectionMatrix", Ice_Shader_Buffer_Param_ProjectionMatrix);
 
-  if (std::strcmp("User0", _str) == 0)
-    return Ice_Shader_Param_User0;
-  if (std::strcmp("User1", _str) == 0)
-    return Ice_Shader_Param_User1;
-  if (std::strcmp("User2", _str) == 0)
-    return Ice_Shader_Param_User2;
-  if (std::strcmp("User3", _str) == 0)
-    return Ice_Shader_Param_User3;
-  if (std::strcmp("User4", _str) == 0)
-    return Ice_Shader_Param_User4;
-  if (std::strcmp("User5", _str) == 0)
-    return Ice_Shader_Param_User5;
-  if (std::strcmp("User6", _str) == 0)
-    return Ice_Shader_Param_User6;
-  if (std::strcmp("User7", _str) == 0)
-    return Ice_Shader_Param_User7;
-  if (std::strcmp("User8", _str) == 0)
-    return Ice_Shader_Param_User8;
-  if (std::strcmp("User9", _str) == 0)
-    return Ice_Shader_Param_User9;
-  if (std::strcmp("User10", _str) == 0)
-    return Ice_Shader_Param_User10;
-  if (std::strcmp("User11", _str) == 0)
-    return Ice_Shader_Param_User11;
+    STP("User0", Ice_Shader_Buffer_Param_User0);
+    STP("User1", Ice_Shader_Buffer_Param_User1);
+    STP("User2", Ice_Shader_Buffer_Param_User2);
+    STP("User3", Ice_Shader_Buffer_Param_User3);
+    STP("User4", Ice_Shader_Buffer_Param_User4);
+    STP("User5", Ice_Shader_Buffer_Param_User5);
+    STP("User6", Ice_Shader_Buffer_Param_User6);
+    STP("User7", Ice_Shader_Buffer_Param_User7);
+    STP("User8", Ice_Shader_Buffer_Param_User8);
+    STP("User9", Ice_Shader_Buffer_Param_User9);
+    STP("User10", Ice_Shader_Buffer_Param_User10);
+    STP("User11", Ice_Shader_Buffer_Param_User11);
+  }
+  else
+  {
+    STP("DepthImage", Ice_Shader_Image_Param_DepthImage);
+    STP("User0", Ice_Shader_Image_Param_User0);
+    STP("User1", Ice_Shader_Image_Param_User1);
+    STP("User2", Ice_Shader_Image_Param_User2);
+    STP("User3", Ice_Shader_Image_Param_User3);
+    STP("User4", Ice_Shader_Image_Param_User4);
+    STP("User5", Ice_Shader_Image_Param_User5);
+    STP("User6", Ice_Shader_Image_Param_User6);
+    STP("User7", Ice_Shader_Image_Param_User7);
+    STP("User8", Ice_Shader_Image_Param_User8);
+    STP("User9", Ice_Shader_Image_Param_User9);
+  }
+
+  #undef STP
 
   return 0;
 }
 
-IceShaderBufferParameterFlags GetNextBufferParameter(u64& _place, std::string& _layout)
+IceShaderBufferParameterFlags GetNextBufferParameter(b8 _isBuffer,
+                                                     u64& _place,
+                                                     std::string& _layout)
 {
   SkipWhiteSpace(_place, _layout);
 
@@ -381,10 +407,10 @@ IceShaderBufferParameterFlags GetNextBufferParameter(u64& _place, std::string& _
     _place++;
   }
 
-  return StringToBufferParam(_layout.substr(start, _place - start).c_str());
+  return StringToParam(_isBuffer, _layout.substr(start, _place - start).c_str());
 }
 
-IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _layout)
+IceShaderBufferParameterFlags GetShaderParameters(b8 _isBuffer, u64& _place, std::string& _layout, std::vector<IceShaderBinding>& _bindings)
 {
   while (_place < _layout.length() && _layout[_place] != '{')
   {
@@ -396,7 +422,13 @@ IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _lay
 
   while (_place < _layout.length() && _layout[_place] != '}')
   {
-    requiredParameters |= GetNextBufferParameter(_place, _layout);
+    IceShaderBufferParameterFlags newParam = GetNextBufferParameter(_isBuffer, _place, _layout);
+    requiredParameters |= newParam;
+
+    if (newParam)
+    {
+      _bindings.push_back((_isBuffer ? Ice_Shader_Binding_Buffer : Ice_Shader_Binding_Image));
+    }
   }
 
   return requiredParameters;
@@ -404,7 +436,9 @@ IceShaderBufferParameterFlags GetBufferParameters(u64& _place, std::string& _lay
 
 IceShaderBinding GetNextBinding(u64& _place,
                                 std::string& _layout,
-                                IceShaderBufferParameterFlags& _parameters)
+                                std::vector<IceShaderBinding>& _bindings,
+                                IceShaderBufferParameterFlags& _bufferParameters,
+                                IceShaderImageParameterFlags& _imageParameters)
 {
   SkipWhiteSpace(_place, _layout);
   assert(_place < _layout.size());
@@ -414,15 +448,22 @@ IceShaderBinding GetNextBinding(u64& _place,
   {
   case 'b':
   {
-    _parameters = GetBufferParameters(_place, _layout);
+    _bufferParameters = GetShaderParameters(true, _place, _layout, _bindings);
     _place++;
     return Ice_Shader_Binding_Buffer;
   }
   case 's':
   {
+    _imageParameters = GetShaderParameters(false, _place, _layout, _bindings);
     _place++;
     return Ice_Shader_Binding_Image;
   }
+  //case 'p':
+  //{
+  //  _bufferParameters = GetShaderParameters(true, _place, _layout); // Replace with pushParameters
+  //  _place++;
+  //  return Ice_Shader_Binding_PushConstant;
+  //}
   }
   _place++;
 
@@ -440,11 +481,15 @@ void IvkMaterial_T::FillShaderBindings(IvkShader& _shader, const char* _director
   IceShaderBufferParameterFlags bufferParameters = 0;
   u64 place = 0;
 
-  while ((bindInput = GetNextBinding(place, layout, info.bufferParameterFlags)) !=
+  while ((bindInput = GetNextBinding(place,
+                                     layout,
+                                     _shader.bindings,
+                                     _shader.bufferParameters,
+                                     _shader.imageParameters)) !=
          Ice_Shader_Binding_Invalid)
   {
-    
-    _shader.bindings.push_back(bindInput);
+    info.bufferParameterFlags |= _shader.bufferParameters;
+    info.imageParameterFlags |= _shader.imageParameters;
   }
 }
 
@@ -477,14 +522,15 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
   u32 nameint = 0;
 
   // Add shader bindings from all the program's shaders
-  for (const auto& s : _shaders)
+  for (const auto& shader : _shaders)
   {
     IceLogError("%s", info.sourceNames[nameint++]);
+    u32 shaderBufferBindings = 0;
 
-    binding.stageFlags = ivkShaderStage(s.stage);
-    for (u32 i = 0; i < s.bindings.size(); i++)
+    binding.stageFlags = ivkShaderStage(shader.stage);
+    for (u32 i = 0; i < shader.bindings.size(); i++)
     {
-      switch (s.bindings[i])
+      switch (shader.bindings[i])
       {
       case Ice_Shader_Binding_Buffer:
         IceLogDebug("Buffer");
@@ -499,7 +545,7 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
 
       binding.binding = bindingIndex++;
       stageBindings.push_back(binding);
-      info.bindings.push_back(s.bindings[i]);
+      info.bindings.push_back(shader.bindings[i]);
     }
   }
   IceLogError("End shader descriptors");

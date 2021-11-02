@@ -25,8 +25,9 @@ public:
   virtual void Shutdown(IceRenderContext* _rContext) = 0;
 
   virtual void UpdateBuffer(IceRenderContext* _rContext,
-                            void* _userData,
-                            IceShaderBufferParameterFlags _userParameterFlags) = 0;
+                            IceShaderStageFlags _stage,
+                            IceShaderBufferParameterFlags _userParameterFlags,
+                            void* _userData) = 0;
   virtual void UpdateImages(IceRenderContext* _rContext,
                              std::vector<iceImage_t*> _images,
                              void* _userData,

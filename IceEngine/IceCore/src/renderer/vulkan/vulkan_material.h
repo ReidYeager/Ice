@@ -41,8 +41,9 @@ public:
   void UpdateSources(IceRenderContext* _rContext);
 
   void UpdateBuffer(IceRenderContext* _rContext,
-                    void* _userData,
-                    IceShaderBufferParameterFlags _userParameterFlags) override;
+                    IceShaderStageFlags _stage,
+                    IceShaderBufferParameterFlags _userParameterFlags,
+                    void* _userData) override;
   // Binds the data and images to update the descriptor set
   void UpdateImages(IceRenderContext* _rContext,
                      std::vector<iceImage_t*> _images,

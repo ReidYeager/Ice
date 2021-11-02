@@ -63,8 +63,9 @@ protected:
       std::vector<const char*> _texStrings,           // Texture directories to use (if any)
       IceFlag _renderSettings = 0);                   // Render pipeline settings
   void MaterialUpdateBuffer(u32 _material,
-                            void* _userData,
-                            IceShaderBufferParameterFlags _userParameterFlags);
+                            IceShaderStageFlags _stage,
+                            IceShaderBufferParameterFlags _userParameterFlags,
+                            void* _userData);
   void MaterialUpdateTextures(u32 _material,
                               std::vector<const char*> _textureNames);
 
