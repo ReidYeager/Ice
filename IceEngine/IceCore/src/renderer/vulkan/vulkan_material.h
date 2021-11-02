@@ -30,8 +30,7 @@ public:
   // Initializes all components required to use in rendering
   void Initialize(IceRenderContext* _rContext,
                   const std::vector<const char*> _shaderNames,
-                  const std::vector<IceShaderStageFlags> _shaderStages,
-                  IceBuffer _buffer = nullptr) override;
+                  const std::vector<IceShaderStageFlags> _shaderStages) override;
   // Destroys its rendering components
   void Shutdown(IceRenderContext* _rContext) override;
   // Destroys components that may change at runtime

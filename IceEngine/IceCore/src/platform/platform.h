@@ -67,7 +67,7 @@ public:
   // Frees allocated memory
   static void FreeMem(void* _memory);
   // Sets an entire block of memory to _value
-  static void SetMem(void* _memory, u64 _size, u64 _value);
+  static void SetMem(void* _memory, u64 _size, u32 _value);
   // Sets a block of memory to 0
   static void ZeroMem(void* _memory, u64 _size);
   // Copies data from _src to _dst

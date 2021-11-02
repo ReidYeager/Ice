@@ -6,7 +6,7 @@ IvkBuffer::~IvkBuffer()
 {
   if (buffer != VK_NULL_HANDLE)
   {
-    LogError("Failed to free buffer of size %u", size);
+    IceLogError("Failed to free buffer of size %u", size);
   }
 }
 
@@ -86,7 +86,7 @@ u32 IvkBuffer::FindMemoryTypeIndex(IceRenderContext* _rContext,
     }
   }
 
-  LogInfo("Failed to find a suitable memory type");
+  IceLogInfo("Failed to find a suitable memory type");
   return -1;
 }
 

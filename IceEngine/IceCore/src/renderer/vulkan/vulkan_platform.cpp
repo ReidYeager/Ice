@@ -46,7 +46,7 @@ VkExtent2D VulkanBackend::GetWindowExtent()
 
   if (!GetWindowRect(ServiceHub::GetPlatform()->state.localState.hwnd, &rect))
   {
-    LogError("Failed to get window rect");
+    IceLogError("Failed to get window rect");
     return rContext->renderExtent;
   }
   else
@@ -78,7 +78,7 @@ VkExtent2D VulkanBackend::GetWindowExtent()
                                capabilities.maxImageExtent.height);
   }
 
-  LogInfo("Renderer : Window at (%u, %u)", extent.width, extent.height);
+  IceLogInfo("Renderer : Window at (%u, %u)", extent.width, extent.height);
   return extent;
 }
 
@@ -91,7 +91,7 @@ void VulkanBackend::GetRequiredPlatformExtensions(std::vector<const char*>& _ext
 
 void VulkanBackend::CreateSurface()
 {
-  LogFatal("This platform is unsupported");
+  IceLogFatal("This platform is unsupported");
 }
 
 VkExtent2D VulkanBackend::GetWindowExtent()

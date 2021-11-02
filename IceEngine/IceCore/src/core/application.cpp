@@ -36,7 +36,7 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
 
 void IceApplication::Initialize()
 {
-  LogInfo("ICE INIT =================================================");
+  IceLogInfo("ICE INIT =================================================");
 
   // Create components
   platform = new IcePlatform();
@@ -82,7 +82,7 @@ void IceApplication::MainLoop()
   float fpsPrintFrequency = 1.0f;  // Seconds
   fpsPrintFrequency *= 1000000.0f; // To microseconds
 
-  LogInfo("ICE LOOP =================================================");
+  IceLogInfo("ICE LOOP =================================================");
   while (platform->Update())
   {
     start = end;
@@ -112,9 +112,9 @@ void IceApplication::MainLoop()
       cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
 
     if (Input.OnKeyPressed(Ice_Key_K))
-      LogDebug("TEST KEY PRESS ------------------------");
+      IceLogDebug("TEST KEY PRESS ------------------------");
     if (Input.OnKeyReleased(Ice_Key_K))
-      LogDebug("TEST KEY RELEASE ----------------------");
+      IceLogDebug("TEST KEY RELEASE ----------------------");
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
     renderPacket.projectionMatrix = cam.GetProjectionMatrix();
@@ -149,7 +149,7 @@ void IceApplication::MainLoop()
     if (deltasSum >= fpsPrintFrequency)
     {
       float avg = deltasSum / deltasCount;
-      LogInfo(" %8.0f us -- %4.0f fps", avg, 1.0f / (avg * 0.000001f));
+      IceLogInfo(" %8.0f us -- %4.0f fps", avg, 1.0f / (avg * 0.000001f));
 
       deltasSum = 0;
       deltasCount = 0;
@@ -160,7 +160,7 @@ void IceApplication::MainLoop()
 
 void IceApplication::Shutdown()
 {
-  LogInfo("ICE SHUTDOWN =============================================");
+  IceLogInfo("ICE SHUTDOWN =============================================");
   ChildShutdown();
 
   EventManager.Unregister(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);

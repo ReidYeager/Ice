@@ -12,7 +12,7 @@ void IceRenderer::Initialize(IceRenderingAPI _api)
   backend = new VulkanBackend();
   backend->Initialize();
   activeAPI = Vulkan;
-  LogInfo("Initialized Renderer system");
+  IceLogInfo("Initialized Renderer system");
 }
 
 void IceRenderer::Shutdown()
@@ -31,7 +31,7 @@ void IceRenderer::Shutdown()
 
   backend->Shutdown();
   delete(backend);
-  LogInfo("Shutdown Renderer system");
+  IceLogInfo("Shutdown Renderer system");
 }
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)

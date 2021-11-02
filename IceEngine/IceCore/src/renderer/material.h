@@ -16,12 +16,12 @@ class IceMaterial_T
 protected:
   IceShaderInfo info;
   IceBuffer materialBuffer;
+  std::vector<IceBuffer> shaderBuffers;
 
 public:
   virtual void Initialize(IceRenderContext* _rContext,
                           const std::vector<const char*> _shaderNames,
-                          const std::vector<IceShaderStageFlags> _shaderStages,
-                          IceBuffer _buffer = nullptr) = 0;
+                          const std::vector<IceShaderStageFlags> _shaderStages) = 0;
   virtual void Shutdown(IceRenderContext* _rContext) = 0;
 
   virtual void UpdateBuffer(IceRenderContext* _rContext,

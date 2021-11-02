@@ -38,7 +38,7 @@ class RendererBackend
 public:
   virtual void Initialize()
   {
-    LogDebug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    IceLogDebug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
   }
 

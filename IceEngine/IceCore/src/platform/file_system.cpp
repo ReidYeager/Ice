@@ -20,7 +20,7 @@ std::vector<char> FileSystem::LoadFile(const char* _directory)
   inFile.open(_directory, std::ios::ate | std::ios::binary);
   if (!inFile)
   {
-    LogInfo("ERROR :: Failed to load file %s", _directory);
+    IceLogInfo("ERROR :: Failed to load file %s", _directory);
     abort();
   }
 
@@ -45,7 +45,7 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
 
   if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &loadWarnings, &loadErrors, dir.c_str()))
   {
-    LogInfo("Failed to load object\n\tWarnings: %s\n\tErros: %s",
+    IceLogInfo("Failed to load object\n\tWarnings: %s\n\tErros: %s",
              loadWarnings.c_str(), loadErrors.c_str());
     return {};
   }
@@ -90,7 +90,7 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
   std::string fileDir(_directory);
   mesh.directory = fileDir;
 
-  LogInfo("Loaded %s -- %u verts, %u indices",
+  IceLogInfo("Loaded %s -- %u verts, %u indices",
            _directory, mesh.vertices.size(), mesh.indices.size());
 
   return mesh;
@@ -99,7 +99,7 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
 void* FileSystem::LoadImageFile(const char* _directory, int& _width, int& _height)
 {
   int channels;
-  LogInfo("Attempting to load %s", _directory);
+  IceLogInfo("Attempting to load %s", _directory);
   stbi_uc* image = stbi_load(_directory, &_width, &_height, &channels, STBI_rgb_alpha);
   assert (image != nullptr);
   return image;

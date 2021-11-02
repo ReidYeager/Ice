@@ -21,7 +21,7 @@ layout(location = 1) out vec2 outUV;
 layout(location = 2) out vec4 user0;
 
 void main() {
-	gl_Position = push.viewProj * push.model * vec4(params.user1.x + position.x, position.y + params.user1.y, position.z, 1.0);
+	gl_Position = push.viewProj * push.model * vec4(position.x, position.y, position.z, 1.0);
 	outNormal = (push.model * vec4(normal, 1.0)).xyz;
 	outUV = uv;
 	user0 = params.user0;

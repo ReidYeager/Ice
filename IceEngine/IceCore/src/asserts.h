@@ -14,7 +14,7 @@
 {                                                                           \
   if (!(expression))                                                        \
   {                                                                         \
-    LogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
+    IceLogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
     __debugbreak();                                                         \
   }                                                                         \
 }
@@ -23,8 +23,8 @@
 {                                                                           \
   if (!(expression))                                                        \
   {                                                                         \
-    LogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
-    LogFatal(msg, __VA_ARGS__);                                             \
+    IceLogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
+    IceLogFatal(msg, __VA_ARGS__);                                             \
     __debugbreak();                                                         \
   }                                                                         \
 }

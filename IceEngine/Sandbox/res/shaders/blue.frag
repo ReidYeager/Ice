@@ -8,6 +8,6 @@ layout(location = 2) in vec4 user0;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-	outColor = vec4((user0.x + 1.0) / 2.0, 0.0, 1.0, 1.0);
+	outColor = vec4(0.0, (user0.x + 1.0) / 2.0, 1.0, 1.0);
 }
 

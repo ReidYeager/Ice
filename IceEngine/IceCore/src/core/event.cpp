@@ -9,7 +9,7 @@ IceEventManager EventManager;
 
 void IceEventManager::Initialize()
 {
-  LogInfo("Initialized Event system");
+  IceLogInfo("Initialized Event system");
 }
 
 void IceEventManager::Shutdown()
@@ -21,7 +21,7 @@ void IceEventManager::Shutdown()
       state[i].registeredEvents.clear();
     }
   }
-  LogInfo("Shutdown Event system");
+  IceLogInfo("Shutdown Event system");
 }
 
 bool IceEventManager::Register(u16 _eCode, void* _listener, EventCallback _callaback)
@@ -83,7 +83,7 @@ bool IceEventManager::Fire(u16 _eCode, void* _sender, IceEventData _data)
     {
       // Failed to execute the callback
       // Not necessarily fatal
-      LogError("Failed to execute a %su event", _eCode);
+      IceLogError("Failed to execute a %su event", _eCode);
     }
   }
 

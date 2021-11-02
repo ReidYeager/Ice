@@ -15,10 +15,9 @@
 
 void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
                                const std::vector<const char*> _shaderNames,
-                               const std::vector<IceShaderStageFlags> _shaderStages,
-                               IceBuffer _buffer /*= nullptr*/)
+                               const std::vector<IceShaderStageFlags> _shaderStages)
 {
-  LogDebug("Creating material");
+  IceLogDebug("Creating material");
   info.sourceNames = _shaderNames;
   info.sourceStages = _shaderStages;
 
@@ -31,36 +30,29 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
   CreateFragileComponents(_rContext);
 
   // Create a buffer if none exists
-  if (_buffer != nullptr)
+  u64 size;
+  u64 RequiredBuffers = info.bufferParameterFlags;
+  // Count the number of set buffer parameter flags
+  for (size = 0; RequiredBuffers; size++)
   {
-    materialBuffer = _buffer;
+    RequiredBuffers &= RequiredBuffers - 1;
   }
-  else
-  {
-    u64 size;
-    u64 RequiredBuffers = info.bufferParameterFlags;
-    // Count the number of set buffer parameter flags
-    for (size = 0; RequiredBuffers; size++)
-    {
-      RequiredBuffers &= RequiredBuffers - 1;
-    }
 
-    materialBuffer = new IvkBuffer(_rContext,
-                                   size * 16,
-                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  }
+  materialBuffer = new IvkBuffer(_rContext,
+                                 size * 16,
+                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   // Forces an update of the the descriptor set
   UpdateImages(_rContext, {}, nullptr, 0);
 
-  LogDebug("Material created");
+  IceLogDebug("Material created");
 }
 
 void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
 {
-  LogDebug("Destroying material");
+  IceLogDebug("Destroying material");
 
   DestroyFragileComponents(_rContext);
   vkDestroyDescriptorSetLayout(_rContext->device, descriptorSetLayout, _rContext->allocator);
@@ -114,7 +106,7 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
       shaderDir.append(".comp.spv");
       break;
     default:
-      LogError("Shader stage %u not recognized", info.sourceStages[i]);
+      IceLogError("Shader stage %u not recognized", info.sourceStages[i]);
     }
 
     // If the time modified is more recent than time loaded
@@ -122,7 +114,7 @@ void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
     if (_stat(shaderDir.c_str(), &result) == 0 &&
         result.st_mtime != info.sourceLastModifiedTimes[i])
     {
-      LogInfo("Shader --- %20s --- loaded: %u, new: %u",
+      IceLogInfo("Shader --- %20s --- loaded: %u, new: %u",
               shaderDir.c_str(),
               info.sourceLastModifiedTimes[i],
               result.st_mtime);
@@ -242,7 +234,7 @@ std::vector<IvkShader> IvkMaterial_T::GetShaders(IceRenderContext* _rContext)
   std::vector<IvkShader> shaders;
   for (u32 i = 0; i < count; i++)
   {
-    LogInfo("Shader : %s", info.sourceNames[i]);
+    IceLogInfo("Shader : %s", info.sourceNames[i]);
     IceShaderStageFlags stages = info.sourceStages[i];
 
     // Load each stage of the shader
@@ -283,11 +275,11 @@ IvkShader IvkMaterial_T::LoadShader(IceRenderContext* _rContext,
     layoutDir.append(".clayout");
     break;
   default:
-    LogError("Shader stage %u not recognized", _stage);
+    IceLogError("Shader stage %u not recognized", _stage);
     return {0, VK_NULL_HANDLE, {}};
   }
 
-  LogInfo("Load Shader : %s", shaderDir.c_str());
+  IceLogInfo("Load Shader : %s", shaderDir.c_str());
 
   // Load and process the shader and its bindings
   CreateShaderModule(_rContext, shader, shaderDir.c_str());
@@ -487,7 +479,7 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
   // Add shader bindings from all the program's shaders
   for (const auto& s : _shaders)
   {
-    LogError("%s", info.sourceNames[nameint++]);
+    IceLogError("%s", info.sourceNames[nameint++]);
 
     binding.stageFlags = ivkShaderStage(s.stage);
     for (u32 i = 0; i < s.bindings.size(); i++)
@@ -495,11 +487,11 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
       switch (s.bindings[i])
       {
       case Ice_Shader_Binding_Buffer:
-        LogDebug("Buffer");
+        IceLogDebug("Buffer");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         break;
       case Ice_Shader_Binding_Image:
-        LogDebug("Image");
+        IceLogDebug("Image");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         imageCount++;
         break;
@@ -510,7 +502,7 @@ void IvkMaterial_T::CreateDescriptorSetLayout(IceRenderContext* _rContext,
       info.bindings.push_back(s.bindings[i]);
     }
   }
-  LogError("End shader descriptors");
+  IceLogError("End shader descriptors");
 
   info.textures.resize(imageCount);
 

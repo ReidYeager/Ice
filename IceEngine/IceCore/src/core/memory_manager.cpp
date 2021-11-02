@@ -9,13 +9,13 @@ IceMemoryManager MemoryManager;
 void IceMemoryManager::Initialize()
 {
   Zero(MemoryManager.GetStats(), sizeof(MemoryStatistics));\
-  LogInfo("Initialized MemoryManagement system");
+  IceLogInfo("Initialized MemoryManagement system");
 }
 
 void IceMemoryManager::Shutdown()
 {
   PrintStats();
-  LogInfo("Shutdown MemoryManagement system");
+  IceLogInfo("Shutdown MemoryManagement system");
 }
 
 IceMemoryManager::MemoryStatistics* IceMemoryManager::GetStats()
@@ -33,9 +33,9 @@ void IceMemoryManager::PrintStats()
 
   for (u32 i = 0; i < IMEM_TYPE_COUNT; i++)
   {
-    LogInfo("%-25s : %llu %s", categoryNames[i], stats->categoryAllocations[i], "B");
+    IceLogInfo("%-25s : %llu %s", categoryNames[i], stats->categoryAllocations[i], "B");
   }
-  LogInfo("%-25s : %llu %s", "Total", stats->totalMemoryAllocated, "B");
+  IceLogInfo("%-25s : %llu %s", "Total", stats->totalMemoryAllocated, "B");
 }
 
 void* IceMemoryManager::Allocate(u32 size, IceMemoryTypeFlag flag)

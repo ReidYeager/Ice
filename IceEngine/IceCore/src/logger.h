@@ -33,25 +33,25 @@ inline void ICE_API IceConsoleLogMessage(IceLogTypes _type, const char* _message
   delete[](outMessage);
 }
 
-#define LogInfo(message, ...)                                 \
+#define IceLogInfo(message, ...)                                 \
 {                                                             \
   IceConsoleLogMessage(Ice_Log_Info, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Info, "\n"); \
 }
 
-#define LogDebug(message, ...)                                 \
+#define IceLogDebug(message, ...)                                 \
 {                                                              \
   IceConsoleLogMessage(Ice_Log_Debug, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Debug, "\n");                 \
 }
 
-#define LogError(message, ...)                                 \
+#define IceLogError(message, ...)                                 \
 {                                                              \
   IceConsoleLogMessage(Ice_Log_Error, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Error, "\n");                 \
 }
 
-#define LogFatal(message, ...)                                 \
+#define IceLogFatal(message, ...)                                 \
 {                                                              \
   IceConsoleLogMessage(Ice_Log_Fatal, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Fatal, "\n");                 \

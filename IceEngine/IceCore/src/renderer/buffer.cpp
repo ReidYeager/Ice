@@ -17,13 +17,18 @@ size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
 IceBuffer CreateAndFillBuffer(
     IceRenderContext* rContext, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
-  IceBuffer stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IceBuffer stagingBuffer = CreateBuffer(rContext,
+                                         _size,
+                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);
 
-  IceBuffer buffer = CreateBuffer(rContext, _size, _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  IceBuffer buffer = CreateBuffer(rContext,
+                                  _size,
+                                  _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   CopyBuffer(rContext, stagingBuffer->GetBuffer(), buffer->GetBuffer(), _size);
 
@@ -55,8 +60,11 @@ void FillBuffer(
 void FillBuffer(
   IceRenderContext* rContext, IceBuffer _buffer, const void* _data, VkDeviceSize _size)
 {
-  IceBuffer stagingBuffer = CreateBuffer(rContext, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IceBuffer stagingBuffer = CreateBuffer(rContext,
+                                         _size,
+                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);
 
@@ -65,8 +73,18 @@ void FillBuffer(
   stagingBuffer->Free(rContext);
 }
 
-void FillShaderBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void* _data, IceShaderBufferParameterFlags _flags, IceShaderBufferParameterFlags _shaderParams)
+void FillShaderBuffer(IceRenderContext* rContext,
+                      IceBuffer _buffer,
+                      const void* _data,
+                      IceShaderBufferParameterFlags _flags,
+                      IceShaderBufferParameterFlags _shaderParams)
 {
+  if ((_flags & _shaderParams) != _flags)
+  {
+    IceLogError("Can not fill buffer at %lu, the buffer does not use those flags", _flags);
+    return;
+  }
+
   u64 offset = 0;
   u64 size = 0;
 
@@ -78,6 +96,12 @@ void FillShaderBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void*
     size += value;
     offset += !size ? ((_shaderParams >> position) & 1) : 0;
 
+  }
+
+  if (size == 0)
+  {
+    IceLogError("Can not fill shader buffer with size 0");
+    return;
   }
 
   offset *= 16;
@@ -100,7 +124,11 @@ void FillShaderBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void*
   stagingBuffer->Free(rContext);
 }
 
-void CopyBuffer(IceRenderContext* rContext, VkBuffer _src, VkBuffer _dst, VkDeviceSize _size, VkDeviceSize _offsets /*= 0*/)
+void CopyBuffer(IceRenderContext* rContext,
+                VkBuffer _src,
+                VkBuffer _dst,
+                VkDeviceSize _size,
+                VkDeviceSize _offsets /*= 0*/)
 {
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

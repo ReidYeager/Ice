@@ -33,7 +33,7 @@ void IcePlatform::Initialize()
   // Ensure singleton
   if (state.active)
   {
-    LogDebug("Platform already initialized");
+    IceLogDebug("Platform already initialized");
     return;
   }
 
@@ -41,7 +41,7 @@ void IcePlatform::Initialize()
   EventManager.Register(Ice_Event_Quit, this, QuitEventCallback);
   state.active = true;
 
-  LogInfo("Initialized Platform system");
+  IceLogInfo("Initialized Platform system");
 
   Input.Initialize();
 }
@@ -57,7 +57,7 @@ void IcePlatform::Shutdown()
     state.localState.hwnd = 0;
   }
 
-  LogInfo("Shutdown Platform system");
+  IceLogInfo("Shutdown Platform system");
 }
 
 void IcePlatform::CreateWindow(u32 _width, u32 _height, const char* _title)
@@ -168,7 +168,7 @@ void IcePlatform::FreeMem(void* _data)
   free(_data);
 }
 
-void IcePlatform::SetMem(void* _memory, u64 _size, u64 _value)
+void IcePlatform::SetMem(void* _memory, u64 _size, u32 _value)
 {
   memset(_memory, _value, _size);
 }
