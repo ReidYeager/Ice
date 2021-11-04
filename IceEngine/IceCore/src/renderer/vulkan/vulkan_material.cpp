@@ -43,9 +43,10 @@ void IvkMaterial_T::Shutdown(IceRenderContext* _rContext)
 
   DestroyPipelineComponents(_rContext);
 
-  // NOTE : This does not remove descriptor sets from the descriptor pool
-  //        If materials are re-loaded enough times, the max-sets will be reached
-  //        This will trigger a breakpoint at "vkAllocateDescriptorSets" on material re-creation
+  vkFreeDescriptorSets(_rContext->device,
+                       _rContext->descriptorPool,
+                       descriptorSets.size(),
+                       descriptorSets.data());
   for (VkDescriptorSetLayout& dsLayout : dSetLayouts)
   {
     vkDestroyDescriptorSetLayout(_rContext->device, dsLayout, _rContext->allocator);

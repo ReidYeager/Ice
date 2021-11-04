@@ -444,7 +444,9 @@ void VulkanBackend::CreateDescriptorPool()
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   createInfo.poolSizeCount = 2;
   createInfo.pPoolSizes = poolSizes;
-  createInfo.maxSets = 16; // Max total shaders across all material instances
+  createInfo.maxSets = 4; // Max total shaders across all material instances
+  // Allows materials to clear their descriptor sets when reloaded or shutdown
+  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
   IVK_ASSERT(vkCreateDescriptorPool(rContext->device,
                                     &createInfo,
