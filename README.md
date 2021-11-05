@@ -26,8 +26,6 @@ The functional end goal of this project is to have a renderer that allows for re
 - Hot reloading shaders
 
 ## Roadmap
-- Add make files
-	- To clean up the extra VS files and allow compilation on Linux
 - Proper input handling
 	- So I can use more complicated test scenes
 - UI

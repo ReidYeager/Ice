@@ -1,20 +1,22 @@
-\IceEngine\IceCore\src\core\application.cpp
+\IceSandbox\Ice\src\core\application.cpp
 	Line   130 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 	Line   182 :--: // NOTE : Should find a more efficient way of accomplishing this goal
-\IceEngine\IceCore\src\core\application.h
+\IceSandbox\Ice\src\core\application.h
 	Line    28 :--: // NOTE : Delete
-\IceEngine\IceCore\src\core\camera.h
+\IceSandbox\Ice\src\core\camera.h
 	Line     8 :--: // NOTE : Create a camera (projection) component to replace this
-\IceEngine\IceCore\src\profiler.h
+\IceSandbox\Ice\src\defines.h
+	Line    55 :--: // TODO : Define these directories in a separate file
+\IceSandbox\Ice\src\profiler.h
 	Line     5 :--: // NOTE : Add profiling tools
-\IceEngine\IceCore\src\renderer\mesh.h
+\IceSandbox\Ice\src\renderer\mesh.h
 	Line    61 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
-\IceEngine\IceCore\src\renderer\renderer_backend.h
+\IceSandbox\Ice\src\renderer\renderer_backend.h
 	Line    55 :--: // NOTE : DELETE
-\IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.cpp
+\IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.cpp
 	Line   946 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
-\IceEngine\IceCore\src\renderer\vulkan\vulkan_backend.h
+\IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // NOTE : Delete
 	Line   185 :--: // NOTE : DELETE -- External classes should not need to get the backend context
-\IceEngine\IceCore\src\renderer\vulkan\vulkan_material.cpp
+\IceSandbox\Ice\src\renderer\vulkan\vulkan_material.cpp
 	Line   172 :--: // TODO : ~!!~ Push renderer information to the respective parameters
