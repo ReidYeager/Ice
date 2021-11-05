@@ -13,6 +13,7 @@ typedef IvkBuffer* IceBuffer;
 // Creates a buffer on the GPU and fills it with data
 IceBuffer CreateAndFillBuffer(IceRenderContext* rContext, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage);
 IceBuffer CreateBuffer(IceRenderContext* rContext, VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _memProperties);
+IceBuffer CreateStagingBuffer(IceRenderContext* rContext, VkDeviceSize _size);
 void FillShaderBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void* _data, IceShaderBufferParameterFlags _flags, IceShaderBufferParameterFlags _shaderParams);
 void FillBuffer(IceRenderContext* rContext, VkDeviceMemory _mem, const void* _data, VkDeviceSize _size);
 void FillBuffer(IceRenderContext* rContext, IceBuffer _buffer, const void* _data, VkDeviceSize _size);

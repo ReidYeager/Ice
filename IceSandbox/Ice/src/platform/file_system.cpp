@@ -103,13 +103,9 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
 
 void* FileSystem::LoadImageFile(const char* _directory, int& _width, int& _height)
 {
-  int channels;
-
-  char path[2046];
-  _getcwd(path, 2046);
-  IceLogDebug("Working in : %s", path);
-
   IceLogInfo("Attempting to load %s", _directory);
+
+  int channels;
   stbi_uc* image = stbi_load(_directory, &_width, &_height, &channels, STBI_rgb_alpha);
   assert (image != nullptr);
   return image;

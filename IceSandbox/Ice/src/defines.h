@@ -41,8 +41,8 @@ typedef unsigned int       b32;
 #error "Only 64 bit windows supported"
 #endif // !_WIN64
 #else
-#error "Only windows supported"
-#endif // defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#error "Apologies, but only MS-Windows is currently supported"
+#endif // Platform detection
 
 //=================================================================================================
 // Ice Flags

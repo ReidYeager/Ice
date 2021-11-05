@@ -17,11 +17,7 @@ size_t PadBufferForGpu(IceRenderContext* rContext, size_t _original)
 IceBuffer CreateAndFillBuffer(
     IceRenderContext* rContext, const void* _data, VkDeviceSize _size, VkBufferUsageFlags _usage)
 {
-  IceBuffer stagingBuffer = CreateBuffer(rContext,
-                                         _size,
-                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IceBuffer stagingBuffer = CreateStagingBuffer(rContext, _size);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);
 
@@ -42,10 +38,20 @@ IceBuffer CreateBuffer(IceRenderContext* rContext,
                         VkBufferUsageFlags _usage,
                         VkMemoryPropertyFlags _memProperties)
 {
-  IceBuffer buffer = new IvkBuffer(
-      rContext, static_cast<u32>(_size), _usage|VK_BUFFER_USAGE_TRANSFER_DST_BIT, _memProperties);
+  IceBuffer buffer = new IvkBuffer(rContext,
+                                   static_cast<u32>(_size),
+                                   _usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                   _memProperties);
 
   return buffer;
+}
+
+IceBuffer CreateStagingBuffer(IceRenderContext* rContext, VkDeviceSize _size)
+{
+  return CreateBuffer(rContext,
+                      _size,
+                      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void FillBuffer(
@@ -60,11 +66,7 @@ void FillBuffer(
 void FillBuffer(
   IceRenderContext* rContext, IceBuffer _buffer, const void* _data, VkDeviceSize _size)
 {
-  IceBuffer stagingBuffer = CreateBuffer(rContext,
-                                         _size,
-                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IceBuffer stagingBuffer = CreateStagingBuffer(rContext, _size);
 
   FillBuffer(rContext, stagingBuffer->GetMemory(), _data, _size);
 
@@ -85,17 +87,26 @@ void FillShaderBuffer(IceRenderContext* rContext,
     return;
   }
 
-  u64 offset = 0;
-  u64 size = 0;
+  u64 offset = 0, size = 0;
 
-  // Find the first contiguous group of set bits
-  for (u64 position = 0, value = 0; !size || value; position++)
+  // Set all identical bits to 1
+  u64 matchingIslands = ~(_flags ^ _shaderParams);
+  // Find where the shader switches between set and unset bits
+  u64 transitions = (_shaderParams ^ (_shaderParams >> 1));
+
+  // Find the first contiguous group of identical bits starting with a set bit
+  for (u64 position = 0, value = 0, validation = 0; !size || validation; position++)
   {
     value = (_flags >> position) & 1;
 
     size += value;
-    offset += !size ? ((_shaderParams >> position) & 1) : 0;
+    // Only increment if the start is not found and the shader uses this position's bit
+    offset += (!size) * ((_shaderParams >> position) & 1);
 
+    // Remove the lowest transition marking bit
+    transitions &= ~(transitions & -transitions);
+    // Ensure the identical group has not ended, and that it has more set flags left to count
+    validation = ((matchingIslands >> position) & 1) && transitions;
   }
 
   if (size == 0)
@@ -104,15 +115,12 @@ void FillShaderBuffer(IceRenderContext* rContext,
     return;
   }
 
+  // Convert to # bytes
   offset *= 16;
-  size *= 16; // Convert to # bytes
+  size *= 16;
 
   // Stage the data
-  IceBuffer stagingBuffer = CreateBuffer(rContext,
-                                         size,
-                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  IceBuffer stagingBuffer = CreateStagingBuffer(rContext, size);
 
   void* tmpData;
   vkMapMemory(rContext->device, stagingBuffer->GetMemory(), offset, size, 0, &tmpData);

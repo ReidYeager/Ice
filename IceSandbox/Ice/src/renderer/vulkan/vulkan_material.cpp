@@ -30,7 +30,7 @@ void IvkMaterial_T::Initialize(IceRenderContext* _rContext,
   CreateDescriptorSets(_rContext);
 
   // Binds any included images, and updates the descriptor sets
-  UpdateImages(_rContext, _images);
+  UpdateDescriptors(_rContext, _images);
 
   CreatePipelineComponents(_rContext);
 
@@ -148,7 +148,6 @@ void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext,
   if (i >= shaderBuffers.size())
     return;
 
-  // Update user data
   if (_userData != nullptr)
   {
     // Update selected user parameters
@@ -156,7 +155,12 @@ void IvkMaterial_T::UpdateBuffer(IceRenderContext* _rContext,
   }
 }
 
-void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext,
+void IvkMaterial_T::UpdateImages(IceRenderContext* _rContext, std::vector<iceImage_t*> _images)
+{
+  UpdateDescriptors(_rContext, _images);
+}
+
+void IvkMaterial_T::UpdateDescriptors(IceRenderContext* _rContext,
                                   std::vector<iceImage_t*> _images)
 {
   u64 imageCount = (_images.size() < info.textures.size()) ? _images.size() : info.textures.size();

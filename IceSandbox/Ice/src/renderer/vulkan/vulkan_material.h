@@ -46,9 +46,11 @@ public:
                     IceShaderStageFlags _stage,
                     IceShaderBufferParameterFlags _userParameterFlags,
                     void* _userData) override;
-  // Binds the data and images to update the descriptor set
   void UpdateImages(IceRenderContext* _rContext,
-                     std::vector<iceImage_t*> _images) override;
+                    std::vector<iceImage_t*> _images) override; 
+  // Binds the data and images to update the descriptor set
+  void UpdateDescriptors(IceRenderContext* _rContext,
+                         std::vector<iceImage_t*> _images);
   // Records commands on how to render this material
   void Render(VkCommandBuffer& _command, const void* _modelMatrix, const void* _viewProjMatrix);
 
