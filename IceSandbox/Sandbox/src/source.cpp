@@ -57,7 +57,7 @@ public:
   {
     time += _deltaTime;
 
-    // TODO : (2) Push renderer information to the respective parameters
+    // TODO : ~!!~ Push renderer information to the respective parameters
     //        As a test: send the VP matrix via only parameters
     //        As a test: send the depth image to the fragment shader
 

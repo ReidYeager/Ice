@@ -265,7 +265,7 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
     // Bind material
     materialIndex = _packet->materialIndices[renderableIndex];
     IvkMaterial_T* mat = ((IvkMaterial_T*)materials[materialIndex]);
-    mat->Render(rContext->commandBuffers[_commandIndex], &modelMatrix, &viewProj);
+    mat->Render(rContext, rContext->commandBuffers[_commandIndex], &modelMatrix, &viewProj);
 
     // Draw mesh
     vkCmdBindVertexBuffers(rContext->commandBuffers[_commandIndex], 0, 1, m->vertexBuffer->GetBufferPtr(), offset);
@@ -954,7 +954,7 @@ u32 VulkanBackend::GetPresentIndex(const VkPhysicalDevice* _device,
 
 void VulkanBackend::CreateGlobalDescriptorSet()
 {
-  rContext->globalDescriptorSetLayout = CreateSetLayout(rContext, {Ice_Shader_Binding_Image});
+  rContext->globalDescriptorSetLayout = CreateSetLayout(rContext, {Ice_Shader_Binding_Buffer});
   CreateDescriptorSet(rContext,
                       rContext->descriptorPool,
                       rContext->globalDescriptorSetLayout,

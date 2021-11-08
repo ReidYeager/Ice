@@ -17,9 +17,8 @@
 class IvkMaterial_T : public IceMaterial_T
 {
 private:
-  VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-  std::vector<VkDescriptorSetLayout> dSetLayouts;
-  std::vector<VkDescriptorSet> descriptorSets;
+  VkDescriptorSetLayout materialDescriptorSetLayout;
+  VkDescriptorSet materialDescriptorSet;
   VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
   VkPipeline pipeline = VK_NULL_HANDLE;
 
@@ -52,7 +51,10 @@ public:
   void UpdateDescriptors(IceRenderContext* _rContext,
                          std::vector<iceImage_t*> _images);
   // Records commands on how to render this material
-  void Render(VkCommandBuffer& _command, const void* _modelMatrix, const void* _viewProjMatrix);
+  void Render(IceRenderContext* _rContext,
+              VkCommandBuffer& _command,
+              const void* _modelMatrix,
+              const void* _viewProjMatrix);
 
 private:
   // Loads all the material's shaders
