@@ -40,7 +40,7 @@ public:
   // Pipeline components separated as they may change at runtime
   void CreatePipelineComponents(IceRenderContext* _rContext);
   // Reloads shader source code if changes were made since loading
-  void UpdateSources(IceRenderContext* _rContext);
+  void CheckForShaderUpdates(IceRenderContext* _rContext);
 
   void UpdateBuffer(IceRenderContext* _rContext,
                     IceShaderStageFlags _stage,

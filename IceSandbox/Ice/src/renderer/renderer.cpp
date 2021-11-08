@@ -38,7 +38,7 @@ void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {
   for (auto s : materials)
   {
-    ((IvkMaterial_T*)s)->UpdateSources(backend->GetContext());
+    ((IvkMaterial_T*)s)->CheckForShaderUpdates(backend->GetContext());
   }
 
   // Make draw calls

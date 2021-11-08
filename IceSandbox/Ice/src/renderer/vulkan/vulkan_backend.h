@@ -55,7 +55,7 @@ public:
   // Required for command buffer recording
   std::vector<IceMaterial> materials;
   mvpMatrices* GetMVP() { return &mvp; }
-  void AddMaterial(IceMaterial _material) { materials.push_back(_material); }
+  void AddMaterial(IceMaterial _material) override { materials.push_back(_material); }
 
 private:
 //=================================================================================================
@@ -127,6 +127,12 @@ private:
   u32 GetPresentIndex(const VkPhysicalDevice* _device,
                       u32 _queuePropertyCount,
                       u32 _graphicsIndex);
+
+//=================================================================================================
+// DESCRIPTORS
+//=================================================================================================
+
+  void CreateGlobalDescriptorSet();
 
 //=================================================================================================
 // NON-API HELPERS

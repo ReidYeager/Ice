@@ -6,7 +6,7 @@
 \IceSandbox\Ice\src\core\camera.h
 	Line     8 :--: // NOTE : Create a camera (projection) component to replace this
 \IceSandbox\Ice\src\defines.h
-	Line    55 :--: // TODO : Define these directories in a separate file
+	Line    58 :--: // TODO : Define these directories in a separate file
 \IceSandbox\Ice\src\profiler.h
 	Line     5 :--: // NOTE : Add profiling tools
 \IceSandbox\Ice\src\renderer\mesh.h
@@ -14,9 +14,12 @@
 \IceSandbox\Ice\src\renderer\renderer_backend.h
 	Line    55 :--: // NOTE : DELETE
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.cpp
-	Line   946 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
+	Line   978 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // NOTE : Delete
-	Line   185 :--: // NOTE : DELETE -- External classes should not need to get the backend context
+	Line   191 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_material.cpp
-	Line   172 :--: // TODO : ~!!~ Push renderer information to the respective parameters
+	Line   176 :--: // TODO : ~!!~ Use one descriptor set for the material
+	Line   632 :--: // TODO : (1) Integrate the global descriptor set into the render pipeline
+\IceSandbox\Sandbox\src\source.cpp
+	Line    59 :--: // TODO : (2) Push renderer information to the respective parameters

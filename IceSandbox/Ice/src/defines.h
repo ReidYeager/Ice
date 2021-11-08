@@ -2,6 +2,9 @@
 #ifndef ICE_DEFINES_H_
 #define ICE_DEFINES_H_
 
+#pragma warning ( disable : 26812 )
+#pragma warning ( disable : 26495 )
+
 #ifdef ICE_DLL_EXPORT
 #define ICE_API
 #else

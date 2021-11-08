@@ -4,12 +4,13 @@
 
 #include "defines.h"
 
+#include "math/vector.h"
+
 struct TransformComponent
 {
-  // Position only
-  float position[3];
-  float rotation[3];
-  float scale[3];
+  vec3 position;
+  vec3 rotation;
+  vec3 scale;
 };
 
 // Required to render a mesh

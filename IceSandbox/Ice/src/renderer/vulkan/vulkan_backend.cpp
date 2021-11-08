@@ -4,6 +4,7 @@
 
 #include "renderer/vulkan/vulkan_backend.h"
 #include "renderer/vulkan/vulkan_context.h"
+#include "renderer/vulkan/vulkan_descriptor.h"
 #include "renderer/buffer.h"
 #include "renderer/mesh.h"
 #include "renderer/shader.h"
@@ -21,7 +22,7 @@ void VulkanBackend::Initialize()
 {
   rContext = new IceRenderContext();
 
-  //EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
+  EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
 
   // Initialize the generic rendering components
   InitializeAPI();
@@ -38,6 +39,8 @@ void VulkanBackend::Initialize()
   // Initialize the fragile rendering components
   InitializeComponents();
 
+  CreateGlobalDescriptorSet();
+
   // Set RendererBackend's render function pointer
   IceRenderBackendDefineRenderFrame(VulkanBackend::RenderFrame);
 }
@@ -53,8 +56,18 @@ void VulkanBackend::Shutdown()
       rContext->allocator);
     vkDestroySemaphore(rContext->device, rContext->syncObjects.renderCompleteSemaphores[i],
       rContext->allocator);
-    vkDestroyFence(rContext->device, rContext->syncObjects.flightSlotAvailableFences[i], rContext->allocator);
+    vkDestroyFence(rContext->device,
+                   rContext->syncObjects.flightSlotAvailableFences[i],
+                   rContext->allocator);
   }
+
+  vkFreeDescriptorSets(rContext->device,
+                       rContext->descriptorPool,
+                       1,
+                       &rContext->globalDescriptorSet);
+  vkDestroyDescriptorSetLayout(rContext->device,
+                               rContext->globalDescriptorSetLayout,
+                               rContext->allocator);
 
   vkDestroyDescriptorPool(rContext->device, rContext->descriptorPool, rContext->allocator);
 
@@ -286,6 +299,8 @@ void VulkanBackend::InitializeComponents()
   CreateDescriptorPool();
   CreateSyncObjects();
   CreateCommandBuffers();
+
+  // UpdateDescriptorSet(Ice_Set_Gloabl, GlobalBuffer);
 }
 
 void VulkanBackend::CreateFragileComponents()
@@ -436,17 +451,21 @@ void VulkanBackend::CreateDescriptorPool()
 {
   VkDescriptorPoolSize poolSizes[2] = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = 3;
+  poolSizes[0].descriptorCount = 512;
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = 9;
+  poolSizes[1].descriptorCount = 1024;
 
   VkDescriptorPoolCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   createInfo.poolSizeCount = 2;
   createInfo.pPoolSizes = poolSizes;
-  createInfo.maxSets = 4; // Max total shaders across all material instances
+  createInfo.maxSets = 25; // Global, Renderpass, Material, object (backup for its push constants)
+  createInfo.flags = 0;
+
+  #ifdef _DEBUG
   // Allows materials to clear their descriptor sets when reloaded or shutdown
-  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  createInfo.flags |= VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  #endif
 
   IVK_ASSERT(vkCreateDescriptorPool(rContext->device,
                                     &createInfo,
@@ -927,6 +946,19 @@ u32 VulkanBackend::GetPresentIndex(const VkPhysicalDevice* _device,
 
   // Returns bestfit (-1 if no bestfit was found)
   return bestfit;
+}
+
+//=================================================================================================
+// DESCRIPTORS
+//=================================================================================================
+
+void VulkanBackend::CreateGlobalDescriptorSet()
+{
+  rContext->globalDescriptorSetLayout = CreateSetLayout(rContext, {Ice_Shader_Binding_Image});
+  CreateDescriptorSet(rContext,
+                      rContext->descriptorPool,
+                      rContext->globalDescriptorSetLayout,
+                      rContext->globalDescriptorSet);
 }
 
 //=================================================================================================

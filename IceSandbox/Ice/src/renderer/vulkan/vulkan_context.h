@@ -61,12 +61,29 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-#define IVK_ASSERT(function, errorMsg, ...)                    \
-{                                                              \
-  VkResult result = function;                                  \
-  ICE_ASSERT_MSG(result == VK_SUCCESS, errorMsg, __VA_ARGS__); \
+inline void aaaa()
+{
+  //VkResult result = function;
+  //  const char* msg[2048];
+  //  sprintf(msg, errorMsg, __VA_ARGS__);
+  //  ICE_ASSERT_MSG(result == VK_SUCCESS, "%s\nVulkan result : %s", VulkanResultToString(result));
 }
-  //LogError("Result = %s", VulkanResultToString(result));       \
+
+#define IVK_ASSERT(function, errorMsg, ...)                                                          \
+{                                                                                                    \
+  VkResult result = function;                                                                        \
+  char msg[2048];                                                                                    \
+  sprintf(msg, errorMsg, __VA_ARGS__);                                                               \
+  ICE_ASSERT_MSG(result == VK_SUCCESS, "%s\nVulkan result : %s", msg, VulkanResultToString(result)); \
+}
+
+enum IvkDescriptorSetIndices
+{
+  Ivk_Descriptor_Set_Global = 0,
+  Ivk_Descriptor_Set_Renderpass = 1,
+  Ivk_Descriptor_Set_Material = 2,
+  Ivk_Descriptor_Set_Extra = 3
+};
 
 struct iceImage_t
 {
@@ -137,6 +154,9 @@ struct IceRenderContext
 
   std::vector<VkCommandBuffer> commandBuffers;
   VkDescriptorPool descriptorPool;
+
+  VkDescriptorSetLayout globalDescriptorSetLayout;
+  VkDescriptorSet globalDescriptorSet;
 
   // Handles all setup for recording a commandBuffer to be executed once
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool& _pool)

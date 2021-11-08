@@ -80,7 +80,7 @@ void IvkMaterial_T::CreatePipelineComponents(IceRenderContext* _rContext)
 }
 
 // Need to move to a dedicated shader module manager
-void IvkMaterial_T::UpdateSources(IceRenderContext* _rContext)
+void IvkMaterial_T::CheckForShaderUpdates(IceRenderContext* _rContext)
 {
   bool shouldUpdate = false;
 
@@ -174,8 +174,7 @@ void IvkMaterial_T::UpdateDescriptors(IceRenderContext* _rContext,
   u32 bindIndex = 0;
   u32 imageIndex = 0;
 
-  // TODO : ~!!~ Push renderer information to the respective parameters
-  //        As a test: send the VP matrix via only parameters
+  // TODO : ~!!~ Use one descriptor set for the material
 
   u32 setIndex = 0;
   for (IvkShader const& shader : shaders)
@@ -630,6 +629,8 @@ void IvkMaterial_T::CreatePipelineLayout(IceRenderContext* _rContext)
   mvpMatricesPushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   mvpMatricesPushConstant.size = 128; // model matrix (64) + view&projection matrix (64)
   mvpMatricesPushConstant.offset = 0;
+
+  // TODO : (1) Integrate the global descriptor set into the render pipeline
 
   VkPipelineLayoutCreateInfo createInfo {};
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

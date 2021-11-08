@@ -38,7 +38,7 @@ class RendererBackend
 public:
   virtual void Initialize()
   {
-    IceLogDebug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    IceLogFatal("No backend implementation defined");
     EventManager.Register(Ice_Event_Window_Resized, this, WindowResizeCallback);
   }
 

@@ -3,6 +3,7 @@
 #include <ice.h>
 
 #include <math.h>
+#include <math\vector.h>
 
 class Application : public IceApplication
 {
@@ -23,7 +24,7 @@ public:
     u32 cactusMesh = GetMeshIndex("BadCactus.obj");
 
     blueMat = GetMaterialIndex(
-      { "mvp", "blue" },
+      { "bluemvp", "blue" },
       { Ice_Shader_Vert, Ice_Shader_Frag },
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cubeMesh = GetMeshIndex("Cube.obj");
@@ -34,8 +35,9 @@ public:
     testGameObjectB = CreateObject();
     testGameObjectB.AddComponent<RenderableComponent>(cactusMesh, blueMat);
 
-    testGameObjectB.transform->position[0] = 2.0f;
-    testGameObject.transform->rotation[2] = 30.0f;
+    testGameObjectB.transform->position.x = 1.0f;
+    testGameObject.transform->position.x = -1.0f;
+    //testGameObject.transform->rotation.z = 30.0f;
   }
 
   void ChildShutdown() override
@@ -55,14 +57,16 @@ public:
   {
     time += _deltaTime;
 
-    float fragdata[4] = { glm::sin(time), 0.0f, 0.0f, 0.0f };
-    int vertdata[4] = { glm::floor(time), 0.0f, 0.0f, 0.0f };
+    // TODO : (2) Push renderer information to the respective parameters
+    //        As a test: send the VP matrix via only parameters
+    //        As a test: send the depth image to the fragment shader
 
-    float sin = glm::sin(time);
-    vertdata[1] = *(int*)(&sin);
+    vec4 testData = { time, sin(time), 0, 0 };
+    MaterialUpdateBuffer(testMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, &testData);
 
-    MaterialUpdateBuffer(testMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, vertdata);
-    MaterialUpdateBuffer(blueMat, Ice_Shader_Frag, Ice_Shader_Buffer_Param_User0, fragdata);
+    vec4 blueData[2] = { { sin(time), 0.0f, 0.0f, 0.0f }, { 0.0f, glm::cos(time), 0.0f, 0.0f } };
+    MaterialUpdateBuffer(blueMat, Ice_Shader_Frag, Ice_Shader_Buffer_Param_User0, &blueData[0]);
+    MaterialUpdateBuffer(blueMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, &blueData[1]);
 
   }
 };
