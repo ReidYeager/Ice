@@ -5,6 +5,8 @@
 #include <math.h>
 #include <math\vector.h>
 
+// TODO : De-pessimize & refactor everything
+
 class Application : public IceApplication
 {
 private:
@@ -18,7 +20,7 @@ public:
     IceApplicationDefineChildLoop(loop);
 
     testMat = GetMaterialIndex(
-      { "bluemvp", "test" },
+      { "mvp", "test" },
       { Ice_Shader_Vert, Ice_Shader_Frag },
       { "TestImage.png", "AltImage.png", "landscape.jpg" });
     u32 cactusMesh = GetMeshIndex("BadCactus.obj");
@@ -58,7 +60,6 @@ public:
     time += _deltaTime;
 
     // TODO : ~!!~ Push renderer information to the respective parameters
-    //        As a test: send the VP matrix via only parameters
     //        As a test: send the depth image to the fragment shader
 
     vec4 testData = { time, sin(time), 0, 0 };

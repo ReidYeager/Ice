@@ -6,6 +6,8 @@
 #include "defines.h"
 #include "logger.h"
 
+#include "renderer/shader_parameters.h"
+
 #include <set>
 #include <string>
 #include <vector>
@@ -155,6 +157,7 @@ struct IceRenderContext
   std::vector<VkCommandBuffer> commandBuffers;
   VkDescriptorPool descriptorPool;
 
+  IceShaderBufferParameterFlags globalBufferParameters;
   VkDescriptorSetLayout globalDescriptorSetLayout;
   VkDescriptorSet globalDescriptorSet;
 

@@ -18,6 +18,8 @@
 #include <string> // Only used in CreateShader
 #include <algorithm>
 
+IceBuffer globalDescriptorBuffer;
+
 void VulkanBackend::Initialize()
 {
   rContext = new IceRenderContext();
@@ -60,6 +62,8 @@ void VulkanBackend::Shutdown()
                    rContext->syncObjects.flightSlotAvailableFences[i],
                    rContext->allocator);
   }
+
+  globalDescriptorBuffer->Free(rContext);
 
   vkFreeDescriptorSets(rContext->device,
                        rContext->descriptorPool,
@@ -120,6 +124,14 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   static float time = 0.0f;
   mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
   #pragma endregion
+
+  glm::mat4 viewProj = _packet->projectionMatrix * _packet->viewMatrix;
+
+  FillShaderBuffer(rContext,
+                   globalDescriptorBuffer,
+                   &viewProj,
+                   Ice_Shader_Buffer_Param_VpMatrix,
+                   rContext->globalBufferParameters);
 
   // Retrieve which swapchain image to draw to and present
   u32 currentFrame;
@@ -954,11 +966,28 @@ u32 VulkanBackend::GetPresentIndex(const VkPhysicalDevice* _device,
 
 void VulkanBackend::CreateGlobalDescriptorSet()
 {
-  rContext->globalDescriptorSetLayout = CreateSetLayout(rContext, {Ice_Shader_Binding_Buffer});
+  std::vector<IceShaderBinding> bindings = { Ice_Shader_Binding_Buffer };
+  rContext->globalBufferParameters = Ice_Shader_Buffer_Param_VpMatrix;
+
+  IceShaderBufferParameterFlags RequiredBuffers = rContext->globalBufferParameters;
+  u32 size = 0;
+  for (size = 0; RequiredBuffers; size++)
+  {
+    RequiredBuffers &= RequiredBuffers - 1;
+  }
+
+  globalDescriptorBuffer = new IvkBuffer(rContext,
+                                         size * 16,
+                                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  rContext->globalDescriptorSetLayout = CreateSetLayout(rContext, bindings);
   CreateDescriptorSet(rContext,
                       rContext->descriptorPool,
                       rContext->globalDescriptorSetLayout,
                       rContext->globalDescriptorSet);
+  BindDescriptors(rContext, rContext->globalDescriptorSet, {globalDescriptorBuffer}, {});
 }
 
 //=================================================================================================

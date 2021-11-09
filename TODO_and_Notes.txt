@@ -14,9 +14,10 @@
 \IceSandbox\Ice\src\renderer\renderer_backend.h
 	Line    55 :--: // NOTE : DELETE
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.cpp
-	Line   978 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
+	Line  1007 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
 	Line    15 :--: // NOTE : Delete
 	Line   191 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceSandbox\Sandbox\src\source.cpp
-	Line    59 :--: // TODO : ~!!~ Push renderer information to the respective parameters
+	Line     7 :--: // TODO : De-pessimize & refactor everything
+	Line    61 :--: // TODO : ~!!~ Push renderer information to the respective parameters

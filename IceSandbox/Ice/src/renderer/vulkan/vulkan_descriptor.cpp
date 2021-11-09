@@ -27,7 +27,7 @@ VkDescriptorSetLayout CreateSetLayout(IceRenderContext* _rContext,
     switch (d)
     {
     case Ice_Shader_Binding_Buffer:
-      descriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      descriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       break;
     case Ice_Shader_Binding_Image:
       descriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -75,10 +75,61 @@ void CreateDescriptorSet(IceRenderContext* _rContext,
              "Failed to allocate descriptor set");
 }
 
+// Binds all buffers, then images
 void BindDescriptors(IceRenderContext* _rContext,
                      VkDescriptorSet& _set,
                      std::vector<IceBuffer> _buffers,
                      std::vector<iceImage_t*> _images)
 {
-  
+  std::vector<VkWriteDescriptorSet> writes(_buffers.size() + _images.size());
+
+  u32 i = 0;
+  u32 writeIndex = 0;
+
+  std::vector<VkDescriptorBufferInfo> bufferInfos(_buffers.size());
+  for (IceBuffer& b : _buffers)
+  {
+    bufferInfos[i].buffer = b->GetBuffer();
+    bufferInfos[i].offset = 0;
+    bufferInfos[i].range = VK_WHOLE_SIZE;
+
+    writes[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[writeIndex].descriptorCount = 1;
+    writes[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writes[writeIndex].dstArrayElement = 0;
+    writes[writeIndex].dstBinding = writeIndex;
+    writes[writeIndex].dstSet = _set;
+    writes[writeIndex].pBufferInfo = &bufferInfos[i];
+    writes[writeIndex].pImageInfo = nullptr;
+    writes[writeIndex].pTexelBufferView = nullptr;
+    writes[writeIndex].pNext = nullptr;
+
+    writeIndex++;
+    i++;
+  }
+
+  i = 0;
+  std::vector<VkDescriptorImageInfo> imageInfos(_images.size());
+  for (iceImage_t* image : _images)
+  {
+    imageInfos[i].imageLayout = image->layout;
+    imageInfos[i].imageView = image->view;
+    imageInfos[i].sampler = image->sampler;
+
+    writes[writeIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[writeIndex].descriptorCount = 1;
+    writes[writeIndex].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writes[writeIndex].dstArrayElement = 0;
+    writes[writeIndex].dstBinding = writeIndex;
+    writes[writeIndex].dstSet = _set;
+    writes[writeIndex].pBufferInfo = nullptr;
+    writes[writeIndex].pImageInfo = &imageInfos[i];
+    writes[writeIndex].pTexelBufferView = nullptr;
+    writes[writeIndex].pNext = nullptr;
+
+    writeIndex++;
+    i++;
+  }
+
+  vkUpdateDescriptorSets(_rContext->device, writes.size(), writes.data(), 0, nullptr);
 }

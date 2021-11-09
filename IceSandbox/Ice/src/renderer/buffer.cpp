@@ -100,11 +100,12 @@ void FillShaderBuffer(IceRenderContext* rContext,
     value = (_flags >> position) & 1;
 
     size += value;
+
     // Only increment if the start is not found and the shader uses this position's bit
     offset += (!size) * ((_shaderParams >> position) & 1);
 
     // Remove the lowest transition marking bit
-    transitions &= ~(transitions & -transitions);
+    transitions &= ~(((transitions >> position) & 1) * (transitions & -transitions));
     // Ensure the identical group has not ended, and that it has more set flags left to count
     validation = ((matchingIslands >> position) & 1) && transitions;
   }

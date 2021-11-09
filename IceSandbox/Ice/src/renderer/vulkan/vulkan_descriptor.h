@@ -17,7 +17,10 @@ void CreateDescriptorSet(IceRenderContext* _rContext,
                          VkDescriptorSetLayout const& _layout,
                          VkDescriptorSet& _set);
 
-void BindDescriptors(IceRenderContext* _rContext, VkDescriptorSet& _set);
+void BindDescriptors(IceRenderContext* _rContext,
+                     VkDescriptorSet& _set,
+                     std::vector<IceBuffer> _buffers,
+                     std::vector<iceImage_t*> _images);
 
 
 
