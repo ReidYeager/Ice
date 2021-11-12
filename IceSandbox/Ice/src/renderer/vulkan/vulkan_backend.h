@@ -12,15 +12,6 @@
 
 class VulkanBackend : public RendererBackend
 {
-private:
-  // NOTE : Delete
-  struct mvpMatrices
-  {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
-  } mvp;
-
 //=================================================================================================
 // VARIABLES
 //=================================================================================================
@@ -54,7 +45,6 @@ public:
 //=================================================================================================
   // Required for command buffer recording
   std::vector<IceMaterial> materials;
-  mvpMatrices* GetMVP() { return &mvp; }
   void AddMaterial(IceMaterial _material) override { materials.push_back(_material); }
 
 private:

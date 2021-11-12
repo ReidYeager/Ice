@@ -33,8 +33,15 @@ public:
 // Functions
 //=================================================================================================
 private:
+  // Used for any initialization the child application requires
+  void(*gameInit)() = 0;
+  // Houses the core game code
+  void(*gameLoop)(float) = 0;
+  // Used for any destruction the child application requires
+  void(*gameShutdown)() = 0;
+
   // Initializes all allocators and subsystems
-  void Initialize();
+  void Startup();
   // Loops until closed
   // Calls input, ChildLoop, and renderer
   void MainLoop();
@@ -43,15 +50,14 @@ private:
   // Called when RenderableComponents are added or removed from objects
   void RenderableCallback();
 
-protected:
-  // Used for any initialization the child application requires
-  virtual void ChildInit() = 0;
-  // Houses the core game code
-  void (IceApplication::* ChildLoop)(float);
-  #define IceApplicationDefineChildLoop(loop) \
-      ChildLoop = static_cast<void (IceApplication::*)(float)>(&Application::##loop)
-  // Used for any destruction the child application requires
-  virtual void ChildShutdown() = 0;
+public:
+  void Initialize(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)());
+  // Houses the Initialize, MainLoop, and Shutdown calls
+  void Run();
+
+  // Tells the application to close
+  void Close();
+
   // Creates a new ecs entity and returns a wrapper for it
   GameObject CreateObject();
   // Load or retrieve the mesh index of the provided directory
@@ -68,10 +74,6 @@ protected:
                             void* _userData);
   void MaterialUpdateTextures(u32 _material,
                               std::vector<const char*> _textureNames);
-
-public:
-  // Houses the Initialize, MainLoop, and Shutdown calls
-  void Run();
 };
 
 #endif // !CORE_APPLICATION_H_

@@ -27,7 +27,7 @@ struct IceRenderPacket
 
   std::vector<mesh_t*> renderables;
   std::vector<u32> materialIndices;
-  std::vector<TransformComponent> transforms;
+  std::vector<TransformComponent*> transforms;
 };
 
 // Calls the backend's resize function on resize events
@@ -46,7 +46,6 @@ public:
   {
     
   }
-
 
   virtual void Resize(u32 _width = 0, u32 _height = 0) = 0;
 

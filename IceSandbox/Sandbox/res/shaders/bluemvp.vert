@@ -26,8 +26,7 @@ layout(location = 0) out vec3 outNormal;
 layout(location = 1) out vec2 outUV;
 
 void main() {
-	gl_Position = global.vp * push.model * vec4(position.x + params.x / 8, position.y + params.y, position.z, 1.0);
-	//gl_Position = push.viewProj * push.model * vec4(position.x + params.x / 8, position.y + params.y, position.z, 1.0);
+	gl_Position = global.vp * push.model * vec4(position.x, position.y + params.y, position.z, 1.0);
 	outNormal = (push.model * vec4(normal, 1.0)).xyz;
 	outUV = uv;
 }

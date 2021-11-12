@@ -1,6 +1,6 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   130 :--: // NOTE : Should find a more efficient way of accomplishing this goal
-	Line   182 :--: // NOTE : Should find a more efficient way of accomplishing this goal
+	Line   107 :--: // NOTE : Should find a more efficient way of accomplishing this goal
+	Line   178 :--: // NOTE : Should find a more efficient way of accomplishing this goal
 \IceSandbox\Ice\src\core\application.h
 	Line    28 :--: // NOTE : Delete
 \IceSandbox\Ice\src\core\camera.h
@@ -11,13 +11,14 @@
 	Line     5 :--: // NOTE : Add profiling tools
 \IceSandbox\Ice\src\renderer\mesh.h
 	Line    61 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+\IceSandbox\Ice\src\renderer\renderer.cpp
+	Line    38 :--: // TODO : Optimize this out. Currently takes ~175 us
 \IceSandbox\Ice\src\renderer\renderer_backend.h
-	Line    55 :--: // NOTE : DELETE
+	Line    54 :--: // NOTE : DELETE
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.cpp
-	Line  1007 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
+	Line  1002 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
-	Line    15 :--: // NOTE : Delete
-	Line   191 :--: // NOTE : DELETE -- External classes should not need to get the backend context
+	Line   181 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceSandbox\Sandbox\src\source.cpp
 	Line     7 :--: // TODO : De-pessimize & refactor everything
-	Line    61 :--: // TODO : ~!!~ Push renderer information to the respective parameters
+	Line    87 :--: // TODO : ~!!~ Push renderer information to the respective parameters

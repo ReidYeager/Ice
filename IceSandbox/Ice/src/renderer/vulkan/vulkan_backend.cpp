@@ -106,6 +106,10 @@ void VulkanBackend::Shutdown()
 
 void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
 {
+  static glm::mat4 viewProj;
+  static u32 currentFlightSlot = 0;
+  static u32 currentFrame = 0;
+
   if (shouldResize)
   {
     RecreateFragileComponents();
@@ -113,20 +117,13 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
   }
 
   // Wait for the oldest in-flight image to return
-  u32& currentFlightSlot = rContext->syncObjects.currentFlightSlot;
   vkWaitForFences(rContext->device,
                   1,
                   &rContext->syncObjects.flightSlotAvailableFences[currentFlightSlot],
                   VK_TRUE,
                   UINT64_MAX);
 
-  #pragma region Move Or Delete
-  static float time = 0.0f;
-  mvp.model = glm::rotate(glm::mat4(1), glm::radians((time += _packet->deltaTime) * 45), glm::vec3(0.0f, 1.0f, 0.0f));
-  #pragma endregion
-
-  glm::mat4 viewProj = _packet->projectionMatrix * _packet->viewMatrix;
-
+  viewProj = _packet->projectionMatrix * _packet->viewMatrix;
   FillShaderBuffer(rContext,
                    globalDescriptorBuffer,
                    &viewProj,
@@ -134,7 +131,6 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
                    rContext->globalBufferParameters);
 
   // Retrieve which swapchain image to draw to and present
-  u32 currentFrame;
   VkResult result =
       vkAcquireNextImageKHR(rContext->device,
                             rContext->swapchain,
@@ -191,13 +187,12 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
              "Failed to submit RenderFrame draw command");
 
   // Present call
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  static VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &rContext->syncObjects.renderCompleteSemaphores[currentFlightSlot];
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = &rContext->swapchain;
   presentInfo.pImageIndices = &currentFrame;
+  presentInfo.pWaitSemaphores = &rContext->syncObjects.renderCompleteSemaphores[currentFlightSlot];
 
   result = vkQueuePresentKHR(rContext->presentQueue, &presentInfo);
 
@@ -211,7 +206,7 @@ void VulkanBackend::RenderFrame(IceRenderPacket* _packet)
     throw "Failed to present swapchain";
   }
 
-  rContext->syncObjects.currentFlightSlot = (currentFlightSlot + 1) % MAX_FLIGHT_IMAGE_COUNT;
+  currentFlightSlot = (currentFlightSlot + 1) % MAX_FLIGHT_IMAGE_COUNT;
 }
 
 void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandIndex)
@@ -262,7 +257,7 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
   renderableIndex = 0;
   for (auto m : _packet->renderables)
   {
-    TransformComponent& tc = _packet->transforms[renderableIndex];
+    TransformComponent& tc = *_packet->transforms[renderableIndex];
 
     glm::vec3 position = glm::vec3(tc.position[0], tc.position[1], tc.position[2]);
     glm::vec3 rotation = glm::vec3(tc.rotation[0], tc.rotation[1], tc.rotation[2]);

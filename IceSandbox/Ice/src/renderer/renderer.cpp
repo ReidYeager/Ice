@@ -36,6 +36,7 @@ void IceRenderer::Shutdown()
 
 void IceRenderer::RenderFrame(IceRenderPacket* _packet)
 {
+  // TODO : Optimize this out. Currently takes ~175 us
   for (auto s : materials)
   {
     ((IvkMaterial_T*)s)->CheckForShaderUpdates(backend->GetContext());

@@ -1,5 +1,6 @@
 
 #include "defines.h"
+#include "asserts.h"
 #include "logger.h"
 #include "service_hub.h"
 
@@ -17,11 +18,34 @@
 #include <iostream>
 #include <glm/glm.hpp>
 
+void IceApplication::Initialize(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)())
+{
+  gameInit = _gameInit;
+  gameLoop = _gameLoop;
+  gameShutdown = _gameShutdown;
+
+  ICE_ASSERT(gameInit != 0 && gameLoop != 0 && gameShutdown != 0);
+
+  Input = Input;
+}
+
 void IceApplication::Run()
 {
-  Initialize();
-  MainLoop();
-  Shutdown();
+  try
+  {
+    Startup();
+    MainLoop();
+    Shutdown();
+  }
+  catch (const char* e)
+  {
+    IceLogFatal("Ice caught : %s", e);
+  }
+}
+
+void IceApplication::Close()
+{
+  platform->Close();
 }
 
 // Registered to the window resize event
@@ -30,11 +54,11 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
   IceApplication* app = static_cast<IceApplication*>(_listener);
   float x = (float)_data.u32[0];
   float y = (float)_data.u32[1];
-  app->cam.SetProjection((x / y));
+  app->cam.SetProjection(x / y);
   return true;
 }
 
-void IceApplication::Initialize()
+void IceApplication::Startup()
 {
   IceLogInfo("ICE INIT =================================================");
 
@@ -60,8 +84,7 @@ void IceApplication::Initialize()
       on_construct<RenderableComponent>().connect<&IceApplication::RenderableCallback>(this);
 
   // Initialize user's application
-  ChildInit();
-  ICE_ASSERT_MSG(ChildLoop != nullptr, "Failed to set an update function");
+  gameInit();
 
   #pragma region MoveToChildLoop
   cam.position = glm::vec3(0.0f, 0.0f, 5.0f);
@@ -75,84 +98,57 @@ void IceApplication::MainLoop()
   auto end = std::chrono::steady_clock::now();
   auto deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-  const float camMoveSpeed = 3.0f;
-
   float deltasSum = 0.0f;
   int deltasCount = 0;
-  float fpsPrintFrequency = 1.0f;  // Seconds
-  fpsPrintFrequency *= 1000000.0f; // To microseconds
+  const float fpsPrintFrequency = 1000000.0f;  // Microseconds
+
+  const float microToSeconds = 0.000001f;
+
+  // Update objects to be rendered
+  // NOTE : Should find a more efficient way of accomplishing this goal
+  renderPacket.transforms.clear();
+  auto v = ecsController->registry.view<RenderableComponent>(); // Guaranteed to have a transform
+  for (auto e : v)
+  {
+    renderPacket.transforms.push_back(&ecsController->GetComponent<TransformComponent>(e));
+  }
 
   IceLogInfo("ICE LOOP =================================================");
   while (platform->Update())
   {
-    start = end;
-    renderPacket.deltaTime = deltaTime.count() * 0.000001f;
+    // Handle input
+    Input.Update();
 
     // Run game code
-    (this->*ChildLoop)(renderPacket.deltaTime);
-    #pragma region MoveToChildLoop
-
-    //i32 x, y;
-    //const float sensitivity = 0.2f;
-    //Input.GetMouseDelta(&x, &y);
-    //cam.Rotate({-y * sensitivity, x * sensitivity, 0});
-    //cam.ClampPitch(89.0f, -89.0f);
-
-    if (Input.IsKeyDown(Ice_Key_W))
-      cam.position += cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;
-    if (Input.IsKeyDown(Ice_Key_S))
-      cam.position -= cam.GetForward() * renderPacket.deltaTime * camMoveSpeed;
-    if (Input.IsKeyDown(Ice_Key_D))
-      cam.position += cam.GetRight() * renderPacket.deltaTime * camMoveSpeed;
-    if (Input.IsKeyDown(Ice_Key_A))
-      cam.position -= cam.GetRight() * renderPacket.deltaTime * camMoveSpeed;
-    if (Input.IsKeyDown(Ice_Key_E))
-      cam.position += glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
-    if (Input.IsKeyDown(Ice_Key_Q))
-      cam.position -= glm::vec3(0.0f, renderPacket.deltaTime, 0.0f) * camMoveSpeed;
-
-    if (Input.OnKeyPressed(Ice_Key_K))
-      IceLogDebug("TEST KEY PRESS ------------------------");
-    if (Input.OnKeyReleased(Ice_Key_K))
-      IceLogDebug("TEST KEY RELEASE ----------------------");
+    gameLoop(renderPacket.deltaTime);
 
     renderPacket.viewMatrix = cam.GetViewMatrix();
     renderPacket.projectionMatrix = cam.GetProjectionMatrix();
 
-    if (Input.IsKeyDown(Ice_Key_Escape))
-    {
-      platform->Close();
-    }
-    #pragma endregion
-
-    // Handle input
-    Input.Update();
-
-    // NOTE : Should find a more efficient way of accomplishing this goal
-    renderPacket.transforms.clear();
-    auto v = ecsController->registry.view<RenderableComponent>(); // Guaranteed to have a transform
-    for (auto e : v)
-    {
-      renderPacket.transforms.push_back(ecsController->GetComponent<TransformComponent>(e));
-    }
+    // Update objects to be rendered
 
     // Render
     renderer->RenderFrame(&renderPacket);
 
     // Calculate times
-    end = std::chrono::steady_clock::now();
-    deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    deltasSum += deltaTime.count();
-    deltasCount++;
-
-    if (deltasSum >= fpsPrintFrequency)
     {
-      float avg = deltasSum / deltasCount;
-      IceLogInfo(" %8.0f us -- %4.0f fps", avg, 1.0f / (avg * 0.000001f));
+      end = std::chrono::steady_clock::now();
+      deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-      deltasSum = 0;
-      deltasCount = 0;
+      deltasSum += deltaTime.count();
+      deltasCount++;
+
+      if (deltasSum >= fpsPrintFrequency)
+      {
+        float avg = deltasSum / deltasCount;
+        IceLogInfo(" %8.0f us -- %4.0f fps", avg, 1.0f / (avg * microToSeconds));
+
+        deltasSum = 0;
+        deltasCount = 0;
+      }
+
+      start = end;
+      renderPacket.deltaTime = deltaTime.count() * microToSeconds;
     }
 
   }
@@ -161,7 +157,7 @@ void IceApplication::MainLoop()
 void IceApplication::Shutdown()
 {
   IceLogInfo("ICE SHUTDOWN =============================================");
-  ChildShutdown();
+  gameShutdown();
 
   EventManager.Unregister(Ice_Event_Window_Resized, this, UpdateCamOnWindowResize);
   ecsController->registry.

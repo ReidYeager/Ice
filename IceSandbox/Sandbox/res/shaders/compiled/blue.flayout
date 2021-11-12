@@ -4,6 +4,7 @@ buffer {
 }
 
 sampler {
+    User0
 }
 
 push {
