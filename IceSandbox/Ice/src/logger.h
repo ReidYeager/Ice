@@ -3,7 +3,7 @@
 #define ICE_LOGGER_H_
 
 #include "defines.h"
-#include "platform/platform.h"
+//#include "platform/platform.h"
 
 #include <stdarg.h>
 #include <stdio.h>

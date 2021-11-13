@@ -2,17 +2,14 @@
 #ifndef ICE_DEFINES_H_
 #define ICE_DEFINES_H_
 
-#pragma warning ( disable : 26812 )
-#pragma warning ( disable : 26495 )
+//#pragma warning ( disable : 26812 )
+//#pragma warning ( disable : 26495 )
 
 #ifdef ICE_DLL_EXPORT
 #define ICE_API
 #else
-#define ICE_API
-#endif // ICE_DLL_EXPORT
-
-// Comment out to disable debug-only code
-#define ICE_DEBUG_ONLY
+#define ICE_API extern "C"
+#endif
 
 //=================================================================================================
 // ice primitive definitions
@@ -27,13 +24,17 @@ typedef unsigned char      u8;
 typedef unsigned short     u16;
 typedef unsigned int       u32;
 typedef unsigned long long u64;
-typedef u64 IceDeviceSize;
 // Floats
 typedef float              f32;
 typedef double             f64;
 // Booleans
-typedef unsigned char      b8;
-typedef unsigned int       b32;
+typedef u8                 b8;
+typedef u32                b32;
+
+#define false 0
+#define true 1
+
+typedef u64 IceDeviceSize;
 
 //=================================================================================================
 // Platform detection

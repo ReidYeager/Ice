@@ -1,8 +1,6 @@
 
 cmake_minimum_required (VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
 
@@ -26,6 +24,6 @@ target_link_directories(Sandbox PRIVATE
 
 target_link_libraries(Sandbox
   Vulkan::Vulkan
+  Ice
 )
 
-target_link_libraries(Sandbox Ice)
