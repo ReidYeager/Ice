@@ -7,6 +7,8 @@ The functional end goal of this project is to have a renderer that allows for re
 > I am considering extending this desired feature-set to include offline rendering so I can experiment with higher cost rendering methodologies like path tracing, and to allow for higher resolution renders.
 
 ---
+![](images/PBRTextured.PNG)
+---
 
 ### Rendering APIs
 - [x] Vulkan
@@ -24,6 +26,10 @@ The functional end goal of this project is to have a renderer that allows for re
 
 ### Notable functionality
 - Hot reloading shaders
+
+---
+![](images/Guns.PNG)
+---
 
 ## Roadmap
 - Proper input handling

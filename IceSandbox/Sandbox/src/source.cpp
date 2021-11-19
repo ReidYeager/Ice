@@ -2,11 +2,15 @@
 #include <iostream>
 #include <ice.h>
 
-#include <math.h>
 #include <math\vector.h>
 
-// TODO : De-pessimize & refactor everything
+#include <math.h>
+#include <chrono>
 
+//#define ICE_USE_PREVIOUS_IMPLEMENTATION
+#ifdef ICE_USE_PREVIOUS_IMPLEMENTATION
+
+// TODO : De-pessimize & refactor everything
 IceApplication app;
 
 GameObject testGameObject;
@@ -85,7 +89,7 @@ void ChildLoop(float _deltaTime)
     app.Close();
   }
 
-  // TODO : ~!!~ Push renderer information to the respective parameters
+  // TODO : Push renderer information to the respective parameters
   //        As a test: send the depth image to the fragment shader
 
   testGameObjectB.transform->rotation.y += _deltaTime * 90.0f;
@@ -97,11 +101,38 @@ void ChildLoop(float _deltaTime)
   app.MaterialUpdateBuffer(blueMat, Ice_Shader_Frag, Ice_Shader_Buffer_Param_User0, &blueData[0]);
   app.MaterialUpdateBuffer(blueMat, Ice_Shader_Vert, Ice_Shader_Buffer_Param_User1, &blueData[1]);
 }
+#else
+
+reIceApplication app;
+
+void reInit()
+{
+  IceLogInfo("Client Init");
+}
+
+void reUpdate(float _deltaTime)
+{
+  //IceLogInfo("Re-Update : %f", _deltaTime);
+}
+
+void reShutdown()
+{
+  IceLogInfo("Client Shutdown");
+}
+
+#endif
 
 int main()
 {
-  app.Initialize(ChildInit, ChildLoop, ChildShutdown);
-  app.Run();
+  reIceApplicationSettings settings = {};
+  settings.ClientInitialize = reInit;
+  settings.ClientUpdate = reUpdate;
+  settings.ClientShutdown = reShutdown;
+  settings.windowSettings.extents = { 800, 600 };
+  settings.windowSettings.screenPosition = { 100, 50 };
+  settings.windowSettings.title = "reIce";
+
+  app.Run(&settings);
 
   return 0;
 }

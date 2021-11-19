@@ -41,7 +41,7 @@ private:
   void(*gameShutdown)() = 0;
 
   // Initializes all allocators and subsystems
-  void Startup();
+  void Initialize();
   // Loops until closed
   // Calls input, ChildLoop, and renderer
   void MainLoop();
@@ -51,7 +51,7 @@ private:
   void RenderableCallback();
 
 public:
-  void Initialize(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)());
+  void Setup(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)());
   // Houses the Initialize, MainLoop, and Shutdown calls
   void Run();
 

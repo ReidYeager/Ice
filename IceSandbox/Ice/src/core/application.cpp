@@ -18,7 +18,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 
-void IceApplication::Initialize(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)())
+void IceApplication::Setup(void(*_gameInit)(), void(*_gameLoop)(float), void(*_gameShutdown)())
 {
   gameInit = _gameInit;
   gameLoop = _gameLoop;
@@ -33,7 +33,7 @@ void IceApplication::Run()
 {
   try
   {
-    Startup();
+    Initialize();
     MainLoop();
     Shutdown();
   }
@@ -58,7 +58,7 @@ bool UpdateCamOnWindowResize(u16 _eventCode, void* _sender, void* _listener, Ice
   return true;
 }
 
-void IceApplication::Startup()
+void IceApplication::Initialize()
 {
   IceLogInfo("ICE INIT =================================================");
 

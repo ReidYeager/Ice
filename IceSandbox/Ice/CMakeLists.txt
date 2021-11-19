@@ -55,11 +55,11 @@ add_library (Ice STATIC
 "src/renderer/vulkan/vulkan_platform.cpp"
 "src/renderer/vulkan/vulkan_shader.h"
 
-
 "src/math/vector.h"
 "src/math/matrix.h"
 "src/math/linear.h"
- "src/renderer/vulkan/vulkan_descriptor.cpp" "src/renderer/vulkan/vulkan_descriptor.h" )
+ "src/renderer/vulkan/vulkan_descriptor.cpp"
+ "src/renderer/vulkan/vulkan_descriptor.h"  "src/core/re_application.h" "src/platform/re_platform.h" "src/core/re_application.cpp" "src/platform/re_platfrom.cpp")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

@@ -5,6 +5,8 @@
 	Line    28 :--: // NOTE : Delete
 \IceSandbox\Ice\src\core\camera.h
 	Line     8 :--: // NOTE : Create a camera (projection) component to replace this
+\IceSandbox\Ice\src\core\re_application.cpp
+	Line    47 :--: // TODO : ~!!~ Initialize renderer
 \IceSandbox\Ice\src\defines.h
 	Line    58 :--: // TODO : Define these directories in a separate file
 \IceSandbox\Ice\src\profiler.h
@@ -20,5 +22,5 @@
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
 	Line   181 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceSandbox\Sandbox\src\source.cpp
-	Line     7 :--: // TODO : De-pessimize & refactor everything
-	Line    87 :--: // TODO : ~!!~ Push renderer information to the respective parameters
+	Line    12 :--: // TODO : De-pessimize & refactor everything
+	Line    91 :--: // TODO : Push renderer information to the respective parameters
