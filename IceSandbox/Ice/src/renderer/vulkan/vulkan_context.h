@@ -63,14 +63,6 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-inline void aaaa()
-{
-  //VkResult result = function;
-  //  const char* msg[2048];
-  //  sprintf(msg, errorMsg, __VA_ARGS__);
-  //  ICE_ASSERT_MSG(result == VK_SUCCESS, "%s\nVulkan result : %s", VulkanResultToString(result));
-}
-
 #define IVK_ASSERT(function, errorMsg, ...)                                                          \
 {                                                                                                    \
   VkResult result = function;                                                                        \

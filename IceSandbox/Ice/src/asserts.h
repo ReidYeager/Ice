@@ -11,22 +11,22 @@
 #include <intrin.h>
 
 #define ICE_ASSERT(expression)                                                 \
-{                                                                           \
-  if (!(expression))                                                        \
-  {                                                                         \
+{                                                                              \
+  if (!(expression))                                                           \
+  {                                                                            \
     IceLogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
-    __debugbreak();                                                         \
-  }                                                                         \
+    __debugbreak();                                                            \
+  }                                                                            \
 }
 
 #define ICE_ASSERT_MSG(expression, msg, ...)                                   \
-{                                                                           \
-  if (!(expression))                                                        \
-  {                                                                         \
+{                                                                              \
+  if (!(expression))                                                           \
+  {                                                                            \
     IceLogFatal("%s failed -- Line %d : %s", #expression, __LINE__, __FILE__); \
     IceLogFatal(msg, __VA_ARGS__);                                             \
-    __debugbreak();                                                         \
-  }                                                                         \
+    __debugbreak();                                                            \
+  }                                                                            \
 }
 
 #else

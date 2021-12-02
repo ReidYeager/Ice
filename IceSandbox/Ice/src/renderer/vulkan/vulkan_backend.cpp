@@ -373,12 +373,12 @@ void VulkanBackend::InitializeAPI()
   std::vector<const char*> extensions;
   GetRequiredPlatformExtensions(extensions);
   extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-  #ifdef ICE_DEBUG_ONLY
+  #ifdef ICE_DEBUG
   extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   #endif
 
   std::vector<const char*> layers;
-  #ifdef ICE_DEBUG_ONLY
+  #ifdef ICE_DEBUG
   layers.push_back("VK_LAYER_KHRONOS_validation");
   #endif
 
@@ -430,7 +430,7 @@ void VulkanBackend::CreateLogicalDevice()
   extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
   std::vector<const char*> layers;
-  #ifdef ICE_DEBUG_ONLY
+  #ifdef ICE_DEBUG
   layers.push_back("VK_LAYER_KHRONOS_validation");
   #endif // ICE_DEBUG_ONLY
 

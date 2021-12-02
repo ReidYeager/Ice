@@ -6,31 +6,32 @@
 
 #include <chrono>
 
-void reIceApplication::Run(reIceApplicationSettings* _settings)
+u32 reIceApplication::Run(reIceApplicationSettings* _settings)
 {
   try
   {
     if (!Initialize(_settings))
     {
       IceLogFatal("IceApplication Initialization failed");
-      return;
+      return -1;
     }
 
     if (!Update())
     {
       IceLogFatal("IceApplication Update failed");
-      return;
+      return -2;
     }
 
     if (!Shutdown())
     {
       IceLogFatal("IceApplication Shutdown failed");
-      return;
+      return -3;
     }
   }
   catch (const char* error)
   {
     IceLogFatal("Ice caught :: %s", error);
+    return -4;
   }
 }
 
@@ -40,31 +41,44 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
   state.ClientUpdate = _settings->ClientUpdate;
   state.ClientShutdown = _settings->ClientShutdown;
 
-  IceLogInfo("reApplication Initialize");
+  IceLogInfo("===== reApplication Initialize =====");
+
+  _settings->windowSettings.title = _settings->title;
 
   //state.platform.Initialize(&_settings->windowSettings);
-  rePlatform.Initialize(&_settings->windowSettings);
+  if (!rePlatform.Initialize(&_settings->windowSettings))
+  {
+    IceLogFatal("Ice Platform failed to initialize");
+    return false;
+  }
 
-  // TODO : ~!!~ Initialize renderer
+  if (!reRenderer.Initialize(&_settings->rendererSettings))
+  {
+    IceLogFatal("Ice Renderer failed to initialize");
+    return false;
+  }
 
   state.ClientInitialize();
-
   return true;
 }
 
 b8 reIceApplication::Update()
 {
+  IceLogInfo("===== reApplication Main Loop =====");
+
   auto start = std::chrono::steady_clock::now();
   auto end = start;
   auto microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
   float deltaTime = 0.0f;
   const float microToSeconds = 0.000001f;
  
- while (rePlatform.Update())
+  while (rePlatform.Update())
   {
     state.ClientUpdate(deltaTime);
 
-    // Update timimg
+    reRenderer.Render();
+
+    // Update timing
     {
       end = std::chrono::steady_clock::now();
       microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -80,8 +94,9 @@ b8 reIceApplication::Shutdown()
 {
   state.ClientShutdown();
 
+  reRenderer.Shutdown();
   rePlatform.Shutdown();
 
-  IceLogInfo("reApplication Shutdown");
+  IceLogInfo("===== reApplication Shutdown =====");
   return true;
 }

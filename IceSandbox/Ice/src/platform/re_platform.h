@@ -13,12 +13,23 @@ struct reIceWindowSettings
   const char* title;
 };
 
+// Vendor-specific information required to maintain a window
+#ifdef ICE_PLATFORM_WINDOWS
+struct rePlatformVendorData
+{
+  HWND hwnd;
+  HINSTANCE hinstance;
+};
+#else
+struct rePlatformVendorData {};
+#endif // ICE_PLATFORM_WINDOWS
+
 extern class reIcePlatform
 {
 private:
   struct
   {
-    void* vendorData = 0; // Vendor-specific information required to maintain a window
+    rePlatformVendorData vendorData;
     reIceWindowSettings windowSettings = {};
     b8 shouldClose = false;
   } state;
@@ -33,6 +44,8 @@ public:
   b8 Shutdown();
 
   void Close() { state.shouldClose = true; }
+
+  rePlatformVendorData const* GetVendorInfo() { return &state.vendorData; }
 
   // Prints text to the platform's console
   void ConsolePrint(const char* _message, u32 _color);

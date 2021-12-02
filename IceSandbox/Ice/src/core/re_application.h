@@ -5,10 +5,15 @@
 #include "defines.h"
 
 #include "platform/re_platform.h"
+#include "rendering/re_renderer.h"
 
 struct reIceApplicationSettings
 {
+  const char* title;
+  u32 version;
+
   reIceWindowSettings windowSettings;
+  reIceRendererSettings rendererSettings;
 
   void(*ClientInitialize)();
   void(*ClientUpdate)(float);
@@ -18,9 +23,6 @@ struct reIceApplicationSettings
 class reIceApplication
 {
 private:
-  // Platform interface
-  // Render interface
-
   struct
   {
     void(*ClientInitialize)();
@@ -29,7 +31,7 @@ private:
   } state;
 
 public:
-  void Run(reIceApplicationSettings* _settings);
+  u32 Run(reIceApplicationSettings* _settings);
 
 private:
   b8 Initialize(reIceApplicationSettings* _settings);

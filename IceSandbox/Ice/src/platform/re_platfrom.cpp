@@ -21,12 +21,6 @@ void PlatformAdjustWindowForBorder(reIceWindowSettings& _window);
 // Handles Windows event messages
 LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam);
 
-struct rePlatformVendorData
-{
-  HWND hwnd;
-  HINSTANCE hinstance;
-};
-
 rePlatformVendorData* vendorData = 0;
 
 b8 reIcePlatform::Initialize(reIceWindowSettings* _settings)
@@ -37,8 +31,7 @@ b8 reIcePlatform::Initialize(reIceWindowSettings* _settings)
     return false;
   }
 
-  state.vendorData = MemAlloc(sizeof(rePlatformVendorData));
-  vendorData = (rePlatformVendorData*)state.vendorData;
+  vendorData = &state.vendorData;
 
   state.windowSettings = *_settings;
 
@@ -56,8 +49,6 @@ b8 reIcePlatform::Shutdown()
   state.shouldClose = true; // Ensure the main loop stops
 
   CloseWindow();
-
-  MemFree(state.vendorData);
 
   return true;
 }

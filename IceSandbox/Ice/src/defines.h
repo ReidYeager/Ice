@@ -12,7 +12,7 @@
 #endif // ICE_DLL_EXPORT
 
 // Comment out to disable debug-only code
-#define ICE_DEBUG_ONLY
+#define ICE_DEBUG
 
 //=================================================================================================
 // ice primitive definitions
