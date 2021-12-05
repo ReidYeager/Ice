@@ -20,7 +20,8 @@
 \IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
 	Line   181 :--: // NOTE : DELETE -- External classes should not need to get the backend context
 \IceSandbox\Ice\src\rendering\vulkan\re_renderer_vulkan.cpp
-	Line    61 :--: // TODO : Define this information elsewhere
+	Line    80 :--: // TODO : Define this information elsewhere
+	Line   417 :--: // TODO : Remove this and hand-off ownership of the images
 \IceSandbox\Sandbox\src\source.cpp
 	Line    12 :--: // TODO : De-pessimize & refactor everything
 	Line    91 :--: // TODO : Push renderer information to the respective parameters

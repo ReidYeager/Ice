@@ -27,6 +27,8 @@ u32 reIceApplication::Run(reIceApplicationSettings* _settings)
       IceLogFatal("IceApplication Shutdown failed");
       return -3;
     }
+
+    return 0;
   }
   catch (const char* error)
   {
@@ -92,11 +94,10 @@ b8 reIceApplication::Update()
 
 b8 reIceApplication::Shutdown()
 {
+  IceLogInfo("===== reApplication Shutdown =====");
   state.ClientShutdown();
 
   reRenderer.Shutdown();
   rePlatform.Shutdown();
-
-  IceLogInfo("===== reApplication Shutdown =====");
   return true;
 }

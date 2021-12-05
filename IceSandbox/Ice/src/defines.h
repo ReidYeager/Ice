@@ -61,4 +61,8 @@ typedef u64 IceFlagExtended;
 #define ICE_RESOURCE_SHADER_DIR "../../../Sandbox/res/shaders/compiled/"
 #define ICE_RESOURCE_MODEL_DIR "../../../Sandbox/res/models/"
 
+#define ICE_ATTEMPT(x) \
+if (!x)                \
+  return false;
+
 #endif // !DEFINES_H

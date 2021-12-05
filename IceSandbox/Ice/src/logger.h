@@ -33,6 +33,7 @@ inline void ICE_API IceConsoleLogMessage(IceLogTypes _type, const char* _message
   delete[](outMessage);
 }
 
+#ifdef ICE_DEBUG
 #define IceLogInfo(message, ...)                            \
 {                                                           \
   IceConsoleLogMessage(Ice_Log_Info, message, __VA_ARGS__); \
@@ -44,6 +45,10 @@ inline void ICE_API IceConsoleLogMessage(IceLogTypes _type, const char* _message
   IceConsoleLogMessage(Ice_Log_Debug, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Debug, "\n");                 \
 }
+#else
+#define IceLogInfo(message, ...)
+#define IceLogDebug(message, ...)
+#endif // ICE_DEBUG
 
 #define IceLogError(message, ...)                            \
 {                                                            \

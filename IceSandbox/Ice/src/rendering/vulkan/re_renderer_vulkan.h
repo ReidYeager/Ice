@@ -4,8 +4,9 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/re_renderer_vulkan_context.h"
+#include "rendering/vulkan/re_vulkan_context.h"
 #include "rendering/re_renderer_backend.h"
+#include "math/vector.h"
 
 #include <vulkan/vulkan.h>
 
@@ -24,10 +25,6 @@ public:
 private:
   // Ensures that all desired layer and extension functionality is present in the created instance
   b8 CreateInstance();
-  // Retrieves all of the extensions the platform requires to render and present with Vulkan
-  void GetPlatformExtensions(std::vector<const char*>& _extensions);
-  // Creates a vendor-specific surface for display
-  b8 CreateSurface();
 
   // Selects the first compatible GPU among those available in the system
   // Fills the selected GPU's information
@@ -38,9 +35,30 @@ private:
   u32 GetPresentQueue();
   // Tests the GPU for desired functionality
   b8 IsDeviceSuitable(const VkPhysicalDevice& _device);
-
-  // ...
+  // Creates the vkDevice
   b8 CreateLogicalDevice();
+
+  // Defines the descriptors and sets available for use
+  b8 CreateDescriptorPool();
+  // Creates a command pool
+  b8 CreateCommandPool(b8 _createTransient = false);
+
+  // Creates the swapchain, its images, and their views
+  b8 CreateSwapchain();
+  // 
+  b8 CreateRenderpass();
+  b8 CreateDepthImage();
+  b8 CreateFrameBuffers();
+
+  b8 CreateSyncObjects();
+  b8 CreateCommandBuffers();
+
+  // Platform =====
+  // Retrieves all of the extensions the platform requires to render and present with Vulkan
+  void GetPlatformExtensions(std::vector<const char*>& _extensions);
+  // Creates a vendor-specific surface for display
+  b8 CreateSurface();
+  vec2U GetPlatformWindowExtents();
 
 };
 

@@ -1,6 +1,6 @@
 
-#ifndef ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_CONTEXT_H_
-#define ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_CONTEXT_H_
+#ifndef ICE_RENDERING_VULKAN_RE_VULKAN_CONTEXT_H_
+#define ICE_RENDERING_VULKAN_RE_VULKAN_CONTEXT_H_
 
 #include "defines.h"
 #include "asserts.h"
@@ -25,7 +25,7 @@ struct reIvkGpu
 
   u32 graphicsQueueIndex;
   u32 presentQueueIndex;
-  u32 transferQueueIndex;
+  u32 transientQueueIndex;
 };
 
 struct reIvkContext
@@ -39,7 +39,17 @@ struct reIvkContext
 
   VkQueue graphicsQueue;
   VkQueue presentQueue;
-  VkQueue transferQueue;
+  VkQueue transientQueue;
+
+  VkDescriptorPool descriptorPool;
+  VkCommandPool graphicsCommandPool;
+  VkCommandPool transientCommandPool; // Used only for one-time commands
+
+  VkSwapchainKHR swapchain;
+  std::vector<VkImage> swapchainImages;
+  VkFormat swapchainFormat;
+  VkExtent2D swapchainExtent;
+  std::vector<VkImageView> swapchainImageViews;
 
 };
 

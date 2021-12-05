@@ -12,14 +12,25 @@ b8 reIvkRenderer::Initialize()
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
 
-  if (!CreateInstance())
-    return false;
-  if (!CreateSurface())
-    return false;
-  if (!ChoosePhysicalDevice())
-    return false;
-  if (!CreateLogicalDevice())
-    return false;
+  // API initialization =====
+  ICE_ATTEMPT(CreateInstance());
+  ICE_ATTEMPT(CreateSurface());
+  ICE_ATTEMPT(ChoosePhysicalDevice());
+  ICE_ATTEMPT(CreateLogicalDevice());
+
+  // Rendering components =====
+  ICE_ATTEMPT(CreateDescriptorPool());
+  ICE_ATTEMPT(CreateCommandPool());
+  ICE_ATTEMPT(CreateCommandPool(true));
+
+  // Create swapchain
+  ICE_ATTEMPT(CreateSwapchain());
+  // Create renderpass
+  // Create depth images
+  // Create frame buffers
+
+  // Create sync objects
+  // Create command buffers
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====")
 
@@ -28,6 +39,14 @@ b8 reIvkRenderer::Initialize()
 
 b8 reIvkRenderer::Shutdown()
 {
+  // Rendering components =====
+  vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
+
+  vkDestroyCommandPool(context.device, context.graphicsCommandPool, context.alloc);
+  vkDestroyCommandPool(context.device, context.transientCommandPool, context.alloc);
+  vkDestroyDescriptorPool(context.device, context.descriptorPool, context.alloc);
+
+  // API shutdown =====
   vkDestroyDevice(context.device, context.alloc);
   vkDestroySurfaceKHR(context.instance, context.surface, context.alloc);
   vkDestroyInstance(context.instance, context.alloc);
@@ -119,7 +138,7 @@ b8 reIvkRenderer::ChoosePhysicalDevice()
   vkGetPhysicalDeviceQueueFamilyProperties(gpu.device, &count, gpu.queueFamilyProperties.data());
 
   vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device, context.surface, &count, nullptr);
-  gpu.surfaceFormats.resize(count);
+  gpu.presentModes.resize(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device,
                                             context.surface,
                                             &count,
@@ -127,17 +146,17 @@ b8 reIvkRenderer::ChoosePhysicalDevice()
 
   // Select queue families
   gpu.graphicsQueueIndex = GetIndexForQueue(VK_QUEUE_GRAPHICS_BIT);
-  gpu.transferQueueIndex = GetIndexForQueue(VK_QUEUE_TRANSFER_BIT);
+  gpu.transientQueueIndex = GetIndexForQueue(VK_QUEUE_TRANSFER_BIT);
   gpu.presentQueueIndex = GetPresentQueue();
 
   if (gpu.graphicsQueueIndex == -1u ||
       gpu.presentQueueIndex == -1u  ||
-      gpu.transferQueueIndex == -1u)
+      gpu.transientQueueIndex == -1u)
   {
     IceLogError("Some of the queue indices are invalid (G : %u, P : %u, T : %u)",
                 gpu.graphicsQueueIndex,
                 gpu.presentQueueIndex,
-                gpu.transferQueueIndex);
+                gpu.transientQueueIndex);
     return false;
   }
 
@@ -238,7 +257,10 @@ b8 reIvkRenderer::CreateLogicalDevice()
 
   u32 queueIndices[queueCount] = { context.gpu.graphicsQueueIndex,
                                    context.gpu.presentQueueIndex,
-                                   context.gpu.transferQueueIndex };
+                                   context.gpu.transientQueueIndex };
+
+  IceLogDebug("Queue Family Indicies:\nGraphics : %u\nPresentation : %u\nTransfer : %u",
+              queueIndices[0], queueIndices[1], queueIndices[2]);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
   for (u32 i = 0; i < queueCount; i++)
@@ -258,6 +280,7 @@ b8 reIvkRenderer::CreateLogicalDevice()
   layers.push_back("VK_LAYER_KHRONOS_validation");
   #endif // ICE_DEBUG
 
+  // Creation =====
   VkDeviceCreateInfo createInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
@@ -273,7 +296,167 @@ b8 reIvkRenderer::CreateLogicalDevice()
 
   vkGetDeviceQueue(context.device, context.gpu.graphicsQueueIndex, 0, &context.graphicsQueue);
   vkGetDeviceQueue(context.device, context.gpu.presentQueueIndex , 0, &context.presentQueue );
-  vkGetDeviceQueue(context.device, context.gpu.transferQueueIndex, 0, &context.transferQueue);
+  vkGetDeviceQueue(context.device, context.gpu.transientQueueIndex, 0, &context.transientQueue);
 
   return context.device != VK_NULL_HANDLE;
+}
+
+b8 reIvkRenderer::CreateDescriptorPool()
+{
+  // Size definitions =====
+  const u32 poolSizeCount = 2;
+  VkDescriptorPoolSize sizes[poolSizeCount];
+
+  sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  sizes[0].descriptorCount = 100;
+
+  sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  sizes[1].descriptorCount = 100;
+
+  // Creation =====
+  VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.maxSets = 4; // 0: Global, 1: per-shader, 2: per-material, 3: per-object
+  createInfo.poolSizeCount = poolSizeCount;
+  createInfo.pPoolSizes = sizes;
+
+  IVK_ASSERT(vkCreateDescriptorPool(context.device,
+                                    &createInfo,
+                                    context.alloc,
+                                    &context.descriptorPool),
+             "Failed to create descriptor pool");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
+{
+  VkCommandPool* poolPtr = 0;
+  VkCommandPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+
+  if (_createTransient)
+  { // Transfer =====
+    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    createInfo.queueFamilyIndex = context.gpu.transientQueueIndex;
+    poolPtr = &context.transientCommandPool;
+  }
+  else
+  { // Graphics =====
+    createInfo.flags = 0;
+    createInfo.queueFamilyIndex = context.gpu.graphicsQueueIndex;
+    poolPtr = &context.graphicsCommandPool;
+  }
+
+  IVK_ASSERT(vkCreateCommandPool(context.device, &createInfo, context.alloc, poolPtr),
+             "Failed to create command pool");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateSwapchain()
+{
+  u32 imageCount = context.gpu.surfaceCapabilities.minImageCount + 1;
+
+  // Create swapchain =====
+  {
+    u32 maxImageCount = context.gpu.surfaceCapabilities.maxImageCount;
+    if (maxImageCount > 0 && imageCount > maxImageCount)
+    {
+      imageCount = maxImageCount;
+    }
+
+    // Format =====
+    VkSurfaceFormatKHR format = context.gpu.surfaceFormats[0]; // Default
+    for (const auto& f : context.gpu.surfaceFormats)
+    {
+      if (f.format == VK_FORMAT_R32G32B32A32_SFLOAT &&
+        f.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT)
+      {
+        format = f;
+        break;
+      }
+    }
+
+    // Present mode =====
+    VkPresentModeKHR present = VK_PRESENT_MODE_FIFO_KHR; // Guaranteed
+    for (const auto& mode : context.gpu.presentModes)
+    {
+      if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
+      {
+        present = mode;
+        break;
+      }
+    }
+
+    // Image dimensions =====
+    VkExtent2D extent;
+    if (context.gpu.surfaceCapabilities.currentExtent.width != -1u)
+    {
+      extent = context.gpu.surfaceCapabilities.currentExtent;
+    }
+    else
+    {
+      vec2U e = GetPlatformWindowExtents();
+      extent = { e.width, e.height };
+    }
+
+    // Creation =====
+    VkSwapchainCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+    createInfo.flags = 0;
+    createInfo.imageArrayLayers = 1;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    createInfo.clipped = VK_TRUE;
+    createInfo.imageColorSpace = format.colorSpace;
+    createInfo.imageFormat = format.format;
+    createInfo.imageExtent = extent;
+    createInfo.presentMode = present;
+    createInfo.minImageCount = imageCount;
+    createInfo.surface = context.surface;
+
+    // TODO : Remove this and hand-off ownership of the images
+    u32 indices[] = { context.gpu.graphicsQueueIndex, context.gpu.presentQueueIndex };
+    if (context.gpu.graphicsQueueIndex != context.gpu.presentQueueIndex)
+    {
+      createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+      createInfo.queueFamilyIndexCount = 2;
+      createInfo.pQueueFamilyIndices = indices;
+    }
+    else
+    {
+      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+
+    IVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
+      "Failed to create swapchain");
+
+    // Swapchain context =====
+    context.swapchainFormat = format.format;
+    context.swapchainExtent = extent;
+  }
+
+  // Retrieve images and create views =====
+  {
+    // Get the number of images actually created
+    vkGetSwapchainImagesKHR(context.device, context.swapchain, &imageCount, nullptr);
+
+    IceLogInfo("Created %u images for the swapchain", imageCount);
+
+    context.swapchainImages.resize(imageCount);
+    context.swapchainImageViews.resize(imageCount);
+
+    vkGetSwapchainImagesKHR(context.device,
+                            context.swapchain,
+                            &imageCount,
+                            context.swapchainImages.data());
+
+    for (u32 i = 0; i < imageCount; i++)
+    {
+      // Create image view
+      //context.swapchainImageViews[i] = CreateImageView(...);
+    }
+  }
+
+  return true;
 }

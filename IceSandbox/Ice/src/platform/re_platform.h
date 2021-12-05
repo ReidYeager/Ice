@@ -8,8 +8,8 @@
 
 struct reIceWindowSettings
 {
-  vec2 screenPosition;
-  vec2 extents;
+  vec2I screenPosition;
+  vec2U extents;
   const char* title;
 };
 
@@ -46,6 +46,7 @@ public:
   void Close() { state.shouldClose = true; }
 
   rePlatformVendorData const* GetVendorInfo() { return &state.vendorData; }
+  reIceWindowSettings const* GetWindowInfo() { return &state.windowSettings; }
 
   // Prints text to the platform's console
   void ConsolePrint(const char* _message, u32 _color);

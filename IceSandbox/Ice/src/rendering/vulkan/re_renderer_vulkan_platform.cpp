@@ -3,6 +3,7 @@
 
 #include "rendering/vulkan/re_renderer_vulkan.h"
 #include "platform/re_platform.h"
+#include "math/vector.h"
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>
@@ -32,6 +33,11 @@ b8 reIvkRenderer::CreateSurface()
              "Failed to create a Win32 surface");
 
   return context.surface != VK_NULL_HANDLE;
+}
+
+vec2U reIvkRenderer::GetPlatformWindowExtents()
+{
+  return rePlatform.GetWindowInfo()->extents;
 }
 
 // End ICE_PLATFORM_WINDOWS
