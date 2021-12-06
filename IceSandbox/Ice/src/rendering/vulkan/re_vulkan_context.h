@@ -11,6 +11,18 @@
 
 #include <vector>
 
+struct reIvkImage
+{
+  VkImage image;
+  VkImageView view;
+  VkSampler sampler;
+
+  VkFormat format;
+  VkImageLayout layout;
+
+  VkDeviceMemory memory;
+};
+
 struct reIvkGpu
 {
   VkPhysicalDevice                 device;
@@ -42,15 +54,28 @@ struct reIvkContext
   VkQueue transientQueue;
 
   VkDescriptorPool descriptorPool;
+
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommandPool; // Used only for one-time commands
+  std::vector<VkCommandBuffer> commandsBuffers;
 
   VkSwapchainKHR swapchain;
   std::vector<VkImage> swapchainImages;
+  std::vector<VkImageView> swapchainImageViews;
   VkFormat swapchainFormat;
   VkExtent2D swapchainExtent;
-  std::vector<VkImageView> swapchainImageViews;
 
+  reIvkImage depthImage;
+
+  VkRenderPass renderpass;
+  std::vector<VkFramebuffer> frameBuffers;
+
+  std::vector<VkFence> imageIsInFlightFence;
+  std::vector<VkFence> flightSlotAvailableFences;
+  std::vector<VkSemaphore> renderCompleteSemaphores;
+  std::vector<VkSemaphore> imageAvailableSemaphores;
+  u32 currentFlightIndex = 0;
+  #define RE_MAX_FLIGHT_IMAGE_COUNT 3
 };
 
 #endif // !define ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_CONTEXT_H_

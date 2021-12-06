@@ -24,10 +24,9 @@ private:
   reIceRendererBackend* backend;
 
 public:
-  virtual b8 Initialize(reIceRendererSettings* _settings);
-  virtual b8 Shutdown();
-
-  virtual b8 Render();
+  b8 Initialize(reIceRendererSettings* _settings);
+  b8 Shutdown();
+  b8 Render();
 } reRenderer;
 
 #endif // !define ICE_RENDERING_RE_RENDERER_H_

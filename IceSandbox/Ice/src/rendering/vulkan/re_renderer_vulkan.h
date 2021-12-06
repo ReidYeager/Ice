@@ -60,6 +60,11 @@ private:
   b8 CreateSurface();
   vec2U GetPlatformWindowExtents();
 
+  // Helpers =====
+  b8 CreateImage(reIvkImage* _image, VkExtent2D _extents, VkFormat _format, VkImageUsageFlags _usage);
+  b8 CreateImageView(reIvkImage* _image, VkImageAspectFlags _aspectFlags);
+  b8 CreateImageSampler(reIvkImage* _image);
+
 };
 
 #endif // !define ICE_RENDERING_RE_RENDERER_VULKAN_H_

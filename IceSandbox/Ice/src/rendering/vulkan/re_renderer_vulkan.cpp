@@ -23,10 +23,9 @@ b8 reIvkRenderer::Initialize()
   ICE_ATTEMPT(CreateCommandPool());
   ICE_ATTEMPT(CreateCommandPool(true));
 
-  // Create swapchain
   ICE_ATTEMPT(CreateSwapchain());
-  // Create renderpass
-  // Create depth images
+  ICE_ATTEMPT(CreateDepthImage());
+  ICE_ATTEMPT(CreateRenderpass());
   // Create frame buffers
 
   // Create sync objects
@@ -40,6 +39,12 @@ b8 reIvkRenderer::Initialize()
 b8 reIvkRenderer::Shutdown()
 {
   // Rendering components =====
+  vkDestroyImage(context.device, context.depthImage.image, context.alloc);
+  vkDestroyImageView(context.device, context.depthImage.view, context.alloc);
+  vkFreeMemory(context.device, context.depthImage.memory, context.alloc);
+
+  vkDestroyRenderPass(context.device, context.renderpass, context.alloc);
+
   vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
 
   vkDestroyCommandPool(context.device, context.graphicsCommandPool, context.alloc);
@@ -259,7 +264,7 @@ b8 reIvkRenderer::CreateLogicalDevice()
                                    context.gpu.presentQueueIndex,
                                    context.gpu.transientQueueIndex };
 
-  IceLogDebug("Queue Family Indicies:\nGraphics : %u\nPresentation : %u\nTransfer : %u",
+  IceLogInfo("Queue Family Indicies -- Graphics : %u -- Presentation : %u -- Transfer : %u",
               queueIndices[0], queueIndices[1], queueIndices[2]);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
@@ -458,5 +463,124 @@ b8 reIvkRenderer::CreateSwapchain()
     }
   }
 
+  return true;
+}
+
+b8 reIvkRenderer::CreateRenderpass()
+{
+  // Color =====
+  VkAttachmentDescription colorDescription {};
+  colorDescription.format = context.swapchainFormat;
+  colorDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  colorDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  VkAttachmentReference colorReference {};
+  colorReference.attachment = 0;
+  colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Depth =====
+  VkAttachmentDescription depthDescription {};
+  depthDescription.format = context.depthImage.format;
+  depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthDescription.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  depthDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  VkAttachmentReference depthReference {};
+  depthReference.attachment = 1;
+  depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  // Subpass =====
+  VkSubpassDescription subpassDescription {};
+  subpassDescription.colorAttachmentCount = 1;
+  subpassDescription.pColorAttachments = &colorReference;
+  subpassDescription.pDepthStencilAttachment = &depthReference;
+  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+  VkSubpassDependency subpassDependency {};
+  subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  subpassDependency.dstSubpass = 0;
+  subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.srcAccessMask = 0;
+  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.dstAccessMask = 0;
+
+  // Creation =====
+  const u32 attachemntCount = 2;
+  VkAttachmentDescription attachments[attachemntCount] = { colorDescription, depthDescription };
+  const u32 subpassCount = 1;
+  VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
+  const u32 dependencyCount = 1;
+  VkSubpassDependency dependencies[dependencyCount] = { subpassDependency };
+
+  VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.attachmentCount = attachemntCount;
+  createInfo.pAttachments    = attachments;
+  createInfo.subpassCount = subpassCount;
+  createInfo.pSubpasses   = subpasses;
+  createInfo.dependencyCount = dependencyCount;
+  createInfo.pDependencies   = dependencies;
+
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
+             "Failed to create renderpass");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateDepthImage()
+{
+  // Find depth format =====
+  VkFormat format = VK_FORMAT_D32_SFLOAT;
+  VkFormatProperties formatProperties;
+  const u32 fCount = 3;
+  VkFormat desiredFormats[fCount] = { VK_FORMAT_D32_SFLOAT,
+                                      VK_FORMAT_D32_SFLOAT_S8_UINT,
+                                      VK_FORMAT_D24_UNORM_S8_UINT };
+  for (u32 i = 0; i < fCount; i++)
+  {
+    vkGetPhysicalDeviceFormatProperties(context.gpu.device, desiredFormats[i], &formatProperties);
+
+    if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+    {
+      format = desiredFormats[i];
+      break;
+    }
+  }
+
+  context.depthImage.format = format;
+
+  // Create image =====
+  ICE_ATTEMPT(CreateImage(&context.depthImage,
+                          context.swapchainExtent,
+                          format,
+                          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+
+  // Create image view =====
+  ICE_ATTEMPT(CreateImageView(&context.depthImage, VK_IMAGE_ASPECT_DEPTH_BIT));
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateFrameBuffers()
+{
+  return true;
+}
+
+b8 reIvkRenderer::CreateSyncObjects()
+{
+  return true;
+}
+
+b8 reIvkRenderer::CreateCommandBuffers()
+{
   return true;
 }

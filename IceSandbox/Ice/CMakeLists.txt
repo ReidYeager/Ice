@@ -70,7 +70,11 @@ add_library (Ice STATIC
  "src/rendering/re_renderer_backend.h"
  "src/rendering/vulkan/re_renderer_vulkan.h"
  "src/rendering/vulkan/re_renderer_vulkan.cpp"
- "src/rendering/vulkan/re_renderer_vulkan_context.h" "src/rendering/vulkan/re_vulkan_assert.h"  "src/rendering/vulkan/re_renderer_vulkan_platform.cpp")
+ "src/rendering/vulkan/re_vulkan_context.h"
+ "src/rendering/vulkan/re_vulkan_assert.h"
+ "src/rendering/vulkan/re_renderer_vulkan_platform.cpp"
+ "src/rendering/vulkan/re_vulkan_image.cpp"
+)
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 
