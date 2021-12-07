@@ -57,6 +57,8 @@ private:
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
 
+  b8 RecordCommandBuffers();
+
   // Materials =====
   b8 CreateDescriptorSet();
   b8 CreatePipelinelayout();

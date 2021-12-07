@@ -54,6 +54,6 @@ b8 reIceRenderer::Shutdown()
 
 b8 reIceRenderer::Render()
 {
-  vkBackend->Render();
+  ICE_ATTEMPT(vkBackend->Render());
   return true;
 }

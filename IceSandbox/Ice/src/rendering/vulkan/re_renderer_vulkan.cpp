@@ -38,12 +38,12 @@ b8 reIvkRenderer::Initialize()
   ICE_ATTEMPT(CreateCommandBuffers());
 
   // Material =====
-  CreateShaderModule(&material.vertexModule, "mvp.vert");
-  CreateShaderModule(&material.fragmentModule, "red.frag");
-
   ICE_ATTEMPT(CreateDescriptorSet());
   ICE_ATTEMPT(CreatePipelinelayout());
   ICE_ATTEMPT(CreatePipeline());
+
+  // Commands =====
+  ICE_ATTEMPT(RecordCommandBuffers());
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====")
 
@@ -52,6 +52,8 @@ b8 reIvkRenderer::Initialize()
 
 b8 reIvkRenderer::Shutdown()
 {
+  vkDeviceWaitIdle(context.device);
+
   // Material =====
   vkDestroyShaderModule(context.device, material.vertexModule, context.alloc);
   vkDestroyShaderModule(context.device, material.fragmentModule, context.alloc);
@@ -104,6 +106,70 @@ b8 reIvkRenderer::Shutdown()
 
 b8 reIvkRenderer::Render()
 {
+  static u32 currentFlightSlotIndex = 0;
+  static u32 currentSwapchainImageIndex = 0;
+
+  // Wait for oldest in-flight slot to return =====
+  reIVK_ASSERT(vkWaitForFences(context.device,
+                               1,
+                               &context.flightSlotAvailableFences[currentFlightSlotIndex],
+                               VK_TRUE,
+                               3000000000), // 3 second timeout
+               "Flight slot wait fence failed");
+
+  reIVK_ASSERT(vkAcquireNextImageKHR(context.device,
+                                     context.swapchain,
+                                     UINT64_MAX,
+                                     context.imageAvailableSemaphores[currentFlightSlotIndex],
+                                     VK_NULL_HANDLE,
+                                     &currentSwapchainImageIndex),
+               "Failed to acquire the next swapchain image");
+
+  // If there are more flight slots than images, wait for the actual image
+  reIVK_ASSERT(vkWaitForFences(context.device,
+                                 1,
+                                 &context.imageIsInFlightFence[currentSwapchainImageIndex],
+                                 VK_TRUE,
+                                 3000000000), // 3 second timeout
+                 "In flight image wait fence failed");
+  context.imageIsInFlightFence[currentSwapchainImageIndex] =
+      context.flightSlotAvailableFences[currentFlightSlotIndex];
+
+  // Submit a graphics =====
+  VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+  VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[currentFlightSlotIndex];
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &context.commandsBuffers[currentSwapchainImageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
+
+  reIVK_ASSERT(vkResetFences(context.device,
+                             1,
+                             &context.flightSlotAvailableFences[currentFlightSlotIndex]),
+               "Failed to reset flight slot available fence %u", currentFlightSlotIndex);
+  reIVK_ASSERT(vkQueueSubmit(context.graphicsQueue,
+                             1,
+                             &submitInfo,
+                             context.flightSlotAvailableFences[currentFlightSlotIndex]),
+               "Failed to submit draw command");
+
+  // Present =====
+  VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &context.swapchain;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
+  presentInfo.pImageIndices = &currentSwapchainImageIndex;
+
+  reIVK_ASSERT(vkQueuePresentKHR(context.presentQueue, &presentInfo),
+               "Failed to present the swapchain");
+
+  currentFlightSlotIndex = (currentFlightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
+
   return true;
 }
 
@@ -659,7 +725,7 @@ b8 reIvkRenderer::CreateSyncObjects()
   semaphoreInfo.flags = 0;
 
   VkFenceCreateInfo fenceInfo { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-  fenceInfo.flags = 0;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -682,6 +748,15 @@ b8 reIvkRenderer::CreateSyncObjects()
                "Failed to create render complete semaphore %u", i);
   }
 
+  // Ensure each image fence corresponds with its initial flight slot fence
+  // Doing this here removes a conditional in Render()
+  u32 i = 0;
+  for (auto& imageFence : context.imageIsInFlightFence)
+  {
+    imageFence = context.flightSlotAvailableFences[i];
+    i = (i + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
+  }
+
   return true;
 }
 
@@ -699,6 +774,48 @@ b8 reIvkRenderer::CreateCommandBuffers()
                                       &allocInfo,
                                       context.commandsBuffers.data()),
              "Failed to allocate command buffers");
+
+  return true;
+}
+
+b8 reIvkRenderer::RecordCommandBuffers()
+{
+  VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  beginInfo.flags = 0;
+
+  VkClearValue clearValues[2] = {};
+  clearValues[0].color = { 0.5f, 0.5f, 0.5f };
+  clearValues[1].depthStencil = { 1, 0 };
+
+  VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  renderPassBeginInfo.clearValueCount = 2;
+  renderPassBeginInfo.pClearValues = clearValues;
+  renderPassBeginInfo.renderArea.extent = context.swapchainExtent;
+  renderPassBeginInfo.renderArea.offset = { 0 , 0 };
+  renderPassBeginInfo.renderPass = context.renderpass;
+
+  for (u32 i = 0; i < context.swapchainImages.size(); i++)
+  {
+    VkCommandBuffer& cmdBuffer = context.commandsBuffers[i];
+
+    renderPassBeginInfo.framebuffer = context.frameBuffers[i];
+
+    reIVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
+                 "Failed to begin command buffer %u", i);
+
+    vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    // Bind & draw
+    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
+
+    //vkCmdBindVertexBuffers(cmdBuffer, 0, 1, nullBuffers, &offset);
+
+    vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(cmdBuffer);
+
+    reIVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
+                 "Failed to record command buffer %u", i);
+  }
 
   return true;
 }
@@ -748,8 +865,9 @@ b8 reIvkRenderer::CreatePipelinelayout()
   //VkPushConstantRange pushRanges[pushCount] = {};
   VkPushConstantRange* pushRanges = nullptr;
 
-  const u32 layoutCount = 1;
-  VkDescriptorSetLayout layouts[layoutCount] = { material.descriptorSetLayout };
+  const u32 layoutCount = 0;
+  //VkDescriptorSetLayout layouts[layoutCount] = { material.descriptorSetLayout };
+  VkDescriptorSetLayout* layouts = nullptr;
 
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
@@ -798,10 +916,12 @@ b8 reIvkRenderer::CreatePipeline()
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
-  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
-  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
+  //vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
+  //vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
+  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
+  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  //vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
 
   // Input Assembly State =====
   // Defines how meshes are to be rendered
@@ -863,6 +983,9 @@ b8 reIvkRenderer::CreatePipeline()
   dynamicStateInfo.pDynamicStates = nullptr;
 
   // Shader Stages State =====
+  CreateShaderModule(&material.vertexModule, "blank.vert");
+  CreateShaderModule(&material.fragmentModule, "red.frag");
+
   // Insert shader modules
   const u32 shaderCount = 2;
   VkPipelineShaderStageCreateInfo shaderStageInfos[shaderCount] {};

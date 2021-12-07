@@ -78,7 +78,7 @@ b8 reIceApplication::Update()
   {
     state.ClientUpdate(deltaTime);
 
-    reRenderer.Render();
+    ICE_ATTEMPT(reRenderer.Render());
 
     // Update timing
     {
