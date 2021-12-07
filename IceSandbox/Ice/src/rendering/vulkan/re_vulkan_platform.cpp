@@ -26,7 +26,7 @@ b8 reIvkRenderer::CreateSurface()
   createInfo.hwnd = vendorData->hwnd;
   createInfo.flags = 0;
 
-  IVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,
+  reIVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,
                                      &createInfo,
                                      context.alloc,
                                      &context.surface),

@@ -5,20 +5,26 @@
 
 #include "rendering/vulkan/re_renderer_vulkan.h"
 #include "platform/re_platform.h"
+#include "platform/file_system.h"
+#include "renderer/mesh.h"
 
 #include <vector>
+
+reIvkMaterial material;
 
 b8 reIvkRenderer::Initialize()
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
 
   // API initialization =====
+
   ICE_ATTEMPT(CreateInstance());
   ICE_ATTEMPT(CreateSurface());
   ICE_ATTEMPT(ChoosePhysicalDevice());
   ICE_ATTEMPT(CreateLogicalDevice());
 
   // Rendering components =====
+
   ICE_ATTEMPT(CreateDescriptorPool());
   ICE_ATTEMPT(CreateCommandPool());
   ICE_ATTEMPT(CreateCommandPool(true));
@@ -31,6 +37,14 @@ b8 reIvkRenderer::Initialize()
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
 
+  // Material =====
+  CreateShaderModule(&material.vertexModule, "mvp.vert");
+  CreateShaderModule(&material.fragmentModule, "red.frag");
+
+  ICE_ATTEMPT(CreateDescriptorSet());
+  ICE_ATTEMPT(CreatePipelinelayout());
+  ICE_ATTEMPT(CreatePipeline());
+
   IceLogDebug("===== Vulkan Renderer Init Complete =====")
 
   return true;
@@ -38,7 +52,20 @@ b8 reIvkRenderer::Initialize()
 
 b8 reIvkRenderer::Shutdown()
 {
+  // Material =====
+  vkDestroyShaderModule(context.device, material.vertexModule, context.alloc);
+  vkDestroyShaderModule(context.device, material.fragmentModule, context.alloc);
+
+  vkDestroyPipeline(context.device, material.pipeline, context.alloc);
+  vkDestroyPipelineLayout(context.device, material.pipelineLayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, material.descriptorSetLayout, context.alloc);
+
   // Rendering components =====
+  vkFreeCommandBuffers(context.device,
+                       context.graphicsCommandPool,
+                       context.commandsBuffers.size(),
+                       context.commandsBuffers.data());
+
   for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
     vkDestroyFence(context.device, context.flightSlotAvailableFences[i], context.alloc);
@@ -113,7 +140,7 @@ b8 reIvkRenderer::CreateInstance()
   createInfo.flags = 0;
   // Daisy-chain additional create infos here with 'createInfo.pNext'
 
-  IVK_ASSERT(vkCreateInstance(&createInfo, context.alloc, &context.instance),
+  reIVK_ASSERT(vkCreateInstance(&createInfo, context.alloc, &context.instance),
              "Failed to create vulkan instance");
 
   return context.instance != VK_NULL_HANDLE;
@@ -306,14 +333,14 @@ b8 reIvkRenderer::CreateLogicalDevice()
   VkDeviceCreateInfo createInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
-  createInfo.queueCreateInfoCount = queueCreateInfos.size(); // Doesn't work if it isn't a vector??
-  createInfo.pQueueCreateInfos    = queueCreateInfos.data(); // Doesn't work if it isn't a vector??
+  createInfo.queueCreateInfoCount = queueCreateInfos.size();
+  createInfo.pQueueCreateInfos    = queueCreateInfos.data();
   createInfo.enabledExtensionCount   = extensions.size();
   createInfo.ppEnabledExtensionNames = extensions.data();
   createInfo.enabledLayerCount   = layers.size();
   createInfo.ppEnabledLayerNames = layers.data();
 
-  IVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
+  reIVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
              "Failed to create Vulkan logical device");
 
   vkGetDeviceQueue(context.device, context.gpu.graphicsQueueIndex, 0, &context.graphicsQueue);
@@ -338,11 +365,11 @@ b8 reIvkRenderer::CreateDescriptorPool()
   // Creation =====
   VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   createInfo.flags = 0;
-  createInfo.maxSets = 4; // 0: Global, 1: per-shader, 2: per-material, 3: per-object
+  createInfo.maxSets = 4; // (max possible) 0: Global, 1: per-shader, 2: per-material, 3: per-object
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 
-  IVK_ASSERT(vkCreateDescriptorPool(context.device,
+  reIVK_ASSERT(vkCreateDescriptorPool(context.device,
                                     &createInfo,
                                     context.alloc,
                                     &context.descriptorPool),
@@ -369,7 +396,7 @@ b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
     poolPtr = &context.graphicsCommandPool;
   }
 
-  IVK_ASSERT(vkCreateCommandPool(context.device, &createInfo, context.alloc, poolPtr),
+  reIVK_ASSERT(vkCreateCommandPool(context.device, &createInfo, context.alloc, poolPtr),
              "Failed to create command pool");
 
   return true;
@@ -450,7 +477,7 @@ b8 reIvkRenderer::CreateSwapchain()
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    IVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
+    reIVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
       "Failed to create swapchain");
 
     // Swapchain context =====
@@ -492,10 +519,10 @@ b8 reIvkRenderer::CreateRenderpass()
   colorDescription.format = context.swapchainFormat;
   colorDescription.samples = VK_SAMPLE_COUNT_1_BIT;
   colorDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  colorDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorDescription.finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  colorDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  colorDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
   VkAttachmentReference colorReference {};
@@ -525,12 +552,12 @@ b8 reIvkRenderer::CreateRenderpass()
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   VkSubpassDependency subpassDependency {};
-  subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  subpassDependency.dstSubpass = 0;
+  subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
   subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   subpassDependency.srcAccessMask = 0;
+  subpassDependency.dstSubpass    = 0;
   subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.dstAccessMask = 0;
+  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
   // Creation =====
   const u32 attachemntCount = 2;
@@ -549,7 +576,7 @@ b8 reIvkRenderer::CreateRenderpass()
   createInfo.dependencyCount = dependencyCount;
   createInfo.pDependencies   = dependencies;
 
-  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
+  reIVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
              "Failed to create renderpass");
 
   return true;
@@ -611,7 +638,7 @@ b8 reIvkRenderer::CreateFrameBuffers()
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    IVK_ASSERT(vkCreateFramebuffer(context.device,
+    reIVK_ASSERT(vkCreateFramebuffer(context.device,
                                    &createInfo,
                                    context.alloc,
                                    &context.frameBuffers[i]),
@@ -636,19 +663,19 @@ b8 reIvkRenderer::CreateSyncObjects()
 
   for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    IVK_ASSERT(vkCreateFence(context.device,
+    reIVK_ASSERT(vkCreateFence(context.device,
                              &fenceInfo,
                              context.alloc,
                              &context.flightSlotAvailableFences[i]),
                "Failed to create flight slot fence %u", i);
 
-    IVK_ASSERT(vkCreateSemaphore(context.device,
+    reIVK_ASSERT(vkCreateSemaphore(context.device,
                                  &semaphoreInfo,
                                  context.alloc,
                                  &context.imageAvailableSemaphores[i]),
                "Failed to create image available semaphore %u", i);
 
-    IVK_ASSERT(vkCreateSemaphore(context.device,
+    reIVK_ASSERT(vkCreateSemaphore(context.device,
                                  &semaphoreInfo,
                                  context.alloc,
                                  &context.renderCompleteSemaphores[i]),
@@ -668,10 +695,229 @@ b8 reIvkRenderer::CreateCommandBuffers()
   allocInfo.commandBufferCount = count;
   allocInfo.commandPool = context.graphicsCommandPool;
 
-  IVK_ASSERT(vkAllocateCommandBuffers(context.device,
+  reIVK_ASSERT(vkAllocateCommandBuffers(context.device,
                                       &allocInfo,
                                       context.commandsBuffers.data()),
              "Failed to allocate command buffers");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateDescriptorSet()
+{
+  // Create layout =====
+  {
+    VkDescriptorSetLayoutBinding binding;
+    binding.descriptorCount = 1;
+    binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    binding.binding = 0;
+    binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    const u32 bindingCount = 1;
+    VkDescriptorSetLayoutBinding bindings[bindingCount] = { binding };
+
+    VkDescriptorSetLayoutCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    createInfo.flags = 0;
+    createInfo.bindingCount = bindingCount;
+    createInfo.pBindings    = bindings;
+
+    reIVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
+                                           &createInfo,
+                                           context.alloc,
+                                           &material.descriptorSetLayout),
+               "Failed to create descriptor set layout");
+  }
+
+  // Create set =====
+  {
+    VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    allocInfo.descriptorPool = context.descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &material.descriptorSetLayout;
+
+    reIVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &material.descriptorSet),
+               "Failed to allocate the descriptor set");
+  }
+
+  return true;
+}
+
+b8 reIvkRenderer::CreatePipelinelayout()
+{
+  const u32 pushCount = 0;
+  //VkPushConstantRange pushRanges[pushCount] = {};
+  VkPushConstantRange* pushRanges = nullptr;
+
+  const u32 layoutCount = 1;
+  VkDescriptorSetLayout layouts[layoutCount] = { material.descriptorSetLayout };
+
+  VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.pNext = 0;
+  createInfo.pushConstantRangeCount = pushCount;
+  createInfo.pPushConstantRanges    = pushRanges;
+  createInfo.setLayoutCount = layoutCount;
+  createInfo.pSetLayouts    = layouts;
+
+  reIVK_ASSERT(vkCreatePipelineLayout(context.device,
+                                    &createInfo,
+                                    context.alloc,
+                                    &material.pipelineLayout),
+             "Failed to create the render pipeline");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreatePipeline()
+{
+  // Viewport State =====
+  // Defines the screen settings used during rasterization
+  VkViewport viewport;
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.width  = (float)context.swapchainExtent.width;
+  viewport.height = (float)context.swapchainExtent.height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1;
+
+  VkRect2D scissor{};
+  scissor.extent = context.swapchainExtent;
+  scissor.offset = { 0, 0 };
+
+  VkPipelineViewportStateCreateInfo viewportStateInfo {};
+  viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  viewportStateInfo.viewportCount = 1;
+  viewportStateInfo.pViewports = &viewport;
+  viewportStateInfo.scissorCount = 1;
+  viewportStateInfo.pScissors = &scissor;
+
+  // Vertex Input State =====
+  // Defines how vertex buffers are to be traversed
+  const auto vertexInputAttribDesc = vertex_t::GetAttributeDescriptions();
+  const auto vertexInputBindingDesc = vertex_t::GetBindingDescription();
+
+  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
+  vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
+  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
+
+  // Input Assembly State =====
+  // Defines how meshes are to be rendered
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
+  inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
+
+  // Rasterization State =====
+  // Defines how the pipeline will rasterize the image
+  VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
+  rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+
+  rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
+  rasterStateInfo.lineWidth = 1.0f;
+  rasterStateInfo.depthBiasEnable = VK_FALSE;
+  rasterStateInfo.depthClampEnable = VK_FALSE;
+  rasterStateInfo.rasterizerDiscardEnable = VK_FALSE;
+
+  // Multisampling State =====
+  VkPipelineMultisampleStateCreateInfo multisampleStateInfo {};
+  multisampleStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  multisampleStateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multisampleStateInfo.sampleShadingEnable = VK_FALSE;
+
+  // Depth Stencil State =====
+  VkPipelineDepthStencilStateCreateInfo depthStateInfo {};
+  depthStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStateInfo.depthTestEnable = VK_TRUE;
+  depthStateInfo.depthWriteEnable = VK_TRUE;
+  depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+  depthStateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+  depthStateInfo.depthBoundsTestEnable = VK_FALSE;
+
+  // Color Blend State =====
+  VkPipelineColorBlendAttachmentState blendAttachmentState {};
+  blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                        VK_COLOR_COMPONENT_G_BIT |
+                                        VK_COLOR_COMPONENT_B_BIT |
+                                        VK_COLOR_COMPONENT_A_BIT;
+  blendAttachmentState.blendEnable = VK_FALSE;
+
+  VkPipelineColorBlendStateCreateInfo blendStateInfo {};
+  blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  blendStateInfo.logicOpEnable = VK_FALSE;
+  blendStateInfo.attachmentCount = 1;
+  blendStateInfo.pAttachments = &blendAttachmentState;
+
+  // Dynamic States =====
+  // States included here are capable of being set by dynamic state setting functions
+  // When binding the pipeline, if these states are not set via one of the state setting functions
+  //    the state's settings bound from the previous bound pipeline shall be used
+  VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
+  dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamicStateInfo.dynamicStateCount = 0;
+  dynamicStateInfo.pDynamicStates = nullptr;
+
+  // Shader Stages State =====
+  // Insert shader modules
+  const u32 shaderCount = 2;
+  VkPipelineShaderStageCreateInfo shaderStageInfos[shaderCount] {};
+
+  shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStageInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+  shaderStageInfos[0].module = material.vertexModule;
+  shaderStageInfos[0].pName = "main";
+
+  shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  shaderStageInfos[1].module = material.fragmentModule;
+  shaderStageInfos[1].pName = "main";
+
+  // Creation =====
+  VkGraphicsPipelineCreateInfo createInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+  createInfo.pViewportState      = &viewportStateInfo;
+  createInfo.pVertexInputState   = &vertexInputStateInfo;
+  createInfo.pInputAssemblyState = &inputAssemblyStateInfo;
+  createInfo.pRasterizationState = &rasterStateInfo;
+  createInfo.pMultisampleState   = &multisampleStateInfo;
+  createInfo.pDepthStencilState  = &depthStateInfo;
+  createInfo.pColorBlendState    = &blendStateInfo;
+  createInfo.pDynamicState       = &dynamicStateInfo;
+
+  createInfo.stageCount = shaderCount;
+  createInfo.pStages    = shaderStageInfos;
+  createInfo.renderPass = context.renderpass;
+  createInfo.layout     = material.pipelineLayout;
+
+  reIVK_ASSERT(vkCreateGraphicsPipelines(context.device,
+                                         nullptr,
+                                         1,
+                                         &createInfo,
+                                         context.alloc,
+                                         &material.pipeline),
+               "Failed to create the graphics pipeline");
+
+  return true;
+}
+
+b8 reIvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
+{
+  std::string directory = ICE_RESOURCE_SHADER_DIR;
+  directory.append(_shader);
+  directory.append(".spv");
+
+  std::vector<char> source = FileSystem::LoadFile(directory.c_str());
+
+  VkShaderModuleCreateInfo createInfo { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
+  createInfo.codeSize = source.size();
+  createInfo.pCode = reinterpret_cast<u32*>(source.data());
+
+  reIVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
+               "failed to create shader module for %s", directory.c_str());
 
   return true;
 }

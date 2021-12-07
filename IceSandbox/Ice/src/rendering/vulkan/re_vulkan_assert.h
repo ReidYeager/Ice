@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan.h>
 
-inline const char* VulkanResultToString(VkResult _result)
+inline const char* reVulkanResultToString(VkResult _result)
 {
   #define RTS(x) case x: return #x
   switch (_result)
@@ -57,14 +57,14 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-#define IVK_ASSERT(function, errorMsg, ...)                                                            \
+#define reIVK_ASSERT(function, errorMsg, ...)                                                            \
 {                                                                                                      \
   VkResult result = function;                                                                          \
   if (result != VK_SUCCESS)                                                                            \
   {                                                                                                    \
     char msg[2048];                                                                                    \
     sprintf(msg, errorMsg, __VA_ARGS__);                                                               \
-    ICE_ASSERT_MSG(result == VK_SUCCESS, "%s\nVulkan result : %s", msg, VulkanResultToString(result)); \
+    ICE_ASSERT_MSG(result == VK_SUCCESS, "%s\nVulkan result : %s", msg, reVulkanResultToString(result)); \
     return false;                                                                                      \
   }                                                                                                    \
 }

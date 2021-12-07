@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // Uses the entire 128 bytes of guaranteed space for push constants
-layout(push_constant) uniform Push {
+layout(set = 0, binding = 0) uniform mvp {
 	mat4 model;
 	mat4 viewProj;
 } push;

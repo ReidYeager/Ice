@@ -247,6 +247,9 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
   IVK_ASSERT(vkBeginCommandBuffer(rContext->commandBuffers[_commandIndex], &beginInfo),
     "Failed to being command buffer");
 
+  // Place shadow render pass, etc. here.
+
+  // Final render pass =====
   vkCmdBeginRenderPass(rContext->commandBuffers[_commandIndex], &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   glm::mat4 viewProj = _packet->projectionMatrix * _packet->viewMatrix;
@@ -283,6 +286,8 @@ void VulkanBackend::RecordCommandBuffers(IceRenderPacket* _packet, u32 _commandI
   }
 
   vkCmdEndRenderPass(rContext->commandBuffers[_commandIndex]);
+
+  // Place post-processing render pass, etc. here.
 
   // Stop recording commands
   IVK_ASSERT(vkEndCommandBuffer(rContext->commandBuffers[_commandIndex]),

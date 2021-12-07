@@ -45,13 +45,22 @@ private:
 
   // Creates the swapchain, its images, and their views
   b8 CreateSwapchain();
-  // 
+  // Creates a simple forward renderpass
   b8 CreateRenderpass();
+  // Creates the depth image and its view
   b8 CreateDepthImage();
+  // Creates a frame buffer for each swapchain image
   b8 CreateFrameBuffers();
 
+  // Creates the fences and semaphores for CPU/GPU synchronization
   b8 CreateSyncObjects();
+  // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
+
+  // Materials =====
+  b8 CreateDescriptorSet();
+  b8 CreatePipelinelayout();
+  b8 CreatePipeline();
 
   // Platform =====
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
@@ -70,6 +79,8 @@ private:
                      VkFormat _format,
                      VkImageAspectFlags _aspectMask);
   b8 CreateImageSampler(reIvkImage* _image);
+
+  b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
 };
 

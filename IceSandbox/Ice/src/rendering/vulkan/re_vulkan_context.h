@@ -78,4 +78,15 @@ struct reIvkContext
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
 };
 
+struct reIvkMaterial
+{
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+  VkShaderModule vertexModule;
+  VkShaderModule fragmentModule;
+};
+
 #endif // !define ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_CONTEXT_H_

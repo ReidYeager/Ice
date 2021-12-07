@@ -72,7 +72,7 @@ add_library (Ice STATIC
  "src/rendering/vulkan/re_renderer_vulkan.cpp"
  "src/rendering/vulkan/re_vulkan_context.h"
  "src/rendering/vulkan/re_vulkan_assert.h"
- "src/rendering/vulkan/re_renderer_vulkan_platform.cpp"
+ "src/rendering/vulkan/re_vulkan_platform.cpp"
  "src/rendering/vulkan/re_vulkan_image.cpp"
 )
 
