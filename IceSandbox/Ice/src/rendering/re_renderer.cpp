@@ -7,8 +7,14 @@
 
 reIceRenderer reRenderer;
 
+// Used temporarily until a direct call to ivkRenderer's Render() function can be established
+reIvkRenderer* vkBackend;
+
 b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
 {
+  // Unused until another rendering API is added
+  // Need to find a way to *directly* call the backend's Render() (aka : without virtual functions)
+  /*
   switch (_settings->api)
   {
   case Ice_Renderer_Vulkan:
@@ -27,8 +33,10 @@ b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
     IceLogFatal("Failed to create a renderer backend");
     return false;
   }
+  */
+  vkBackend = new reIvkRenderer();
 
-  if (!backend->Initialize())
+  if (!vkBackend->Initialize())
   {
     IceLogFatal("Failed to initialize renderer backend");
     return false;
@@ -39,13 +47,13 @@ b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
 
 b8 reIceRenderer::Shutdown()
 {
-  backend->Shutdown();
-  delete(backend);
+  vkBackend->Shutdown();
+  delete(vkBackend);
   return true;
 }
 
 b8 reIceRenderer::Render()
 {
-  backend->Render();
+  vkBackend->Render();
   return true;
 }

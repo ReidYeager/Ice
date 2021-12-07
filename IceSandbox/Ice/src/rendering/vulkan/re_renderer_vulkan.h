@@ -61,8 +61,14 @@ private:
   vec2U GetPlatformWindowExtents();
 
   // Helpers =====
-  b8 CreateImage(reIvkImage* _image, VkExtent2D _extents, VkFormat _format, VkImageUsageFlags _usage);
-  b8 CreateImageView(reIvkImage* _image, VkImageAspectFlags _aspectFlags);
+  b8 CreateImage(reIvkImage* _image,
+                 VkExtent2D _extents,
+                 VkFormat _format,
+                 VkImageUsageFlags _usage);
+  b8 CreateImageView(VkImageView* _view,
+                     VkImage _image,
+                     VkFormat _format,
+                     VkImageAspectFlags _aspectMask);
   b8 CreateImageSampler(reIvkImage* _image);
 
 };

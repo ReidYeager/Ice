@@ -67,13 +67,16 @@ b8 reIvkRenderer::CreateImage(reIvkImage* _image,
   return true;
 }
 
-b8 reIvkRenderer::CreateImageView(reIvkImage* _image, VkImageAspectFlags _aspectMask)
+b8 reIvkRenderer::CreateImageView(VkImageView* _view,
+                                  VkImage _image,
+                                  VkFormat _format,
+                                  VkImageAspectFlags _aspectMask)
 {
   VkImageViewCreateInfo createInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  createInfo.image = _image->image;
-  createInfo.format = _image->format;
+  createInfo.image = _image;
+  createInfo.format = _format;
   createInfo.subresourceRange.aspectMask = _aspectMask;
   createInfo.subresourceRange.levelCount = 1;
   createInfo.subresourceRange.baseMipLevel = 0;
@@ -84,7 +87,7 @@ b8 reIvkRenderer::CreateImageView(reIvkImage* _image, VkImageAspectFlags _aspect
   createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
   createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-  IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, &_image->view),
+  IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
              "Failed to create an image view");
 
   return true;

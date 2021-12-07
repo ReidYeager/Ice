@@ -26,10 +26,10 @@ b8 reIvkRenderer::Initialize()
   ICE_ATTEMPT(CreateSwapchain());
   ICE_ATTEMPT(CreateDepthImage());
   ICE_ATTEMPT(CreateRenderpass());
-  // Create frame buffers
+  ICE_ATTEMPT(CreateFrameBuffers());
 
-  // Create sync objects
-  // Create command buffers
+  ICE_ATTEMPT(CreateSyncObjects());
+  ICE_ATTEMPT(CreateCommandBuffers());
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====")
 
@@ -39,11 +39,28 @@ b8 reIvkRenderer::Initialize()
 b8 reIvkRenderer::Shutdown()
 {
   // Rendering components =====
+  for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
+  {
+    vkDestroyFence(context.device, context.flightSlotAvailableFences[i], context.alloc);
+    vkDestroySemaphore(context.device, context.renderCompleteSemaphores[i], context.alloc);
+    vkDestroySemaphore(context.device, context.imageAvailableSemaphores[i], context.alloc);
+  }
+
+  for (const auto& f : context.frameBuffers)
+  {
+    vkDestroyFramebuffer(context.device, f, context.alloc);
+  }
+
+  vkDestroyRenderPass(context.device, context.renderpass, context.alloc);
+
   vkDestroyImage(context.device, context.depthImage.image, context.alloc);
   vkDestroyImageView(context.device, context.depthImage.view, context.alloc);
   vkFreeMemory(context.device, context.depthImage.memory, context.alloc);
 
-  vkDestroyRenderPass(context.device, context.renderpass, context.alloc);
+  for (const auto& v : context.swapchainImageViews)
+  {
+    vkDestroyImageView(context.device, v, context.alloc);
+  }
 
   vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
 
@@ -420,7 +437,7 @@ b8 reIvkRenderer::CreateSwapchain()
     createInfo.minImageCount = imageCount;
     createInfo.surface = context.surface;
 
-    // TODO : Remove this and hand-off ownership of the images
+    // TODO : Remove this and manually hand-off ownership of the images
     u32 indices[] = { context.gpu.graphicsQueueIndex, context.gpu.presentQueueIndex };
     if (context.gpu.graphicsQueueIndex != context.gpu.presentQueueIndex)
     {
@@ -458,8 +475,10 @@ b8 reIvkRenderer::CreateSwapchain()
 
     for (u32 i = 0; i < imageCount; i++)
     {
-      // Create image view
-      //context.swapchainImageViews[i] = CreateImageView(...);
+      ICE_ATTEMPT(CreateImageView(&context.swapchainImageViews[i],
+                                  context.swapchainImages[i],
+                                  context.swapchainFormat,
+                                  VK_IMAGE_ASPECT_COLOR_BIT));
     }
   }
 
@@ -565,22 +584,94 @@ b8 reIvkRenderer::CreateDepthImage()
                           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
 
   // Create image view =====
-  ICE_ATTEMPT(CreateImageView(&context.depthImage, VK_IMAGE_ASPECT_DEPTH_BIT));
+  ICE_ATTEMPT(CreateImageView(&context.depthImage.view,
+                              context.depthImage.image,
+                              context.depthImage.format,
+                              VK_IMAGE_ASPECT_DEPTH_BIT));
 
   return true;
 }
 
 b8 reIvkRenderer::CreateFrameBuffers()
 {
+  VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.layers = 1;
+  createInfo.renderPass = context.renderpass;
+  createInfo.width  = context.swapchainExtent.width;
+  createInfo.height = context.swapchainExtent.height;
+
+  // One framebuffer per frame
+  const u32 imageCount = context.swapchainImages.size();
+  context.frameBuffers.resize(imageCount);
+
+  for (u32 i = 0; i < imageCount; i++)
+  {
+    VkImageView attachments[] = { context.swapchainImageViews[i], context.depthImage.view };
+    createInfo.attachmentCount = 2;
+    createInfo.pAttachments = attachments;
+
+    IVK_ASSERT(vkCreateFramebuffer(context.device,
+                                   &createInfo,
+                                   context.alloc,
+                                   &context.frameBuffers[i]),
+               "Failed to create frame buffer %u", i);
+  }
+
   return true;
 }
 
 b8 reIvkRenderer::CreateSyncObjects()
 {
+  context.imageAvailableSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.renderCompleteSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.flightSlotAvailableFences.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.imageIsInFlightFence.resize(context.swapchainImages.size(), VK_NULL_HANDLE);
+
+  VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+  semaphoreInfo.flags = 0;
+
+  VkFenceCreateInfo fenceInfo { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+  fenceInfo.flags = 0;
+
+  for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
+  {
+    IVK_ASSERT(vkCreateFence(context.device,
+                             &fenceInfo,
+                             context.alloc,
+                             &context.flightSlotAvailableFences[i]),
+               "Failed to create flight slot fence %u", i);
+
+    IVK_ASSERT(vkCreateSemaphore(context.device,
+                                 &semaphoreInfo,
+                                 context.alloc,
+                                 &context.imageAvailableSemaphores[i]),
+               "Failed to create image available semaphore %u", i);
+
+    IVK_ASSERT(vkCreateSemaphore(context.device,
+                                 &semaphoreInfo,
+                                 context.alloc,
+                                 &context.renderCompleteSemaphores[i]),
+               "Failed to create render complete semaphore %u", i);
+  }
+
   return true;
 }
 
 b8 reIvkRenderer::CreateCommandBuffers()
 {
+  const u32 count = context.swapchainImages.size();
+  context.commandsBuffers.resize(count);
+
+  VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = count;
+  allocInfo.commandPool = context.graphicsCommandPool;
+
+  IVK_ASSERT(vkAllocateCommandBuffers(context.device,
+                                      &allocInfo,
+                                      context.commandsBuffers.data()),
+             "Failed to allocate command buffers");
+
   return true;
 }
