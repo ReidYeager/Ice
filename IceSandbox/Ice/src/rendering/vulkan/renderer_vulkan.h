@@ -4,8 +4,8 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/re_vulkan_context.h"
-#include "rendering/re_renderer_backend.h"
+#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/renderer_backend.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>

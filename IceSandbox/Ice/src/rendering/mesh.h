@@ -1,11 +1,7 @@
 
-#ifndef ICE_RENDERER_MESH_H_
-#define ICE_RENDERER_MESH_H_
+#ifndef ICE_RENDERING_MESH_H_
+#define ICE_RENDERING_MESH_H_
 
-#include "defines.h"
-#include "renderer/buffer.h"
-
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <vulkan/vulkan.h>
@@ -78,8 +74,8 @@ struct mesh_t
   std::vector<vertex_t> vertices;
   std::vector<u32> indices;
 
-  IceBuffer vertexBuffer;
-  IceBuffer indexBuffer;
+  //IceBuffer vertexBuffer;
+  //IceBuffer indexBuffer;
 };
 
-#endif // !RENDERER_MESH_H
+#endif // !define ICE_RENDERING_MESH_H_

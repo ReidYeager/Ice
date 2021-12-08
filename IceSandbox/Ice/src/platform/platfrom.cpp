@@ -2,7 +2,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "platform/re_platform.h"
+#include "platform/platform.h"
 #include "core/input.h"
 
 #include <stdio.h>
@@ -179,4 +179,19 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   }
 
   return DefWindowProcA(hwnd, message, wparam, lparam);
+}
+
+void reIcePlatform::ConsolePrint(const char* _message, u32 _color)
+{
+  //               Info , Debug, Error , Fatal
+  //               White, Cyan , Yellow, White-on-Red
+  u32 colors[] = { 0xf  , 0xb  , 0xe   , 0xcf };
+
+  HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(console, colors[_color]);
+  OutputDebugStringA(_message);
+  u64 length = strlen(_message);
+  LPDWORD written = 0;
+  WriteConsoleA(console, _message, (DWORD)length, written, 0);
+  SetConsoleTextAttribute(console, 0xf);
 }

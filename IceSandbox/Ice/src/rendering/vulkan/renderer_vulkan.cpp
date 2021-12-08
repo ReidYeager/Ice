@@ -3,10 +3,10 @@
 #include "asserts.h"
 #include "logger.h"
 
-#include "rendering/vulkan/re_renderer_vulkan.h"
-#include "platform/re_platform.h"
+#include "rendering/vulkan/renderer_vulkan.h"
+#include "platform/platform.h"
 #include "platform/file_system.h"
-#include "renderer/mesh.h"
+#include "rendering/mesh.h"
 
 #include <vector>
 
@@ -110,14 +110,14 @@ b8 reIvkRenderer::Render()
   static u32 currentSwapchainImageIndex = 0;
 
   // Wait for oldest in-flight slot to return =====
-  reIVK_ASSERT(vkWaitForFences(context.device,
+  IVK_ASSERT(vkWaitForFences(context.device,
                                1,
                                &context.flightSlotAvailableFences[currentFlightSlotIndex],
                                VK_TRUE,
                                3000000000), // 3 second timeout
                "Flight slot wait fence failed");
 
-  reIVK_ASSERT(vkAcquireNextImageKHR(context.device,
+  IVK_ASSERT(vkAcquireNextImageKHR(context.device,
                                      context.swapchain,
                                      UINT64_MAX,
                                      context.imageAvailableSemaphores[currentFlightSlotIndex],
@@ -126,7 +126,7 @@ b8 reIvkRenderer::Render()
                "Failed to acquire the next swapchain image");
 
   // If there are more flight slots than images, wait for the actual image
-  reIVK_ASSERT(vkWaitForFences(context.device,
+  IVK_ASSERT(vkWaitForFences(context.device,
                                  1,
                                  &context.imageIsInFlightFence[currentSwapchainImageIndex],
                                  VK_TRUE,
@@ -147,11 +147,11 @@ b8 reIvkRenderer::Render()
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
 
-  reIVK_ASSERT(vkResetFences(context.device,
+  IVK_ASSERT(vkResetFences(context.device,
                              1,
                              &context.flightSlotAvailableFences[currentFlightSlotIndex]),
                "Failed to reset flight slot available fence %u", currentFlightSlotIndex);
-  reIVK_ASSERT(vkQueueSubmit(context.graphicsQueue,
+  IVK_ASSERT(vkQueueSubmit(context.graphicsQueue,
                              1,
                              &submitInfo,
                              context.flightSlotAvailableFences[currentFlightSlotIndex]),
@@ -165,7 +165,7 @@ b8 reIvkRenderer::Render()
   presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
   presentInfo.pImageIndices = &currentSwapchainImageIndex;
 
-  reIVK_ASSERT(vkQueuePresentKHR(context.presentQueue, &presentInfo),
+  IVK_ASSERT(vkQueuePresentKHR(context.presentQueue, &presentInfo),
                "Failed to present the swapchain");
 
   currentFlightSlotIndex = (currentFlightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
@@ -206,7 +206,7 @@ b8 reIvkRenderer::CreateInstance()
   createInfo.flags = 0;
   // Daisy-chain additional create infos here with 'createInfo.pNext'
 
-  reIVK_ASSERT(vkCreateInstance(&createInfo, context.alloc, &context.instance),
+  IVK_ASSERT(vkCreateInstance(&createInfo, context.alloc, &context.instance),
              "Failed to create vulkan instance");
 
   return context.instance != VK_NULL_HANDLE;
@@ -406,7 +406,7 @@ b8 reIvkRenderer::CreateLogicalDevice()
   createInfo.enabledLayerCount   = layers.size();
   createInfo.ppEnabledLayerNames = layers.data();
 
-  reIVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
+  IVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
              "Failed to create Vulkan logical device");
 
   vkGetDeviceQueue(context.device, context.gpu.graphicsQueueIndex, 0, &context.graphicsQueue);
@@ -435,7 +435,7 @@ b8 reIvkRenderer::CreateDescriptorPool()
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 
-  reIVK_ASSERT(vkCreateDescriptorPool(context.device,
+  IVK_ASSERT(vkCreateDescriptorPool(context.device,
                                     &createInfo,
                                     context.alloc,
                                     &context.descriptorPool),
@@ -462,7 +462,7 @@ b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
     poolPtr = &context.graphicsCommandPool;
   }
 
-  reIVK_ASSERT(vkCreateCommandPool(context.device, &createInfo, context.alloc, poolPtr),
+  IVK_ASSERT(vkCreateCommandPool(context.device, &createInfo, context.alloc, poolPtr),
              "Failed to create command pool");
 
   return true;
@@ -543,7 +543,7 @@ b8 reIvkRenderer::CreateSwapchain()
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    reIVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
+    IVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
       "Failed to create swapchain");
 
     // Swapchain context =====
@@ -642,7 +642,7 @@ b8 reIvkRenderer::CreateRenderpass()
   createInfo.dependencyCount = dependencyCount;
   createInfo.pDependencies   = dependencies;
 
-  reIVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
              "Failed to create renderpass");
 
   return true;
@@ -704,7 +704,7 @@ b8 reIvkRenderer::CreateFrameBuffers()
     createInfo.attachmentCount = 2;
     createInfo.pAttachments = attachments;
 
-    reIVK_ASSERT(vkCreateFramebuffer(context.device,
+    IVK_ASSERT(vkCreateFramebuffer(context.device,
                                    &createInfo,
                                    context.alloc,
                                    &context.frameBuffers[i]),
@@ -729,19 +729,19 @@ b8 reIvkRenderer::CreateSyncObjects()
 
   for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
-    reIVK_ASSERT(vkCreateFence(context.device,
+    IVK_ASSERT(vkCreateFence(context.device,
                              &fenceInfo,
                              context.alloc,
                              &context.flightSlotAvailableFences[i]),
                "Failed to create flight slot fence %u", i);
 
-    reIVK_ASSERT(vkCreateSemaphore(context.device,
+    IVK_ASSERT(vkCreateSemaphore(context.device,
                                  &semaphoreInfo,
                                  context.alloc,
                                  &context.imageAvailableSemaphores[i]),
                "Failed to create image available semaphore %u", i);
 
-    reIVK_ASSERT(vkCreateSemaphore(context.device,
+    IVK_ASSERT(vkCreateSemaphore(context.device,
                                  &semaphoreInfo,
                                  context.alloc,
                                  &context.renderCompleteSemaphores[i]),
@@ -770,7 +770,7 @@ b8 reIvkRenderer::CreateCommandBuffers()
   allocInfo.commandBufferCount = count;
   allocInfo.commandPool = context.graphicsCommandPool;
 
-  reIVK_ASSERT(vkAllocateCommandBuffers(context.device,
+  IVK_ASSERT(vkAllocateCommandBuffers(context.device,
                                       &allocInfo,
                                       context.commandsBuffers.data()),
              "Failed to allocate command buffers");
@@ -800,7 +800,7 @@ b8 reIvkRenderer::RecordCommandBuffers()
 
     renderPassBeginInfo.framebuffer = context.frameBuffers[i];
 
-    reIVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
+    IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
                  "Failed to begin command buffer %u", i);
 
     vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -813,7 +813,7 @@ b8 reIvkRenderer::RecordCommandBuffers()
 
     vkCmdEndRenderPass(cmdBuffer);
 
-    reIVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
+    IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
                  "Failed to record command buffer %u", i);
   }
 
@@ -838,7 +838,7 @@ b8 reIvkRenderer::CreateDescriptorSet()
     createInfo.bindingCount = bindingCount;
     createInfo.pBindings    = bindings;
 
-    reIVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
+    IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
                                            &createInfo,
                                            context.alloc,
                                            &material.descriptorSetLayout),
@@ -852,7 +852,7 @@ b8 reIvkRenderer::CreateDescriptorSet()
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &material.descriptorSetLayout;
 
-    reIVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &material.descriptorSet),
+    IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &material.descriptorSet),
                "Failed to allocate the descriptor set");
   }
 
@@ -877,7 +877,7 @@ b8 reIvkRenderer::CreatePipelinelayout()
   createInfo.setLayoutCount = layoutCount;
   createInfo.pSetLayouts    = layouts;
 
-  reIVK_ASSERT(vkCreatePipelineLayout(context.device,
+  IVK_ASSERT(vkCreatePipelineLayout(context.device,
                                     &createInfo,
                                     context.alloc,
                                     &material.pipelineLayout),
@@ -1016,7 +1016,7 @@ b8 reIvkRenderer::CreatePipeline()
   createInfo.renderPass = context.renderpass;
   createInfo.layout     = material.pipelineLayout;
 
-  reIVK_ASSERT(vkCreateGraphicsPipelines(context.device,
+  IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                          nullptr,
                                          1,
                                          &createInfo,
@@ -1039,7 +1039,7 @@ b8 reIvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shade
   createInfo.codeSize = source.size();
   createInfo.pCode = reinterpret_cast<u32*>(source.data());
 
-  reIVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
+  IVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
                "failed to create shader module for %s", directory.c_str());
 
   return true;

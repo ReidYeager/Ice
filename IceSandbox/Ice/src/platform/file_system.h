@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "renderer/mesh.h"
+#include "rendering/mesh.h"
 
 #include <vector>
 

@@ -2,7 +2,6 @@
 #ifndef ICE_MATH_VECTOR_H_
 #define ICE_MATH_VECTOR_H_
 
-#include "asserts.h"
 #include "defines.h"
 
 typedef struct vec2
@@ -12,7 +11,6 @@ typedef struct vec2
 
   f32& operator[](int i)
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -25,7 +23,6 @@ typedef struct vec2
 
   f32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -46,7 +43,6 @@ typedef struct vec3
 
   f32& operator[](int i)
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -61,7 +57,6 @@ typedef struct vec3
 
   f32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -85,7 +80,6 @@ typedef struct vec4
 
   f32& operator[](int i)
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:
@@ -102,7 +96,6 @@ typedef struct vec4
 
   f32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:
@@ -129,7 +122,6 @@ typedef struct vec2I
 
   i32& operator[](int i)
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -142,7 +134,6 @@ typedef struct vec2I
 
   i32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -163,7 +154,6 @@ typedef struct vec3I
 
   i32& operator[](int i)
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -178,7 +168,6 @@ typedef struct vec3I
 
   i32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -202,7 +191,6 @@ typedef struct vec4I
 
   i32& operator[](int i)
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:
@@ -219,7 +207,6 @@ typedef struct vec4I
 
   i32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:
@@ -246,7 +233,6 @@ typedef struct vec2U
 
   u32& operator[](int i)
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -259,7 +245,6 @@ typedef struct vec2U
 
   u32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 2);
     switch (i)
     {
     default:
@@ -280,7 +265,6 @@ typedef struct vec3U
 
   u32& operator[](int i)
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -295,7 +279,6 @@ typedef struct vec3U
 
   u32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 3);
     switch (i)
     {
     default:
@@ -319,7 +302,6 @@ typedef struct vec4U
 
   u32& operator[](int i)
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:
@@ -336,7 +318,6 @@ typedef struct vec4U
 
   u32 const& operator[](int i) const
   {
-    ICE_ASSERT(i < 4);
     switch (i)
     {
     default:

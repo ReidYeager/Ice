@@ -1,81 +1,69 @@
 
-#ifndef ICE_PLATFORM_PLATFORM_H_
-#define ICE_PLATFORM_PLATFORM_H_
+#ifndef ICE_PLATFORM_RE_PLATFORM_H_
+#define ICE_PLATFORM_RE_PLATFORM_H_
 
 #include "defines.h"
 
-#include "core/event.h"
+#include "math/vector.h"
 
-#ifdef ICE_PLATFORM_WINDOWS
-#include <windows.h>
-#undef CreateWindow // Gets rid of the windows.h preprocessor definition
-#else
-// Non-windows platform includes
-#endif
-
-enum CursorStates
+struct reIceWindowSettings
 {
-  Ice_Cursor_Unlocked, // Visible, not confined to window
-  Ice_Cursor_Confined, // Visible, confined to window
-  Ice_Cursor_Locked    // Not visible, confined to one spot
+  vec2I screenPosition;
+  vec2U extents;
+  const char* title;
 };
 
-class IcePlatform
+// Vendor-specific information required to maintain a window
+#ifdef ICE_PLATFORM_WINDOWS
+#include <Windows.h>
+#undef CreateWindow // Gets rid of the windows.h preprocessor definition
+#undef CloseWindow // Gets rid of the windows.h preprocessor definition
+struct rePlatformVendorData
 {
-public:
-  // Stores platform-specific window data
-  #ifdef ICE_PLATFORM_WINDOWS
-  struct PlatformLocalState
-  {
-    HWND hwnd;
-    HINSTANCE hinstance;
-  };
-  #else
-  struct PlatformLocalState { };
-  #endif
+  HWND hwnd;
+  HINSTANCE hinstance;
+};
+#else
+struct rePlatformVendorData {};
+#endif // ICE_PLATFORM_WINDOWS
 
-  // Stores platform generic window data
-  struct PlatformStateInformation
+extern class reIcePlatform
+{
+private:
+  struct
   {
-    b8 active;
-    PlatformLocalState localState;
-    CursorStates cursorState;
-
-    u32 windowWidth;
-    u32 windowHeight;
-    u32 windowPositionX;
-    u32 windowPositionY;
+    rePlatformVendorData vendorData;
+    reIceWindowSettings windowSettings = {};
+    b8 shouldClose = false;
   } state;
 
 public:
-  // Initializes platform specific sub-layers
-  void Initialize();
-  // Shuts down platform specific sub-layers, destroys all active windows
-  void Shutdown();
-  // Handles updating platform information
-  bool Update();
-  // Triggers the Ice_Event_Quit event
-  void Close();
+  // Initializes any components that interact with the operating system
+  b8 Initialize(reIceWindowSettings* _settings);
+  // Pumps the platform's queued events
+  // Returns true when the window is closed
+  b8 Update();
+  // Destroys the window and frees its allocated memory
+  b8 Shutdown();
 
-  // Creates a new window
-  void CreateWindow(u32 _width, u32 _height, const char* _title);
-  // Changes the platform settings required to accomplish the new cursor state
-  void ChangeCursorState(CursorStates _newState);
+  void Close() { state.shouldClose = true; }
 
-  // Dynamically allocates memory
-  static void* AllocateMem(u64 _size);
-  // Frees allocated memory
-  static void FreeMem(void* _memory);
-  // Sets an entire block of memory to _value
-  static void SetMem(void* _memory, u64 _size, u32 _value);
-  // Sets a block of memory to 0
-  static void ZeroMem(void* _memory, u64 _size);
-  // Copies data from _src to _dst
-  static void* CopyMem(void* _dst, void* _src, u64 _size);
+  rePlatformVendorData const* GetVendorInfo() { return &state.vendorData; }
+  reIceWindowSettings const* GetWindowInfo() { return &state.windowSettings; }
 
   // Prints text to the platform's console
-  static void ConsolePrint(const char* _message, u32 _color);
+  void ConsolePrint(const char* _message, u32 _color);
 
-};
+  void* MemAlloc(u64 _size) { return malloc(_size); }
+  void MemSet(void* _data, u64 _size, u32 _value) { memset(_data, _value, _size); }
+  void MemZero(void* _data, u64 _size) { MemSet(_data, _size, 0); }
+  void MemFree(void* _data) { free(_data); }
+  void MemCopy(void* _src, void* _dst, u64 _size) { memcpy(_src, _dst, _size); }
 
-#endif // !PLATFORM_PLATFORM_H
+private:
+  b8 CreateWindow();
+  void CloseWindow();
+
+} rePlatform;
+
+#endif // !define ICE_PLATFORM_RE_PLATFORM_H_

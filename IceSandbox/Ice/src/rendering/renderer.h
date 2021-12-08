@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "rendering/re_renderer_backend.h"
+#include "rendering/renderer_backend.h"
 
 enum IceRenderingApi
 {

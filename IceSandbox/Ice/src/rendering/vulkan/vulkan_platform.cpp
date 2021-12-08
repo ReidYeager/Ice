@@ -1,8 +1,8 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/re_renderer_vulkan.h"
-#include "platform/re_platform.h"
+#include "rendering/vulkan/renderer_vulkan.h"
+#include "platform/platform.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
@@ -26,7 +26,7 @@ b8 reIvkRenderer::CreateSurface()
   createInfo.hwnd = vendorData->hwnd;
   createInfo.flags = 0;
 
-  reIVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,
+  IVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,
                                      &createInfo,
                                      context.alloc,
                                      &context.surface),

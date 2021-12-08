@@ -1,27 +1,9 @@
-\IceSandbox\Ice\src\core\application.cpp
-	Line   107 :--: // NOTE : Should find a more efficient way of accomplishing this goal
-	Line   178 :--: // NOTE : Should find a more efficient way of accomplishing this goal
-\IceSandbox\Ice\src\core\application.h
-	Line    28 :--: // NOTE : Delete
-\IceSandbox\Ice\src\core\camera.h
-	Line     8 :--: // NOTE : Create a camera (projection) component to replace this
 \IceSandbox\Ice\src\defines.h
 	Line    58 :--: // TODO : Define these directories in a separate file
 \IceSandbox\Ice\src\profiler.h
 	Line     5 :--: // NOTE : Add profiling tools
-\IceSandbox\Ice\src\renderer\mesh.h
-	Line    61 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
-\IceSandbox\Ice\src\renderer\renderer.cpp
-	Line    38 :--: // TODO : Optimize this out. Currently takes ~175 us
-\IceSandbox\Ice\src\renderer\renderer_backend.h
-	Line    54 :--: // NOTE : DELETE
-\IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.cpp
-	Line  1007 :--: // NOTE : Clear vertex and index vectors to save memory? (Unnecessary for now...)
-\IceSandbox\Ice\src\renderer\vulkan\vulkan_backend.h
-	Line   181 :--: // NOTE : DELETE -- External classes should not need to get the backend context
-\IceSandbox\Ice\src\rendering\vulkan\re_renderer_vulkan.cpp
+\IceSandbox\Ice\src\rendering\mesh.h
+	Line    57 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
+\IceSandbox\Ice\src\rendering\vulkan\renderer_vulkan.cpp
 	Line   195 :--: // TODO : Define this information elsewhere
 	Line   532 :--: // TODO : Remove this and manually hand-off ownership of the images
-\IceSandbox\Sandbox\src\source.cpp
-	Line    12 :--: // TODO : De-pessimize & refactor everything
-	Line    91 :--: // TODO : Push renderer information to the respective parameters

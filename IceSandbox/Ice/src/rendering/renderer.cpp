@@ -2,8 +2,8 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/re_renderer.h"
-#include "rendering/vulkan/re_renderer_vulkan.h"
+#include "rendering/renderer.h"
+#include "rendering/vulkan/renderer_vulkan.h"
 
 reIceRenderer reRenderer;
 

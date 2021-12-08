@@ -21,14 +21,15 @@ inline void ICE_API IceConsoleLogMessage(IceLogTypes _type, const char* _message
   // Limit 65,535 characters per message
   const u16 length = 0xFFFF;
   char* outMessage = new char[length];
-  IcePlatform::ZeroMem(outMessage, length);
+  rePlatform.MemZero(outMessage, length);
+
 
   va_list args;
   va_start(args, _message);
   vsnprintf(outMessage, length, _message, args);
   va_end(args);
 
-  IcePlatform::ConsolePrint(outMessage, _type);
+  rePlatform.ConsolePrint(outMessage, _type);
 
   delete[](outMessage);
 }

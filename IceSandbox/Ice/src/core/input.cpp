@@ -2,14 +2,12 @@
 #include "logger.h"
 
 #include "core/input.h"
-#include "core/event.h"
-#include "core/memory_manager.h"
 
 IceInput Input;
 
 void IceInput::Initialize()
 {
-  MemoryManager.Zero(&m_states, sizeof(InputStates));
+  rePlatform.MemZero(&m_states, sizeof(InputStates));
   IceLogInfo("Initialized Input system");
 }
 
@@ -20,24 +18,13 @@ void IceInput::Shutdown()
 
 void IceInput::Update()
 {
-  MemoryManager.Copy(&m_states.keyboardPrevious, &m_states.keyboardCurrent, sizeof(keyboardState));
-  MemoryManager.Copy(&m_states.mousePrevious, &m_states.mouseCurrent, sizeof(mouseState));
+  rePlatform.MemCopy(&m_states.keyboardPrevious, &m_states.keyboardCurrent, sizeof(keyboardState));
+  rePlatform.MemCopy(&m_states.mousePrevious, &m_states.mouseCurrent, sizeof(mouseState));
 }
 
 void IceInput::ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed)
 {
   m_states.keyboardCurrent.keys[_key] = _pressed;
-
-  //IceEventData data;
-  //data.u32[0] = _key;
-  //if (_pressed)
-  //{
-  //  EventManager.Fire(Ice_Event_Key_Pressed, nullptr, data);
-  //}
-  //else
-  //{
-  //  EventManager.Fire(Ice_Event_Key_Released, nullptr, data);
-  //}
 }
 
 b8 IceInput::IsKeyDown(IceKeyCodeFlag _key)
@@ -68,17 +55,6 @@ b8 IceInput::OnKeyHold(IceKeyCodeFlag _key)
 void IceInput::ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed)
 {
   m_states.mouseCurrent.buttons[_button] = _pressed;
-
-  //IceEventData data;
-  //data.u32[0] = _button;
-  //if (_pressed)
-  //{
-  //  EventManager.Fire(Ice_Event_Mouse_Button_Pressed, nullptr, data);
-  //}
-  //else
-  //{
-  //  EventManager.Fire(Ice_Event_Mouse_Button_Released, nullptr, data);
-  //}
 }
 
 void IceInput::ProcessMouseMove(i32 _x, i32 _y)
@@ -87,14 +63,6 @@ void IceInput::ProcessMouseMove(i32 _x, i32 _y)
   {
     m_states.mouseCurrent.x = _x;
     m_states.mouseCurrent.y = _y;
-
-    //i32 deltaX = 0, deltaY = 0;
-    //GetMouseDelta(&deltaX, &deltaY);
-
-    //IceEventData data;
-    //data.u32[0] = *((u32*)&deltaX);
-    //data.u32[1] = *((u32*)&deltaY);
-    //EventManager.Fire(Ice_Event_Mouse_Moved, nullptr, data);
   }
 }
 

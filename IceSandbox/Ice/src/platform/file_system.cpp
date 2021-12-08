@@ -3,7 +3,7 @@
 
 #include "platform/file_system.h"
 #include "platform/platform.h"
-#include "renderer/mesh.h"
+#include "rendering/mesh.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -91,7 +91,8 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
   mesh.directory = fileDir;
 
   IceLogInfo("Loaded %s -- %u verts, %u indices",
-           _directory, mesh.vertices.size(), mesh.indices.size());
+             _directory, mesh.vertices.size(),
+             mesh.indices.size());
 
   return mesh;
 }

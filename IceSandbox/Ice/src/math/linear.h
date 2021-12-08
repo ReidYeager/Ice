@@ -7,7 +7,17 @@
 #include "math/vector.h"
 #include "math/matrix.h"
 
-float DotV4V4(vec4 _l, vec4 _r)
+float Dot(vec2 _l, vec2 _r)
+{
+  return (_l.x * _r.x) + (_l.y * _r.y);
+}
+
+float Dot(vec3 _l, vec3 _r)
+{
+  return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z);
+}
+
+float Dot(vec4 _l, vec4 _r)
 {
   return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z) + (_l.w * _r.w);
 }

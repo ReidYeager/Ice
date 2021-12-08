@@ -1,7 +1,7 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/re_renderer_vulkan.h"
+#include "rendering/vulkan/renderer_vulkan.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
@@ -42,7 +42,7 @@ b8 reIvkRenderer::CreateImage(reIvkImage* _image,
   createInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
   createInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
 
-  reIVK_ASSERT(vkCreateImage(context.device, &createInfo, context.alloc, &_image->image),
+  IVK_ASSERT(vkCreateImage(context.device, &createInfo, context.alloc, &_image->image),
              "Failed to create an image");
 
   // Image memory =====
@@ -57,11 +57,11 @@ b8 reIvkRenderer::CreateImage(reIvkImage* _image,
                                                memoryReq.memoryTypeBits,
                                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  reIVK_ASSERT(vkAllocateMemory(context.device, &memoryAlloc, context.alloc, &_image->memory),
+  IVK_ASSERT(vkAllocateMemory(context.device, &memoryAlloc, context.alloc, &_image->memory),
              "Failed to allocate image memory");
 
   // Binding =====
-  reIVK_ASSERT(vkBindImageMemory(context.device, _image->image, _image->memory, 0),
+  IVK_ASSERT(vkBindImageMemory(context.device, _image->image, _image->memory, 0),
              "Failed to bind an image and its memory");
 
   return true;
@@ -87,7 +87,7 @@ b8 reIvkRenderer::CreateImageView(VkImageView* _view,
   createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
   createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-  reIVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
+  IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
              "Failed to create an image view");
 
   return true;
@@ -111,7 +111,7 @@ b8 reIvkRenderer::CreateImageSampler(reIvkImage* _image)
   createInfo.minLod = 0.0f;
   createInfo.maxLod = 0.0f;
 
-  reIVK_ASSERT(vkCreateSampler(context.device, &createInfo, context.alloc, &_image->sampler),
+  IVK_ASSERT(vkCreateSampler(context.device, &createInfo, context.alloc, &_image->sampler),
              "Failed to create an image sampler");
 
   return true;
