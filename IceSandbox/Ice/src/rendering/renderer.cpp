@@ -8,7 +8,7 @@
 reIceRenderer reRenderer;
 
 // Used temporarily until a direct call to ivkRenderer's Render() function can be established
-reIvkRenderer* vkBackend;
+IvkRenderer* vkBackend;
 
 b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
 {
@@ -34,7 +34,7 @@ b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
     return false;
   }
   */
-  vkBackend = new reIvkRenderer();
+  vkBackend = new IvkRenderer();
 
   if (!vkBackend->Initialize())
   {

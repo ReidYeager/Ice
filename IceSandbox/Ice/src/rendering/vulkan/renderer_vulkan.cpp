@@ -8,11 +8,15 @@
 #include "platform/file_system.h"
 #include "rendering/mesh.h"
 
+#include "core/input.h"
+
 #include <vector>
 
-reIvkMaterial material;
+IvkMaterial material;
+IvkBuffer vertBuffer;
+IvkBuffer indexBuffer;
 
-b8 reIvkRenderer::Initialize()
+b8 IvkRenderer::Initialize()
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
 
@@ -42,17 +46,40 @@ b8 reIvkRenderer::Initialize()
   ICE_ATTEMPT(CreatePipelinelayout());
   ICE_ATTEMPT(CreatePipeline());
 
-  // Commands =====
-  ICE_ATTEMPT(RecordCommandBuffers());
+  IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
-  IceLogDebug("===== Vulkan Renderer Init Complete =====")
+  // TMP =====
+  const iceVertex verts[3] = {
+    { { 0.0, -1.0, 0.0}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} },
+    { {-0.5,  0.5, 0.0}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} },
+    { { 0.5,  0.5, 0.0}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} }
+  };
+
+  const u16 indices[3] = {
+    0, 1, 2
+  };
+
+  CreateBuffer(&vertBuffer,
+               3 * sizeof(iceVertex),
+               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)verts);
+  CreateBuffer(&indexBuffer,
+               3 * sizeof(u16),
+               VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)indices);
 
   return true;
 }
 
-b8 reIvkRenderer::Shutdown()
+b8 IvkRenderer::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
+
+  // TMP =====
+  DestroyBuffer(&vertBuffer, true);
+  DestroyBuffer(&indexBuffer, true);
 
   // Material =====
   vkDestroyShaderModule(context.device, material.vertexModule, context.alloc);
@@ -104,76 +131,68 @@ b8 reIvkRenderer::Shutdown()
   return true;
 }
 
-b8 reIvkRenderer::Render()
+b8 IvkRenderer::Render()
 {
-  static u32 currentFlightSlotIndex = 0;
-  static u32 currentSwapchainImageIndex = 0;
+  static u32 flightSlotIndex = 0;
+  static u32 swapchainImageIndex = 0;
 
-  // Wait for oldest in-flight slot to return =====
+  // Wait for oldest in-flight slot to return (FIFO) =====
   IVK_ASSERT(vkWaitForFences(context.device,
-                               1,
-                               &context.flightSlotAvailableFences[currentFlightSlotIndex],
-                               VK_TRUE,
-                               3000000000), // 3 second timeout
-               "Flight slot wait fence failed");
+                             1,
+                             &context.flightSlotAvailableFences[flightSlotIndex],
+                             VK_TRUE,
+                             3000000000), // 3 second timeout
+             "Flight slot wait fence failed");
 
   IVK_ASSERT(vkAcquireNextImageKHR(context.device,
-                                     context.swapchain,
-                                     UINT64_MAX,
-                                     context.imageAvailableSemaphores[currentFlightSlotIndex],
-                                     VK_NULL_HANDLE,
-                                     &currentSwapchainImageIndex),
-               "Failed to acquire the next swapchain image");
+                                   context.swapchain,
+                                   UINT64_MAX,
+                                   context.imageAvailableSemaphores[flightSlotIndex],
+                                   VK_NULL_HANDLE,
+                                   &swapchainImageIndex),
+             "Failed to acquire the next swapchain image");
 
-  // If there are more flight slots than images, wait for the actual image
-  IVK_ASSERT(vkWaitForFences(context.device,
-                                 1,
-                                 &context.imageIsInFlightFence[currentSwapchainImageIndex],
-                                 VK_TRUE,
-                                 3000000000), // 3 second timeout
-                 "In flight image wait fence failed");
-  context.imageIsInFlightFence[currentSwapchainImageIndex] =
-      context.flightSlotAvailableFences[currentFlightSlotIndex];
+  // Submit a command buffer =====
+  RecordCommandBuffer(swapchainImageIndex);
 
-  // Submit a graphics =====
   VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
   VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[currentFlightSlotIndex];
+  submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[flightSlotIndex];
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &context.commandsBuffers[currentSwapchainImageIndex];
+  submitInfo.pCommandBuffers = &context.commandsBuffers[swapchainImageIndex];
   submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
+  submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
 
   IVK_ASSERT(vkResetFences(context.device,
-                             1,
-                             &context.flightSlotAvailableFences[currentFlightSlotIndex]),
-               "Failed to reset flight slot available fence %u", currentFlightSlotIndex);
+                           1,
+                           &context.flightSlotAvailableFences[flightSlotIndex]),
+             "Failed to reset flight slot available fence %u", flightSlotIndex);
   IVK_ASSERT(vkQueueSubmit(context.graphicsQueue,
-                             1,
-                             &submitInfo,
-                             context.flightSlotAvailableFences[currentFlightSlotIndex]),
-               "Failed to submit draw command");
+                           1,
+                           &submitInfo,
+                           context.flightSlotAvailableFences[flightSlotIndex]),
+             "Failed to submit draw command");
 
   // Present =====
   VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = &context.swapchain;
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[currentFlightSlotIndex];
-  presentInfo.pImageIndices = &currentSwapchainImageIndex;
+  presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
+  presentInfo.pImageIndices = &swapchainImageIndex;
 
   IVK_ASSERT(vkQueuePresentKHR(context.presentQueue, &presentInfo),
-               "Failed to present the swapchain");
+             "Failed to present the swapchain");
 
-  currentFlightSlotIndex = (currentFlightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
+  flightSlotIndex = (flightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
 
   return true;
 }
 
-b8 reIvkRenderer::CreateInstance()
+b8 IvkRenderer::CreateInstance()
 {
   // Retrieve and validate extensions and layers to enable
   std::vector<const char*> extensions;
@@ -193,7 +212,7 @@ b8 reIvkRenderer::CreateInstance()
   appInfo.pEngineName = "Ice";
   appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
 
-  // TODO : Define this information elsewhere
+  // Define this information elsewhere
   appInfo.pApplicationName = "TMP_APPLICAITON_NAME";
   appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
 
@@ -212,7 +231,7 @@ b8 reIvkRenderer::CreateInstance()
   return context.instance != VK_NULL_HANDLE;
 }
 
-b8 reIvkRenderer::ChoosePhysicalDevice()
+b8 IvkRenderer::ChoosePhysicalDevice()
 {
   u32 deviceCount = 0;
   vkEnumeratePhysicalDevices(context.instance, &deviceCount, nullptr);
@@ -278,7 +297,7 @@ b8 reIvkRenderer::ChoosePhysicalDevice()
   return true;
 }
 
-u32 reIvkRenderer::GetIndexForQueue(VkQueueFlags _flags)
+u32 IvkRenderer::GetIndexForQueue(VkQueueFlags _flags)
 {
   u32 bestFit = -1u;
 
@@ -307,7 +326,7 @@ u32 reIvkRenderer::GetIndexForQueue(VkQueueFlags _flags)
   return bestFit;
 }
 
-u32 reIvkRenderer::GetPresentQueue()
+u32 IvkRenderer::GetPresentQueue()
 {
   VkBool32 canPresent = false;
   u32 bestFit = -1u;
@@ -339,7 +358,7 @@ u32 reIvkRenderer::GetPresentQueue()
   return bestFit;
 }
 
-b8 reIvkRenderer::IsDeviceSuitable(const VkPhysicalDevice& _device)
+b8 IvkRenderer::IsDeviceSuitable(const VkPhysicalDevice& _device)
 {
   u32 queueCount;
   vkGetPhysicalDeviceQueueFamilyProperties(_device, &queueCount, nullptr);
@@ -360,7 +379,7 @@ b8 reIvkRenderer::IsDeviceSuitable(const VkPhysicalDevice& _device)
   return isSuitable;
 }
 
-b8 reIvkRenderer::CreateLogicalDevice()
+b8 IvkRenderer::CreateLogicalDevice()
 {
   // Use to enable features for use in rendering
   VkPhysicalDeviceFeatures enabledFeatures{};
@@ -416,7 +435,7 @@ b8 reIvkRenderer::CreateLogicalDevice()
   return context.device != VK_NULL_HANDLE;
 }
 
-b8 reIvkRenderer::CreateDescriptorPool()
+b8 IvkRenderer::CreateDescriptorPool()
 {
   // Size definitions =====
   const u32 poolSizeCount = 2;
@@ -444,7 +463,7 @@ b8 reIvkRenderer::CreateDescriptorPool()
   return true;
 }
 
-b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
+b8 IvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
 {
   VkCommandPool* poolPtr = 0;
   VkCommandPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
@@ -457,7 +476,7 @@ b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
   }
   else
   { // Graphics =====
-    createInfo.flags = 0;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     createInfo.queueFamilyIndex = context.gpu.graphicsQueueIndex;
     poolPtr = &context.graphicsCommandPool;
   }
@@ -468,7 +487,7 @@ b8 reIvkRenderer::CreateCommandPool(b8 _createTransient /*= false*/)
   return true;
 }
 
-b8 reIvkRenderer::CreateSwapchain()
+b8 IvkRenderer::CreateSwapchain()
 {
   u32 imageCount = context.gpu.surfaceCapabilities.minImageCount + 1;
 
@@ -485,7 +504,7 @@ b8 reIvkRenderer::CreateSwapchain()
     for (const auto& f : context.gpu.surfaceFormats)
     {
       if (f.format == VK_FORMAT_R32G32B32A32_SFLOAT &&
-        f.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT)
+          f.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_NONLINEAR_EXT)
       {
         format = f;
         break;
@@ -502,6 +521,7 @@ b8 reIvkRenderer::CreateSwapchain()
         break;
       }
     }
+    present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
 
     // Image dimensions =====
     VkExtent2D extent;
@@ -544,7 +564,7 @@ b8 reIvkRenderer::CreateSwapchain()
     }
 
     IVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
-      "Failed to create swapchain");
+               "Failed to create swapchain");
 
     // Swapchain context =====
     context.swapchainFormat = format.format;
@@ -578,7 +598,7 @@ b8 reIvkRenderer::CreateSwapchain()
   return true;
 }
 
-b8 reIvkRenderer::CreateRenderpass()
+b8 IvkRenderer::CreateRenderpass()
 {
   // Color =====
   VkAttachmentDescription colorDescription {};
@@ -648,7 +668,7 @@ b8 reIvkRenderer::CreateRenderpass()
   return true;
 }
 
-b8 reIvkRenderer::CreateDepthImage()
+b8 IvkRenderer::CreateDepthImage()
 {
   // Find depth format =====
   VkFormat format = VK_FORMAT_D32_SFLOAT;
@@ -685,7 +705,7 @@ b8 reIvkRenderer::CreateDepthImage()
   return true;
 }
 
-b8 reIvkRenderer::CreateFrameBuffers()
+b8 IvkRenderer::CreateFrameBuffers()
 {
   VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
   createInfo.flags = 0;
@@ -714,12 +734,11 @@ b8 reIvkRenderer::CreateFrameBuffers()
   return true;
 }
 
-b8 reIvkRenderer::CreateSyncObjects()
+b8 IvkRenderer::CreateSyncObjects()
 {
   context.imageAvailableSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
   context.renderCompleteSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
   context.flightSlotAvailableFences.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-  context.imageIsInFlightFence.resize(context.swapchainImages.size(), VK_NULL_HANDLE);
 
   VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
   semaphoreInfo.flags = 0;
@@ -748,19 +767,10 @@ b8 reIvkRenderer::CreateSyncObjects()
                "Failed to create render complete semaphore %u", i);
   }
 
-  // Ensure each image fence corresponds with its initial flight slot fence
-  // Doing this here removes a conditional in Render()
-  u32 i = 0;
-  for (auto& imageFence : context.imageIsInFlightFence)
-  {
-    imageFence = context.flightSlotAvailableFences[i];
-    i = (i + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
-  }
-
   return true;
 }
 
-b8 reIvkRenderer::CreateCommandBuffers()
+b8 IvkRenderer::CreateCommandBuffers()
 {
   const u32 count = context.swapchainImages.size();
   context.commandsBuffers.resize(count);
@@ -778,13 +788,13 @@ b8 reIvkRenderer::CreateCommandBuffers()
   return true;
 }
 
-b8 reIvkRenderer::RecordCommandBuffers()
+b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 {
   VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = 0;
 
   VkClearValue clearValues[2] = {};
-  clearValues[0].color = { 0.5f, 0.5f, 0.5f };
+  clearValues[0].color = { 0.3f, 0.3f, 0.3f };
   clearValues[1].depthStencil = { 1, 0 };
 
   VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
@@ -794,33 +804,44 @@ b8 reIvkRenderer::RecordCommandBuffers()
   renderPassBeginInfo.renderArea.offset = { 0 , 0 };
   renderPassBeginInfo.renderPass = context.renderpass;
 
-  for (u32 i = 0; i < context.swapchainImages.size(); i++)
-  {
-    VkCommandBuffer& cmdBuffer = context.commandsBuffers[i];
+  VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
 
-    renderPassBeginInfo.framebuffer = context.frameBuffers[i];
+  renderPassBeginInfo.framebuffer = context.frameBuffers[_commandIndex];
 
-    IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
-                 "Failed to begin command buffer %u", i);
+  IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
+             "Failed to begin command buffer %u", _commandIndex);
 
-    vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    // Bind & draw
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
+  vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    //vkCmdBindVertexBuffers(cmdBuffer, 0, 1, nullBuffers, &offset);
+  // -- For each view
+  // Bind global descriptors (cam view, environmental info, lights, etc.) == set 0
 
-    vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+  // -- For each material
+  // Bind pipeline
+  vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
+  // Bind descriptor set == Set 1
 
-    vkCmdEndRenderPass(cmdBuffer);
+  // -- For each material instance
+  // Bind descriptor set == Set 2
 
-    IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
-                 "Failed to record command buffer %u", i);
-  }
+  // -- For each object
+  // bind push constants (if any)
+  // bind vertices & indices
+  // render
+  VkDeviceSize zero = 0;
+  vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertBuffer.buffer, &zero);
+  vkCmdBindIndexBuffer(cmdBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+  vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
+  //vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+  vkCmdEndRenderPass(cmdBuffer);
+  IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
+             "Failed to record command buffer %u", _commandIndex);
 
   return true;
 }
 
-b8 reIvkRenderer::CreateDescriptorSet()
+b8 IvkRenderer::CreateDescriptorSet()
 {
   // Create layout =====
   {
@@ -859,7 +880,7 @@ b8 reIvkRenderer::CreateDescriptorSet()
   return true;
 }
 
-b8 reIvkRenderer::CreatePipelinelayout()
+b8 IvkRenderer::CreatePipelinelayout()
 {
   const u32 pushCount = 0;
   //VkPushConstantRange pushRanges[pushCount] = {};
@@ -886,8 +907,45 @@ b8 reIvkRenderer::CreatePipelinelayout()
   return true;
 }
 
-b8 reIvkRenderer::CreatePipeline()
+b8 IvkRenderer::CreatePipeline()
 {
+  // Shader Stages State =====
+  CreateShaderModule(&material.vertexModule, "blank.vert");
+  CreateShaderModule(&material.fragmentModule, "rainbow.frag");
+
+  // Insert shader modules
+  const u32 shaderCount = 2;
+  VkPipelineShaderStageCreateInfo shaderStageInfos[shaderCount]{};
+
+  shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStageInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+  shaderStageInfos[0].module = material.vertexModule;
+  shaderStageInfos[0].pName = "main";
+
+  shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  shaderStageInfos[1].module = material.fragmentModule;
+  shaderStageInfos[1].pName = "main";
+
+  // Vertex Input State =====
+  // Defines how vertex buffers are to be traversed
+  const auto vertexInputAttribDesc = iceVertex::GetAttributeDescriptions();
+  const auto vertexInputBindingDesc = iceVertex::GetBindingDescription();
+
+  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
+  vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttribDesc.size();
+  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
+
+  // Input Assembly State =====
+  // Defines how meshes are to be rendered
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
+  inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
+
   // Viewport State =====
   // Defines the screen settings used during rasterization
   VkViewport viewport;
@@ -908,27 +966,6 @@ b8 reIvkRenderer::CreatePipeline()
   viewportStateInfo.pViewports = &viewport;
   viewportStateInfo.scissorCount = 1;
   viewportStateInfo.pScissors = &scissor;
-
-  // Vertex Input State =====
-  // Defines how vertex buffers are to be traversed
-  const auto vertexInputAttribDesc = vertex_t::GetAttributeDescriptions();
-  const auto vertexInputBindingDesc = vertex_t::GetBindingDescription();
-
-  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
-  vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  //vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttribDesc.size());
-  //vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
-  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  //vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
-
-  // Input Assembly State =====
-  // Defines how meshes are to be rendered
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
-  inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-  inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
 
   // Rasterization State =====
   // Defines how the pipeline will rasterize the image
@@ -982,24 +1019,6 @@ b8 reIvkRenderer::CreatePipeline()
   dynamicStateInfo.dynamicStateCount = 0;
   dynamicStateInfo.pDynamicStates = nullptr;
 
-  // Shader Stages State =====
-  CreateShaderModule(&material.vertexModule, "blank.vert");
-  CreateShaderModule(&material.fragmentModule, "red.frag");
-
-  // Insert shader modules
-  const u32 shaderCount = 2;
-  VkPipelineShaderStageCreateInfo shaderStageInfos[shaderCount] {};
-
-  shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  shaderStageInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  shaderStageInfos[0].module = material.vertexModule;
-  shaderStageInfos[0].pName = "main";
-
-  shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  shaderStageInfos[1].module = material.fragmentModule;
-  shaderStageInfos[1].pName = "main";
-
   // Creation =====
   VkGraphicsPipelineCreateInfo createInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
   createInfo.pViewportState      = &viewportStateInfo;
@@ -1010,24 +1029,23 @@ b8 reIvkRenderer::CreatePipeline()
   createInfo.pDepthStencilState  = &depthStateInfo;
   createInfo.pColorBlendState    = &blendStateInfo;
   createInfo.pDynamicState       = &dynamicStateInfo;
-
   createInfo.stageCount = shaderCount;
   createInfo.pStages    = shaderStageInfos;
   createInfo.renderPass = context.renderpass;
   createInfo.layout     = material.pipelineLayout;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
-                                         nullptr,
-                                         1,
-                                         &createInfo,
-                                         context.alloc,
-                                         &material.pipeline),
-               "Failed to create the graphics pipeline");
+                                       nullptr,
+                                       1,
+                                       &createInfo,
+                                       context.alloc,
+                                       &material.pipeline),
+             "Failed to create the graphics pipeline");
 
   return true;
 }
 
-b8 reIvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
+b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
 {
   std::string directory = ICE_RESOURCE_SHADER_DIR;
   directory.append(_shader);
@@ -1040,7 +1058,7 @@ b8 reIvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shade
   createInfo.pCode = reinterpret_cast<u32*>(source.data());
 
   IVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
-               "failed to create shader module for %s", directory.c_str());
+             "failed to create shader module for %s", directory.c_str());
 
   return true;
 }

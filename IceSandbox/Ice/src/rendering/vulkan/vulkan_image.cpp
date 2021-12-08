@@ -22,7 +22,7 @@ u32 FindMemoryType(const VkPhysicalDeviceMemoryProperties& _properties,
   return -1;
 }
 
-b8 reIvkRenderer::CreateImage(reIvkImage* _image,
+b8 IvkRenderer::CreateImage(reIvkImage* _image,
                               VkExtent2D _extents,
                               VkFormat _format,
                               VkImageUsageFlags _usage)
@@ -67,7 +67,7 @@ b8 reIvkRenderer::CreateImage(reIvkImage* _image,
   return true;
 }
 
-b8 reIvkRenderer::CreateImageView(VkImageView* _view,
+b8 IvkRenderer::CreateImageView(VkImageView* _view,
                                   VkImage _image,
                                   VkFormat _format,
                                   VkImageAspectFlags _aspectMask)
@@ -93,7 +93,7 @@ b8 reIvkRenderer::CreateImageView(VkImageView* _view,
   return true;
 }
 
-b8 reIvkRenderer::CreateImageSampler(reIvkImage* _image)
+b8 IvkRenderer::CreateImageSampler(reIvkImage* _image)
 {
   VkSamplerCreateInfo createInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
   createInfo.magFilter = VK_FILTER_LINEAR;

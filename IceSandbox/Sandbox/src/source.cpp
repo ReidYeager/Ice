@@ -1,29 +1,43 @@
 
-#include <iostream>
 #include <ice.h>
-
 #include <math\vector.h>
+#include <core\input.h>
 
-#include <math.h>
 #include <chrono>
+#include <iostream>
+#include <math.h>
 
 reIceApplication app;
 
 void reInit()
 {
   IceLogInfo("Client Init");
+
+  //iceMaterial mat = app.GetShader({
+  //    { "blank", Ice_Shader_Vertex },
+  //    { "red", Ice_Shader_Fragment }
+  //    });
+
 }
 
 void reUpdate(float _deltaTime)
 {
   //IceLogInfo("Re-Update : %f", _deltaTime);
+  if (Input.OnKeyPressed(Ice_Key_K))
+  {
+    IceLogInfo("KAY HOORAY");
+  }
+
+  if (Input.OnKeyPressed(Ice_Key_Escape))
+  {
+    rePlatform.Close();
+  }
 }
 
 void reShutdown()
 {
   IceLogInfo("Client Shutdown");
 }
-
 
 int main()
 {

@@ -20,7 +20,7 @@ std::vector<char> FileSystem::LoadFile(const char* _directory)
   inFile.open(_directory, std::ios::ate | std::ios::binary);
   if (!inFile)
   {
-    IceLogInfo("ERROR :: Failed to load file %s", _directory);
+    IceLogError("Failed to load file : %s", _directory);
     abort();
   }
 
@@ -51,9 +51,9 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
   }
 
   mesh_t mesh;
-  std::unordered_map<vertex_t, u32> vertMap = {};
+  std::unordered_map<iceVertex, u32> vertMap = {};
 
-  vertex_t vert {};
+  iceVertex vert {};
   for (const auto& shape : shapes)
   {
     for (const auto& index : shape.mesh.indices)

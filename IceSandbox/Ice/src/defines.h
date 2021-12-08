@@ -56,7 +56,7 @@ typedef u64 IceFlagExtended;
 //=================================================================================================
 // Resource directories
 //=================================================================================================
-// TODO : Define these directories in a separate file
+// Define these directories in a separate file
 #define ICE_RESOURCE_TEXTURE_DIR "../../../Sandbox/res/textures/"
 #define ICE_RESOURCE_SHADER_DIR "../../../Sandbox/res/shaders/compiled/"
 #define ICE_RESOURCE_MODEL_DIR "../../../Sandbox/res/models/"

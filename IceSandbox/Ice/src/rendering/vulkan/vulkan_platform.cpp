@@ -12,12 +12,12 @@
 
 #ifdef ICE_PLATFORM_WINDOWS
 
-void reIvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions)
+void IvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions)
 {
   _extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 }
 
-b8 reIvkRenderer::CreateSurface()
+b8 IvkRenderer::CreateSurface()
 {
   rePlatformVendorData const* vendorData = rePlatform.GetVendorInfo();
 
@@ -35,7 +35,7 @@ b8 reIvkRenderer::CreateSurface()
   return context.surface != VK_NULL_HANDLE;
 }
 
-vec2U reIvkRenderer::GetPlatformWindowExtents()
+vec2U IvkRenderer::GetPlatformWindowExtents()
 {
   return rePlatform.GetWindowInfo()->extents;
 }
@@ -43,7 +43,7 @@ vec2U reIvkRenderer::GetPlatformWindowExtents()
 // End ICE_PLATFORM_WINDOWS
 #else
 
-void reIvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions) {}
-b8 reIvkRenderer::CreateSurface() { return false; }
+void IvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions) {}
+b8 IvkRenderer::CreateSurface() { return false; }
 
 #endif

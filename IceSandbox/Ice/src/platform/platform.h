@@ -58,7 +58,7 @@ public:
   void MemSet(void* _data, u64 _size, u32 _value) { memset(_data, _value, _size); }
   void MemZero(void* _data, u64 _size) { MemSet(_data, _size, 0); }
   void MemFree(void* _data) { free(_data); }
-  void MemCopy(void* _src, void* _dst, u64 _size) { memcpy(_src, _dst, _size); }
+  void MemCopy(void* _src, void* _dst, u64 _size) { memcpy(_dst, _src, _size); }
 
 private:
   b8 CreateWindow();

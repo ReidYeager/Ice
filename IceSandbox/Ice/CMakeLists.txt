@@ -11,13 +11,13 @@ add_library (Ice STATIC
  "src/defines.h"
  "src/ice.h"
  "src/logger.h"
- "src/profiler.h"
+ 
  
 
  "src/platform/file_system.cpp"
  "src/platform/file_system.h"
  "src/platform/platform.h"
- "src/platform/platfrom.cpp"
+ "src/platform/platform.cpp"
 
  "src/core/application.h"
  "src/core/application.cpp"
@@ -44,7 +44,7 @@ add_library (Ice STATIC
 
 
 
- )
+  "src/rendering/vulkan/vulkan_buffer.cpp")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

@@ -18,8 +18,8 @@ void IceInput::Shutdown()
 
 void IceInput::Update()
 {
-  rePlatform.MemCopy(&m_states.keyboardPrevious, &m_states.keyboardCurrent, sizeof(keyboardState));
-  rePlatform.MemCopy(&m_states.mousePrevious, &m_states.mouseCurrent, sizeof(mouseState));
+  rePlatform.MemCopy(&m_states.keyboardCurrent, &m_states.keyboardPrevious, sizeof(keyboardState));
+  rePlatform.MemCopy(&m_states.mouseCurrent, &m_states.mousePrevious, sizeof(mouseState));
 }
 
 void IceInput::ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed)

@@ -12,7 +12,7 @@
 
 #include <vector>
 
-class reIvkRenderer : public reIceRendererBackend
+class IvkRenderer : public reIceRendererBackend
 {
 private:
   reIvkContext context;
@@ -25,7 +25,6 @@ public:
 private:
   // Ensures that all desired layer and extension functionality is present in the created instance
   b8 CreateInstance();
-
   // Selects the first compatible GPU among those available in the system
   // Fills the selected GPU's information
   b8 ChoosePhysicalDevice();
@@ -57,12 +56,7 @@ private:
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
 
-  b8 RecordCommandBuffers();
-
-  // Materials =====
-  b8 CreateDescriptorSet();
-  b8 CreatePipelinelayout();
-  b8 CreatePipeline();
+  b8 RecordCommandBuffer(u32 _commandIndex);
 
   // Platform =====
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
@@ -71,7 +65,27 @@ private:
   b8 CreateSurface();
   vec2U GetPlatformWindowExtents();
 
-  // Helpers =====
+public:
+
+  // Materials =====
+  b8 CreateDescriptorSet();
+  b8 CreatePipelinelayout();
+  b8 CreatePipeline();
+
+  // Buffers =====
+  // Allocates a new block of memory on the GPU
+  b8 CreateBuffer(IvkBuffer* _buffer,
+                  u64 _size,
+                  VkBufferUsageFlags _usage,
+                  VkMemoryPropertyFlags _memoryProperties,
+                  void* _data = nullptr);
+  // Binds the buffer to the memory starting at the offset
+  b8 BindBuffer(IvkBuffer* _buffer, u64 _offset);
+  // Fills the given buffer with data
+  b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0);
+  void DestroyBuffer(IvkBuffer* _buffer, b8 _freeMemory = false);
+
+  // Images =====
   b8 CreateImage(reIvkImage* _image,
                  VkExtent2D _extents,
                  VkFormat _format,

@@ -3,6 +3,7 @@
 #include "logger.h"
 
 #include "core/application.h"
+#include "core/input.h"
 
 #include <chrono>
 
@@ -60,6 +61,8 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
     return false;
   }
 
+  Input.Initialize();
+
   state.ClientInitialize();
   return true;
 }
@@ -72,7 +75,11 @@ b8 reIceApplication::Update()
   auto end = start;
   auto microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
   float deltaTime = 0.0f;
-  const float microToSeconds = 0.000001f;
+  const float microToMilli = 0.001f;
+  const float microToSecond = microToMilli * 0.001f;
+
+  float deltaSum = 0.0f;
+  u32 deltaCount = 0;
  
   while (rePlatform.Update())
   {
@@ -80,12 +87,27 @@ b8 reIceApplication::Update()
 
     ICE_ATTEMPT(reRenderer.Render());
 
-    // Update timing
+    // Update timing =====
     {
       end = std::chrono::steady_clock::now();
       microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-      deltaTime = microsecDelta.count() * microToSeconds;
+      deltaTime = microsecDelta.count() * microToSecond;
       start = end;
+
+      // Timing log =====
+      deltaSum += deltaTime;
+      deltaCount++;
+      if (deltaSum >= 1.0f)
+      {
+        float averageSec = (deltaSum / deltaCount);
+        IceLogInfo("%3.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
+
+        deltaSum = 0;
+        deltaCount = 0;
+      }
+
+      // Update input =====
+      Input.Update();
     }
   }
 

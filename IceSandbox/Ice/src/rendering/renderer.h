@@ -27,6 +27,8 @@ public:
   b8 Initialize(reIceRendererSettings* _settings);
   b8 Shutdown();
   b8 Render();
+
+
 } reRenderer;
 
 #endif // !define ICE_RENDERING_RE_RENDERER_H_

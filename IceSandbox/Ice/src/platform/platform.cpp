@@ -170,9 +170,14 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
     rePlatform.Close();
   } break;
   case WM_KEYDOWN:
+  case WM_SYSKEYDOWN:
   {
-    if (wparam == Ice_Key_Escape)
-      rePlatform.Close();
+    Input.ProcessKeyboardKey(wparam, true);
+  } break;
+  case WM_KEYUP:
+  case WM_SYSKEYUP:
+  {
+    Input.ProcessKeyboardKey(wparam, false);
   } break;
   default:
     break;

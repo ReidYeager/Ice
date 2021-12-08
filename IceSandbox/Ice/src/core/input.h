@@ -77,7 +77,7 @@ typedef IceFlag IceMouseButtonFlag;
 #undef NewButton
 
 // Handles signals from the platform's physical input events
-class IceInput
+extern class IceInput
 {
 private:
   struct keyboardState
@@ -125,8 +125,6 @@ public:
   void GetMousePosition(i32* _x, i32* _y);
   void GetMousePreviousPosition(i32* _x, i32* _y);
   void GetMouseDelta(i32* _x, i32* _y);
-};
-
-extern IceInput Input;
+} Input;
 
 #endif // !CORE_INPUT_H
