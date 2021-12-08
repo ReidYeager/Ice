@@ -6,6 +6,7 @@
 
 #include "rendering/vulkan/vulkan_context.h"
 #include "rendering/renderer_backend.h"
+#include "rendering/mesh.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
@@ -97,6 +98,9 @@ public:
   b8 CreateImageSampler(reIvkImage* _image);
 
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
+
+  // Meshes =====
+  b8 CreateMesh(mesh_t* _mesh, const char* _directory);
 
 };
 

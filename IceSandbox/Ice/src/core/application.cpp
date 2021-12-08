@@ -67,6 +67,9 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
   return true;
 }
 
+float averageSum = 0.0f;
+u32 averageCount = 0;
+
 b8 reIceApplication::Update()
 {
   IceLogInfo("===== reApplication Main Loop =====");
@@ -102,6 +105,9 @@ b8 reIceApplication::Update()
         float averageSec = (deltaSum / deltaCount);
         IceLogInfo("%3.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
 
+        averageSum += averageSec;
+        averageCount++;
+
         deltaSum = 0;
         deltaCount = 0;
       }
@@ -116,6 +122,11 @@ b8 reIceApplication::Update()
 
 b8 reIceApplication::Shutdown()
 {
+  float totalAverageDelta = averageSum / averageCount;
+  IceLogInfo("Average delta : %3.3f ms -- %3.0f FPS",
+             totalAverageDelta * 1000.0f,
+             1.0f / totalAverageDelta);
+
   IceLogInfo("===== reApplication Shutdown =====");
   state.ClientShutdown();
 

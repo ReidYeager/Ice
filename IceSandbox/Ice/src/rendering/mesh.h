@@ -2,6 +2,8 @@
 #ifndef ICE_RENDERING_MESH_H_
 #define ICE_RENDERING_MESH_H_
 
+#include "rendering/vulkan/vulkan_context.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <vulkan/vulkan.h>
@@ -74,8 +76,8 @@ struct mesh_t
   std::vector<iceVertex> vertices;
   std::vector<u32> indices;
 
-  //IceBuffer vertexBuffer;
-  //IceBuffer indexBuffer;
+  IvkBuffer vertBuffer;
+  IvkBuffer indexBuffer;
 };
 
 #endif // !define ICE_RENDERING_MESH_H_

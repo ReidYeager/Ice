@@ -61,6 +61,8 @@ b8 IvkRenderer::CreateBuffer(IvkBuffer* _buffer,
   IVK_ASSERT(vkAllocateMemory(context.device, &allocInfo, context.alloc, &_buffer->memory),
              "Failed to allocate buffer memory");
 
+  _buffer->offset = 0;
+
   // Should auto-binding even be in place?
   BindBuffer(_buffer, 0);
 

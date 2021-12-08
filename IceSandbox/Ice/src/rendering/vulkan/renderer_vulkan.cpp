@@ -13,8 +13,9 @@
 #include <vector>
 
 IvkMaterial material;
-IvkBuffer vertBuffer;
-IvkBuffer indexBuffer;
+mesh_t mesh;
+glm::mat4 viewProj;
+IvkBuffer viewProjBuffer;
 
 b8 IvkRenderer::Initialize()
 {
@@ -49,26 +50,37 @@ b8 IvkRenderer::Initialize()
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
   // TMP =====
-  const iceVertex verts[3] = {
-    { { 0.0, -1.0, 0.0}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f} },
-    { {-0.5,  0.5, 0.0}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} },
-    { { 0.5,  0.5, 0.0}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} }
-  };
+  CreateMesh(&mesh, "Sphere.obj");
 
-  const u16 indices[3] = {
-    0, 1, 2
-  };
+  // TMP camera position
+  viewProj = glm::mat4(1);
+  viewProj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.01f, 1000.0f);
+  viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
+  viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
+  viewProj = glm::rotate(viewProj, glm::radians(35.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  viewProj = glm::rotate(viewProj, glm::radians(-35.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-  CreateBuffer(&vertBuffer,
-               3 * sizeof(iceVertex),
-               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               (void*)verts);
-  CreateBuffer(&indexBuffer,
-               3 * sizeof(u16),
-               VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               (void*)indices);
+  CreateBuffer(&viewProjBuffer,
+               sizeof(viewProj),
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  // TODO : Create a function that handles this automatically
+  VkDescriptorBufferInfo bufferInfo {};
+  bufferInfo.buffer = viewProjBuffer.buffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
+
+  VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  write.descriptorCount = 1;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.dstArrayElement = 0;
+  write.dstBinding = 0;
+  write.dstSet = material.descriptorSet;
+  write.pBufferInfo = &bufferInfo;
+  vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+
+  FillBuffer(&viewProjBuffer, (void*)&viewProj, sizeof(viewProj));
 
   return true;
 }
@@ -78,8 +90,9 @@ b8 IvkRenderer::Shutdown()
   vkDeviceWaitIdle(context.device);
 
   // TMP =====
-  DestroyBuffer(&vertBuffer, true);
-  DestroyBuffer(&indexBuffer, true);
+  DestroyBuffer(&viewProjBuffer, true);
+  DestroyBuffer(&mesh.vertBuffer, true);
+  DestroyBuffer(&mesh.indexBuffer, true);
 
   // Material =====
   vkDestroyShaderModule(context.device, material.vertexModule, context.alloc);
@@ -521,7 +534,7 @@ b8 IvkRenderer::CreateSwapchain()
         break;
       }
     }
-    present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
+    //present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
 
     // Image dimensions =====
     VkExtent2D extent;
@@ -819,6 +832,14 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   // -- For each material
   // Bind pipeline
   vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
+  vkCmdBindDescriptorSets(cmdBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          material.pipelineLayout,
+                          0,
+                          1,
+                          &material.descriptorSet,
+                          0,
+                          nullptr);
   // Bind descriptor set == Set 1
 
   // -- For each material instance
@@ -829,9 +850,9 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   // bind vertices & indices
   // render
   VkDeviceSize zero = 0;
-  vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertBuffer.buffer, &zero);
-  vkCmdBindIndexBuffer(cmdBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
-  vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
+  vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
+  vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
   //vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
   vkCmdEndRenderPass(cmdBuffer);
@@ -886,9 +907,9 @@ b8 IvkRenderer::CreatePipelinelayout()
   //VkPushConstantRange pushRanges[pushCount] = {};
   VkPushConstantRange* pushRanges = nullptr;
 
-  const u32 layoutCount = 0;
-  //VkDescriptorSetLayout layouts[layoutCount] = { material.descriptorSetLayout };
-  VkDescriptorSetLayout* layouts = nullptr;
+  const u32 layoutCount = 1;
+  VkDescriptorSetLayout layouts[layoutCount] = { material.descriptorSetLayout };
+  //VkDescriptorSetLayout* layouts = nullptr;
 
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
@@ -973,7 +994,7 @@ b8 IvkRenderer::CreatePipeline()
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;
@@ -1059,6 +1080,24 @@ b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
 
   IVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
              "failed to create shader module for %s", directory.c_str());
+
+  return true;
+}
+
+b8 IvkRenderer::CreateMesh(mesh_t* _mesh, const char* _directory)
+{
+  *_mesh = FileSystem::LoadMesh(_directory);
+
+  CreateBuffer(&_mesh->vertBuffer,
+               _mesh->vertices.size() * sizeof(iceVertex),
+               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)_mesh->vertices.data());
+  CreateBuffer(&_mesh->indexBuffer,
+               _mesh->indices.size() * sizeof(u32),
+               VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)_mesh->indices.data());
 
   return true;
 }
