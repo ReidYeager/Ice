@@ -6,6 +6,9 @@
 
 #include "rendering/renderer_backend.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 enum IceRenderingApi
 {
   Ice_Renderer_Vulkan,
@@ -26,7 +29,7 @@ private:
 public:
   b8 Initialize(reIceRendererSettings* _settings);
   b8 Shutdown();
-  b8 Render();
+  b8 Render(IceCamera* _camera);
 
 
 } reRenderer;

@@ -3,6 +3,9 @@
 #include <math\vector.h>
 #include <core\input.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 #include <chrono>
 #include <iostream>
 #include <math.h>
@@ -17,8 +20,9 @@ void reInit()
   //    { "blank", Ice_Shader_Vertex },
   //    { "red", Ice_Shader_Fragment }
   //    });
-
 }
+
+float pitch = 0.0f, yaw = 0.0f;
 
 void reUpdate(float _deltaTime)
 {
@@ -26,6 +30,23 @@ void reUpdate(float _deltaTime)
   if (Input.OnKeyPressed(Ice_Key_K))
   {
     IceLogInfo("KAY HOORAY");
+  }
+
+  if (Input.IsMouseButtonDown(Ice_Mouse_Right))
+  {
+    i32 x, y;
+    Input.GetMouseDelta(&x, &y);
+    pitch += y;
+    yaw += x;
+
+    glm::mat4& viewProj = app.cam.viewProjectionMatrix;
+
+    viewProj = glm::mat4(1);
+    viewProj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.01f, 1000.0f);
+    viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
+    viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
+    viewProj = glm::rotate(viewProj, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    viewProj = glm::rotate(viewProj, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
   }
 
   if (Input.OnKeyPressed(Ice_Key_Escape))

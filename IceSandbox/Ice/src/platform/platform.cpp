@@ -169,6 +169,8 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   {
     rePlatform.Close();
   } break;
+
+  // Keyboard =====
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
   {
@@ -179,9 +181,62 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   {
     Input.ProcessKeyboardKey(wparam, false);
   } break;
+
+  // Mouse =====
+  case WM_MOUSEMOVE:
+  {
+    Input.ProcessMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+  } break;
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_RBUTTONDOWN:
+  case WM_RBUTTONUP:
+  case WM_MBUTTONDOWN:
+  case WM_MBUTTONUP:
+  case WM_XBUTTONDOWN:
+  case WM_XBUTTONUP:
+  {
+    b8 pressed = message == WM_LBUTTONDOWN ||
+                 message == WM_RBUTTONDOWN ||
+                 message == WM_MBUTTONDOWN ||
+                 message == WM_XBUTTONDOWN;
+
+    IceMouseButtonFlag button = Ice_Mouse_Max;
+    switch (message)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+      button = Ice_Mouse_Left; break;
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+      button = Ice_Mouse_Right; break;
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+      button = Ice_Mouse_Middle; break;
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    {
+      u32 xButton = GET_XBUTTON_WPARAM(wparam);
+      switch (xButton)
+      {
+        case 1: button = Ice_Mouse_Back; break;
+        case 2: button = Ice_Mouse_Forward; break;
+        default: button = Ice_Mouse_Extra; break;
+      }
+    } break;
+    default:
+      break;
+    }
+
+    if (button != Ice_Mouse_Max)
+    {
+      Input.ProcessMouseButton(button, pressed);
+    }
+  } break;
   default:
     break;
   }
+
 
   return DefWindowProcA(hwnd, message, wparam, lparam);
 }

@@ -4,6 +4,14 @@
 
 #include "defines.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
+struct IceCamera
+{
+  glm::mat4 viewProjectionMatrix;
+};
+
 class reIceRendererBackend
 {
 public:

@@ -52,16 +52,8 @@ b8 IvkRenderer::Initialize()
   // TMP =====
   CreateMesh(&mesh, "Sphere.obj");
 
-  // TMP camera position
-  viewProj = glm::mat4(1);
-  viewProj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.01f, 1000.0f);
-  viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-  viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
-  viewProj = glm::rotate(viewProj, glm::radians(35.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-  viewProj = glm::rotate(viewProj, glm::radians(-35.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
   CreateBuffer(&viewProjBuffer,
-               sizeof(viewProj),
+               64,
                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -79,8 +71,6 @@ b8 IvkRenderer::Initialize()
   write.dstSet = material.descriptorSet;
   write.pBufferInfo = &bufferInfo;
   vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
-
-  FillBuffer(&viewProjBuffer, (void*)&viewProj, sizeof(viewProj));
 
   return true;
 }
@@ -144,7 +134,7 @@ b8 IvkRenderer::Shutdown()
   return true;
 }
 
-b8 IvkRenderer::Render()
+b8 IvkRenderer::Render(IceCamera* _camera)
 {
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
@@ -164,6 +154,9 @@ b8 IvkRenderer::Render()
                                    VK_NULL_HANDLE,
                                    &swapchainImageIndex),
              "Failed to acquire the next swapchain image");
+
+  // TMP camera =====
+  FillBuffer(&viewProjBuffer, (void*)&_camera->viewProjectionMatrix, 64);
 
   // Submit a command buffer =====
   RecordCommandBuffer(swapchainImageIndex);

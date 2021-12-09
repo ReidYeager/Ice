@@ -10,18 +10,20 @@
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <vector>
 
-class IvkRenderer : public reIceRendererBackend
+class IvkRenderer
 {
 private:
   reIvkContext context;
 
 public:
-  b8 Initialize() override;
-  b8 Shutdown() override;
-  b8 Render() override;
+  b8 Initialize();
+  b8 Shutdown();
+  b8 Render(IceCamera* _camera);
 
 private:
   // Ensures that all desired layer and extension functionality is present in the created instance

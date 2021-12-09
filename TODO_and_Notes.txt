@@ -1,5 +1,5 @@
 \IceSandbox\Ice\src\rendering\mesh.h
 	Line    59 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceSandbox\Ice\src\rendering\vulkan\renderer_vulkan.cpp
-	Line    67 :--: // TODO : Create a function that handles this automatically
-	Line   565 :--: // TODO : Remove this and manually hand-off ownership of the images
+	Line    59 :--: // TODO : Create a function that handles this automatically
+	Line   558 :--: // TODO : Remove this and manually hand-off ownership of the images

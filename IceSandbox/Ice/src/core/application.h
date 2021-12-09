@@ -7,6 +7,9 @@
 #include "platform/platform.h"
 #include "rendering/renderer.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 struct reIceApplicationSettings
 {
   const char* title;
@@ -31,6 +34,8 @@ private:
   } state;
 
 public:
+  IceCamera cam;
+
   u32 Run(reIceApplicationSettings* _settings);
 
 private:

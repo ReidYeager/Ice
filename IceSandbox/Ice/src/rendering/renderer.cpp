@@ -52,8 +52,8 @@ b8 reIceRenderer::Shutdown()
   return true;
 }
 
-b8 reIceRenderer::Render()
+b8 reIceRenderer::Render(IceCamera* _camera)
 {
-  ICE_ATTEMPT(vkBackend->Render());
+  ICE_ATTEMPT(vkBackend->Render(_camera));
   return true;
 }
