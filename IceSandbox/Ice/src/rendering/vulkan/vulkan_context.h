@@ -16,10 +16,10 @@
 struct IvkBuffer
 {
   //IvkBuffer* parent; // Used in sub-allocating buffers
-  VkBuffer buffer;
-  VkDeviceMemory memory;
-  u64 size; // Not Padded
-  u64 offset;
+  VkBuffer buffer = VK_NULL_HANDLE;
+  VkDeviceMemory memory = VK_NULL_HANDLE;
+  u64 size = 0; // Not Padded
+  u64 offset = 0;
 };
 
 // =======================

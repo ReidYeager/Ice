@@ -33,7 +33,7 @@ std::vector<char> FileSystem::LoadFile(const char* _directory)
   return rawData;
 }
 
-mesh_t FileSystem::LoadMesh(const char* _directory)
+IvkMesh FileSystem::LoadMesh(const char* _directory)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -45,12 +45,12 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
 
   if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &loadWarnings, &loadErrors, dir.c_str()))
   {
-    IceLogInfo("Failed to load object\n\tWarnings: %s\n\tErros: %s",
-             loadWarnings.c_str(), loadErrors.c_str());
+    IceLogFatal("Failed to load mesh %s\n\ttinyobj warnings: %s\n\ttinyobj erros: %s",
+                _directory, loadWarnings.c_str(), loadErrors.c_str());
     return {};
   }
 
-  mesh_t mesh;
+  IvkMesh mesh;
   std::unordered_map<iceVertex, u32> vertMap = {};
 
   iceVertex vert {};
@@ -88,7 +88,7 @@ mesh_t FileSystem::LoadMesh(const char* _directory)
   // Create index buffer
 
   std::string fileDir(_directory);
-  mesh.directory = fileDir;
+  mesh.directory = fileDir.c_str();
 
   IceLogInfo("Loaded %s -- %u verts, %u indices",
              _directory, mesh.vertices.size(),

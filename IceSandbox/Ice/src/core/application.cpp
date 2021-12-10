@@ -135,6 +135,12 @@ b8 reIceApplication::Shutdown()
   return true;
 }
 
+void reIceApplication::AddObject(const char* _meshDir, u32 _material)
+{
+  u32 meshIndex = reRenderer.CreateMesh(_meshDir);
+  reRenderer.AddMeshToScene(meshIndex, _material);
+}
+
 u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
 {
   return reRenderer.CreateMaterial(_shaders);

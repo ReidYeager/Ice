@@ -69,9 +69,9 @@ namespace std {
   };
 }
 
-struct mesh_t
+struct IvkMesh
 {
-  std::string directory;
+  const char* directory;
 
   std::vector<iceVertex> vertices;
   std::vector<u32> indices;

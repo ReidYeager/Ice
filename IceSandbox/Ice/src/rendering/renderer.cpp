@@ -35,3 +35,13 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
 {
   return backend.CreateMaterial(_shaders);
 }
+
+u32 reIceRenderer::CreateMesh(const char* _meshDir)
+{
+  return backend.CreateMesh(_meshDir);
+}
+
+void reIceRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+{
+  backend.AddMeshToScene(_meshIndex, _materialIndex);
+}

@@ -20,6 +20,10 @@ class IvkRenderer
 private:
   reIvkContext context;
   std::vector<IvkMaterial> materials;
+  std::vector<IvkMesh> meshes;
+  // This system is slow and will need to be upgraded later.
+  std::vector<std::vector<IvkMesh>> scene;
+
   IvkBuffer viewProjBuffer;
 
 public:
@@ -60,7 +64,7 @@ private:
   b8 CreateSyncObjects();
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
-
+  // Records the commands to render the scene
   b8 RecordCommandBuffer(u32 _commandIndex);
 
   // Platform =====
@@ -68,6 +72,7 @@ private:
   void GetPlatformExtensions(std::vector<const char*>& _extensions);
   // Creates a vendor-specific surface for display
   b8 CreateSurface();
+  // Returns the widnow width and height
   vec2U GetPlatformWindowExtents();
 
   // Materials =====
@@ -86,7 +91,8 @@ private:
   b8 BindBuffer(IvkBuffer* _buffer, u64 _offset);
   // Fills the given buffer with data
   b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0);
-  void DestroyBuffer(IvkBuffer* _buffer, b8 _freeMemory = false);
+  // Destroys the input buffer and can free its memory
+  void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
   // Images =====
 
@@ -105,17 +111,15 @@ private:
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
-  // Meshes =====
-
-  // Loads the mesh and fills its buffers
-  b8 CreateMesh(mesh_t* _mesh, const char* _directory);
-
   // ====================
   // API
   // ====================
   public:
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
+  // Loads the mesh and fills its buffers
+  u32 CreateMesh(const char* _directory);
+  void AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
 
 };
 

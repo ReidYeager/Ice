@@ -34,6 +34,8 @@ public:
 
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
 
+  u32 CreateMesh(const char* _meshDir);
+  void AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
 
 } reRenderer;
 

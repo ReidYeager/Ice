@@ -95,7 +95,7 @@ b8 IvkRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size /*= 0*/)
   return true;
 }
 
-void IvkRenderer::DestroyBuffer(IvkBuffer* _buffer, b8 _freeMemory /*= false*/)
+void IvkRenderer::DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory /*= false*/)
 {
   vkDestroyBuffer(context.device, _buffer->buffer, context.alloc);
   if (_freeMemory)

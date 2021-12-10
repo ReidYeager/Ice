@@ -24,12 +24,14 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
     {
       tmpName.append(".vert");
       CreateShaderModule(&material.vertexModule.module, tmpName.c_str());
+      material.vertexModule.info = shader;
       tmpName = name;
     }
     if (shader.stages & Ice_Shader_Fragment)
     {
       tmpName.append(".frag");
       CreateShaderModule(&material.fragmentModule.module, tmpName.c_str());
+      material.fragmentModule.info = shader;
       tmpName = name;
     }
   }
@@ -38,15 +40,14 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
   ICE_ATTEMPT(CreatePipelinelayout(material));
   ICE_ATTEMPT(CreatePipeline(material));
 
-  //CreateShaderModule(&material.vertexModule.module, "blank.vert");
-  //CreateShaderModule(&material.fragmentModule.module, "rainbow.frag");
-
-  materials.push_back(material);
-
-  CreateBuffer(&viewProjBuffer,
-               64,
-               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  if (viewProjBuffer.size == 0)
+  {
+    // TODO : Create a global descriptor set for the viewProj buffer
+    CreateBuffer(&viewProjBuffer,
+                 64,
+                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  }
 
   // TODO : Create a function that handles this automatically
   VkDescriptorBufferInfo bufferInfo {};
@@ -63,6 +64,9 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
   write.pBufferInfo = &bufferInfo;
   vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
 
+  materials.push_back(material);
+
+  scene.resize(materials.size()); // Bad.
   return materials.size() - 1;
 }
 
@@ -195,7 +199,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;

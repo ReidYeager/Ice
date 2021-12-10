@@ -16,9 +16,12 @@ void reInit()
 {
   IceLogInfo("Client Init");
 
-  //u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex | Ice_Shader_Fragment} });
-  u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
-                                    {"fresnel", Ice_Shader_Fragment} });
+  u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex | Ice_Shader_Fragment} });
+  u32 rainbow =  app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
+                                      {"rainbow", Ice_Shader_Fragment} });
+
+  app.AddObject("BadCactus.obj", material);
+  app.AddObject("Sphere.obj", rainbow);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

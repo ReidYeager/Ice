@@ -13,7 +13,7 @@
 
 #include <vector>
 
-mesh_t mesh;
+IvkMesh mesh;
 
 b8 IvkRenderer::Initialize()
 {
@@ -43,7 +43,7 @@ b8 IvkRenderer::Initialize()
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
   // TMP =====
-  CreateMesh(&mesh, "Sphere.obj");
+  //CreateMesh(&mesh, "Sphere.obj");
 
   return true;
 }
@@ -53,9 +53,7 @@ b8 IvkRenderer::Shutdown()
   vkDeviceWaitIdle(context.device);
 
   // TMP =====
-  DestroyBuffer(&viewProjBuffer, true);
-  DestroyBuffer(&mesh.vertBuffer, true);
-  DestroyBuffer(&mesh.indexBuffer, true);
+  DestroyBuffer(&viewProjBuffer);
 
   // Material =====
   for (const auto& mat : materials)
@@ -66,6 +64,12 @@ b8 IvkRenderer::Shutdown()
     vkDestroyPipeline(context.device, mat.pipeline, context.alloc);
     vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
+  }
+
+  for (const auto& mesh : meshes)
+  {
+    DestroyBuffer(&mesh.vertBuffer);
+    DestroyBuffer(&mesh.indexBuffer);
   }
 
 
@@ -794,36 +798,31 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
              "Failed to begin command buffer %u", _commandIndex);
 
+  VkDeviceSize zero = 0;
+
   vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-  // -- For each view
-  // Bind global descriptors (cam view, environmental info, lights, etc.) == set 0
-
-  for (const auto& mat : materials)
+  // Bind each material =====
+  for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
   {
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mat.pipeline);
+    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            mat.pipelineLayout,
+                            materials[matIndex].pipelineLayout,
                             0,
                             1,
-                            &mat.descriptorSet,
+                            &materials[matIndex].descriptorSet,
                             0,
                             nullptr);
 
-    // -- For each material instance
-    // Bind descriptor set == Set 2
-
-    // -- For each object
-    // bind push constants (if any)
-    // bind vertices & indices
-    // render
-    VkDeviceSize zero = 0;
-    vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
-    vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
-  //vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
-
+    // Draw each object =====
+    for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+    {
+      IvkMesh& mesh = scene[matIndex][objectIndex];
+      vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
+      vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+    }
   }
 
   vkCmdEndRenderPass(cmdBuffer);
@@ -833,20 +832,37 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   return true;
 }
 
-b8 IvkRenderer::CreateMesh(mesh_t* _mesh, const char* _directory)
+u32 IvkRenderer::CreateMesh(const char* _directory)
 {
-  *_mesh = FileSystem::LoadMesh(_directory);
+  u32 i = 0;
+  for (const auto& m : meshes)
+  {
+    if (strcmp(_directory, m.directory) == 0)
+    {
+      return i;
+    }
+    i++;
+  }
 
-  CreateBuffer(&_mesh->vertBuffer,
-               _mesh->vertices.size() * sizeof(iceVertex),
+  IvkMesh mesh = FileSystem::LoadMesh(_directory);
+  mesh.directory = _directory;
+
+  CreateBuffer(&mesh.vertBuffer,
+               mesh.vertices.size() * sizeof(iceVertex),
                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               (void*)_mesh->vertices.data());
-  CreateBuffer(&_mesh->indexBuffer,
-               _mesh->indices.size() * sizeof(u32),
+               (void*)mesh.vertices.data());
+  CreateBuffer(&mesh.indexBuffer,
+               mesh.indices.size() * sizeof(u32),
                VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               (void*)_mesh->indices.data());
+               (void*)mesh.indices.data());
 
-  return true;
+  meshes.push_back(mesh);
+  return meshes.size() - 1;
+}
+
+void IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+{
+  scene[_materialIndex].push_back(meshes[_meshIndex]);
 }
