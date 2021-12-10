@@ -38,6 +38,8 @@ public:
 
   u32 Run(reIceApplicationSettings* _settings);
 
+  u32 CreateMaterial(std::vector<IceShaderInfo> _shaders);
+
 private:
   b8 Initialize(reIceApplicationSettings* _settings);
   b8 Update();

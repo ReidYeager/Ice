@@ -16,10 +16,9 @@ void reInit()
 {
   IceLogInfo("Client Init");
 
-  //iceMaterial mat = app.GetShader({
-  //    { "blank", Ice_Shader_Vertex },
-  //    { "red", Ice_Shader_Fragment }
-  //    });
+  //u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex | Ice_Shader_Fragment} });
+  u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
+                                    {"fresnel", Ice_Shader_Fragment} });
 }
 
 float pitch = 0.0f, yaw = 0.0f;
@@ -32,7 +31,7 @@ void reUpdate(float _deltaTime)
     IceLogInfo("KAY HOORAY");
   }
 
-  if (Input.IsMouseButtonDown(Ice_Mouse_Right))
+  if (Input.IsMouseButtonDown(Ice_Mouse_Right) || Input.IsMouseButtonDown(Ice_Mouse_Left))
   {
     i32 x, y;
     Input.GetMouseDelta(&x, &y);

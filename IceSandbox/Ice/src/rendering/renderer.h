@@ -4,7 +4,8 @@
 
 #include "defines.h"
 
-#include "rendering/renderer_backend.h"
+#include "rendering/vulkan/renderer_vulkan.h"
+#include "core/camera.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -24,12 +25,14 @@ struct reIceRendererSettings
 extern class reIceRenderer
 {
 private:
-  reIceRendererBackend* backend;
+  IvkRenderer backend;
 
 public:
   b8 Initialize(reIceRendererSettings* _settings);
   b8 Shutdown();
   b8 Render(IceCamera* _camera);
+
+  u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
 
 
 } reRenderer;

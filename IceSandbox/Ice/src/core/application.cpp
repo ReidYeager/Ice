@@ -134,3 +134,8 @@ b8 reIceApplication::Shutdown()
   rePlatform.Shutdown();
   return true;
 }
+
+u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
+{
+  return reRenderer.CreateMaterial(_shaders);
+}

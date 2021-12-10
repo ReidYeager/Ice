@@ -9,6 +9,10 @@
 
 #include <vector>
 
+// =======================
+// Buffer
+// =======================
+
 struct IvkBuffer
 {
   //IvkBuffer* parent; // Used in sub-allocating buffers
@@ -17,6 +21,10 @@ struct IvkBuffer
   u64 size; // Not Padded
   u64 offset;
 };
+
+// =======================
+// Image
+// =======================
 
 struct reIvkImage
 {
@@ -29,6 +37,45 @@ struct reIvkImage
 
   VkDeviceMemory memory;
 };
+
+// =======================
+// Material
+// =======================
+
+enum IceShaderStageFlagBits
+{
+  Ice_Shader_Invalid = 0,
+  Ice_Shader_Vertex,
+  Ice_Shader_Fragment
+};
+typedef IceFlag IceShaderStageFlag;
+
+struct IceShaderInfo
+{
+  const char* directory;
+  IceShaderStageFlag stages;
+};
+
+struct IvkShader
+{
+  VkShaderModule module;
+  IceShaderInfo info;
+};
+
+struct IvkMaterial
+{
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+  IvkShader vertexModule;
+  IvkShader fragmentModule;
+};
+
+// =======================
+// Context
+// =======================
 
 struct reIvkGpu
 {
@@ -82,17 +129,6 @@ struct reIvkContext
   std::vector<VkSemaphore> imageAvailableSemaphores;
   u32 currentFlightIndex = 0;
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
-};
-
-struct IvkMaterial
-{
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorSet descriptorSet;
-
-  VkPipelineLayout pipelineLayout;
-  VkPipeline pipeline;
-  VkShaderModule vertexModule;
-  VkShaderModule fragmentModule;
 };
 
 // =======================

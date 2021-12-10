@@ -30,7 +30,7 @@ add_library (Ice STATIC
 
  "src/rendering/renderer.h"
  "src/rendering/renderer.cpp"
- "src/rendering/renderer_backend.h"
+ 
 
  "src/rendering/mesh.h"
 
@@ -39,12 +39,13 @@ add_library (Ice STATIC
  "src/rendering/vulkan/vulkan_context.h"
  "src/rendering/vulkan/vulkan_platform.cpp"
  "src/rendering/vulkan/vulkan_image.cpp"
+ "src/rendering/vulkan/vulkan_material.cpp"
 
 
 
 
 
-  "src/rendering/vulkan/vulkan_buffer.cpp")
+  "src/rendering/vulkan/vulkan_buffer.cpp" "src/core/camera.h")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

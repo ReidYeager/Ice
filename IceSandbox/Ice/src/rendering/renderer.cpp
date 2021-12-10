@@ -3,40 +3,14 @@
 #include "logger.h"
 
 #include "rendering/renderer.h"
+
 #include "rendering/vulkan/renderer_vulkan.h"
 
 reIceRenderer reRenderer;
 
-// Used temporarily until a direct call to ivkRenderer's Render() function can be established
-IvkRenderer* vkBackend;
-
 b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
 {
-  // Unused until another rendering API is added
-  // Need to find a way to *directly* call the backend's Render() (aka : without virtual functions)
-  /*
-  switch (_settings->api)
-  {
-  case Ice_Renderer_Vulkan:
-  {
-    backend = new reIvkRenderer();
-  } break;
-  default:
-  {
-    IceLogFatal("The selected rendering API is not supported");
-    return false;
-  } break;
-  }
-
-  if (backend == nullptr)
-  {
-    IceLogFatal("Failed to create a renderer backend");
-    return false;
-  }
-  */
-  vkBackend = new IvkRenderer();
-
-  if (!vkBackend->Initialize())
+  if (!backend.Initialize())
   {
     IceLogFatal("Failed to initialize renderer backend");
     return false;
@@ -47,13 +21,17 @@ b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
 
 b8 reIceRenderer::Shutdown()
 {
-  vkBackend->Shutdown();
-  delete(vkBackend);
+  backend.Shutdown();
   return true;
 }
 
 b8 reIceRenderer::Render(IceCamera* _camera)
 {
-  ICE_ATTEMPT(vkBackend->Render(_camera));
+  ICE_ATTEMPT(backend.Render(_camera));
   return true;
+}
+
+u32 reIceRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
+{
+  return backend.CreateMaterial(_shaders);
 }

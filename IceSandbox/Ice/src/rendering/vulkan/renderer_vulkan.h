@@ -4,10 +4,10 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/vulkan_context.h"
-#include "rendering/renderer_backend.h"
-#include "rendering/mesh.h"
 #include "math/vector.h"
+#include "core/camera.h"
+#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/mesh.h"
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
@@ -19,6 +19,8 @@ class IvkRenderer
 {
 private:
   reIvkContext context;
+  std::vector<IvkMaterial> materials;
+  IvkBuffer viewProjBuffer;
 
 public:
   b8 Initialize();
@@ -68,12 +70,10 @@ private:
   b8 CreateSurface();
   vec2U GetPlatformWindowExtents();
 
-public:
-
   // Materials =====
-  b8 CreateDescriptorSet();
-  b8 CreatePipelinelayout();
-  b8 CreatePipeline();
+  b8 CreateDescriptorSet(IvkMaterial& material);
+  b8 CreatePipelinelayout(IvkMaterial& material);
+  b8 CreatePipeline(IvkMaterial& material);
 
   // Buffers =====
   // Allocates a new block of memory on the GPU
@@ -89,20 +89,33 @@ public:
   void DestroyBuffer(IvkBuffer* _buffer, b8 _freeMemory = false);
 
   // Images =====
+
+  // Creates a vulkan image
   b8 CreateImage(reIvkImage* _image,
                  VkExtent2D _extents,
                  VkFormat _format,
                  VkImageUsageFlags _usage);
+  // Creates a vulkan image view
   b8 CreateImageView(VkImageView* _view,
                      VkImage _image,
                      VkFormat _format,
                      VkImageAspectFlags _aspectMask);
+  // Creates a vulkan image sampler
   b8 CreateImageSampler(reIvkImage* _image);
-
+  // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
   // Meshes =====
+
+  // Loads the mesh and fills its buffers
   b8 CreateMesh(mesh_t* _mesh, const char* _directory);
+
+  // ====================
+  // API
+  // ====================
+  public:
+  // Creates a new material (descriptor set, pipeline layout, pipeline)
+  u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
 
 };
 
