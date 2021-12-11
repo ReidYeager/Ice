@@ -65,6 +65,7 @@ b8 IvkRenderer::Shutdown()
     vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
   }
+  DestroyImage(&texture);
 
   for (const auto& mesh : meshes)
   {
@@ -682,7 +683,7 @@ b8 IvkRenderer::CreateDepthImage()
                           context.swapchainExtent,
                           format,
                           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
-
+  context.depthImage.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
   // Create image view =====
   ICE_ATTEMPT(CreateImageView(&context.depthImage.view,
                               context.depthImage.image,
@@ -723,15 +724,16 @@ b8 IvkRenderer::CreateFrameBuffers()
 
 b8 IvkRenderer::CreateSyncObjects()
 {
-  context.imageAvailableSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-  context.renderCompleteSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-  context.flightSlotAvailableFences.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-
   VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
   semaphoreInfo.flags = 0;
 
   VkFenceCreateInfo fenceInfo { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  // Create each frame's sync objects =====
+  context.imageAvailableSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.renderCompleteSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.flightSlotAvailableFences.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
 
   for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
@@ -756,6 +758,10 @@ b8 IvkRenderer::CreateSyncObjects()
 
   return true;
 }
+
+// ====================
+// Commands
+// ====================
 
 b8 IvkRenderer::CreateCommandBuffers()
 {
@@ -795,6 +801,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   renderPassBeginInfo.framebuffer = context.frameBuffers[_commandIndex];
 
+  // Begin recording =====
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
              "Failed to begin command buffer %u", _commandIndex);
 
@@ -826,14 +833,63 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   }
 
   vkCmdEndRenderPass(cmdBuffer);
+
+  // End recording =====
   IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
              "Failed to record command buffer %u", _commandIndex);
 
   return true;
 }
 
+VkCommandBuffer IvkRenderer::BeginSingleTimeCommand(VkCommandPool _pool)
+{
+  // Allocate command =====
+  VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = _pool;
+  allocInfo.commandBufferCount = 1;
+
+  VkCommandBuffer command;
+  IVK_ASSERT(vkAllocateCommandBuffers(context.device, &allocInfo, &command),
+             "Failed to allocate sintle time command");
+
+  // Begin command recording =====
+  VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  vkBeginCommandBuffer(command, &beginInfo);
+
+  return command;
+}
+
+b8 IvkRenderer::EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue)
+{
+  // Complete recording =====
+  IVK_ASSERT(vkEndCommandBuffer(_command),
+             "Failed to record single-time command buffer");
+
+  // Execution =====
+  VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &_command;
+
+  IVK_ASSERT(vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE),
+             "Failed to submit single-time command");
+  vkQueueWaitIdle(_queue);
+
+  // Destruction =====
+  vkFreeCommandBuffers(context.device, _pool, 1, &_command);
+
+  return true;
+}
+
+// ====================
+// Meshes
+// ====================
+
+
 u32 IvkRenderer::CreateMesh(const char* _directory)
 {
+  // Check if exists =====
   u32 i = 0;
   for (const auto& m : meshes)
   {
@@ -844,6 +900,7 @@ u32 IvkRenderer::CreateMesh(const char* _directory)
     i++;
   }
 
+  // Load mesh =====
   IvkMesh mesh = FileSystem::LoadMesh(_directory);
   mesh.directory = _directory;
 

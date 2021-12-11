@@ -10,6 +10,7 @@ layout(set = 0, binding = 0) uniform GlobalUniform {
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out float viewDot;
+layout(location = 2) out vec2 uvOut;
 
 void main() {
     gl_Position = global.viewProj * vec4(position, 1.0);
@@ -17,4 +18,5 @@ void main() {
 
     vec3 camPos = vec3(global.viewProj[0][3], global.viewProj[1][3], global.viewProj[2][3]);
     viewDot = dot(-camPos, normal);
+    uvOut = uv;
 }

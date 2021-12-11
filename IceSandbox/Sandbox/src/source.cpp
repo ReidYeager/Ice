@@ -18,10 +18,10 @@ void reInit()
 
   u32 material = app.CreateMaterial({ {"blank", Ice_Shader_Vertex | Ice_Shader_Fragment} });
   u32 rainbow =  app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
-                                      {"rainbow", Ice_Shader_Fragment} });
+                                      {"textured", Ice_Shader_Fragment} });
 
-  app.AddObject("BadCactus.obj", material);
-  app.AddObject("Sphere.obj", rainbow);
+  app.AddObject("Cube.obj", rainbow);
+  //app.AddObject("Sphere.obj", rainbow);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

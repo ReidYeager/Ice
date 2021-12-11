@@ -25,6 +25,7 @@ private:
   std::vector<std::vector<IvkMesh>> scene;
 
   IvkBuffer viewProjBuffer;
+  reIvkImage texture;
 
 public:
   b8 Initialize();
@@ -67,6 +68,9 @@ private:
   // Records the commands to render the scene
   b8 RecordCommandBuffer(u32 _commandIndex);
 
+  VkCommandBuffer BeginSingleTimeCommand(VkCommandPool _pool);
+  b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
+
   // Platform =====
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
   void GetPlatformExtensions(std::vector<const char*>& _extensions);
@@ -79,6 +83,8 @@ private:
   b8 CreateDescriptorSet(IvkMaterial& material);
   b8 CreatePipelinelayout(IvkMaterial& material);
   b8 CreatePipeline(IvkMaterial& material);
+  // Creates a vulkan shader module
+  b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
   // Buffers =====
   // Allocates a new block of memory on the GPU
@@ -95,12 +101,12 @@ private:
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
   // Images =====
-
   // Creates a vulkan image
   b8 CreateImage(reIvkImage* _image,
                  VkExtent2D _extents,
                  VkFormat _format,
                  VkImageUsageFlags _usage);
+  void DestroyImage(const reIvkImage* _image);
   // Creates a vulkan image view
   b8 CreateImageView(VkImageView* _view,
                      VkImage _image,
@@ -108,8 +114,11 @@ private:
                      VkImageAspectFlags _aspectMask);
   // Creates a vulkan image sampler
   b8 CreateImageSampler(reIvkImage* _image);
-  // Creates a vulkan shader module
-  b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
+  b8 CreateTexture(reIvkImage* _image, const char* _directory);
+  void TransitionImageLayout(reIvkImage* _image,
+                             b8 _forSampling,
+                             VkPipelineStageFlagBits _shaderStage);
+  void CopyBufferToImage(IvkBuffer* _buffer, reIvkImage* _image);
 
   // ====================
   // API

@@ -104,10 +104,13 @@ IvkMesh FileSystem::LoadMesh(const char* _directory)
 
 void* FileSystem::LoadImageFile(const char* _directory, int& _width, int& _height)
 {
-  IceLogInfo("Attempting to load %s", _directory);
+  std::string dir(ICE_RESOURCE_TEXTURE_DIR);
+  dir.append(_directory);
+
+  IceLogInfo("Attempting to load %s", dir.c_str());
 
   int channels;
-  stbi_uc* image = stbi_load(_directory, &_width, &_height, &channels, STBI_rgb_alpha);
+  stbi_uc* image = stbi_load(dir.c_str(), &_width, &_height, &channels, STBI_rgb_alpha);
   assert (image != nullptr);
   return image;
 }

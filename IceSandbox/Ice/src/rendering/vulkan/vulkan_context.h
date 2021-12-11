@@ -5,6 +5,8 @@
 #include "defines.h"
 #include "asserts.h"
 
+#include "math/vector.h"
+
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -28,9 +30,10 @@ struct IvkBuffer
 
 struct reIvkImage
 {
-  VkImage image;
-  VkImageView view;
-  VkSampler sampler;
+  vec2U extents;
+  VkImage image = VK_NULL_HANDLE;
+  VkImageView view = VK_NULL_HANDLE;
+  VkSampler sampler = VK_NULL_HANDLE;
 
   VkFormat format;
   VkImageLayout layout;

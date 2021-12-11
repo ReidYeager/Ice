@@ -49,20 +49,45 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   }
 
+  if (texture.sampler == VK_NULL_HANDLE)
+  {
+    ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
+  }
+
   // TODO : Create a function that handles this automatically
   VkDescriptorBufferInfo bufferInfo {};
   bufferInfo.buffer = viewProjBuffer.buffer;
   bufferInfo.offset = 0;
   bufferInfo.range = VK_WHOLE_SIZE;
 
-  VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-  write.descriptorCount = 1;
-  write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  write.dstArrayElement = 0;
-  write.dstBinding = 0;
-  write.dstSet = material.descriptorSet;
-  write.pBufferInfo = &bufferInfo;
-  vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+  VkDescriptorImageInfo imageInfo {};
+  imageInfo.imageLayout = texture.layout;
+  imageInfo.imageView = texture.view;
+  imageInfo.sampler = texture.sampler;
+
+  std::vector<VkWriteDescriptorSet> write(2);
+  // Buffer
+  write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write[0].dstSet = material.descriptorSet;
+  write[0].dstBinding = 0;
+  write[0].dstArrayElement = 0;
+  write[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write[0].descriptorCount = 1;
+  write[0].pBufferInfo = &bufferInfo;
+  write[0].pImageInfo = nullptr;
+  write[0].pTexelBufferView = nullptr;
+  // Texture
+  write[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write[1].dstSet = material.descriptorSet;
+  write[1].dstBinding = 1;
+  write[1].dstArrayElement = 0;
+  write[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write[1].descriptorCount = 1;
+  write[1].pBufferInfo = nullptr;
+  write[1].pImageInfo = &imageInfo;
+  write[1].pTexelBufferView = nullptr;
+
+  vkUpdateDescriptorSets(context.device, 2, write.data(), 0, nullptr);
 
   materials.push_back(material);
 
@@ -75,16 +100,25 @@ b8 IvkRenderer::CreateDescriptorSet(IvkMaterial& material)
   // Create layout =====
   {
     VkDescriptorSetLayoutBinding binding;
-    binding.descriptorCount = 1;
     binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    binding.descriptorCount = 1;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    binding.pImmutableSamplers = nullptr;
 
-    const u32 bindingCount = 1;
-    VkDescriptorSetLayoutBinding bindings[bindingCount] = { binding };
+    VkDescriptorSetLayoutBinding textureBinding;
+    textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    textureBinding.descriptorCount = 1;
+    textureBinding.binding = 1;
+    textureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    textureBinding.pImmutableSamplers = nullptr;
+
+    const u32 bindingCount = 2;
+    VkDescriptorSetLayoutBinding bindings[bindingCount] = { binding, textureBinding };
 
     VkDescriptorSetLayoutCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
     createInfo.flags = 0;
+    createInfo.pNext = nullptr;
     createInfo.bindingCount = bindingCount;
     createInfo.pBindings    = bindings;
 
