@@ -67,6 +67,8 @@ private:
   b8 CreateCommandBuffers();
   // Records the commands to render the scene
   b8 RecordCommandBuffer(u32 _commandIndex);
+  // Creates the pipelineLayout and descriptor set for the global descritpros
+  b8 PrepareGlobalDescriptors();
 
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool _pool);
   b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);

@@ -40,6 +40,8 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
 
+  ICE_ATTEMPT(PrepareGlobalDescriptors());
+
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
   // TMP =====
@@ -73,6 +75,9 @@ b8 IvkRenderer::Shutdown()
     DestroyBuffer(&mesh.indexBuffer);
   }
 
+  // Global descriptors =====
+  vkDestroyPipelineLayout(context.device, context.globalPipelinelayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorSetLayout, context.alloc);
 
   // Rendering components =====
   vkFreeCommandBuffers(context.device,
@@ -808,6 +813,14 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   VkDeviceSize zero = 0;
 
   vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBindDescriptorSets(cmdBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          context.globalPipelinelayout,
+                          0,
+                          1,
+                          &context.globalDescritorSet,
+                          0,
+                          nullptr);
 
   // Bind each material =====
   for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
@@ -816,7 +829,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             materials[matIndex].pipelineLayout,
-                            0,
+                            1,
                             1,
                             &materials[matIndex].descriptorSet,
                             0,
@@ -837,6 +850,94 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   // End recording =====
   IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
              "Failed to record command buffer %u", _commandIndex);
+
+  return true;
+}
+
+b8 IvkRenderer::PrepareGlobalDescriptors()
+{
+  // Prepare buffer =====
+  {
+    CreateBuffer(&viewProjBuffer,
+                 64,
+                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  }
+
+  // Create descriptor set layout =====
+  {
+    const u32 bindingCount = 1;
+    VkDescriptorSetLayoutBinding bindings[bindingCount];
+    // View-Projection buffer
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].binding = 0;
+    bindings[0].stageFlags = VK_SHADER_STAGE_ALL;
+    bindings[0].pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+    createInfo.flags = 0;
+    createInfo.pNext = nullptr;
+    createInfo.bindingCount = bindingCount;
+    createInfo.pBindings    = bindings;
+
+    IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
+                                           &createInfo,
+                                           context.alloc,
+                                           &context.globalDescriptorSetLayout),
+               "Failed to create global descriptor set layout");
+  }
+
+  // Create descriptor set =====
+  {
+    VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    allocInfo.pNext = nullptr;
+    allocInfo.descriptorPool = context.descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &context.globalDescriptorSetLayout;
+
+    IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                        &allocInfo,
+                                        &context.globalDescritorSet),
+               "Failed to allocate global descriptor set");
+  }
+
+  // Create pipeline layout =====
+  {
+    VkPipelineLayoutCreateInfo createInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+    createInfo.flags = 0;
+    createInfo.pNext = 0;
+    createInfo.pushConstantRangeCount = 0;
+    createInfo.pPushConstantRanges    = nullptr;
+    createInfo.setLayoutCount = 1;
+    createInfo.pSetLayouts    = &context.globalDescriptorSetLayout;
+
+    IVK_ASSERT(vkCreatePipelineLayout(context.device,
+                                      &createInfo,
+                                      context.alloc,
+                                      &context.globalPipelinelayout),
+               "Failed to create the global render pipeline");
+  }
+
+  // Update the global descriptor set =====
+  {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = viewProjBuffer.buffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    write.dstSet           = context.globalDescritorSet;
+    write.dstBinding       = 0;
+    write.dstArrayElement  = 0;
+    write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.descriptorCount  = 1;
+    write.pBufferInfo      = &bufferInfo;
+    write.pImageInfo       = nullptr;
+    write.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+  }
 
   return true;
 }

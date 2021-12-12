@@ -132,6 +132,10 @@ struct reIvkContext
   std::vector<VkSemaphore> imageAvailableSemaphores;
   u32 currentFlightIndex = 0;
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
+
+  VkDescriptorSetLayout globalDescriptorSetLayout;
+  VkDescriptorSet globalDescritorSet;
+  VkPipelineLayout globalPipelinelayout;
 };
 
 // =======================

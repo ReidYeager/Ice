@@ -21,7 +21,7 @@ void reInit()
                                       {"textured", Ice_Shader_Fragment} });
 
   app.AddObject("Cube.obj", rainbow);
-  //app.AddObject("Sphere.obj", rainbow);
+  app.AddObject("BadCactus.obj", material);
 }
 
 float pitch = 0.0f, yaw = 0.0f;
