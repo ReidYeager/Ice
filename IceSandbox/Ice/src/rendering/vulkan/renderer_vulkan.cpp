@@ -40,6 +40,9 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
 
+  tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
+  tmpLights.directionalDirection = { 1.0f, -1.0f, -1.0f };
+
   ICE_ATTEMPT(PrepareGlobalDescriptors());
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
@@ -144,6 +147,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
 
   // TMP camera =====
   FillBuffer(&viewProjBuffer, (void*)&_camera->viewProjectionMatrix, 64);
+  FillBuffer(&viewProjBuffer, (void*)&tmpLights, sizeof(IvkLights), 64);
 
   // Submit a command buffer =====
   RecordCommandBuffer(swapchainImageIndex);
@@ -514,7 +518,7 @@ b8 IvkRenderer::CreateSwapchain()
         break;
       }
     }
-    //present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
+    present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
 
     // Image dimensions =====
     VkExtent2D extent;
@@ -859,7 +863,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
   // Prepare buffer =====
   {
     CreateBuffer(&viewProjBuffer,
-                 64,
+                 64 + sizeof(IvkLights),
                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   }

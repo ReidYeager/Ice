@@ -77,6 +77,16 @@ struct IvkMaterial
 };
 
 // =======================
+// TMP -- Lights
+// =======================
+
+struct IvkLights
+{
+  vec3 directionalDirection;
+  vec3 directionalColor;
+};
+
+// =======================
 // Context
 // =======================
 

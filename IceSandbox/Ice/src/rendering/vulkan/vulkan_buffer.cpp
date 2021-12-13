@@ -83,12 +83,13 @@ b8 IvkRenderer::BindBuffer(IvkBuffer* _buffer, u64 _offset)
   return true;
 }
 
-b8 IvkRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size /*= 0*/)
+b8 IvkRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size /*= 0*/, u64 _offset /*= 0*/)
 {
   void* mappedMemory;
+  // Use the buffer's whole size if undefined
   u64 usedSize = _size == 0 ? _buffer->size : _size;
 
-  vkMapMemory(context.device, _buffer->memory, _buffer->offset, usedSize, 0, &mappedMemory);
+  vkMapMemory(context.device, _buffer->memory, _buffer->offset + _offset, usedSize, 0, &mappedMemory);
   rePlatform.MemCopy(_data, mappedMemory, usedSize);
   vkUnmapMemory(context.device, _buffer->memory);
 

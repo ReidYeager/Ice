@@ -64,7 +64,7 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
 
   // Set camera default state =====
   glm::mat4 viewProj = glm::mat4(1);
-  viewProj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.01f, 1000.0f);
+  viewProj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
   viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
   viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
   cam.viewProjectionMatrix = viewProj;

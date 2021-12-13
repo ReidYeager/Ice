@@ -25,6 +25,7 @@ private:
   std::vector<std::vector<IvkMesh>> scene;
 
   IvkBuffer viewProjBuffer;
+  IvkLights tmpLights;
   reIvkImage texture;
 
 public:
@@ -98,7 +99,7 @@ private:
   // Binds the buffer to the memory starting at the offset
   b8 BindBuffer(IvkBuffer* _buffer, u64 _offset);
   // Fills the given buffer with data
-  b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0);
+  b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0, u64 _offset = 0);
   // Destroys the input buffer and can free its memory
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
