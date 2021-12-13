@@ -8,6 +8,9 @@
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <vector>
 
@@ -48,8 +51,9 @@ struct reIvkImage
 enum IceShaderStageFlagBits
 {
   Ice_Shader_Invalid = 0,
-  Ice_Shader_Vertex,
-  Ice_Shader_Fragment
+  Ice_Shader_Vertex = 1,
+  Ice_Shader_Fragment = 2,
+  Ice_shader_VertFrag = Ice_Shader_Vertex | Ice_Shader_Fragment
 };
 typedef IceFlag IceShaderStageFlag;
 
@@ -72,8 +76,20 @@ struct IvkMaterial
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
+  VkPipeline shadowPipeline;
   IvkShader vertexModule;
   IvkShader fragmentModule;
+};
+
+struct IvkShadow
+{
+  VkFramebuffer framebuffer;
+  reIvkImage image;
+  VkRenderPass renderpass = VK_NULL_HANDLE;
+  VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+  IvkBuffer lightMatrixBuffer;
+
+  glm::mat4 viewProjMatrix;
 };
 
 // =======================
@@ -82,8 +98,8 @@ struct IvkMaterial
 
 struct IvkLights
 {
-  vec3 directionalDirection;
-  vec3 directionalColor;
+  vec4 directionalDirection;
+  vec4 directionalColor;
 };
 
 // =======================

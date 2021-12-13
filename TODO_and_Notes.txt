@@ -1,7 +1,10 @@
 \IceSandbox\Ice\src\rendering\mesh.h
 	Line    59 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceSandbox\Ice\src\rendering\vulkan\renderer_vulkan.cpp
-	Line   549 :--: // TODO : Remove this and manually hand-off ownership of the images
+	Line   609 :--: // TODO : Remove this and manually hand-off ownership of the images
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line    49 :--: // TODO : Create a function that handles this automatically
 	Line    79 :--: // TODO : Pull descriptors from the shaders automatically
+	Line   332 :--: // TODO : ~!!~ CLEAN UP SHADOW CREATION AND USE
+\IceSandbox\Sandbox\res\shaders\shadow.frag
+	Line    21 :--: // TODO : Figure out why these hacks work. (Commented below)

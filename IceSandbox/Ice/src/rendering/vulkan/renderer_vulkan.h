@@ -27,6 +27,7 @@ private:
   IvkBuffer viewProjBuffer;
   IvkLights tmpLights;
   reIvkImage texture;
+  IvkShadow shadow;
 
 public:
   b8 Initialize();
@@ -88,6 +89,8 @@ private:
   b8 CreatePipeline(IvkMaterial& material);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
+
+  b8 CreateShadowComponents();
 
   // Buffers =====
   // Allocates a new block of memory on the GPU

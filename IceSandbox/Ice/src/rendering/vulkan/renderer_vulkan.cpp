@@ -41,9 +41,61 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateCommandBuffers());
 
   tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
-  tmpLights.directionalDirection = { 1.0f, -1.0f, -1.0f };
+  tmpLights.directionalDirection = { 1.0f, -1.0f, 1.0f };
+
+  ICE_ATTEMPT(CreateShadowComponents());
 
   ICE_ATTEMPT(PrepareGlobalDescriptors());
+  // Create descriptor set =====
+  {
+    VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    allocInfo.pNext = nullptr;
+    allocInfo.descriptorPool = context.descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &context.globalDescriptorSetLayout;
+
+    IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                        &allocInfo,
+                                        &shadow.descriptorSet),
+               "Failed to allocate global descriptor set");
+  }
+
+  const float width = 15.0f;
+  const float zNear = 0.0f;
+  const float zFar = 47.0f;
+
+  glm::mat4& proj = shadow.viewProjMatrix;
+  proj = glm::ortho(-width, width, -width, width, -zNear, zFar);
+  proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
+  glm::mat4 view = glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+  proj = proj * view;
+
+  CreateBuffer(&shadow.lightMatrixBuffer,
+               64,
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               &shadow.viewProjMatrix);
+
+  FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+
+  VkDescriptorBufferInfo bufferInfo {};
+  bufferInfo.buffer = shadow.lightMatrixBuffer.buffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
+
+  const u32 writeCount = 1;
+  std::vector<VkWriteDescriptorSet> write(writeCount);
+  write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write[0].dstSet           = shadow.descriptorSet;
+  write[0].dstBinding       = 0;
+  write[0].dstArrayElement  = 0;
+  write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write[0].descriptorCount  = 1;
+  write[0].pBufferInfo      = &bufferInfo;
+  write[0].pImageInfo       = nullptr;
+  write[0].pTexelBufferView = nullptr;
+
+  vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
@@ -60,12 +112,20 @@ b8 IvkRenderer::Shutdown()
   // TMP =====
   DestroyBuffer(&viewProjBuffer);
 
+  // Shadow =====
+  DestroyBuffer(&shadow.lightMatrixBuffer, true);
+  DestroyImage(&shadow.image);
+  vkDestroyRenderPass(context.device, shadow.renderpass, context.alloc);
+  //vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &shadow.descriptorSet);
+  vkDestroyFramebuffer(context.device, shadow.framebuffer, context.alloc);
+
   // Material =====
   for (const auto& mat : materials)
   {
     vkDestroyShaderModule(context.device, mat.vertexModule.module, context.alloc);
     vkDestroyShaderModule(context.device, mat.fragmentModule.module, context.alloc);
 
+    vkDestroyPipeline(context.device, mat.shadowPipeline, context.alloc);
     vkDestroyPipeline(context.device, mat.pipeline, context.alloc);
     vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
@@ -799,16 +859,25 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   clearValues[0].color = { 0.3f, 0.3f, 0.3f };
   clearValues[1].depthStencil = { 1, 0 };
 
-  VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-  renderPassBeginInfo.clearValueCount = 2;
-  renderPassBeginInfo.pClearValues = clearValues;
-  renderPassBeginInfo.renderArea.extent = context.swapchainExtent;
-  renderPassBeginInfo.renderArea.offset = { 0 , 0 };
-  renderPassBeginInfo.renderPass = context.renderpass;
+  VkRenderPassBeginInfo passes[2];
+  // Shadow
+  VkRenderPassBeginInfo shadowPass { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  shadowPass.clearValueCount = 1;
+  shadowPass.pClearValues = &clearValues[1];
+  shadowPass.renderArea.extent = { 1024, 1024 };
+  shadowPass.renderArea.offset = { 0 , 0 };
+  shadowPass.renderPass = shadow.renderpass;
+  shadowPass.framebuffer = shadow.framebuffer;
+  // Color
+  VkRenderPassBeginInfo colorPass { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  colorPass.clearValueCount = 2;
+  colorPass.pClearValues = clearValues;
+  colorPass.renderArea.extent = context.swapchainExtent;
+  colorPass.renderArea.offset = { 0 , 0 };
+  colorPass.renderPass = context.renderpass;
+  colorPass.framebuffer = context.frameBuffers[_commandIndex];
 
   VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
-
-  renderPassBeginInfo.framebuffer = context.frameBuffers[_commandIndex];
 
   // Begin recording =====
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
@@ -816,40 +885,80 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   VkDeviceSize zero = 0;
 
-  vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-  vkCmdBindDescriptorSets(cmdBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          context.globalPipelinelayout,
-                          0,
-                          1,
-                          &context.globalDescritorSet,
-                          0,
-                          nullptr);
-
-  // Bind each material =====
-  for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+  // Shadow pass =====
   {
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
+    vkCmdBeginRenderPass(cmdBuffer, &shadowPass, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            materials[matIndex].pipelineLayout,
+                            context.globalPipelinelayout,
+                            0,
                             1,
-                            1,
-                            &materials[matIndex].descriptorSet,
+                            &shadow.descriptorSet,
                             0,
                             nullptr);
 
-    // Draw each object =====
-    for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+    // Bind each material =====
+    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
     {
-      IvkMesh& mesh = scene[matIndex][objectIndex];
-      vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
-      vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].shadowPipeline);
+      vkCmdBindDescriptorSets(cmdBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              materials[matIndex].pipelineLayout,
+                              1,
+                              1,
+                              &materials[matIndex].descriptorSet,
+                              0,
+                              nullptr);
+
+      // Draw each object =====
+      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+      {
+        IvkMesh& mesh = scene[matIndex][objectIndex];
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+      }
     }
+    vkCmdEndRenderPass(cmdBuffer);
   }
 
-  vkCmdEndRenderPass(cmdBuffer);
+  // Color pass =====
+  {
+    vkCmdBeginRenderPass(cmdBuffer, &colorPass, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindDescriptorSets(cmdBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            context.globalPipelinelayout,
+                            0,
+                            1,
+                            &context.globalDescritorSet,
+                            0,
+                            nullptr);
+
+    // Bind each material =====
+    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+    {
+      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
+      vkCmdBindDescriptorSets(cmdBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              materials[matIndex].pipelineLayout,
+                              1,
+                              1,
+                              &materials[matIndex].descriptorSet,
+                              0,
+                              nullptr);
+
+      // Draw each object =====
+      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+      {
+        IvkMesh& mesh = scene[matIndex][objectIndex];
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+      }
+    }
+
+    vkCmdEndRenderPass(cmdBuffer);
+  }
 
   // End recording =====
   IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
@@ -863,14 +972,14 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
   // Prepare buffer =====
   {
     CreateBuffer(&viewProjBuffer,
-                 64 + sizeof(IvkLights),
+                 64 + sizeof(IvkLights) + 64,
                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   }
 
   // Create descriptor set layout =====
   {
-    const u32 bindingCount = 1;
+    const u32 bindingCount = 2;
     VkDescriptorSetLayoutBinding bindings[bindingCount];
     // View-Projection buffer
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -878,6 +987,12 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     bindings[0].binding = 0;
     bindings[0].stageFlags = VK_SHADER_STAGE_ALL;
     bindings[0].pImmutableSamplers = nullptr;
+
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].binding = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
+    bindings[1].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     createInfo.flags = 0;
@@ -925,22 +1040,39 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
 
   // Update the global descriptor set =====
   {
-    VkDescriptorBufferInfo bufferInfo{};
+    VkDescriptorBufferInfo bufferInfo {};
     bufferInfo.buffer = viewProjBuffer.buffer;
     bufferInfo.offset = 0;
     bufferInfo.range = VK_WHOLE_SIZE;
 
-    VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-    write.dstSet           = context.globalDescritorSet;
-    write.dstBinding       = 0;
-    write.dstArrayElement  = 0;
-    write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    write.descriptorCount  = 1;
-    write.pBufferInfo      = &bufferInfo;
-    write.pImageInfo       = nullptr;
-    write.pTexelBufferView = nullptr;
+    VkDescriptorImageInfo shadowInfo {};
+    shadowInfo.imageLayout = shadow.image.layout;
+    shadowInfo.imageView = shadow.image.view;
+    shadowInfo.sampler = shadow.image.sampler;
 
-    vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+    const u32 writeCount = 2;
+    std::vector<VkWriteDescriptorSet> write(writeCount);
+    write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write[0].dstSet           = context.globalDescritorSet;
+    write[0].dstBinding       = 0;
+    write[0].dstArrayElement  = 0;
+    write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write[0].descriptorCount  = 1;
+    write[0].pBufferInfo      = &bufferInfo;
+    write[0].pImageInfo       = nullptr;
+    write[0].pTexelBufferView = nullptr;
+    // Shadow map
+    write[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write[1].dstSet           = context.globalDescritorSet;
+    write[1].dstBinding       = 1;
+    write[1].dstArrayElement  = 0;
+    write[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write[1].descriptorCount  = 1;
+    write[1].pBufferInfo      = nullptr;
+    write[1].pImageInfo       = &shadowInfo;
+    write[1].pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
   }
 
   return true;

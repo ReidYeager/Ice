@@ -10,10 +10,8 @@ The functional end goal of this project is to have a renderer that allows for re
 ![](images/PBRTextured.PNG)
 ---
 
-### Rendering APIs
-- [x] Vulkan
-- [ ] OpenGL
-- [ ] DirectX
+### Notable shaders
+- Shadow mapping
 
 ### Rendering methodologies
 - [x] Forward
@@ -21,24 +19,21 @@ The functional end goal of this project is to have a renderer that allows for re
 - [ ] Hybrid RT (deferred)
 - [ ] Pure RT
 
-### Notable shaders
-- :(
-
-### Notable functionality
-- Hot reloading shaders
+### Rendering APIs - Low priority
+- [x] Vulkan
+- [ ] OpenGL
+- [ ] DirectX
 
 ---
 ![](images/Guns.PNG)
 ---
 
 ## Roadmap
-- Proper input handling
-	- So I can use more complicated test scenes
 - UI
 	- To manually edit shader parameters
 	- Probably ImGui for now
 - Post-processing
-	- To learn how to handle multiple renderpasses
+	- To better understand how to handle multiple renderpasses
 
 #### Shaders
 - PBR

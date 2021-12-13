@@ -202,6 +202,26 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   viewportStateInfo.scissorCount = 1;
   viewportStateInfo.pScissors = &scissor;
 
+  // Shadow
+  VkViewport shadowViewport;
+  shadowViewport.x = 0;
+  shadowViewport.y = 0;
+  shadowViewport.width = 1024.0f;
+  shadowViewport.height = 1024.0f;
+  shadowViewport.minDepth = 0;
+  shadowViewport.maxDepth = 1;
+
+  VkRect2D shadowScissor{};
+  shadowScissor.extent = { 1024, 1024 };
+  shadowScissor.offset = { 0, 0 };
+
+  VkPipelineViewportStateCreateInfo shadowViewportStateInfo{};
+  shadowViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  shadowViewportStateInfo.viewportCount = 1;
+  shadowViewportStateInfo.pViewports = &shadowViewport;
+  shadowViewportStateInfo.scissorCount = 1;
+  shadowViewportStateInfo.pScissors = &shadowScissor;
+
   // Rasterization State =====
   // Defines how the pipeline will rasterize the image
   VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
@@ -277,6 +297,18 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
                                        &material.pipeline),
              "Failed to create the graphics pipeline");
 
+  createInfo.stageCount = 1;
+  createInfo.pStages = shaderStageInfos;
+  createInfo.renderPass = shadow.renderpass;
+  createInfo.pViewportState = &shadowViewportStateInfo;
+  IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
+                                       nullptr,
+                                       1,
+                                       &createInfo,
+                                       context.alloc,
+                                       &material.shadowPipeline),
+             "Failed to create the shadow pipeline");
+
   return true;
 }
 
@@ -294,6 +326,102 @@ b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
 
   IVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
              "failed to create shader module for %s", directory.c_str());
+
+  return true;
+}
+
+// TODO : ~!!~ CLEAN UP SHADOW CREATION AND USE
+b8 IvkRenderer::CreateShadowComponents()
+{
+  IceLogDebug("Creating shadow components");
+
+  const u32 size = 1024;
+
+  // Create the depth image components =====
+  {
+    CreateImage(&shadow.image,
+                {size, size},
+                VK_FORMAT_D32_SFLOAT,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    shadow.image.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+
+    CreateImageView(&shadow.image.view,
+                    shadow.image.image,
+                    shadow.image.format,
+                    VK_IMAGE_ASPECT_DEPTH_BIT);
+
+    CreateImageSampler(&shadow.image);
+  }
+
+  // Create renderpass =====
+  {
+    VkAttachmentDescription depthDescription {};
+    depthDescription.format = shadow.image.format;
+    depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthDescription.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+    depthDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+    VkAttachmentReference depthReference {};
+    depthReference.attachment = 0;
+    depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+
+    // Subpass =====
+    VkSubpassDescription subpassDescription {};
+    subpassDescription.colorAttachmentCount = 0;
+    subpassDescription.pColorAttachments = nullptr;
+    subpassDescription.pDepthStencilAttachment = &depthReference;
+    subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+    VkSubpassDependency subpassDependency {};
+    subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+    subpassDependency.srcStageMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    subpassDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    subpassDependency.dstSubpass    = 0;
+    subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    // Creation =====
+    const u32 attachemntCount = 1;
+    VkAttachmentDescription attachments[attachemntCount] = { depthDescription };
+    const u32 subpassCount = 1;
+    VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
+    const u32 dependencyCount = 1;
+    VkSubpassDependency dependencies[dependencyCount] = { subpassDependency };
+
+    VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+    createInfo.flags = 0;
+    createInfo.attachmentCount = attachemntCount;
+    createInfo.pAttachments    = attachments;
+    createInfo.subpassCount = subpassCount;
+    createInfo.pSubpasses   = subpasses;
+    createInfo.dependencyCount = dependencyCount;
+    createInfo.pDependencies   = dependencies;
+
+    IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &shadow.renderpass),
+               "Failed to create shadow renderpass");
+  }
+
+  // Create the framebuffer =====
+  {
+    VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    createInfo.flags = 0;
+    createInfo.layers = 1;
+    createInfo.renderPass = shadow.renderpass;
+    createInfo.width = size;
+    createInfo.height = size;
+    createInfo.attachmentCount = 1;
+    createInfo.pAttachments = &shadow.image.view;
+
+    IVK_ASSERT(vkCreateFramebuffer(context.device,
+                                   &createInfo,
+                                   context.alloc,
+                                   &shadow.framebuffer),
+               "Failed to create shadow framebuffer");
+  }
 
   return true;
 }
