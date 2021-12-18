@@ -20,14 +20,12 @@ b8 IvkRenderer::Initialize()
   IceLogDebug("===== Vulkan Renderer Init =====");
 
   // API initialization =====
-
   ICE_ATTEMPT(CreateInstance());
   ICE_ATTEMPT(CreateSurface());
   ICE_ATTEMPT(ChoosePhysicalDevice());
   ICE_ATTEMPT(CreateLogicalDevice());
 
   // Rendering components =====
-
   ICE_ATTEMPT(CreateDescriptorPool());
   ICE_ATTEMPT(CreateCommandPool());
   ICE_ATTEMPT(CreateCommandPool(true));
@@ -37,71 +35,20 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateRenderpass());
   ICE_ATTEMPT(CreateFrameBuffers());
 
+  ICE_ATTEMPT(CreateShadowImages());
+  ICE_ATTEMPT(CreateShadowRenderpass());
+  ICE_ATTEMPT(CreateShadowFrameBuffers());
+
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
+
+  ICE_ATTEMPT(PrepareGlobalDescriptors());
+  ICE_ATTEMPT(PrepareShadowDescriptors());
 
   tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
   tmpLights.directionalDirection = { 1.0f, -1.0f, 1.0f };
 
-  ICE_ATTEMPT(CreateShadowComponents());
-
-  ICE_ATTEMPT(PrepareGlobalDescriptors());
-  // Create descriptor set =====
-  {
-    VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-    allocInfo.pNext = nullptr;
-    allocInfo.descriptorPool = context.descriptorPool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &context.globalDescriptorSetLayout;
-
-    IVK_ASSERT(vkAllocateDescriptorSets(context.device,
-                                        &allocInfo,
-                                        &shadow.descriptorSet),
-               "Failed to allocate global descriptor set");
-  }
-
-  const float width = 15.0f;
-  const float zNear = 0.0f;
-  const float zFar = 47.0f;
-
-  glm::mat4& proj = shadow.viewProjMatrix;
-  proj = glm::ortho(-width, width, -width, width, -zNear, zFar);
-  proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-  glm::mat4 view = glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-  proj = proj * view;
-
-  CreateBuffer(&shadow.lightMatrixBuffer,
-               64,
-               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               &shadow.viewProjMatrix);
-
-  FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
-
-  VkDescriptorBufferInfo bufferInfo {};
-  bufferInfo.buffer = shadow.lightMatrixBuffer.buffer;
-  bufferInfo.offset = 0;
-  bufferInfo.range = VK_WHOLE_SIZE;
-
-  const u32 writeCount = 1;
-  std::vector<VkWriteDescriptorSet> write(writeCount);
-  write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write[0].dstSet           = shadow.descriptorSet;
-  write[0].dstBinding       = 0;
-  write[0].dstArrayElement  = 0;
-  write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  write[0].descriptorCount  = 1;
-  write[0].pBufferInfo      = &bufferInfo;
-  write[0].pImageInfo       = nullptr;
-  write[0].pTexelBufferView = nullptr;
-
-  vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
-
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
-
-  // TMP =====
-  //CreateMesh(&mesh, "Sphere.obj");
-
   return true;
 }
 
@@ -1115,6 +1062,172 @@ b8 IvkRenderer::EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _p
 
   // Destruction =====
   vkFreeCommandBuffers(context.device, _pool, 1, &_command);
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowRenderpass()
+{
+  // Attachments =====
+  VkAttachmentDescription depthDescription {};
+  depthDescription.format = shadow.image.format;
+  depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthDescription.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  depthDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  depthDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+  VkAttachmentReference depthReference {};
+  depthReference.attachment = 0;
+  depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+
+  // Subpass =====
+  VkSubpassDescription subpassDescription {};
+  subpassDescription.colorAttachmentCount = 0;
+  subpassDescription.pColorAttachments = nullptr;
+  subpassDescription.pDepthStencilAttachment = &depthReference;
+  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+  VkSubpassDependency subpassDependency {};
+  subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+  subpassDependency.srcStageMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  subpassDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  subpassDependency.dstSubpass    = 0;
+  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  // Creation =====
+  const u32 attachemntCount = 1;
+  VkAttachmentDescription attachments[attachemntCount] = { depthDescription };
+  const u32 subpassCount = 1;
+  VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
+  const u32 dependencyCount = 1;
+  VkSubpassDependency dependencies[dependencyCount] = { subpassDependency };
+
+  VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.attachmentCount = attachemntCount;
+  createInfo.pAttachments    = attachments;
+  createInfo.subpassCount = subpassCount;
+  createInfo.pSubpasses   = subpasses;
+  createInfo.dependencyCount = dependencyCount;
+  createInfo.pDependencies   = dependencies;
+
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &shadow.renderpass),
+              "Failed to create shadow renderpass");
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowFrameBuffers()
+{
+  const u32 size = 1024;
+
+  VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.layers = 1;
+  createInfo.renderPass = shadow.renderpass;
+  createInfo.width = size;
+  createInfo.height = size;
+  createInfo.attachmentCount = 1;
+  createInfo.pAttachments = &shadow.image.view;
+
+  IVK_ASSERT(vkCreateFramebuffer(context.device,
+                                 &createInfo,
+                                 context.alloc,
+                                 &shadow.framebuffer),
+              "Failed to create shadow framebuffer");
+
+  return true;
+}
+
+b8 IvkRenderer::PrepareShadowDescriptors()
+{
+  const u32 size = 1024;
+
+  // Prepare buffers =====
+  {
+    glm::mat4& proj = shadow.viewProjMatrix;
+    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.0f, 47.0f);
+    proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
+    proj = proj * glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+    CreateBuffer(&shadow.lightMatrixBuffer,
+                 64,
+                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 &shadow.viewProjMatrix);
+
+    FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+  }
+
+  // Descriptor set layout =====
+  {
+    // Currently no need to use a specialized global descriptor for shadows
+  }
+
+  // Descriptor set =====
+  {
+    VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+    allocInfo.pNext = nullptr;
+    allocInfo.descriptorPool = context.descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &context.globalDescriptorSetLayout;
+
+    IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                        &allocInfo,
+                                        &shadow.descriptorSet),
+               "Failed to allocate global descriptor set");
+  }
+
+  // Pipeline layout =====
+  {
+    // Currently no need to use a specialized pipeline layout for shadows
+  }
+
+  // Update descriptor set =====
+  {
+    VkDescriptorBufferInfo bufferInfo {};
+    bufferInfo.buffer = shadow.lightMatrixBuffer.buffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = VK_WHOLE_SIZE;
+
+    const u32 writeCount = 1;
+    std::vector<VkWriteDescriptorSet> write(writeCount);
+    write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write[0].dstSet           = shadow.descriptorSet;
+    write[0].dstBinding       = 0;
+    write[0].dstArrayElement  = 0;
+    write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write[0].descriptorCount  = 1;
+    write[0].pBufferInfo      = &bufferInfo;
+    write[0].pImageInfo       = nullptr;
+    write[0].pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
+  }
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowImages()
+{
+  const u32 size = 1024;
+
+  ICE_ATTEMPT(CreateImage(&shadow.image,
+                          {size, size},
+                          VK_FORMAT_D32_SFLOAT,
+                          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+  shadow.image.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+
+  ICE_ATTEMPT(CreateImageView(&shadow.image.view,
+                              shadow.image.image,
+                              shadow.image.format,
+                              VK_IMAGE_ASPECT_DEPTH_BIT));
+
+  ICE_ATTEMPT(CreateImageSampler(&shadow.image));
 
   return true;
 }

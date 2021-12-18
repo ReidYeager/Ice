@@ -90,7 +90,12 @@ private:
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
-  b8 CreateShadowComponents();
+  // Creates the renderpass to render the shadows' depth buffers
+  b8 CreateShadowRenderpass();
+  b8 CreateShadowFrameBuffers();
+  // Creates the images buffers used by the shadow renderpass
+  b8 PrepareShadowDescriptors();
+  b8 CreateShadowImages();
 
   // Buffers =====
   // Allocates a new block of memory on the GPU
