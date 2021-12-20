@@ -39,11 +39,12 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateShadowRenderpass());
   ICE_ATTEMPT(CreateShadowFrameBuffers());
 
+  ICE_ATTEMPT(PrepareGlobalDescriptors());
+  ICE_ATTEMPT(PrepareShadowDescriptors());
+
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
 
-  ICE_ATTEMPT(PrepareGlobalDescriptors());
-  ICE_ATTEMPT(PrepareShadowDescriptors());
 
   tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
   tmpLights.directionalDirection = { 1.0f, -1.0f, 1.0f };
@@ -602,43 +603,54 @@ b8 IvkRenderer::CreateSwapchain()
   return true;
 }
 
+IvkRenderer::IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settings)
+{
+  IvkAttachmentDescRef descRef {};
+
+  descRef.description.format = _settings.imageFormat;
+  descRef.description.samples = VK_SAMPLE_COUNT_1_BIT;
+  descRef.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  descRef.description.finalLayout = _settings.finalLayout;
+  descRef.description.loadOp = _settings.loadOperation;
+  descRef.description.storeOp = _settings.storeOperation;
+  descRef.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  descRef.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  descRef.reference.attachment = _settings.index;
+  descRef.reference.layout = _settings.referenceLayout;
+
+  return descRef;
+}
+
 b8 IvkRenderer::CreateRenderpass()
 {
-  // Color =====
-  VkAttachmentDescription colorDescription {};
-  colorDescription.format = context.swapchainFormat;
-  colorDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-  colorDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorDescription.finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  colorDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  colorDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  colorDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  IvkAttachmentSettings attachSettings {};
 
-  VkAttachmentReference colorReference {};
-  colorReference.attachment = 0;
-  colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Color =====
+  attachSettings.index = 0;
+  attachSettings.imageFormat = context.swapchainFormat;
+  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
+  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  IvkAttachmentDescRef color = CreateAttachment(attachSettings);
 
   // Depth =====
-  VkAttachmentDescription depthDescription {};
-  depthDescription.format = context.depthImage.format;
-  depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-  depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthDescription.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  depthDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depthDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachSettings.index = 1;
+  attachSettings.imageFormat = context.depthImage.format;
+  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
+  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  VkAttachmentReference depthReference {};
-  depthReference.attachment = 1;
-  depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  IvkAttachmentDescRef depth = CreateAttachment(attachSettings);
 
   // Subpass =====
   VkSubpassDescription subpassDescription {};
   subpassDescription.colorAttachmentCount = 1;
-  subpassDescription.pColorAttachments = &colorReference;
-  subpassDescription.pDepthStencilAttachment = &depthReference;
+  subpassDescription.pColorAttachments = &color.reference;
+  subpassDescription.pDepthStencilAttachment = &depth.reference;
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   VkSubpassDependency subpassDependency {};
@@ -651,7 +663,7 @@ b8 IvkRenderer::CreateRenderpass()
 
   // Creation =====
   const u32 attachemntCount = 2;
-  VkAttachmentDescription attachments[attachemntCount] = { colorDescription, depthDescription };
+  VkAttachmentDescription attachments[attachemntCount] = { color.description, depth.description };
   const u32 subpassCount = 1;
   VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
   const u32 dependencyCount = 1;
@@ -1069,25 +1081,21 @@ b8 IvkRenderer::EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _p
 b8 IvkRenderer::CreateShadowRenderpass()
 {
   // Attachments =====
-  VkAttachmentDescription depthDescription {};
-  depthDescription.format = shadow.image.format;
-  depthDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-  depthDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthDescription.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
-  depthDescription.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depthDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  depthDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  depthDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+  IvkAttachmentSettings attachSettings {};
+  attachSettings.index = 0;
+  attachSettings.imageFormat = shadow.image.format;
+  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
+  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
 
-  VkAttachmentReference depthReference {};
-  depthReference.attachment = 0;
-  depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  IvkAttachmentDescRef shadowDepth = CreateAttachment(attachSettings);
 
   // Subpass =====
   VkSubpassDescription subpassDescription {};
   subpassDescription.colorAttachmentCount = 0;
   subpassDescription.pColorAttachments = nullptr;
-  subpassDescription.pDepthStencilAttachment = &depthReference;
+  subpassDescription.pDepthStencilAttachment = &shadowDepth.reference;
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   VkSubpassDependency subpassDependency {};
@@ -1100,7 +1108,7 @@ b8 IvkRenderer::CreateShadowRenderpass()
 
   // Creation =====
   const u32 attachemntCount = 1;
-  VkAttachmentDescription attachments[attachemntCount] = { depthDescription };
+  VkAttachmentDescription attachments[attachemntCount] = { shadowDepth.description };
   const u32 subpassCount = 1;
   VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
   const u32 dependencyCount = 1;

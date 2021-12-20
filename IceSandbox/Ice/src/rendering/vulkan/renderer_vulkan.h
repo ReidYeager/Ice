@@ -54,8 +54,25 @@ private:
   // Creates a command pool
   b8 CreateCommandPool(b8 _createTransient = false);
 
+  struct IvkAttachmentDescRef
+  {
+    VkAttachmentDescription description;
+    VkAttachmentReference reference;
+  };
+
+  struct IvkAttachmentSettings
+  {
+    VkFormat imageFormat;
+    VkAttachmentLoadOp loadOperation = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    VkAttachmentStoreOp storeOperation = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    VkImageLayout finalLayout;
+    VkImageLayout referenceLayout;
+    u32 index;
+  };
+
   // Creates the swapchain, its images, and their views
   b8 CreateSwapchain();
+  IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings);
   // Creates a simple forward renderpass
   b8 CreateRenderpass();
   // Creates the depth image and its view
