@@ -18,11 +18,18 @@
 class IvkRenderer
 {
 private:
+  struct IvkObject
+  {
+    IvkMesh mesh;
+    IvkBuffer transformBuffer;
+    VkDescriptorSet descriptorSet;
+  };
+
   reIvkContext context;
   std::vector<IvkMaterial> materials;
   std::vector<IvkMesh> meshes;
   // This system is slow and will need to be upgraded later.
-  std::vector<std::vector<IvkMesh>> scene;
+  std::vector<std::vector<IvkObject>> scene;
 
   IvkBuffer viewProjBuffer;
   IvkLights tmpLights;
@@ -156,7 +163,7 @@ private:
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);
-  void AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
+  b8 AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
 
 };
 

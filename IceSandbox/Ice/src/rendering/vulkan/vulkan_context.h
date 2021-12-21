@@ -159,6 +159,8 @@ struct reIvkContext
   u32 currentFlightIndex = 0;
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
 
+  VkDescriptorSetLayout objectDescriptorSetLayout;
+
   VkDescriptorSetLayout globalDescriptorSetLayout;
   VkDescriptorSet globalDescritorSet;
   VkPipelineLayout globalPipelinelayout;

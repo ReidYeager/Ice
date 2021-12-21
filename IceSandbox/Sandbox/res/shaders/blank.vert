@@ -11,13 +11,17 @@ layout(set = 0, binding = 0) uniform GlobalUniform {
     mat4 dLightMatrix;
 } global;
 
+layout(set = 2, binding = 0) uniform ModelUniform {
+    mat4 transform;
+} model;
+
 layout(location = 0) out vec3 outNormal;
 layout(location = 1) out float viewDot;
 layout(location = 2) out vec2 uvOut;
 layout(location = 3) out vec4 fragLightPos;
 
 void main() {
-    vec4 modelPosition = vec4(position, 1.0);
+    vec4 modelPosition = model.transform * vec4(position, 1.0);
 
     gl_Position = global.viewProj * modelPosition;
     outNormal = normal;

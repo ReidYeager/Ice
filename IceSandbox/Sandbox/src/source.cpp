@@ -19,11 +19,11 @@ void reInit()
   u32 light =  app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
                                     {"lights", Ice_Shader_Fragment} });
   //u32 blank = app.CreateMaterial({ {"blank", Ice_shader_VertFrag} });
-  u32 fresnel = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
+  u32 shadow = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
                                      {"shadow", Ice_Shader_Fragment}});
 
-  app.AddObject("BadCactus.obj", fresnel);
-  app.AddObject("Plane.obj", fresnel);
+  app.AddObject("Sphere.obj", shadow);
+  app.AddObject("Cube.obj", shadow);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

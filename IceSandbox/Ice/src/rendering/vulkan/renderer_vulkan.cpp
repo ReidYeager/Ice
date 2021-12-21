@@ -80,6 +80,16 @@ b8 IvkRenderer::Shutdown()
   }
   DestroyImage(&texture);
 
+  for (u32 i = 0; i < scene.size(); i++)
+  {
+    for (const auto& obj : scene[i])
+    {
+      //vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &obj.descriptorSet);
+      DestroyBuffer(&obj.transformBuffer, true);
+    }
+  }
+  vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorSetLayout, context.alloc);
+
   for (const auto& mesh : meshes)
   {
     DestroyBuffer(&mesh.vertBuffer);
@@ -455,7 +465,7 @@ b8 IvkRenderer::CreateDescriptorPool()
   // Creation =====
   VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   createInfo.flags = 0;
-  createInfo.maxSets = 4; // (max possible) 0: Global, 1: per-shader, 2: per-material, 3: per-object
+  createInfo.maxSets = 100; // (max possible) 0: Global, 1: per-shader, 2: per-material, 3: per-object
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 
@@ -872,10 +882,19 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
       // Draw each object =====
       for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
       {
-        IvkMesh& mesh = scene[matIndex][objectIndex];
-        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
-        vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+        IvkObject& object = scene[matIndex][objectIndex];
+        vkCmdBindDescriptorSets(cmdBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                materials[matIndex].pipelineLayout,
+                                2,
+                                1,
+                                &object.descriptorSet,
+                                0,
+                                nullptr);
+
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
       }
     }
     vkCmdEndRenderPass(cmdBuffer);
@@ -909,10 +928,19 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
       // Draw each object =====
       for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
       {
-        IvkMesh& mesh = scene[matIndex][objectIndex];
-        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &mesh.vertBuffer.buffer, &zero);
-        vkCmdBindIndexBuffer(cmdBuffer, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuffer, mesh.indices.size(), 1, 0, 0, 0);
+        IvkObject& object = scene[matIndex][objectIndex];
+        vkCmdBindDescriptorSets(cmdBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                materials[matIndex].pipelineLayout,
+                                2,
+                                1,
+                                &object.descriptorSet,
+                                0,
+                                nullptr);
+
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
       }
     }
 
@@ -1032,6 +1060,28 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     write[1].pTexelBufferView = nullptr;
 
     vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
+  }
+
+  // Object descriptor set layout =====
+  {
+    VkDescriptorSetLayoutBinding binding;
+    binding.binding = 0;
+    binding.descriptorCount = 1;
+    binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    binding.pImmutableSamplers = nullptr;
+    binding.stageFlags = VK_SHADER_STAGE_ALL;
+
+    VkDescriptorSetLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+    createInfo.flags = 0;
+    createInfo.bindingCount = 1;
+    createInfo.pBindings = &binding;
+    createInfo.pNext = nullptr;
+
+    IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
+                                           &createInfo,
+                                           context.alloc,
+                                           &context.objectDescriptorSetLayout),
+               "Failed to create object descriptor set layout");
   }
 
   return true;
@@ -1277,7 +1327,51 @@ u32 IvkRenderer::CreateMesh(const char* _directory)
   return meshes.size() - 1;
 }
 
-void IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+b8 IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
 {
-  scene[_materialIndex].push_back(meshes[_meshIndex]);
+  IvkObject object;
+  object.mesh = meshes[_meshIndex];
+
+  float pos = (_meshIndex % 2 == 0) ? -2.0f : 2.0f;
+  IceLogDebug("Pos = %u => %f", _meshIndex, pos);
+
+  glm::mat4 tmpTransform = glm::translate(glm::mat4(1), glm::vec3(0, pos, 0));
+
+  CreateBuffer(&object.transformBuffer,
+               64,
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)&tmpTransform);
+
+  VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+  allocInfo.descriptorPool = context.descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &context.objectDescriptorSetLayout;
+  allocInfo.pNext = nullptr;
+
+  IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                      &allocInfo,
+                                      &object.descriptorSet),
+             "Failed to allocate object descriptor set");
+
+  VkDescriptorBufferInfo bufferInfo {};
+  bufferInfo.buffer = object.transformBuffer.buffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
+
+  VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  write.dstSet           = object.descriptorSet;
+  write.dstBinding       = 0;
+  write.dstArrayElement  = 0;
+  write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.descriptorCount  = 1;
+  write.pBufferInfo      = &bufferInfo;
+  write.pImageInfo       = nullptr;
+  write.pTexelBufferView = nullptr;
+  
+  vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+
+  scene[_materialIndex].push_back(object);
+
+  return true;
 }

@@ -121,10 +121,11 @@ b8 IvkRenderer::CreatePipelinelayout(IvkMaterial& material)
   //VkPushConstantRange pushRanges[pushCount] = {};
   VkPushConstantRange* pushRanges = nullptr;
 
-  const u32 layoutCount = 2;
+  const u32 layoutCount = 3;
   VkDescriptorSetLayout layouts[layoutCount] = {
     context.globalDescriptorSetLayout,
-    material.descriptorSetLayout
+    material.descriptorSetLayout,
+    context.objectDescriptorSetLayout
   };
   //VkDescriptorSetLayout* layouts = nullptr;
 
