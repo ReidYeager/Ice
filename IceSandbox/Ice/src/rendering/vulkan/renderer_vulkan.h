@@ -36,10 +36,14 @@ private:
   reIvkImage texture;
   IvkShadow shadow;
 
+  const u32 shadowResolution = 1024;
+
 public:
   b8 Initialize();
   b8 Shutdown();
   b8 Render(IceCamera* _camera);
+
+  void DefineRenderpass();
 
 private:
   // Ensures that all desired layer and extension functionality is present in the created instance

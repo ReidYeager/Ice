@@ -207,13 +207,13 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   VkViewport shadowViewport;
   shadowViewport.x = 0;
   shadowViewport.y = 0;
-  shadowViewport.width = 1024.0f;
-  shadowViewport.height = 1024.0f;
+  shadowViewport.width = (float)shadowResolution;
+  shadowViewport.height = (float)shadowResolution;
   shadowViewport.minDepth = 0;
   shadowViewport.maxDepth = 1;
 
   VkRect2D shadowScissor{};
-  shadowScissor.extent = { 1024, 1024 };
+  shadowScissor.extent = { shadowResolution, shadowResolution };
   shadowScissor.offset = { 0, 0 };
 
   VkPipelineViewportStateCreateInfo shadowViewportStateInfo{};

@@ -207,6 +207,51 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   return true;
 }
 
+void IvkRenderer::DefineRenderpass()
+{
+  // Inputs
+  std::vector<IvkAttachmentSettings> settings;
+
+  // -----
+  // Renderpass
+
+  // attachments (descriptions & references)
+  // -IvkAttachmentSettings
+
+  // Subpasses & dependencies
+  // -What attachments it uses
+  // -What pipeline point to bind to (default to graphics)
+
+  // Creation
+
+  // -----
+  // Framebuffers
+
+  // -Image resolution
+  // -What images to use for attachments
+  // -Layers (eventually)
+
+  // Creation
+
+  // -----
+  // Descriptor set
+
+  // Create assets (buffers & images)
+  // -Can be done prior
+
+  // Descriptor set layout
+  // -What types of descriptors
+  // -What order
+
+  // Descriptor set
+
+  // Pipeline layout
+
+  // Update descriptor set (bind its assets)
+  // -What types of descriptors
+  // -What assets to use for each descriptor
+}
+
 b8 IvkRenderer::CreateInstance()
 {
   // Retrieve and validate extensions and layers to enable
@@ -833,7 +878,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   VkRenderPassBeginInfo shadowPass { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
   shadowPass.clearValueCount = 1;
   shadowPass.pClearValues = &clearValues[1];
-  shadowPass.renderArea.extent = { 1024, 1024 };
+  shadowPass.renderArea.extent = { shadowResolution, shadowResolution };
   shadowPass.renderArea.offset = { 0 , 0 };
   shadowPass.renderPass = shadow.renderpass;
   shadowPass.framebuffer = shadow.framebuffer;
@@ -1062,7 +1107,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
   }
 
-  // Object descriptor set layout =====
+  // Scene object descriptor set layout =====
   {
     VkDescriptorSetLayoutBinding binding;
     binding.binding = 0;
@@ -1181,14 +1226,12 @@ b8 IvkRenderer::CreateShadowRenderpass()
 
 b8 IvkRenderer::CreateShadowFrameBuffers()
 {
-  const u32 size = 1024;
-
   VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.layers = 1;
   createInfo.renderPass = shadow.renderpass;
-  createInfo.width = size;
-  createInfo.height = size;
+  createInfo.width = shadowResolution;
+  createInfo.height = shadowResolution;
   createInfo.attachmentCount = 1;
   createInfo.pAttachments = &shadow.image.view;
 
@@ -1203,8 +1246,6 @@ b8 IvkRenderer::CreateShadowFrameBuffers()
 
 b8 IvkRenderer::PrepareShadowDescriptors()
 {
-  const u32 size = 1024;
-
   // Prepare buffers =====
   {
     glm::mat4& proj = shadow.viewProjMatrix;
@@ -1272,10 +1313,8 @@ b8 IvkRenderer::PrepareShadowDescriptors()
 
 b8 IvkRenderer::CreateShadowImages()
 {
-  const u32 size = 1024;
-
   ICE_ATTEMPT(CreateImage(&shadow.image,
-                          {size, size},
+                          { shadowResolution, shadowResolution },
                           VK_FORMAT_D32_SFLOAT,
                           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
   shadow.image.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;

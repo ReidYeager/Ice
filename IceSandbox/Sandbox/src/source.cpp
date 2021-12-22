@@ -83,19 +83,14 @@ void reUpdate(float _deltaTime)
     pitch += y;
     yaw += x;
 
-    glm::mat4& viewProj = app.cam.viewProjectionMatrix;
+    glm::mat4 view = glm::translate(glm::mat4(1), glm::vec3(0.0f, 0.0f, -3.0f));
+    view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    //viewProj = glm::mat4(1);
-    //viewProj = glm::ortho(-halfWidth, halfWidth, -halfWidth, halfWidth, zNear, zFar);
-    //viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-    //glm::mat4 view = glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    //viewProj = viewProj * view;
-
-    viewProj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
-    viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-    viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
-    viewProj = glm::rotate(viewProj, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-    viewProj = glm::rotate(viewProj, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
+    // Not doing this incorrectly renders geometry, does not just flip the final image
+    proj[1][1] *= -1; // Flip the projection's Y
+    app.cam.viewProjectionMatrix = proj * view;
   }
 
   if (Input.OnKeyPressed(Ice_Key_Escape))
