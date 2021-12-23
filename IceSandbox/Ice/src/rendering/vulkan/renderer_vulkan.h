@@ -88,8 +88,6 @@ private:
   b8 CreateRenderpass();
   // Creates the depth image and its view
   b8 CreateDepthImage();
-  // Creates a frame buffer for each swapchain image
-  b8 CreateFrameBuffers();
 
   // Creates the fences and semaphores for CPU/GPU synchronization
   b8 CreateSyncObjects();
@@ -110,6 +108,11 @@ private:
   b8 CreateSurface();
   // Returns the widnow width and height
   vec2U GetPlatformWindowExtents();
+
+  b8 CreateFrameBuffer(VkFramebuffer* _framebuffer,
+                        VkRenderPass& _renderpass,
+                        VkExtent2D _extents,
+                        std::vector<VkImageView> _views);
 
   b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
                          VkDescriptorSetLayout* _setLayout,

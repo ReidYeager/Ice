@@ -33,7 +33,21 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateSwapchain());
   ICE_ATTEMPT(CreateDepthImage());
   ICE_ATTEMPT(CreateRenderpass());
-  ICE_ATTEMPT(CreateFrameBuffers());
+
+  // Framebuffers =====
+  {
+    // Creates a frame buffer for each swapchain image
+    const u32 imageCount = context.swapchainImages.size();
+    context.frameBuffers.resize(imageCount);
+
+    for (u32 i = 0; i < imageCount; i++)
+    {
+      CreateFrameBuffer(&context.frameBuffers[i],
+                        context.renderpass,
+                        context.swapchainExtent,
+                        { context.swapchainImageViews[i], context.depthImage.view });
+    }
+  }
 
   ICE_ATTEMPT(CreateShadowImages());
   ICE_ATTEMPT(CreateShadowRenderpass());
@@ -231,6 +245,7 @@ void IvkRenderer::DefineRenderpass()
 
   // Inputs
   std::vector<IvkAttachmentSettings> settings;
+  std::vector<IvkDescriptorBinding> _bindings;
 
   // -----
   // Renderpass
@@ -244,32 +259,23 @@ void IvkRenderer::DefineRenderpass()
 
   // Creation
 
+  // TODO : ~!~ Define the IvkImage(s) to use for framebuffer creation
   // -----
   // Framebuffers
 
-  // -Image resolution
-  // -What images to use for attachments
-  // -Layers (eventually)
-
-  // Creation
+  //CreateFrameBuffer();
 
   // -----
   // Descriptor set
 
-  // Create assets (buffers & images)
-  // -Can be done prior
+  // Create assets (buffers, textures)
 
   CreateDescriptorSet(_settings.descriptors, &rp.descriptorLayout, &rp.descriptorSet);
 
   // Pipeline layout
-  CreatePipelinelayout(&rp.pipelineLayout, {rp.descriptorLayout}, {});
+  CreatePipelinelayout(&rp.pipelineLasyout, {rp.descriptorLayout}, {});
 
-  // Update descriptor set (bind its assets)
-  // -What types of descriptors
-  // -What assets to use for each descriptor
-
-  // TODO : ~!!~ Define assets to use before here
-  //UpdateDescriptorSet(rp.descriptorSet, bindings);
+  UpdateDescriptorSet(rp.descriptorSet, _bindings);
 
   vkDestroyPipelineLayout(context.device, rp.pipelineLayout, nullptr);
   vkDestroyDescriptorSetLayout(context.device, rp.descriptorLayout, nullptr);
@@ -799,35 +805,6 @@ b8 IvkRenderer::CreateDepthImage()
   return true;
 }
 
-b8 IvkRenderer::CreateFrameBuffers()
-{
-  VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-  createInfo.flags = 0;
-  createInfo.layers = 1;
-  createInfo.renderPass = context.renderpass;
-  createInfo.width  = context.swapchainExtent.width;
-  createInfo.height = context.swapchainExtent.height;
-
-  // One framebuffer per frame
-  const u32 imageCount = context.swapchainImages.size();
-  context.frameBuffers.resize(imageCount);
-
-  for (u32 i = 0; i < imageCount; i++)
-  {
-    VkImageView attachments[] = { context.swapchainImageViews[i], context.depthImage.view };
-    createInfo.attachmentCount = 2;
-    createInfo.pAttachments = attachments;
-
-    IVK_ASSERT(vkCreateFramebuffer(context.device,
-                                   &createInfo,
-                                   context.alloc,
-                                   &context.frameBuffers[i]),
-               "Failed to create frame buffer %u", i);
-  }
-
-  return true;
-}
-
 b8 IvkRenderer::CreateSyncObjects()
 {
   VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
@@ -1192,6 +1169,30 @@ b8 IvkRenderer::EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _p
 
   // Destruction =====
   vkFreeCommandBuffers(context.device, _pool, 1, &_command);
+
+  return true;
+}
+
+b8 IvkRenderer::CreateFrameBuffer(VkFramebuffer* _framebuffer,
+                                   VkRenderPass& _renderpass,
+                                   VkExtent2D _extents,
+                                   std::vector<VkImageView> _views)
+{
+  VkFramebufferCreateInfo createInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.layers = 1;
+  createInfo.renderPass = _renderpass;
+  createInfo.width = _extents.width;
+  createInfo.height = _extents.height;
+
+  createInfo.attachmentCount = _views.size();
+  createInfo.pAttachments = _views.data();
+
+  IVK_ASSERT(vkCreateFramebuffer(context.device,
+                                 &createInfo,
+                                 context.alloc,
+                                 _framebuffer),
+             "Failed to create frame buffer");
 
   return true;
 }
