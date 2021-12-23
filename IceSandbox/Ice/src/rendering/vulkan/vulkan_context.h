@@ -48,6 +48,19 @@ struct reIvkImage
 // Material
 // =======================
 
+struct IvkDescriptor
+{
+  VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL;
+};
+
+struct IvkDescriptorBinding
+{
+  VkDescriptorType type;
+  reIvkImage* image = nullptr;
+  IvkBuffer* buffer = nullptr;
+};
+
 enum IceShaderStageFlagBits
 {
   Ice_Shader_Invalid = 0,

@@ -111,9 +111,13 @@ private:
   // Returns the widnow width and height
   vec2U GetPlatformWindowExtents();
 
-  // Materials =====
-  b8 CreateDescriptorSet(IvkMaterial& material);
-  b8 CreatePipelinelayout(IvkMaterial& material);
+  b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
+                         VkDescriptorSetLayout* _setLayout,
+                         VkDescriptorSet* _set);
+  b8 UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<IvkDescriptorBinding> _bindings);
+  b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
+                          std::vector<VkDescriptorSetLayout> _layouts,
+                          std::vector<VkPushConstantRange> _pushRanges);
   b8 CreatePipeline(IvkMaterial& material);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);

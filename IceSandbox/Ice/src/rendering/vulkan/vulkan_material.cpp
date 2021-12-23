@@ -38,8 +38,19 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
     }
   }
 
-  ICE_ATTEMPT(CreateDescriptorSet(material));
-  ICE_ATTEMPT(CreatePipelinelayout(material));
+  std::vector<IvkDescriptor> descriptors;
+  descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
+
+  ICE_ATTEMPT(CreateDescriptorSet(descriptors,
+                                  &material.descriptorSetLayout,
+                                  &material.descriptorSet));
+
+  ICE_ATTEMPT(CreatePipelinelayout(&material.pipelineLayout,
+                                   { context.globalDescriptorSetLayout,
+                                     material.descriptorSetLayout,
+                                     context.objectDescriptorSetLayout },
+                                   {}));
+
   ICE_ATTEMPT(CreatePipeline(material));
 
   if (texture.sampler == VK_NULL_HANDLE)
@@ -47,23 +58,11 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
     ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
   }
 
-  // TODO : Create a function that handles this automatically
-  VkDescriptorImageInfo imageInfo {};
-  imageInfo.imageLayout = texture.layout;
-  imageInfo.imageView = texture.view;
-  imageInfo.sampler = texture.sampler;
+  IvkDescriptorBinding textureBinding;
+  textureBinding.image = &texture;
+  textureBinding.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
-  VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-  write.dstSet           = material.descriptorSet;
-  write.dstBinding       = 0;
-  write.dstArrayElement  = 0;
-  write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  write.descriptorCount  = 1;
-  write.pBufferInfo      = nullptr;
-  write.pImageInfo       = &imageInfo;
-  write.pTexelBufferView = nullptr;
-
-  vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+  UpdateDescriptorSet(material.descriptorSet, {textureBinding});
 
   IceLogInfo("===== Finished creating material %u", materials.size());
 
@@ -73,31 +72,37 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
   return materials.size() - 1;
 }
 
-b8 IvkRenderer::CreateDescriptorSet(IvkMaterial& material)
+b8 IvkRenderer::CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
+                                    VkDescriptorSetLayout* _setLayout,
+                                    VkDescriptorSet* _set)
 {
+  const u32 count = _descriptors.size();
+
   // Create layout =====
   {
-    // TODO : Pull descriptors from the shaders automatically
-    VkDescriptorSetLayoutBinding textureBinding;
-    textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    textureBinding.descriptorCount = 1;
-    textureBinding.binding = 0;
-    textureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    textureBinding.pImmutableSamplers = nullptr;
+    std::vector<VkDescriptorSetLayoutBinding> bindings(count);
 
-    const u32 bindingCount = 1;
-    VkDescriptorSetLayoutBinding bindings[bindingCount] = { textureBinding };
+    for (u32 i = 0; i < count; i++)
+    {
+      bindings[i].descriptorCount = 1;
+      bindings[i].binding = i;
+      bindings[i].pImmutableSamplers = nullptr;
+      // Customizable =====
+      bindings[i].descriptorType = _descriptors[i].type;
+      bindings[i].stageFlags = _descriptors[i].stageFlags;
+    }
 
-    VkDescriptorSetLayoutCreateInfo createInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    VkDescriptorSetLayoutCreateInfo createInfo {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     createInfo.flags = 0;
     createInfo.pNext = nullptr;
-    createInfo.bindingCount = bindingCount;
-    createInfo.pBindings    = bindings;
+    createInfo.bindingCount = count;
+    createInfo.pBindings    = bindings.data();
 
     IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
                                            &createInfo,
                                            context.alloc,
-                                           &material.descriptorSetLayout),
+                                           _setLayout),
                "Failed to create descriptor set layout");
   }
 
@@ -106,41 +111,31 @@ b8 IvkRenderer::CreateDescriptorSet(IvkMaterial& material)
     VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
     allocInfo.descriptorPool = context.descriptorPool;
     allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &material.descriptorSetLayout;
+    allocInfo.pSetLayouts = _setLayout;
 
-    IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &material.descriptorSet),
+    IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, _set),
                "Failed to allocate the descriptor set");
   }
 
   return true;
 }
 
-b8 IvkRenderer::CreatePipelinelayout(IvkMaterial& material)
+b8 IvkRenderer::CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
+                                     std::vector<VkDescriptorSetLayout> _descriptorLayouts,
+                                     std::vector<VkPushConstantRange> _pushRanges)
 {
-  const u32 pushCount = 0;
-  //VkPushConstantRange pushRanges[pushCount] = {};
-  VkPushConstantRange* pushRanges = nullptr;
-
-  const u32 layoutCount = 3;
-  VkDescriptorSetLayout layouts[layoutCount] = {
-    context.globalDescriptorSetLayout,
-    material.descriptorSetLayout,
-    context.objectDescriptorSetLayout
-  };
-  //VkDescriptorSetLayout* layouts = nullptr;
-
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pNext = 0;
-  createInfo.pushConstantRangeCount = pushCount;
-  createInfo.pPushConstantRanges    = pushRanges;
-  createInfo.setLayoutCount = layoutCount;
-  createInfo.pSetLayouts    = layouts;
+  createInfo.pushConstantRangeCount = _pushRanges.size();
+  createInfo.pPushConstantRanges    = _pushRanges.data();
+  createInfo.setLayoutCount = _descriptorLayouts.size();
+  createInfo.pSetLayouts    = _descriptorLayouts.data();
 
   IVK_ASSERT(vkCreatePipelineLayout(context.device,
                                     &createInfo,
                                     context.alloc,
-                                    &material.pipelineLayout),
+                                    _pipelineLayout),
              "Failed to create the render pipeline");
 
   return true;

@@ -50,6 +50,9 @@ b8 IvkRenderer::Initialize()
   tmpLights.directionalDirection = { 1.0f, -1.0f, 1.0f };
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
+
+  DefineRenderpass();
+
   return true;
 }
 
@@ -207,8 +210,25 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   return true;
 }
 
+struct IvkRenderpassSettings
+{
+  std::vector<IvkDescriptor> descriptors;
+};
+
+struct IvkRenderpass
+{
+  VkDescriptorSetLayout descriptorLayout;
+  VkDescriptorSet descriptorSet;
+
+  VkPipelineLayout pipelineLayout;
+
+};
+
 void IvkRenderer::DefineRenderpass()
 {
+  IvkRenderpassSettings _settings;
+  IvkRenderpass rp;
+
   // Inputs
   std::vector<IvkAttachmentSettings> settings;
 
@@ -239,17 +259,20 @@ void IvkRenderer::DefineRenderpass()
   // Create assets (buffers & images)
   // -Can be done prior
 
-  // Descriptor set layout
-  // -What types of descriptors
-  // -What order
-
-  // Descriptor set
+  CreateDescriptorSet(_settings.descriptors, &rp.descriptorLayout, &rp.descriptorSet);
 
   // Pipeline layout
+  CreatePipelinelayout(&rp.pipelineLayout, {rp.descriptorLayout}, {});
 
   // Update descriptor set (bind its assets)
   // -What types of descriptors
   // -What assets to use for each descriptor
+
+  // TODO : ~!!~ Define assets to use before here
+  //UpdateDescriptorSet(rp.descriptorSet, bindings);
+
+  vkDestroyPipelineLayout(context.device, rp.pipelineLayout, nullptr);
+  vkDestroyDescriptorSetLayout(context.device, rp.descriptorLayout, nullptr);
 }
 
 b8 IvkRenderer::CreateInstance()
@@ -1169,6 +1192,61 @@ b8 IvkRenderer::EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _p
 
   // Destruction =====
   vkFreeCommandBuffers(context.device, _pool, 1, &_command);
+
+  return true;
+}
+
+b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
+                                    std::vector<IvkDescriptorBinding> _bindings)
+{
+  std::vector<VkDescriptorImageInfo> imageInfos;
+  std::vector<VkDescriptorBufferInfo> bufferInfos;
+  std::vector<VkWriteDescriptorSet> writes(_bindings.size());
+
+  for (u32 i = 0; i < _bindings.size(); i++)
+  {
+    VkWriteDescriptorSet& write = writes[i];
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = _set;
+    write.dstBinding = i;
+    write.dstArrayElement = 0;
+    write.descriptorType = _bindings[i].type;
+    write.descriptorCount = 1;
+    write.pTexelBufferView = nullptr;
+
+    switch (_bindings[i].type)
+    {
+    default:
+    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+    {
+      VkDescriptorBufferInfo info {};
+      info.buffer = _bindings[i].buffer->buffer;
+      info.offset = _bindings[i].buffer->offset;
+      info.range = _bindings[i].buffer->size;
+
+      bufferInfos.push_back(info);
+
+      write.pBufferInfo = &bufferInfos[bufferInfos.size() - 1];
+      write.pImageInfo = nullptr;
+    } break;
+    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+    {
+      VkDescriptorImageInfo info {};
+      info.imageLayout = _bindings[i].image->layout;
+      info.imageView = _bindings[i].image->view;
+      info.sampler = _bindings[i].image->sampler;
+
+      imageInfos.push_back(info);
+
+      write.pBufferInfo = nullptr;
+      write.pImageInfo = &imageInfos[imageInfos.size() - 1];
+    } break;
+    }
+
+    writes.push_back(write);
+  }
+
+  vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
 
   return true;
 }
