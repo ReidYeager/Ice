@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/renderer_vulkan.h"
+#include "rendering/vulkan/vulkan_renderer.h"
 #include "core/camera.h"
 
 #include <glm/glm.hpp>

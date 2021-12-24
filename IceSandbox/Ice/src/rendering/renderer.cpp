@@ -4,7 +4,7 @@
 
 #include "rendering/renderer.h"
 
-#include "rendering/vulkan/renderer_vulkan.h"
+#include "rendering/vulkan/vulkan_renderer.h"
 
 reIceRenderer reRenderer;
 

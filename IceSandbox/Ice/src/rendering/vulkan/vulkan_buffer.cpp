@@ -1,7 +1,7 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/renderer_vulkan.h"
+#include "rendering/vulkan/vulkan_renderer.h"
 
 u32 FindMemoryTypeIndex(reIvkContext* _context,
                         u32 _supportedMemoryTypes,

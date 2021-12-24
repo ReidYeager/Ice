@@ -2,7 +2,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/vulkan/renderer_vulkan.h"
+#include "rendering/vulkan/vulkan_renderer.h"
 
 #include "core/camera.h"
 #include "math/vector.h"

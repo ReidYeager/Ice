@@ -1,6 +1,6 @@
 
-#ifndef ICE_RENDERING_VULKAN_RE_VULKAN_CONTEXT_H_
-#define ICE_RENDERING_VULKAN_RE_VULKAN_CONTEXT_H_
+#ifndef ICE_RENDERING_VULKAN_VULKAN_CONTEXT_H_
+#define ICE_RENDERING_VULKAN_VULKAN_CONTEXT_H_
 
 #include "defines.h"
 #include "asserts.h"
@@ -59,6 +59,22 @@ struct IvkDescriptorBinding
   VkDescriptorType type;
   reIvkImage* image = nullptr;
   IvkBuffer* buffer = nullptr;
+};
+
+struct IvkAttachmentDescRef
+{
+  VkAttachmentDescription description;
+  VkAttachmentReference reference;
+};
+
+struct IvkAttachmentSettings
+{
+  VkFormat imageFormat;
+  VkAttachmentLoadOp loadOperation = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  VkAttachmentStoreOp storeOperation = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  VkImageLayout finalLayout;
+  VkImageLayout referenceLayout;
+  u32 index;
 };
 
 enum IceShaderStageFlagBits

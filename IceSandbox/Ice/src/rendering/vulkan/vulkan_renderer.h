@@ -1,6 +1,6 @@
 
-#ifndef ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_H_
-#define ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_H_
+#ifndef ICE_RENDERING_VULKAN_VULKAN_RENDERER_H_
+#define ICE_RENDERING_VULKAN_VULKAN_RENDERER_H_
 
 #include "defines.h"
 
@@ -43,8 +43,6 @@ public:
   b8 Shutdown();
   b8 Render(IceCamera* _camera);
 
-  void DefineRenderpass();
-
 private:
   // Ensures that all desired layer and extension functionality is present in the created instance
   b8 CreateInstance();
@@ -59,80 +57,80 @@ private:
   b8 IsDeviceSuitable(const VkPhysicalDevice& _device);
   // Creates the vkDevice
   b8 CreateLogicalDevice();
-
-  // Defines the descriptors and sets available for use
-  b8 CreateDescriptorPool();
   // Creates a command pool
   b8 CreateCommandPool(b8 _createTransient = false);
-
-  struct IvkAttachmentDescRef
-  {
-    VkAttachmentDescription description;
-    VkAttachmentReference reference;
-  };
-
-  struct IvkAttachmentSettings
-  {
-    VkFormat imageFormat;
-    VkAttachmentLoadOp loadOperation = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    VkAttachmentStoreOp storeOperation = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    VkImageLayout finalLayout;
-    VkImageLayout referenceLayout;
-    u32 index;
-  };
-
   // Creates the swapchain, its images, and their views
   b8 CreateSwapchain();
-  IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings);
-  // Creates a simple forward renderpass
-  b8 CreateRenderpass();
-  // Creates the depth image and its view
-  b8 CreateDepthImage();
-
   // Creates the fences and semaphores for CPU/GPU synchronization
   b8 CreateSyncObjects();
+
+  b8 CreateShadowImages();
+
+  // Commands =====
+
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
   // Records the commands to render the scene
   b8 RecordCommandBuffer(u32 _commandIndex);
-  // Creates the pipelineLayout and descriptor set for the global descritpros
-  b8 PrepareGlobalDescriptors();
-
+  // Allocates and begins recording a command buffer
   VkCommandBuffer BeginSingleTimeCommand(VkCommandPool _pool);
+  // Ends recording and queues the command buffer
   b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
 
+  // Descriptors =====
+
+  // Defines the descriptors and sets available for use
+  b8 CreateDescriptorPool();
+  // Creates the pipelineLayout and descriptor set for the global descriptors
+  b8 PrepareGlobalDescriptors();
+  // Creates a descriptor set and its layout
+  b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
+                         VkDescriptorSetLayout* _setLayout,
+                         VkDescriptorSet* _set);
+  // Binds the input values to the descriptor set
+  b8 UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<IvkDescriptorBinding> _bindings);
+  // Creates the images buffers used by the shadow renderpass
+  b8 PrepareShadowDescriptors();
+
+  // Renderpass =====
+
+  // Creates a depth image and its view
+  b8 CreateDepthImage();
+  // Defines a renderpass attachment and its reference
+  IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings);
+  // Creates the final renderpass that creates the presented image
+  b8 CreateRenderpass();
+  // Creates a framebuffer that binds the input image views for use in the renderpass
+  b8 CreateFrameBuffer(VkFramebuffer* _framebuffer,
+                       VkRenderPass& _renderpass,
+                       VkExtent2D _extents,
+                       std::vector<VkImageView> _views);
+  // Creates the renderpass to render the shadows' depth buffers
+  b8 CreateShadowRenderpass();
+  b8 CreateShadowFrameBuffers();
+
   // Platform =====
+
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
   void GetPlatformExtensions(std::vector<const char*>& _extensions);
   // Creates a vendor-specific surface for display
   b8 CreateSurface();
-  // Returns the widnow width and height
+  // Returns the window width and height
   vec2U GetPlatformWindowExtents();
 
-  b8 CreateFrameBuffer(VkFramebuffer* _framebuffer,
-                        VkRenderPass& _renderpass,
-                        VkExtent2D _extents,
-                        std::vector<VkImageView> _views);
+  // Material =====
 
-  b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
-                         VkDescriptorSetLayout* _setLayout,
-                         VkDescriptorSet* _set);
-  b8 UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<IvkDescriptorBinding> _bindings);
+  // Creates a simple pipeline layout
   b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
                           std::vector<VkDescriptorSetLayout> _layouts,
                           std::vector<VkPushConstantRange> _pushRanges);
+  // Creates a presentation pipeline and a shadow-pass pipeline
   b8 CreatePipeline(IvkMaterial& material);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
-  // Creates the renderpass to render the shadows' depth buffers
-  b8 CreateShadowRenderpass();
-  b8 CreateShadowFrameBuffers();
-  // Creates the images buffers used by the shadow renderpass
-  b8 PrepareShadowDescriptors();
-  b8 CreateShadowImages();
-
   // Buffers =====
+
   // Allocates a new block of memory on the GPU
   b8 CreateBuffer(IvkBuffer* _buffer,
                   u64 _size,
@@ -147,6 +145,7 @@ private:
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
   // Images =====
+
   // Creates a vulkan image
   b8 CreateImage(reIvkImage* _image,
                  VkExtent2D _extents,
