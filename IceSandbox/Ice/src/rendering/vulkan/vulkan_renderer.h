@@ -97,7 +97,7 @@ private:
   // Creates a depth image and its view
   b8 CreateDepthImage();
   // Defines a renderpass attachment and its reference
-  IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings);
+  IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings, u32 _index);
   // Creates the final renderpass that creates the presented image
   b8 CreateRenderpass();
   // Creates a framebuffer that binds the input image views for use in the renderpass

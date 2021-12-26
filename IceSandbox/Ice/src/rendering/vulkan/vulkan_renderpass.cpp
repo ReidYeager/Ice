@@ -5,7 +5,7 @@
 #include "rendering/vulkan/vulkan_renderer.h"
 
 
-IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settings)
+IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settings, u32 _index)
 {
   IvkAttachmentDescRef descRef {};
 
@@ -18,7 +18,7 @@ IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settin
   descRef.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   descRef.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-  descRef.reference.attachment = _settings.index;
+  descRef.reference.attachment = _index;
   descRef.reference.layout = _settings.referenceLayout;
 
   return descRef;
@@ -26,46 +26,55 @@ IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settin
 
 b8 IvkRenderer::CreateRenderpass()
 {
-  IvkAttachmentSettings attachSettings {};
+  // Inputs =====
+  std::vector<IvkAttachmentSettings> _attachSettings(2);
+  // Color
+  _attachSettings[0].imageFormat = context.swapchainFormat;
+  _attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  _attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Depth
+  _attachSettings[1].imageFormat = context.depthImage.format;
+  _attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  _attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  // Color =====
-  attachSettings.index = 0;
-  attachSettings.imageFormat = context.swapchainFormat;
-  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
-  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  std::vector<IvkSubpassSettings> _subpass(1);
+  _subpass[0].colorIndices.push_back(0);
+  _subpass[0].depthIndex = 1;
 
-  IvkAttachmentDescRef color = CreateAttachment(attachSettings);
+  std::vector<IvkSubpassDependancies> _deps(1);
+  _deps[0].srcIndex = VK_SUBPASS_EXTERNAL;
+  _deps[0].dstIndex = 0;
 
-  // Depth =====
-  attachSettings.index = 1;
-  attachSettings.imageFormat = context.depthImage.format;
-  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
-  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-  IvkAttachmentDescRef depth = CreateAttachment(attachSettings);
+  // Attachments =====
+  std::vector<IvkAttachmentDescRef> attachmentDescRefs(_attachSettings.size());
+  for (u32 i = 0; i < attachmentDescRefs.size(); i++)
+  {
+    attachmentDescRefs[i] = CreateAttachment(_attachSettings[i], i);
+  }
 
   // Subpass =====
+  std::vector<VkAttachmentReference> colorRefs(_subpass[0].colorIndices.size());
+  for (u32 i = 0; i < _subpass[0].colorIndices.size(); i++)
+  {
+    colorRefs[i] = attachmentDescRefs[_subpass[0].colorIndices[i]].reference;
+  }
+
   VkSubpassDescription subpassDescription {};
-  subpassDescription.colorAttachmentCount = 1;
-  subpassDescription.pColorAttachments = &color.reference;
-  subpassDescription.pDepthStencilAttachment = &depth.reference;
-  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpassDescription.colorAttachmentCount = colorRefs.size();
+  subpassDescription.pColorAttachments = colorRefs.data();
+  subpassDescription.pDepthStencilAttachment = &attachmentDescRefs[_subpass[0].depthIndex].reference;
+  subpassDescription.pipelineBindPoint = _subpass[0].bindPoint;
 
   VkSubpassDependency subpassDependency {};
-  subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+  subpassDependency.srcSubpass    = _deps[0].srcIndex;
   subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.srcAccessMask = 0;
-  subpassDependency.dstSubpass    = 0;
+  subpassDependency.dstSubpass    = _deps[0].dstIndex;
   subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
   // Creation =====
   const u32 attachemntCount = 2;
-  VkAttachmentDescription attachments[attachemntCount] = { color.description, depth.description };
+  VkAttachmentDescription attachments[attachemntCount] = { attachmentDescRefs[0].description,
+                                                           attachmentDescRefs[1].description};
   const u32 subpassCount = 1;
   VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
   const u32 dependencyCount = 1;
@@ -90,14 +99,11 @@ b8 IvkRenderer::CreateShadowRenderpass()
 {
   // Attachments =====
   IvkAttachmentSettings attachSettings {};
-  attachSettings.index = 0;
   attachSettings.imageFormat = shadow.image.format;
-  attachSettings.loadOperation   = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachSettings.storeOperation  = VK_ATTACHMENT_STORE_OP_STORE;
   attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
   attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
 
-  IvkAttachmentDescRef shadowDepth = CreateAttachment(attachSettings);
+  IvkAttachmentDescRef shadowDepth = CreateAttachment(attachSettings, 0);
 
   // Subpass =====
   VkSubpassDescription subpassDescription {};
@@ -108,11 +114,9 @@ b8 IvkRenderer::CreateShadowRenderpass()
 
   VkSubpassDependency subpassDependency {};
   subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
-  subpassDependency.srcStageMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  subpassDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
   subpassDependency.dstSubpass    = 0;
-  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
 
   // Creation =====
   const u32 attachemntCount = 1;

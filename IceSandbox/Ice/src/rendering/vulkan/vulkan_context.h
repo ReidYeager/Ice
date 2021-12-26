@@ -70,11 +70,23 @@ struct IvkAttachmentDescRef
 struct IvkAttachmentSettings
 {
   VkFormat imageFormat;
-  VkAttachmentLoadOp loadOperation = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  VkAttachmentStoreOp storeOperation = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  VkAttachmentLoadOp loadOperation = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  VkAttachmentStoreOp storeOperation = VK_ATTACHMENT_STORE_OP_STORE;
   VkImageLayout finalLayout;
   VkImageLayout referenceLayout;
-  u32 index;
+};
+
+struct IvkSubpassSettings
+{
+  std::vector<u32> colorIndices;
+  u32 depthIndex = -1; // -1 is invalid
+  VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+};
+
+struct IvkSubpassDependancies
+{
+  u32 srcIndex;
+  u32 dstIndex;
 };
 
 enum IceShaderStageFlagBits
