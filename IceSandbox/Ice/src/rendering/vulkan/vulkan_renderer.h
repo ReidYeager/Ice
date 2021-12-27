@@ -15,6 +15,8 @@
 
 #include <vector>
 
+// TODO : ~!!~ Clean up vulkan files
+
 class IvkRenderer
 {
 private:
@@ -94,12 +96,17 @@ private:
 
   // Renderpass =====
 
+  b8 CreateMainRenderPass();
+
   // Creates a depth image and its view
   b8 CreateDepthImage();
   // Defines a renderpass attachment and its reference
   IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings, u32 _index);
   // Creates the final renderpass that creates the presented image
-  b8 CreateRenderpass();
+  b8 CreateRenderpass(VkRenderPass* _renderpass,
+                      std::vector<IvkAttachmentSettings> _attachSettings,
+                      std::vector<IvkSubpassSettings> _subpasses,
+                      std::vector<IvkSubpassDependencies> _dependencies);
   // Creates a framebuffer that binds the input image views for use in the renderpass
   b8 CreateFrameBuffer(VkFramebuffer* _framebuffer,
                        VkRenderPass& _renderpass,

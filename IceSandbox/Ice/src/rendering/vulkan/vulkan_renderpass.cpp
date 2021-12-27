@@ -24,119 +24,71 @@ IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settin
   return descRef;
 }
 
-b8 IvkRenderer::CreateRenderpass()
-{
-  // Inputs =====
-  std::vector<IvkAttachmentSettings> _attachSettings(2);
-  // Color
-  _attachSettings[0].imageFormat = context.swapchainFormat;
-  _attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  _attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  // Depth
-  _attachSettings[1].imageFormat = context.depthImage.format;
-  _attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  _attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-  std::vector<IvkSubpassSettings> _subpass(1);
-  _subpass[0].colorIndices.push_back(0);
-  _subpass[0].depthIndex = 1;
-
-  std::vector<IvkSubpassDependancies> _deps(1);
-  _deps[0].srcIndex = VK_SUBPASS_EXTERNAL;
-  _deps[0].dstIndex = 0;
-
-  // Attachments =====
-  std::vector<IvkAttachmentDescRef> attachmentDescRefs(_attachSettings.size());
-  for (u32 i = 0; i < attachmentDescRefs.size(); i++)
-  {
-    attachmentDescRefs[i] = CreateAttachment(_attachSettings[i], i);
-  }
-
-  // Subpass =====
-  std::vector<VkAttachmentReference> colorRefs(_subpass[0].colorIndices.size());
-  for (u32 i = 0; i < _subpass[0].colorIndices.size(); i++)
-  {
-    colorRefs[i] = attachmentDescRefs[_subpass[0].colorIndices[i]].reference;
-  }
-
-  VkSubpassDescription subpassDescription {};
-  subpassDescription.colorAttachmentCount = colorRefs.size();
-  subpassDescription.pColorAttachments = colorRefs.data();
-  subpassDescription.pDepthStencilAttachment = &attachmentDescRefs[_subpass[0].depthIndex].reference;
-  subpassDescription.pipelineBindPoint = _subpass[0].bindPoint;
-
-  VkSubpassDependency subpassDependency {};
-  subpassDependency.srcSubpass    = _deps[0].srcIndex;
-  subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.dstSubpass    = _deps[0].dstIndex;
-  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-  // Creation =====
-  const u32 attachemntCount = 2;
-  VkAttachmentDescription attachments[attachemntCount] = { attachmentDescRefs[0].description,
-                                                           attachmentDescRefs[1].description};
-  const u32 subpassCount = 1;
-  VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
-  const u32 dependencyCount = 1;
-  VkSubpassDependency dependencies[dependencyCount] = { subpassDependency };
-
-  VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-  createInfo.flags = 0;
-  createInfo.attachmentCount = attachemntCount;
-  createInfo.pAttachments    = attachments;
-  createInfo.subpassCount = subpassCount;
-  createInfo.pSubpasses   = subpasses;
-  createInfo.dependencyCount = dependencyCount;
-  createInfo.pDependencies   = dependencies;
-
-  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.renderpass),
-             "Failed to create renderpass");
-
-  return true;
-}
-
-b8 IvkRenderer::CreateShadowRenderpass()
+b8 IvkRenderer::CreateRenderpass(VkRenderPass* _renderpass,
+                                 std::vector<IvkAttachmentSettings> _attachSettings,
+                                 std::vector<IvkSubpassSettings> _subpasses,
+                                 std::vector<IvkSubpassDependencies> _dependencies)
 {
   // Attachments =====
-  IvkAttachmentSettings attachSettings {};
-  attachSettings.imageFormat = shadow.image.format;
-  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
-  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  std::vector<IvkAttachmentDescRef> descRefs(_attachSettings.size());
+  std::vector<VkAttachmentDescription> attachments(_attachSettings.size());
 
-  IvkAttachmentDescRef shadowDepth = CreateAttachment(attachSettings, 0);
+  for (u32 i = 0; i < descRefs.size(); i++)
+  {
+    descRefs[i] = CreateAttachment(_attachSettings[i], i);
+    attachments[i] = descRefs[i].description;
+  }
 
-  // Subpass =====
-  VkSubpassDescription subpassDescription {};
-  subpassDescription.colorAttachmentCount = 0;
-  subpassDescription.pColorAttachments = nullptr;
-  subpassDescription.pDepthStencilAttachment = &shadowDepth.reference;
-  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  // Subpasses =====
+  std::vector<std::vector<VkAttachmentReference>> allColorReferences(_subpasses.size());
+  std::vector<VkSubpassDescription> subpasses(_subpasses.size());
 
-  VkSubpassDependency subpassDependency {};
-  subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
-  subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-  subpassDependency.dstSubpass    = 0;
-  subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+  for (u32 i = 0; i < _subpasses.size(); i++)
+  {
+    std::vector<VkAttachmentReference>& colorRefs = allColorReferences[i];
+    colorRefs.resize(_subpasses[i].colorIndices.size());
+
+    for (u32 j = 0; j < _subpasses[i].colorIndices.size(); j++)
+    {
+      colorRefs[j] = descRefs[_subpasses[i].colorIndices[j]].reference;
+    }
+
+    VkSubpassDescription& subpassDescription = subpasses[i];
+    subpassDescription.pipelineBindPoint = _subpasses[i].bindPoint;
+
+    subpassDescription.colorAttachmentCount = colorRefs.size();
+    subpassDescription.pColorAttachments = colorRefs.size() == 0 ? nullptr : colorRefs.data();
+
+    if (_subpasses[i].depthIndex == -1)
+      subpassDescription.pDepthStencilAttachment = nullptr;
+    else
+      subpassDescription.pDepthStencilAttachment = &descRefs[_subpasses[i].depthIndex].reference;
+  }
+
+  // Dependencies =====
+  std::vector<VkSubpassDependency> dependencies(_dependencies.size());
+
+  for (u32 i = 0; i < _dependencies.size(); i++)
+  {
+    dependencies[i].srcSubpass = _dependencies[i].srcIndex;
+    dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[i].dstSubpass = _dependencies[i].dstIndex;
+    dependencies[i].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
 
   // Creation =====
-  const u32 attachemntCount = 1;
-  VkAttachmentDescription attachments[attachemntCount] = { shadowDepth.description };
-  const u32 subpassCount = 1;
-  VkSubpassDescription subpasses[subpassCount] = { subpassDescription };
-  const u32 dependencyCount = 1;
-  VkSubpassDependency dependencies[dependencyCount] = { subpassDependency };
-
   VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
   createInfo.flags = 0;
-  createInfo.attachmentCount = attachemntCount;
-  createInfo.pAttachments    = attachments;
-  createInfo.subpassCount = subpassCount;
-  createInfo.pSubpasses   = subpasses;
-  createInfo.dependencyCount = dependencyCount;
-  createInfo.pDependencies   = dependencies;
+  createInfo.attachmentCount = attachments.size();
+  createInfo.pAttachments    = attachments.data();
+  createInfo.subpassCount = subpasses.size();
+  createInfo.pSubpasses   = subpasses.data();
+  createInfo.dependencyCount = dependencies.size();
+  createInfo.pDependencies   = dependencies.data();
 
-  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &shadow.renderpass),
-              "Failed to create shadow renderpass");
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, _renderpass),
+             "Failed to create renderpass -- %u attachments, %u subpasses, %u dependencies",
+             (u32)attachments.size(), (u32)subpasses.size(), (u32)dependencies.size());
 
   return true;
 }

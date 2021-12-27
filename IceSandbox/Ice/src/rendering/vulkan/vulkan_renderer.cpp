@@ -35,7 +35,7 @@ b8 IvkRenderer::Initialize()
 
   ICE_ATTEMPT(CreateSwapchain());
   ICE_ATTEMPT(CreateDepthImage());
-  ICE_ATTEMPT(CreateRenderpass());
+  ICE_ATTEMPT(CreateMainRenderPass());
 
   // Framebuffers =====
   {
@@ -632,6 +632,57 @@ b8 IvkRenderer::CreateSyncObjects()
                                  &context.renderCompleteSemaphores[i]),
                "Failed to create render complete semaphore %u", i);
   }
+
+  return true;
+}
+
+b8 IvkRenderer::CreateMainRenderPass()
+{
+  // Attachments =====
+  std::vector<IvkAttachmentSettings> attachSettings(2);
+  // Color
+  attachSettings[0].imageFormat = context.swapchainFormat;
+  attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Depth
+  attachSettings[1].imageFormat = context.depthImage.format;
+  attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  // Subpass =====
+  IvkSubpassSettings subpasses;
+  subpasses.colorIndices.push_back(0);
+  subpasses.depthIndex = 1;
+
+  // Dependencies =====
+  IvkSubpassDependencies dependency {};
+  dependency.srcIndex = VK_SUBPASS_EXTERNAL;
+  dependency.dstIndex = 0;
+
+  ICE_ATTEMPT(CreateRenderpass(&context.renderpass, attachSettings, { subpasses }, { dependency }));
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowRenderpass()
+{
+  // Attachments =====
+  IvkAttachmentSettings attachSettings {};
+  attachSettings.imageFormat = shadow.image.format;
+  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+
+  // Subpass =====
+  IvkSubpassSettings subpass {};
+  subpass.bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.depthIndex = 0;
+
+  // Dependencies =====
+  IvkSubpassDependencies dependency{};
+  dependency.srcIndex = VK_SUBPASS_EXTERNAL;
+  dependency.dstIndex = 0;
+
+  ICE_ATTEMPT(CreateRenderpass(&shadow.renderpass, { attachSettings }, { subpass }, { dependency }));
 
   return true;
 }

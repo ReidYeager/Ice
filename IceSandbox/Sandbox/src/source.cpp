@@ -22,7 +22,7 @@ void reInit()
   u32 shadow = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
                                      {"shadow", Ice_Shader_Fragment}});
 
-  app.AddObject("Sphere.obj", shadow);
+  app.AddObject("Sphere.obj", light);
   app.AddObject("Cube.obj", shadow);
 }
 
@@ -115,7 +115,7 @@ int main()
 
   settings.windowSettings.extents = { 1280, 720 };
   //settings.windowSettings.extents = { 1024, 1024 };
-  settings.windowSettings.screenPosition = { 100, 50 };
+  settings.windowSettings.screenPosition = { 250, 150 };
 
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
 

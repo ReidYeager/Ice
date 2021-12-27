@@ -79,11 +79,11 @@ struct IvkAttachmentSettings
 struct IvkSubpassSettings
 {
   std::vector<u32> colorIndices;
-  u32 depthIndex = -1; // -1 is invalid
+  u32 depthIndex = ~(0u); // ~0 is an invalid index
   VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 };
 
-struct IvkSubpassDependancies
+struct IvkSubpassDependencies
 {
   u32 srcIndex;
   u32 dstIndex;
