@@ -15,11 +15,10 @@
 
 #include <vector>
 
-// TODO : ~!!~ Clean up vulkan files
-
 class IvkRenderer
 {
 private:
+  // TODO : Remove/move everything in this private section
   struct IvkObject
   {
     IvkMesh mesh;
@@ -41,8 +40,11 @@ private:
   const u32 shadowResolution = 1024;
 
 public:
+  // Initializes the components required to render
   b8 Initialize();
+  // Destroys the components required to render, materials, and meshes
   b8 Shutdown();
+  // Queues and presents a single frame's render
   b8 Render(IceCamera* _camera);
 
 private:
@@ -66,6 +68,7 @@ private:
   // Creates the fences and semaphores for CPU/GPU synchronization
   b8 CreateSyncObjects();
 
+  // Creates an image, view, and sampler for the directional light's shadow
   b8 CreateShadowImages();
 
   // Commands =====
@@ -83,8 +86,6 @@ private:
 
   // Defines the descriptors and sets available for use
   b8 CreateDescriptorPool();
-  // Creates the pipelineLayout and descriptor set for the global descriptors
-  b8 PrepareGlobalDescriptors();
   // Creates a descriptor set and its layout
   b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
                          VkDescriptorSetLayout* _setLayout,
@@ -92,14 +93,14 @@ private:
   // Binds the input values to the descriptor set
   b8 UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<IvkDescriptorBinding> _bindings);
   // Creates the images buffers used by the shadow renderpass
+
+  // Creates the pipelineLayout and set for the global descriptors
+  b8 PrepareGlobalDescriptors();
+  // Creates the pipelineLayout and set for the shadow descriptors
   b8 PrepareShadowDescriptors();
 
   // Renderpass =====
 
-  b8 CreateMainRenderPass();
-
-  // Creates a depth image and its view
-  b8 CreateDepthImage();
   // Defines a renderpass attachment and its reference
   IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings, u32 _index);
   // Creates the final renderpass that creates the presented image
@@ -112,9 +113,19 @@ private:
                        VkRenderPass& _renderpass,
                        VkExtent2D _extents,
                        std::vector<VkImageView> _views);
-  // Creates the renderpass to render the shadows' depth buffers
+
+  // Creates the main camera's depth image and its view
+  b8 CreateDepthImage();
+
+  // Creates a frame buffer for each swapchain image
+  b8 CreateMainFrameBuffers();
+  // Creates a frame buffer for the directional light's shadows
+  b8 CreateShadowFrameBuffer();
+
+  // Defines the settings used to create the presentation renderpass
+  b8 CreateMainRenderPass();
+  // Defines the settings used to create the light depth-buffer renderpass
   b8 CreateShadowRenderpass();
-  b8 CreateShadowFrameBuffers();
 
   // Platform =====
 
@@ -166,11 +177,15 @@ private:
                      VkImageAspectFlags _aspectMask);
   // Creates a vulkan image sampler
   b8 CreateImageSampler(reIvkImage* _image);
-  b8 CreateTexture(reIvkImage* _image, const char* _directory);
+  // Transitions the image into either the transfer-dst (!forSampling) or shader-read-only layout
   void TransitionImageLayout(reIvkImage* _image,
                              b8 _forSampling,
                              VkPipelineStageFlagBits _shaderStage);
+  // Copies the information in the buffer into a vkImage
   void CopyBufferToImage(IvkBuffer* _buffer, reIvkImage* _image);
+
+  // Creates an image, view, and sampler for the input image file
+  b8 CreateTexture(reIvkImage* _image, const char* _directory);
 
   // ====================
   // API

@@ -45,7 +45,7 @@ struct reIvkImage
 };
 
 // =======================
-// Material
+// Descriptor
 // =======================
 
 struct IvkDescriptor
@@ -60,6 +60,10 @@ struct IvkDescriptorBinding
   reIvkImage* image = nullptr;
   IvkBuffer* buffer = nullptr;
 };
+
+//=========================
+// Renderpass
+//=========================
 
 struct IvkAttachmentDescRef
 {
@@ -89,6 +93,10 @@ struct IvkSubpassDependencies
   u32 dstIndex;
 };
 
+//=========================
+// Shader
+//=========================
+
 enum IceShaderStageFlagBits
 {
   Ice_Shader_Invalid = 0,
@@ -110,6 +118,10 @@ struct IvkShader
   IceShaderInfo info;
 };
 
+//=========================
+// Material
+//=========================
+
 struct IvkMaterial
 {
   VkDescriptorSetLayout descriptorSetLayout;
@@ -122,6 +134,16 @@ struct IvkMaterial
   IvkShader fragmentModule;
 };
 
+// =======================
+// TMP -- Lights
+// =======================
+
+struct IvkLights
+{
+  vec4 directionalDirection;
+  vec4 directionalColor;
+};
+
 struct IvkShadow
 {
   VkFramebuffer framebuffer;
@@ -131,16 +153,6 @@ struct IvkShadow
   IvkBuffer lightMatrixBuffer;
 
   glm::mat4 viewProjMatrix;
-};
-
-// =======================
-// TMP -- Lights
-// =======================
-
-struct IvkLights
-{
-  vec4 directionalDirection;
-  vec4 directionalColor;
 };
 
 // =======================

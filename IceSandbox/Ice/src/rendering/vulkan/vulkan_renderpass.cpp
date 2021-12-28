@@ -154,7 +154,23 @@ b8 IvkRenderer::CreateFrameBuffer(VkFramebuffer* _framebuffer,
   return true;
 }
 
-b8 IvkRenderer::CreateShadowFrameBuffers()
+b8 IvkRenderer::CreateMainFrameBuffers()
+{
+  const u32 imageCount = context.swapchainImages.size();
+  context.frameBuffers.resize(imageCount);
+
+  for (u32 i = 0; i < imageCount; i++)
+  {
+    ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
+                                  context.renderpass,
+                                  context.swapchainExtent,
+                                  { context.swapchainImageViews[i], context.depthImage.view }));
+  }
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowFrameBuffer()
 {
   ICE_ATTEMPT(CreateFrameBuffer(&shadow.framebuffer,
                                 shadow.renderpass,

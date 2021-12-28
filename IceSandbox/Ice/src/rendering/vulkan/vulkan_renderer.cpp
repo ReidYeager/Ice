@@ -13,10 +13,11 @@
 
 #include <vector>
 
-IvkMesh mesh;
-
 b8 IvkRenderer::Initialize()
 {
+  // TODO : ~!!~ Shader hot-reload on update event
+  // TODO : ~!~ Improve object/scene handling
+
   IceLogDebug("===== Vulkan Renderer Init =====");
 
   tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
@@ -37,24 +38,11 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateDepthImage());
   ICE_ATTEMPT(CreateMainRenderPass());
 
-  // Framebuffers =====
-  {
-    // Creates a frame buffer for each swapchain image
-    const u32 imageCount = context.swapchainImages.size();
-    context.frameBuffers.resize(imageCount);
-
-    for (u32 i = 0; i < imageCount; i++)
-    {
-      ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
-                                    context.renderpass,
-                                    context.swapchainExtent,
-                                    { context.swapchainImageViews[i], context.depthImage.view }));
-    }
-  }
+  ICE_ATTEMPT(CreateMainFrameBuffers());
 
   ICE_ATTEMPT(CreateShadowImages());
   ICE_ATTEMPT(CreateShadowRenderpass());
-  ICE_ATTEMPT(CreateShadowFrameBuffers());
+  ICE_ATTEMPT(CreateShadowFrameBuffer());
 
   ICE_ATTEMPT(PrepareGlobalDescriptors());
   ICE_ATTEMPT(PrepareShadowDescriptors());
