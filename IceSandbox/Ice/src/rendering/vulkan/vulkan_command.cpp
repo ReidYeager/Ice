@@ -4,6 +4,10 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_vulkan.h"
+#include "imgui/imgui_impl_win32.h"
+
 
 b8 IvkRenderer::CreateCommandBuffers()
 {
@@ -25,6 +29,8 @@ b8 IvkRenderer::CreateCommandBuffers()
 
 b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 {
+  ImGui::Render();
+
   VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = 0;
 
@@ -32,23 +38,22 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   clearValues[0].color = { 0.3f, 0.3f, 0.3f };
   clearValues[1].depthStencil = { 1, 0 };
 
-  VkRenderPassBeginInfo passes[2];
   // Shadow
-  VkRenderPassBeginInfo shadowPass { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-  shadowPass.clearValueCount = 1;
-  shadowPass.pClearValues = &clearValues[1];
-  shadowPass.renderArea.extent = { shadowResolution, shadowResolution };
-  shadowPass.renderArea.offset = { 0 , 0 };
-  shadowPass.renderPass = shadow.renderpass;
-  shadowPass.framebuffer = shadow.framebuffer;
+  VkRenderPassBeginInfo shadowBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  shadowBeginInfo.clearValueCount = 1;
+  shadowBeginInfo.pClearValues = &clearValues[1];
+  shadowBeginInfo.renderArea.extent = { shadowResolution, shadowResolution };
+  shadowBeginInfo.renderArea.offset = { 0 , 0 };
+  shadowBeginInfo.renderPass = shadow.renderpass;
+  shadowBeginInfo.framebuffer = shadow.framebuffer;
   // Color
-  VkRenderPassBeginInfo colorPass { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-  colorPass.clearValueCount = 2;
-  colorPass.pClearValues = clearValues;
-  colorPass.renderArea.extent = context.swapchainExtent;
-  colorPass.renderArea.offset = { 0 , 0 };
-  colorPass.renderPass = context.renderpass;
-  colorPass.framebuffer = context.frameBuffers[_commandIndex];
+  VkRenderPassBeginInfo colorBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  colorBeginInfo.clearValueCount = 2;
+  colorBeginInfo.pClearValues = clearValues;
+  colorBeginInfo.renderArea.extent = context.swapchainExtent;
+  colorBeginInfo.renderArea.offset = { 0 , 0 };
+  colorBeginInfo.renderPass = context.mainRenderpass;
+  colorBeginInfo.framebuffer = context.frameBuffers[_commandIndex];
 
   VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
 
@@ -60,7 +65,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   // Shadow pass =====
   {
-    vkCmdBeginRenderPass(cmdBuffer, &shadowPass, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmdBuffer, &shadowBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             context.globalPipelinelayout,
@@ -106,7 +111,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   // Color pass =====
   {
-    vkCmdBeginRenderPass(cmdBuffer, &colorPass, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmdBuffer, &colorBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             context.globalPipelinelayout,
@@ -147,6 +152,8 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
         vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
       }
     }
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
     vkCmdEndRenderPass(cmdBuffer);
   }

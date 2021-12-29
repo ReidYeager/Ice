@@ -11,13 +11,20 @@
 #include "platform/file_system.h"
 #include "rendering/mesh.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_vulkan.h"
+#include "imgui/imgui_impl_win32.h"
+
 #include <vector>
+
+// TODO : ~!!~ Deferred rendering
+// TODO : ~!~ Shader hot-reload on update event
+//   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
+// TODO : ~!~ Improve object/scene handling
+//   Integrate cameras & lights into this scene system
 
 b8 IvkRenderer::Initialize()
 {
-  // TODO : ~!!~ Shader hot-reload on update event
-  // TODO : ~!~ Improve object/scene handling
-
   IceLogDebug("===== Vulkan Renderer Init =====");
 
   tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
@@ -52,6 +59,69 @@ b8 IvkRenderer::Initialize()
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
+  // Initialize IMGUI =====
+  {
+    //1: create descriptor pool for IMGUI
+  // the size of the pool is very oversize, but it's copied from imgui demo itself.
+    VkDescriptorPoolSize pool_sizes[] =
+    {
+      { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+      { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+      { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+      { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+      { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+      { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000;
+    pool_info.poolSizeCount = std::size(pool_sizes);
+    pool_info.pPoolSizes = pool_sizes;
+
+    IVK_ASSERT(vkCreateDescriptorPool(context.device, &pool_info, nullptr, &context.imguiPool),
+               "Failed to create descriptor pool for ImGui");
+
+    // 2: initialize imgui library
+
+    //this initializes the core structures of imgui
+    ImGui::CreateContext();
+
+    ImGui_ImplWin32_Init((void*)(rePlatform.GetVendorInfo()->hwnd));
+
+    //this initializes imgui for Vulkan
+    ImGui_ImplVulkan_InitInfo initInfo {};
+    initInfo.Instance = context.instance;
+    initInfo.PhysicalDevice = context.gpu.device;
+    initInfo.Device = context.device;
+    initInfo.Queue = context.graphicsQueue;
+    initInfo.DescriptorPool = context.imguiPool;
+    initInfo.MinImageCount = context.swapchainImages.size();
+    initInfo.ImageCount = context.swapchainImages.size();
+    initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    initInfo.Allocator = context.alloc;
+
+    ImGui_ImplVulkan_Init(&initInfo, context.mainRenderpass);
+
+    ImVec2 windowSize;
+    windowSize.x = context.swapchainExtent.width;
+    windowSize.y = context.swapchainExtent.height;
+
+    //execute a gpu command to upload imgui font textures
+    VkCommandBuffer cmd = BeginSingleTimeCommand(context.graphicsCommandPool);
+    ImGui_ImplVulkan_CreateFontsTexture(cmd);
+    EndSingleTimeCommand(cmd, context.graphicsCommandPool, context.graphicsQueue);
+
+    //clear font textures from cpu data
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+  }
+
   return true;
 }
 
@@ -61,6 +131,11 @@ b8 IvkRenderer::Shutdown()
 
   // TMP =====
   DestroyBuffer(&viewProjBuffer);
+
+  // ImGui =====
+  vkDestroyDescriptorPool(context.device, context.imguiPool, nullptr);
+  ImGui_ImplVulkan_Shutdown();
+  ImGui_ImplWin32_Shutdown();
 
   // Shadow =====
   DestroyBuffer(&shadow.lightMatrixBuffer, true);
@@ -120,7 +195,7 @@ b8 IvkRenderer::Shutdown()
     vkDestroyFramebuffer(context.device, f, context.alloc);
   }
 
-  vkDestroyRenderPass(context.device, context.renderpass, context.alloc);
+  vkDestroyRenderPass(context.device, context.mainRenderpass, context.alloc);
 
   vkDestroyImage(context.device, context.depthImage.image, context.alloc);
   vkDestroyImageView(context.device, context.depthImage.view, context.alloc);
@@ -146,6 +221,18 @@ b8 IvkRenderer::Shutdown()
 
 b8 IvkRenderer::Render(IceCamera* _camera)
 {
+  {
+    //imgui new frame
+    ImGui_ImplWin32_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
+    ImGui::NewFrame();
+
+    static bool t = true;
+
+    //imgui commands
+    ImGui::ShowDemoWindow(&t);
+  }
+
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
 
@@ -499,6 +586,7 @@ b8 IvkRenderer::CreateSwapchain()
         break;
       }
     }
+    context.surfaceFormat = format;
 
     // Present mode =====
     VkPresentModeKHR present = VK_PRESENT_MODE_FIFO_KHR; // Guaranteed
@@ -511,6 +599,7 @@ b8 IvkRenderer::CreateSwapchain()
       }
     }
     //present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
+    context.presentMode = present;
 
     // Image dimensions =====
     VkExtent2D extent;
@@ -647,7 +736,7 @@ b8 IvkRenderer::CreateMainRenderPass()
   dependency.srcIndex = VK_SUBPASS_EXTERNAL;
   dependency.dstIndex = 0;
 
-  ICE_ATTEMPT(CreateRenderpass(&context.renderpass, attachSettings, { subpasses }, { dependency }));
+  ICE_ATTEMPT(CreateRenderpass(&context.mainRenderpass, attachSettings, { subpasses }, { dependency }));
 
   return true;
 }

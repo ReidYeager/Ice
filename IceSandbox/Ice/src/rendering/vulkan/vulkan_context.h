@@ -12,6 +12,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_vulkan.h"
+#include "imgui/imgui_impl_win32.h"
+
 #include <vector>
 
 // =======================
@@ -182,6 +186,7 @@ struct reIvkContext
 
   VkInstance   instance = VK_NULL_HANDLE;
   VkSurfaceKHR surface  = VK_NULL_HANDLE;
+  VkSurfaceFormatKHR surfaceFormat;
   VkDevice     device   = VK_NULL_HANDLE;
   reIvkGpu     gpu;
 
@@ -190,12 +195,15 @@ struct reIvkContext
   VkQueue transientQueue;
 
   VkDescriptorPool descriptorPool;
+  VkDescriptorPool imguiPool;
+  ImGui_ImplVulkanH_Window imguiWindow;
 
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommandPool; // Used only for one-time commands
   std::vector<VkCommandBuffer> commandsBuffers;
 
   VkSwapchainKHR swapchain;
+  VkPresentModeKHR presentMode;
   std::vector<VkImage> swapchainImages;
   std::vector<VkImageView> swapchainImageViews;
   VkFormat swapchainFormat;
@@ -203,7 +211,7 @@ struct reIvkContext
 
   reIvkImage depthImage;
 
-  VkRenderPass renderpass;
+  VkRenderPass mainRenderpass;
   std::vector<VkFramebuffer> frameBuffers;
 
   std::vector<VkFence> flightSlotAvailableFences;

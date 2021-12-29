@@ -5,6 +5,9 @@
 #include "platform/platform.h"
 #include "core/input.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <windows.h>
@@ -20,6 +23,7 @@ b8 RegisterWindow();
 void PlatformAdjustWindowForBorder(reIceWindowSettings& _window);
 // Handles Windows event messages
 LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 rePlatformVendorData* vendorData = 0;
 
@@ -69,17 +73,17 @@ b8 reIcePlatform::CreateWindow()
 
   // Create the window
   HWND handle = CreateWindowExA(window_ex_style,
-    "IceWindowClass",
-    settings.title,
-    window_style,
-    settings.screenPosition.x,
-    settings.screenPosition.y,
-    settings.extents.width,
-    settings.extents.height,
-    0,
-    0,
-    vendorData->hinstance,
-    0);
+                                "IceWindowClass",
+                                settings.title,
+                                window_style,
+                                settings.screenPosition.x,
+                                settings.screenPosition.y,
+                                settings.extents.width,
+                                settings.extents.height,
+                                0,
+                                0,
+                                vendorData->hinstance,
+                                0);
 
   if (handle == 0)
   {
@@ -95,6 +99,12 @@ b8 reIcePlatform::CreateWindow()
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
   ShowWindow(vendorData->hwnd, showWindowCommandFlags);
+
+  {
+    RECT rct = { 0, 0, 0, 0 };
+    ::GetClientRect(handle, &rct);
+    IceLogDebug("L");
+  }
 
   return true;
 }
@@ -162,6 +172,8 @@ b8 reIcePlatform::Update()
 
 LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam)
 {
+  ImGui_ImplWin32_WndProcHandler(hwnd, message, wparam, lparam);
+
   switch (message)
   {
   case WM_CLOSE:

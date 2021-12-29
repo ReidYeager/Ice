@@ -162,7 +162,7 @@ b8 IvkRenderer::CreateMainFrameBuffers()
   for (u32 i = 0; i < imageCount; i++)
   {
     ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
-                                  context.renderpass,
+                                  context.mainRenderpass,
                                   context.swapchainExtent,
                                   { context.swapchainImageViews[i], context.depthImage.view }));
   }

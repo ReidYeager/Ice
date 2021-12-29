@@ -282,7 +282,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   createInfo.pDynamicState       = &dynamicStateInfo;
   createInfo.stageCount = shaderCount;
   createInfo.pStages    = shaderStageInfos;
-  createInfo.renderPass = context.renderpass;
+  createInfo.renderPass = context.mainRenderpass;
   createInfo.layout     = material.pipelineLayout;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,

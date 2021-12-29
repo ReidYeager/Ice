@@ -11,8 +11,6 @@ add_library (Ice STATIC
  "src/defines.h"
  "src/ice.h"
  "src/logger.h"
- 
- 
 
  "src/platform/file_system.cpp"
  "src/platform/file_system.h"
@@ -23,6 +21,7 @@ add_library (Ice STATIC
  "src/core/application.cpp"
  "src/core/input.cpp"
  "src/core/input.h"
+ "src/core/camera.h"
 
  "src/math/vector.h"
  "src/math/matrix.h"
@@ -30,8 +29,6 @@ add_library (Ice STATIC
 
  "src/rendering/renderer.h"
  "src/rendering/renderer.cpp"
- 
-
  "src/rendering/mesh.h"
 
  "src/rendering/vulkan/vulkan_renderer.h"
@@ -40,17 +37,34 @@ add_library (Ice STATIC
  "src/rendering/vulkan/vulkan_platform.cpp"
  "src/rendering/vulkan/vulkan_image.cpp"
  "src/rendering/vulkan/vulkan_material.cpp"
+ "src/rendering/vulkan/vulkan_descriptors.cpp"
+ "src/rendering/vulkan/vulkan_renderpass.cpp"
+ "src/rendering/vulkan/vulkan_mesh.cpp"
+ "src/rendering/vulkan/vulkan_command.cpp"
+ "src/rendering/vulkan/vulkan_buffer.cpp"
 
-
-
-
-
-  "src/rendering/vulkan/vulkan_buffer.cpp" "src/core/camera.h" "src/rendering/vulkan/vulkan_descriptors.cpp" "src/rendering/vulkan/vulkan_renderpass.cpp" "src/rendering/vulkan/vulkan_mesh.cpp" "src/rendering/vulkan/vulkan_command.cpp")
+ "libraries/imgui/imconfig.h"
+ "libraries/imgui/imgui.h"
+ "libraries/imgui/imgui.cpp"
+ "libraries/imgui/imgui_demo.cpp"
+ "libraries/imgui/imgui_draw.cpp"
+ "libraries/imgui/imgui_impl_vulkan.h"
+ "libraries/imgui/imgui_impl_vulkan.cpp"
+ "libraries/imgui/imgui_impl_win32.h"
+ "libraries/imgui/imgui_impl_win32.cpp"
+ "libraries/imgui/imgui_internal.h"
+ "libraries/imgui/imgui_tables.cpp"
+ "libraries/imgui/imgui_widgets.cpp"
+ "libraries/imgui/imstb_rectpack.h"
+ "libraries/imgui/imstb_textedit.h"
+ "libraries/imgui/imstb_truetype.h"
+)
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 
 target_include_directories(Ice PUBLIC
   ./src/
+  ./libraries/
   ${CMAKE_SOURCE_DIR}/libraries/include/
   ${Vulkan_INCLUDE_DIRS}
 )
