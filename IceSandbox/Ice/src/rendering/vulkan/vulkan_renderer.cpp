@@ -11,16 +11,18 @@
 #include "platform/file_system.h"
 #include "rendering/mesh.h"
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_vulkan.h"
-#include "imgui/imgui_impl_win32.h"
+#include "libraries/imgui/imgui.h"
+#include "libraries/imgui/imgui_impl_vulkan.h"
+#include "libraries/imgui/imgui_impl_win32.h"
 
 #include <vector>
 
-// TODO : ~!!~ Deferred rendering
-// TODO : ~!~ Shader hot-reload on update event
+// TODO : ~!!~ Automatically preview all image views with ImGui
+// TODO : ~!~ Deferred rendering
+
+// TODO : Shader hot-reload on update event
 //   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
-// TODO : ~!~ Improve object/scene handling
+// TODO : Improve object/scene handling
 //   Integrate cameras & lights into this scene system
 
 b8 IvkRenderer::Initialize()
@@ -227,10 +229,37 @@ b8 IvkRenderer::Render(IceCamera* _camera)
     ImGui_ImplVulkan_NewFrame();
     ImGui::NewFrame();
 
-    static bool t = true;
-
     //imgui commands
-    ImGui::ShowDemoWindow(&t);
+    //ImGui::ShowDemoWindow();
+
+    ImGui::Begin("test");
+    ImGui::InputFloat3("Light color", &tmpLights.directionalColor.x);
+    ImGui::SliderFloat("direction x", &tmpLights.directionalDirection.x, -1.0f, 1.0f);
+    ImGui::SliderFloat("direction y", &tmpLights.directionalDirection.y, -1.0f, 1.0f);
+    ImGui::SliderFloat("direction z", &tmpLights.directionalDirection.z, -1.0f, 1.0f);
+
+    // normalize direction
+    f32 xsq = tmpLights.directionalDirection.x * tmpLights.directionalDirection.x;
+    f32 ysq = tmpLights.directionalDirection.y * tmpLights.directionalDirection.y;
+    f32 zsq = tmpLights.directionalDirection.z * tmpLights.directionalDirection.z;
+    f32 sq = xsq + ysq + zsq;
+    sq = sqrt(sq);
+    tmpLights.directionalDirection.x /= sq;
+    tmpLights.directionalDirection.y /= sq;
+    tmpLights.directionalDirection.z /= sq;
+
+    ImGui::End();
+  }
+
+  {
+    glm::mat4& proj = shadow.viewProjMatrix;
+    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
+    proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
+    proj = proj * glm::lookAt(glm::vec3(tmpLights.directionalDirection.x, tmpLights.directionalDirection.y, tmpLights.directionalDirection.z) * -10.0f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+    FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+    FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
+
   }
 
   static u32 flightSlotIndex = 0;

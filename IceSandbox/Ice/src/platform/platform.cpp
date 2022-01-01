@@ -5,8 +5,8 @@
 #include "platform/platform.h"
 #include "core/input.h"
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
+#include "libraries/imgui/imgui.h"
+#include "libraries/imgui/imgui_impl_win32.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -99,12 +99,6 @@ b8 reIcePlatform::CreateWindow()
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
   ShowWindow(vendorData->hwnd, showWindowCommandFlags);
-
-  {
-    RECT rct = { 0, 0, 0, 0 };
-    ::GetClientRect(handle, &rct);
-    IceLogDebug("L");
-  }
 
   return true;
 }

@@ -12,9 +12,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_vulkan.h"
-#include "imgui/imgui_impl_win32.h"
+#include "libraries/imgui/imgui.h"
+#include "libraries/imgui/imgui_impl_vulkan.h"
+#include "libraries/imgui/imgui_impl_win32.h"
 
 #include <vector>
 

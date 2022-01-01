@@ -19,7 +19,7 @@ layout(location = 0) out vec4 outColor;
 void main() {
     vec3 projectCoords = fragLightPos.xyz / fragLightPos.w;
 
-    // TODO : Figure out why these hacks work. (Commented below)
+    // TODO : Figure out why these hacks (kind of) work.
 
     // Remapping the z value causes all currentDepth values to be > shadowDepth
     projectCoords.xy = projectCoords.xy * 0.5 + 0.5;

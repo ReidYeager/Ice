@@ -37,7 +37,7 @@ private:
   reIvkImage texture;
   IvkShadow shadow;
 
-  const u32 shadowResolution = 1024;
+  const u32 shadowResolution = 4096;
 
 public:
   // Initializes the components required to render

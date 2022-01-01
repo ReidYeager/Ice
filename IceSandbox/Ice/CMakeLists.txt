@@ -43,22 +43,22 @@ add_library (Ice STATIC
  "src/rendering/vulkan/vulkan_command.cpp"
  "src/rendering/vulkan/vulkan_buffer.cpp"
 
- "libraries/imgui/imconfig.h"
- "libraries/imgui/imgui.h"
- "libraries/imgui/imgui.cpp"
- "libraries/imgui/imgui_demo.cpp"
- "libraries/imgui/imgui_draw.cpp"
- "libraries/imgui/imgui_impl_vulkan.h"
- "libraries/imgui/imgui_impl_vulkan.cpp"
- "libraries/imgui/imgui_impl_win32.h"
- "libraries/imgui/imgui_impl_win32.cpp"
- "libraries/imgui/imgui_internal.h"
- "libraries/imgui/imgui_tables.cpp"
- "libraries/imgui/imgui_widgets.cpp"
- "libraries/imgui/imstb_rectpack.h"
- "libraries/imgui/imstb_textedit.h"
- "libraries/imgui/imstb_truetype.h"
-)
+ "src/libraries/imgui/imconfig.h"
+ "src/libraries/imgui/imgui.h"
+ "src/libraries/imgui/imgui.cpp"
+ "src/libraries/imgui/imgui_demo.cpp"
+ "src/libraries/imgui/imgui_draw.cpp"
+ "src/libraries/imgui/imgui_impl_vulkan.h"
+ "src/libraries/imgui/imgui_impl_vulkan.cpp"
+ "src/libraries/imgui/imgui_impl_win32.h"
+ "src/libraries/imgui/imgui_impl_win32.cpp"
+ "src/libraries/imgui/imgui_internal.h"
+ "src/libraries/imgui/imgui_tables.cpp"
+ "src/libraries/imgui/imgui_widgets.cpp"
+ "src/libraries/imgui/imstb_rectpack.h"
+ "src/libraries/imgui/imstb_textedit.h"
+ "src/libraries/imgui/imstb_truetype.h"
+ "src/core/gui.h")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

@@ -4,9 +4,9 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_vulkan.h"
-#include "imgui/imgui_impl_win32.h"
+#include "libraries/imgui/imgui.h"
+#include "libraries/imgui/imgui_impl_vulkan.h"
+#include "libraries/imgui/imgui_impl_win32.h"
 
 
 b8 IvkRenderer::CreateCommandBuffers()
@@ -29,8 +29,6 @@ b8 IvkRenderer::CreateCommandBuffers()
 
 b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 {
-  ImGui::Render();
-
   VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = 0;
 
@@ -153,6 +151,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
       }
     }
 
+    ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
     vkCmdEndRenderPass(cmdBuffer);

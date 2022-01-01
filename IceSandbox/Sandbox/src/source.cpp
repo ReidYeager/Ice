@@ -33,50 +33,7 @@ float halfWidth = 10.0f;
 
 void reUpdate(float _deltaTime)
 {
-  //if (Input.IsKeyDown(Ice_Key_R))
-  //{
-  //  static float tmpTime = 0.0f;
-  //  reRenderer.backend.tmpLights.directionalDirection.x = sin(tmpTime);
-  //  reRenderer.backend.tmpLights.directionalDirection.z = cos(tmpTime);
-
-  //  tmpTime += _deltaTime * 2.0f;
-  //}
-
-  if (Input.IsKeyDown(Ice_Key_O))
-  {
-    zFar += 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-  if (Input.IsKeyDown(Ice_Key_L))
-  {
-    zFar -= 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-
-  if (Input.IsKeyDown(Ice_Key_I))
-  {
-    zNear += 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-  if (Input.IsKeyDown(Ice_Key_K))
-  {
-    zNear -= 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-
-  if (Input.IsKeyDown(Ice_Key_U))
-  {
-    halfWidth += 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-  if (Input.IsKeyDown(Ice_Key_J))
-  {
-    halfWidth -= 0.1f;
-    IceLogInfo("--HWidth: %f -- zNear: %f -- zFar: %f", halfWidth, zNear, zFar);
-  }
-
-
-  if (Input.IsMouseButtonDown(Ice_Mouse_Right) || Input.IsMouseButtonDown(Ice_Mouse_Left))
+  if (Input.IsMouseButtonDown(Ice_Mouse_Right) || Input.IsKeyDown(Ice_Key_R))
   {
     i32 x, y;
     Input.GetMouseDelta(&x, &y);
