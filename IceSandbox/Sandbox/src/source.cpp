@@ -24,6 +24,7 @@ void reInit()
 
   app.AddObject("Plane.obj", shadow);
   app.AddObject("Cube.obj", shadow);
+  app.AddObject("Sphere.obj", shadow);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

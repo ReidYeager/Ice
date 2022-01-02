@@ -21,12 +21,12 @@ layout(location = 0) out vec4 outColor;
 float textureProj(vec4 shadowCoord)
 {
 	float shadow = 1.0;
+	float bias = max(0.05 * (1.0 - abs(dot(normal, global.dLightDirection))), 0.005);  
+	
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
 	{
-		// I do not know why, but when dist == shadowCoord.z, dist < shadowCoord.z returns true
-		// Therefore I multiply dist by 1.01 to avoid this
-		float dist = texture( shadowMap, shadowCoord.st).r * 1.01;
-		if ( dist < shadowCoord.z && shadowCoord.w > 0.0 ) 
+		float sampledDepth = texture(shadowMap, shadowCoord.st).r;
+		if ( sampledDepth < (shadowCoord.z - bias) )
 		{
 			shadow = ambient;
 		}

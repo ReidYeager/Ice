@@ -17,7 +17,6 @@
 
 #include <vector>
 
-// TODO : ~!!~ Automatically preview all image views with ImGui
 // TODO : ~!~ Deferred rendering
 
 // TODO : Shader hot-reload on update event
@@ -923,7 +922,7 @@ b8 IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
   IvkObject object;
   object.mesh = meshes[_meshIndex];
 
-  float pos = (_meshIndex % 2 == 0) ? -0.5f : 0.5f;
+  float pos = (_meshIndex % 2 == 0) ? -1.0f : 1.0f;
   IceLogDebug("Pos = %u => %f", _meshIndex, pos);
 
   glm::mat4 tmpTransform = glm::translate(glm::mat4(1), glm::vec3(0, pos, 0));
