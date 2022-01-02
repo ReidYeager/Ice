@@ -22,7 +22,7 @@ void reInit()
   u32 shadow = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
                                      {"shadow", Ice_Shader_Fragment}});
 
-  app.AddObject("Sphere.obj", light);
+  app.AddObject("Plane.obj", shadow);
   app.AddObject("Cube.obj", shadow);
 }
 

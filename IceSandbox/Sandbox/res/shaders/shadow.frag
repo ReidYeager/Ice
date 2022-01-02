@@ -16,19 +16,26 @@ layout(location = 3) in vec4 fragLightPos;
 
 layout(location = 0) out vec4 outColor;
 
+#define ambient 0.1
+
+float textureProj(vec4 shadowCoord)
+{
+	float shadow = 1.0;
+	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
+	{
+		// I do not know why, but when dist == shadowCoord.z, dist < shadowCoord.z returns true
+		// Therefore I multiply dist by 1.01 to avoid this
+		float dist = texture( shadowMap, shadowCoord.st).r * 1.01;
+		if ( dist < shadowCoord.z && shadowCoord.w > 0.0 ) 
+		{
+			shadow = ambient;
+		}
+	}
+	return shadow;
+}
+
 void main() {
-    vec3 projectCoords = fragLightPos.xyz / fragLightPos.w;
+    float shadow = textureProj(fragLightPos / fragLightPos.w);
 
-    // TODO : Figure out why these hacks (kind of) work.
-
-    // Remapping the z value causes all currentDepth values to be > shadowDepth
-    projectCoords.xy = projectCoords.xy * 0.5 + 0.5;
-
-    float shadowDepth = texture(shadowMap, projectCoords.xy).r;
-    float currentDepth = projectCoords.z;
-
-    // Using the raw current depth, anything not in shadow results in a spiraling pattern
-    float shadow = (currentDepth * 0.99) < shadowDepth ? 1.0 : 0.0;
-
-    outColor = vec4(vec3(shadow), 1.0);
+    outColor = vec4(global.dLightColor * shadow, 1.0);
 }

@@ -144,8 +144,11 @@ struct IvkMaterial
 
 struct IvkLights
 {
-  vec4 directionalDirection;
-  vec4 directionalColor;
+  struct
+  {
+    vec4 direction;
+    vec4 color;
+  } directional;
 };
 
 struct IvkShadow

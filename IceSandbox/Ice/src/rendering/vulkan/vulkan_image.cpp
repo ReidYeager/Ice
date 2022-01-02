@@ -90,15 +90,16 @@ b8 IvkRenderer::CreateImageView(VkImageView* _view,
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
   createInfo.image = _image;
   createInfo.format = _format;
+  createInfo.subresourceRange = {};
   createInfo.subresourceRange.aspectMask = _aspectMask;
   createInfo.subresourceRange.levelCount = 1;
   createInfo.subresourceRange.baseMipLevel = 0;
   createInfo.subresourceRange.layerCount = 1;
   createInfo.subresourceRange.baseArrayLayer = 0;
-  createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-  createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-  createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-  createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+  //createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+  //createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+  //createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+  //createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
   IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
              "Failed to create an image view");
@@ -111,18 +112,19 @@ b8 IvkRenderer::CreateImageSampler(reIvkImage* _image)
   VkSamplerCreateInfo createInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
   createInfo.magFilter = VK_FILTER_LINEAR;
   createInfo.minFilter = VK_FILTER_LINEAR;
-  createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  createInfo.addressModeV = createInfo.addressModeU;
+  createInfo.addressModeW = createInfo.addressModeU;
 
-  createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
   createInfo.unnormalizedCoordinates = VK_FALSE;
   createInfo.compareEnable = VK_FALSE;
   createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
   createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   createInfo.mipLodBias = 0.0f;
   createInfo.minLod = 0.0f;
-  createInfo.maxLod = 0.0f;
+  createInfo.maxLod = 1.0f;
+  createInfo.maxAnisotropy = 1.0f;
 
   IVK_ASSERT(vkCreateSampler(context.device, &createInfo, context.alloc, &_image->sampler),
              "Failed to create an image sampler");
@@ -138,8 +140,8 @@ b8 IvkRenderer::CreateTexture(reIvkImage* _image, const char* _directory)
   VkDeviceSize imageSize = 4 * (VkDeviceSize)width * (VkDeviceSize)height;
 
   // Create texture buffer =====
-  IvkBuffer imageBuffer;
-  CreateBuffer(&imageBuffer,
+  IvkBuffer transferBuffer;
+  CreateBuffer(&transferBuffer,
                imageSize,
                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -159,10 +161,10 @@ b8 IvkRenderer::CreateTexture(reIvkImage* _image, const char* _directory)
 
   // Fill the image info =====
   TransitionImageLayout(_image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-  CopyBufferToImage(&imageBuffer, _image);
+  CopyBufferToImage(&transferBuffer, _image);
   TransitionImageLayout(_image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
-  DestroyBuffer(&imageBuffer, true);
+  DestroyBuffer(&transferBuffer, true);
 
   return true;
 }

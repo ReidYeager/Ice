@@ -29,8 +29,8 @@ b8 IvkRenderer::Initialize()
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
 
-  tmpLights.directionalColor = { 1.0f, 0.5f, 0.1f };
-  tmpLights.directionalDirection = { 1.0f, -1.0f, 1.0f };
+  tmpLights.directional.color = { 1.0f, 1.0f, 1.0f };
+  tmpLights.directional.direction = { -1.0f, -1.0f, -1.0f };
 
   // API initialization =====
   ICE_ATTEMPT(CreateInstance());
@@ -224,6 +224,20 @@ b8 IvkRenderer::Shutdown()
 b8 IvkRenderer::Render(IceCamera* _camera)
 {
   {
+    glm::mat4& proj = shadow.viewProjMatrix;
+    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
+    proj[1][1] *= -1;
+    proj = proj * glm::lookAt(glm::vec3(tmpLights.directional.direction.x,
+                                        tmpLights.directional.direction.y,
+                                        tmpLights.directional.direction.z) * -10.0f,
+                              glm::vec3(0, 0, 0),
+                              glm::vec3(0, 1, 0));
+
+    FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+    FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
+  }
+
+  {
     //imgui new frame
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplVulkan_NewFrame();
@@ -233,33 +247,22 @@ b8 IvkRenderer::Render(IceCamera* _camera)
     //ImGui::ShowDemoWindow();
 
     ImGui::Begin("test");
-    ImGui::InputFloat3("Light color", &tmpLights.directionalColor.x);
-    ImGui::SliderFloat("direction x", &tmpLights.directionalDirection.x, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction y", &tmpLights.directionalDirection.y, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction z", &tmpLights.directionalDirection.z, -1.0f, 1.0f);
+    ImGui::InputFloat3("Light color", &tmpLights.directional.color.x);
+    ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
+    ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
+    ImGui::SliderFloat("direction z", &tmpLights.directional.direction.z, -1.0f, 1.0f);
 
     // normalize direction
-    f32 xsq = tmpLights.directionalDirection.x * tmpLights.directionalDirection.x;
-    f32 ysq = tmpLights.directionalDirection.y * tmpLights.directionalDirection.y;
-    f32 zsq = tmpLights.directionalDirection.z * tmpLights.directionalDirection.z;
+    f32 xsq = tmpLights.directional.direction.x * tmpLights.directional.direction.x;
+    f32 ysq = tmpLights.directional.direction.y * tmpLights.directional.direction.y;
+    f32 zsq = tmpLights.directional.direction.z * tmpLights.directional.direction.z;
     f32 sq = xsq + ysq + zsq;
     sq = sqrt(sq);
-    tmpLights.directionalDirection.x /= sq;
-    tmpLights.directionalDirection.y /= sq;
-    tmpLights.directionalDirection.z /= sq;
+    tmpLights.directional.direction.x /= sq;
+    tmpLights.directional.direction.y /= sq;
+    tmpLights.directional.direction.z /= sq;
 
     ImGui::End();
-  }
-
-  {
-    glm::mat4& proj = shadow.viewProjMatrix;
-    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
-    proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-    proj = proj * glm::lookAt(glm::vec3(tmpLights.directionalDirection.x, tmpLights.directionalDirection.y, tmpLights.directionalDirection.z) * -10.0f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-    FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
-    FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
-
   }
 
   static u32 flightSlotIndex = 0;
@@ -745,27 +748,113 @@ b8 IvkRenderer::CreateSyncObjects()
 b8 IvkRenderer::CreateMainRenderPass()
 {
   // Attachments =====
-  std::vector<IvkAttachmentSettings> attachSettings(2);
+  //std::vector<IvkAttachmentSettings> attachSettings(2);
   // Color
-  attachSettings[0].imageFormat = context.swapchainFormat;
-  attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  // Depth
-  attachSettings[1].imageFormat = context.depthImage.format;
-  attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  //attachSettings[0].imageFormat = context.swapchainFormat;
+  //attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  //attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  //// Depth
+  //attachSettings[1].imageFormat = context.depthImage.format;
+  //attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  //attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentDescription attachments[2];
+  attachments[0].flags = 0;
+  attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[0].format = context.swapchainFormat;
+  attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[0].finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachments[0].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  attachments[1].flags = 0;
+  attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[1].format = context.depthImage.format;
+  attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[1].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  attachments[1].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  VkAttachmentReference references[2];
+  references[0].attachment = 0;
+  references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  references[1].attachment = 1;
+  references[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   // Subpass =====
-  IvkSubpassSettings subpasses;
-  subpasses.colorIndices.push_back(0);
-  subpasses.depthIndex = 1;
+  //IvkSubpassSettings subpasses;
+  //subpasses.colorIndices.push_back(0);
+  //subpasses.depthIndex = 1;
+
+  VkSubpassDescription subpass;
+  subpass.flags = 0;
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &references[0];
+  subpass.pDepthStencilAttachment = &references[1];
+  subpass.inputAttachmentCount = 0;
+  subpass.pInputAttachments = nullptr;
+  subpass.preserveAttachmentCount = 0;
+  subpass.pPreserveAttachments = nullptr;
+  subpass.pResolveAttachments = nullptr;
 
   // Dependencies =====
-  IvkSubpassDependencies dependency {};
-  dependency.srcIndex = VK_SUBPASS_EXTERNAL;
-  dependency.dstIndex = 0;
+  //IvkSubpassDependencies dependency {};
+  //dependency.srcIndex = VK_SUBPASS_EXTERNAL;
+  //dependency.dstIndex = 0;
 
-  ICE_ATTEMPT(CreateRenderpass(&context.mainRenderpass, attachSettings, { subpasses }, { dependency }));
+  VkSubpassDependency dependencies[2];
+
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+    // Creation =====
+  VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.attachmentCount = 2;
+  createInfo.pAttachments    = attachments;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses   = &subpass;
+  createInfo.dependencyCount = 2;
+  createInfo.pDependencies   = dependencies;
+
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.mainRenderpass),
+             "Failed to create renderpass");
+
+  return true;
+}
+
+b8 IvkRenderer::CreateShadowImages()
+{
+  ICE_ATTEMPT(CreateImage(&shadow.image,
+                          { shadowResolution, shadowResolution },
+                          VK_FORMAT_D16_UNORM,
+                          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT));
+  shadow.image.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+  ICE_ATTEMPT(CreateImageView(&shadow.image.view,
+                              shadow.image.image,
+                              shadow.image.format,
+                              VK_IMAGE_ASPECT_DEPTH_BIT));
+
+  ICE_ATTEMPT(CreateImageSampler(&shadow.image));
 
   return true;
 }
@@ -773,22 +862,107 @@ b8 IvkRenderer::CreateMainRenderPass()
 b8 IvkRenderer::CreateShadowRenderpass()
 {
   // Attachments =====
-  IvkAttachmentSettings attachSettings {};
-  attachSettings.imageFormat = shadow.image.format;
-  attachSettings.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
-  attachSettings.referenceLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
+  VkAttachmentDescription attachSettings {};
+  attachSettings.format = shadow.image.format;
+  attachSettings.flags = 0;
+  attachSettings.samples = VK_SAMPLE_COUNT_1_BIT;
+  attachSettings.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachSettings.finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+  attachSettings.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachSettings.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachSettings.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachSettings.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  VkAttachmentReference reference {};
+  reference.attachment = 0;
+  reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   // Subpass =====
-  IvkSubpassSettings subpass {};
-  subpass.bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.depthIndex = 0;
+  VkSubpassDescription subpass {};
+  subpass.flags = 0;
+  subpass.colorAttachmentCount = 0;
+  subpass.pDepthStencilAttachment = &reference;
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
   // Dependencies =====
-  IvkSubpassDependencies dependency{};
-  dependency.srcIndex = VK_SUBPASS_EXTERNAL;
-  dependency.dstIndex = 0;
+  VkSubpassDependency dependencies[2];
+  dependencies[0].srcSubpass  = VK_SUBPASS_EXTERNAL;
+  dependencies[0].dstSubpass = 0;
+  dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-  ICE_ATTEMPT(CreateRenderpass(&shadow.renderpass, { attachSettings }, { subpass }, { dependency }));
+  dependencies[1].srcSubpass = 0;
+  dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+  dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+  dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+  // Creation =====
+  VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.attachmentCount = 1;
+  createInfo.pAttachments    = &attachSettings;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses   = &subpass;
+  createInfo.dependencyCount = 2;
+  createInfo.pDependencies   = dependencies;
+
+  IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &shadow.renderpass),
+             "Failed to create shadow renderpass");
+
+  return true;
+}
+
+b8 IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+{
+  IvkObject object;
+  object.mesh = meshes[_meshIndex];
+
+  float pos = (_meshIndex % 2 == 0) ? -0.5f : 0.5f;
+  IceLogDebug("Pos = %u => %f", _meshIndex, pos);
+
+  glm::mat4 tmpTransform = glm::translate(glm::mat4(1), glm::vec3(0, pos, 0));
+
+  CreateBuffer(&object.transformBuffer,
+               64,
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               (void*)&tmpTransform);
+
+  VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+  allocInfo.descriptorPool = context.descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &context.objectDescriptorSetLayout;
+  allocInfo.pNext = nullptr;
+
+  IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                      &allocInfo,
+                                      &object.descriptorSet),
+             "Failed to allocate object descriptor set");
+
+  VkDescriptorBufferInfo bufferInfo {};
+  bufferInfo.buffer = object.transformBuffer.buffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = VK_WHOLE_SIZE;
+
+  VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  write.dstSet           = object.descriptorSet;
+  write.dstBinding       = 0;
+  write.dstArrayElement  = 0;
+  write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.descriptorCount  = 1;
+  write.pBufferInfo      = &bufferInfo;
+  write.pImageInfo       = nullptr;
+  write.pTexelBufferView = nullptr;
+  
+  vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
+
+  scene[_materialIndex].push_back(object);
 
   return true;
 }

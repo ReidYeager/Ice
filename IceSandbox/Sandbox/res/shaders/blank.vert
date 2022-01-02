@@ -20,6 +20,12 @@ layout(location = 1) out float viewDot;
 layout(location = 2) out vec2 uvOut;
 layout(location = 3) out vec4 fragLightPos;
 
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 );
+
 void main() {
     vec4 modelPosition = model.transform * vec4(position, 1.0);
 
@@ -29,5 +35,5 @@ void main() {
     vec3 camPos = vec3(global.viewProj[0][3], global.viewProj[1][3], global.viewProj[2][3]);
     viewDot = dot(-camPos, normal);
     uvOut = uv;
-    fragLightPos = global.dLightMatrix * modelPosition;
+    fragLightPos = (biasMat * global.dLightMatrix * model.transform) * vec4(position, 1.0);
 }
