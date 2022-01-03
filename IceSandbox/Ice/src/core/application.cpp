@@ -62,6 +62,8 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
     return false;
   }
 
+  sceneRoot = new IceObject();
+
   // Set camera default state =====
   glm::mat4 viewProj = glm::mat4(1);
   viewProj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
@@ -128,6 +130,17 @@ b8 reIceApplication::Update()
   return true;
 }
 
+void DestroyObjectAndChildren(IceObject* object)
+{
+  for (auto& o : object->children)
+  {
+    DestroyObjectAndChildren(o);
+  }
+
+  object->children.clear();
+  free(object);
+}
+
 b8 reIceApplication::Shutdown()
 {
   float totalAverageDelta = averageSum / averageCount;
@@ -138,15 +151,27 @@ b8 reIceApplication::Shutdown()
   IceLogInfo("===== reApplication Shutdown =====");
   state.ClientShutdown();
 
+  DestroyObjectAndChildren(sceneRoot);
+
   reRenderer.Shutdown();
   rePlatform.Shutdown();
   return true;
 }
 
-void reIceApplication::AddObject(const char* _meshDir, u32 _material)
+// TODO : ~!!~ Tie scene objects to rendering
+IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material)
 {
   u32 meshIndex = reRenderer.CreateMesh(_meshDir);
   reRenderer.AddMeshToScene(meshIndex, _material);
+
+  IceObject* obj = new IceObject();
+  obj->materialHandle = _material;
+  obj->meshHandle = meshIndex;
+
+  obj->transform.parent = &sceneRoot->transform;
+  sceneRoot->children.push_back(obj);
+
+  return obj;
 }
 
 u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)

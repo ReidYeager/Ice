@@ -4,6 +4,7 @@
 
 #include "defines.h"
 
+#include "core/scene.h"
 #include "platform/platform.h"
 #include "rendering/renderer.h"
 
@@ -35,10 +36,11 @@ private:
 
 public:
   IceCamera cam;
+  IceObject* sceneRoot;
 
   u32 Run(reIceApplicationSettings* _settings);
 
-  void AddObject(const char* _meshDir, u32 _material);
+  IceObject* AddObject(const char* _meshDir, u32 _material);
   u32 CreateMaterial(std::vector<IceShaderInfo> _shaders);
 
 private:
