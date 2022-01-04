@@ -293,7 +293,6 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
                                        &material.pipeline),
              "Failed to create the graphics pipeline");
 
-  // NOTE : Does not fully work as-is. Need to look into this a bit more.
   rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT; // Fix peter-panning
   createInfo.stageCount = 1;
   createInfo.pStages = shaderStageInfos;

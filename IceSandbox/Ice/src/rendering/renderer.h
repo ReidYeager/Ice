@@ -6,6 +6,7 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 #include "core/camera.h"
+#include "core/object.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -35,7 +36,9 @@ public:
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
 
   u32 CreateMesh(const char* _meshDir);
-  void AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
+  void AddObjectToScene(IceObject* _object);
+
+  void FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size);
 
 } reRenderer;
 

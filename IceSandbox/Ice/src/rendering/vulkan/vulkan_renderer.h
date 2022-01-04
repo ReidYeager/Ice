@@ -6,6 +6,7 @@
 
 #include "math/vector.h"
 #include "core/camera.h"
+#include "core/object.h"
 #include "rendering/vulkan/vulkan_context.h"
 #include "rendering/mesh.h"
 
@@ -157,8 +158,6 @@ private:
                   void* _data = nullptr);
   // Binds the buffer to the memory starting at the offset
   b8 BindBuffer(IvkBuffer* _buffer, u64 _offset);
-  // Fills the given buffer with data
-  b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0, u64 _offset = 0);
   // Destroys the input buffer and can free its memory
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
@@ -195,7 +194,9 @@ private:
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);
-  b8 AddMeshToScene(u32 _meshIndex, u32 _materialIndex);
+  b8 AddMeshToScene(IceObject* _object);
+  // Fills the given buffer with data
+  b8 FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size = 0, u64 _offset = 0);
 
 };
 

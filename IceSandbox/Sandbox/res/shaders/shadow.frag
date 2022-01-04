@@ -21,12 +21,12 @@ layout(location = 0) out vec4 outColor;
 float textureProj(vec4 shadowCoord)
 {
 	float shadow = 1.0;
-	float bias = max(0.05 * (1.0 - abs(dot(normal, global.dLightDirection))), 0.005);  
+	float bias = max(0.0001 * (1.0 - dot(normal, global.dLightDirection)), 0.0001); 
 	
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
 	{
-		float sampledDepth = texture(shadowMap, shadowCoord.st).r;
-		if ( sampledDepth < (shadowCoord.z - bias) )
+		float sampledDepth = texture(shadowMap, shadowCoord.st).r - bias;
+		if ( sampledDepth < shadowCoord.z )
 		{
 			shadow = ambient;
 		}

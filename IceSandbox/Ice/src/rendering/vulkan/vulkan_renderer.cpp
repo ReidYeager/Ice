@@ -21,8 +21,7 @@
 
 // TODO : Shader hot-reload on update event
 //   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
-// TODO : Improve object/scene handling
-//   Integrate cameras & lights into this scene system
+// TODO : Integrate cameras & lights into this scene system
 
 b8 IvkRenderer::Initialize()
 {
@@ -237,15 +236,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   }
 
   {
-    //imgui new frame
-    ImGui_ImplWin32_NewFrame();
-    ImGui_ImplVulkan_NewFrame();
-    ImGui::NewFrame();
-
-    //imgui commands
-    //ImGui::ShowDemoWindow();
-
-    ImGui::Begin("test");
+    ImGui::Begin("Directional light");
     ImGui::InputFloat3("Light color", &tmpLights.directional.color.x);
     ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
     ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
@@ -917,21 +908,19 @@ b8 IvkRenderer::CreateShadowRenderpass()
   return true;
 }
 
-b8 IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+b8 IvkRenderer::AddMeshToScene(IceObject* _object)
 {
+  const u32& meshIndex = _object->meshHandle;
+  const u32& materialIndex = _object->materialHandle;
+
   IvkObject object;
-  object.mesh = meshes[_meshIndex];
-
-  float pos = (_meshIndex % 2 == 0) ? -1.0f : 1.0f;
-  IceLogDebug("Pos = %u => %f", _meshIndex, pos);
-
-  glm::mat4 tmpTransform = glm::translate(glm::mat4(1), glm::vec3(0, pos, 0));
+  object.mesh = meshes[meshIndex];
 
   CreateBuffer(&object.transformBuffer,
                64,
                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               (void*)&tmpTransform);
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  _object->transform.buffer = object.transformBuffer;
 
   VkDescriptorSetAllocateInfo allocInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
   allocInfo.descriptorPool = context.descriptorPool;
@@ -961,7 +950,7 @@ b8 IvkRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
   
   vkUpdateDescriptorSets(context.device, 1, &write, 0, nullptr);
 
-  scene[_materialIndex].push_back(object);
+  scene[materialIndex].push_back(object);
 
   return true;
 }

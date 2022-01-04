@@ -6,15 +6,25 @@
 
 #include "math/vector.h"
 
+#include "rendering/vulkan/vulkan_context.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 #include <vector>
 
 struct IceTransform
 {
-  vec3 position = { 0.0f, 0.0f, 0.0f };
-  vec3 rotation = { 0.0f, 0.0f, 0.0f };
-  vec3 scale = { 1.0f, 1.0f, 1.0f };
+  glm::vec3 position = { 0.0f, 0.0f, 0.0f };
+  glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };
+  glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
 
   IceTransform* parent;
+
+  glm::mat4 matrix;
+  IvkBuffer buffer; // Tmp fix for buffers moving around in renderer
+
+  glm::mat4 UpdateMatrix();
 };
 
 struct IceObject

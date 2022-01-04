@@ -23,8 +23,8 @@ void reInit()
                                      {"shadow", Ice_Shader_Fragment}});
 
   app.AddObject("Plane.obj", shadow);
-  app.AddObject("Cube.obj", shadow);
-  app.AddObject("Sphere.obj", shadow);
+  IceObject* obj = app.AddObject("Cube.obj", shadow);
+  app.AddObject("Sphere.obj", shadow, obj);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

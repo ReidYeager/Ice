@@ -41,7 +41,12 @@ u32 reIceRenderer::CreateMesh(const char* _meshDir)
   return backend.CreateMesh(_meshDir);
 }
 
-void reIceRenderer::AddMeshToScene(u32 _meshIndex, u32 _materialIndex)
+void reIceRenderer::AddObjectToScene(IceObject* _object)
 {
-  backend.AddMeshToScene(_meshIndex, _materialIndex);
+  backend.AddMeshToScene(_object);
+}
+
+void reIceRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size)
+{
+  backend.FillBuffer(_buffer, _data, _size);
 }

@@ -4,6 +4,10 @@
 
 #include "core/application.h"
 #include "core/input.h"
+#include "core/object.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 #include <chrono>
 
@@ -63,6 +67,7 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
   }
 
   sceneRoot = new IceObject();
+  sceneRoot->transform.matrix = glm::mat4(1.0f);
 
   // Set camera default state =====
   glm::mat4 viewProj = glm::mat4(1);
@@ -80,6 +85,25 @@ b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
 float averageSum = 0.0f;
 u32 averageCount = 0;
 
+void AddObjectToSceneGui(IceObject* _object, u32 index = 0)
+{
+  if (ImGui::TreeNode((void*)index, "object %d", index))
+  {
+    ImGui::DragFloat3("Position", &_object->transform.position[0], 0.01f);
+    ImGui::DragFloat3("Rotation", &_object->transform.rotation[0], 0.1f);
+    ImGui::DragFloat3("Scale", &_object->transform.scale[0], 0.01f);
+
+    _object->transform.UpdateMatrix();
+
+    for (const auto& o : _object->children)
+    {
+      AddObjectToSceneGui(o, ++index);
+    }
+
+    ImGui::TreePop(); // Done displaying this object's information
+  }
+}
+
 b8 reIceApplication::Update()
 {
   IceLogInfo("===== reApplication Main Loop =====");
@@ -96,6 +120,27 @@ b8 reIceApplication::Update()
  
   while (rePlatform.Update())
   {
+    // Start IMGUI frame
+    {
+      ImGui_ImplWin32_NewFrame();
+      ImGui_ImplVulkan_NewFrame();
+      ImGui::NewFrame();
+
+      //ImGui::ShowDemoWindow();
+    }
+
+    // Scene hierarchy
+    {
+      u32 index = 0;
+      ImGui::Begin("Scene");
+      for (auto& o : sceneRoot->children)
+      {
+        AddObjectToSceneGui(o, index++);
+      }
+      //AddObjectToSceneGui(sceneRoot, 0);
+      ImGui::End();
+    }
+
     state.ClientUpdate(deltaTime);
 
     ICE_ATTEMPT(reRenderer.Render(&cam));
@@ -158,18 +203,25 @@ b8 reIceApplication::Shutdown()
   return true;
 }
 
-// TODO : ~!!~ Tie scene objects to rendering
-IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material)
+IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceObject* _parent)
 {
-  u32 meshIndex = reRenderer.CreateMesh(_meshDir);
-  reRenderer.AddMeshToScene(meshIndex, _material);
-
   IceObject* obj = new IceObject();
   obj->materialHandle = _material;
-  obj->meshHandle = meshIndex;
+  obj->meshHandle = reRenderer.CreateMesh(_meshDir);
 
-  obj->transform.parent = &sceneRoot->transform;
-  sceneRoot->children.push_back(obj);
+  if (_parent != nullptr)
+  {
+    obj->transform.parent = &_parent->transform;
+    _parent->children.push_back(obj);
+  }
+  else
+  {
+    obj->transform.parent = &sceneRoot->transform;
+    sceneRoot->children.push_back(obj);
+  }
+
+  reRenderer.AddObjectToScene(obj);
+  obj->transform.UpdateMatrix();
 
   return obj;
 }
@@ -177,4 +229,21 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material)
 u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
 {
   return reRenderer.CreateMaterial(_shaders);
+}
+
+glm::mat4 IceTransform::UpdateMatrix()
+{
+  matrix = glm::mat4(1.0f) * parent->matrix;
+
+  matrix = glm::translate(matrix, position);
+  matrix = glm::rotate(matrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+  matrix = glm::rotate(matrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+  matrix = glm::rotate(matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+  matrix = glm::scale(matrix, scale);
+
+  reRenderer.FillBuffer(&buffer, &matrix, 64);
+
+  // TODO : Update children's matrices
+
+  return matrix;
 }

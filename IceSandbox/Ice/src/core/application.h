@@ -40,7 +40,7 @@ public:
 
   u32 Run(reIceApplicationSettings* _settings);
 
-  IceObject* AddObject(const char* _meshDir, u32 _material);
+  IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
   u32 CreateMaterial(std::vector<IceShaderInfo> _shaders);
 
 private:
