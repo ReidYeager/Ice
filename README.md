@@ -29,13 +29,12 @@ The functional end goal of this project is to have a renderer that allows for re
 ---
 
 ## Roadmap
-- UI
-	- To manually edit shader parameters
-	- Probably ImGui for now
+- Implement shader hot-reloading
+> Start focusing primarily on shader development
+> Passively imroving renderpass/pipeline creation, making doing so an easier process done at higher levels of the application (namely source.cpp/the user application)
+- PBR and IBL
 - Post-processing
-	- To better understand how to handle multiple renderpasses
 
 #### Shaders
-- PBR
-- IBL
-
+- Physically Based Rendering
+- Image Based Lighting

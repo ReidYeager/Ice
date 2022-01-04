@@ -17,9 +17,8 @@
 
 #include <vector>
 
-// TODO : ~!~ Deferred rendering
-
-// TODO : Shader hot-reload on update event
+// TODO : ~!!~ Shader hot-reload on update event
+// TODO : Deferred rendering
 //   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
 // TODO : Integrate cameras & lights into this scene system
 

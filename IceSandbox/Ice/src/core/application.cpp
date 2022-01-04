@@ -233,7 +233,7 @@ u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
 
 glm::mat4 IceTransform::UpdateMatrix()
 {
-  matrix = glm::mat4(1.0f) * parent->matrix;
+  matrix = parent->matrix;
 
   matrix = glm::translate(matrix, position);
   matrix = glm::rotate(matrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
