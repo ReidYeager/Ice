@@ -96,10 +96,6 @@ b8 IvkRenderer::CreateImageView(VkImageView* _view,
   createInfo.subresourceRange.baseMipLevel = 0;
   createInfo.subresourceRange.layerCount = 1;
   createInfo.subresourceRange.baseArrayLayer = 0;
-  //createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-  //createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-  //createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-  //createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
   IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
              "Failed to create an image view");

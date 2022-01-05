@@ -30,7 +30,7 @@ void main() {
     vec4 modelPosition = model.transform * vec4(position, 1.0);
 
     gl_Position = global.viewProj * modelPosition;
-    outNormal = normal;
+    outNormal = normalize(mat3(model.transform) * normal);
 
     vec3 camPos = vec3(global.viewProj[0][3], global.viewProj[1][3], global.viewProj[2][3]);
     viewDot = dot(-camPos, normal);

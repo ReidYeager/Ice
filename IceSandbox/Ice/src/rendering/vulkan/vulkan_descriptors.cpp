@@ -222,17 +222,10 @@ b8 IvkRenderer::PrepareShadowDescriptors()
 {
   // Prepare buffers =====
   {
-    glm::mat4& proj = shadow.viewProjMatrix;
-    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.0f, 47.0f);
-    proj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-    proj = proj * glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
     CreateBuffer(&shadow.lightMatrixBuffer,
                  64,
                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    //FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
   }
 
   // Descriptor set layout =====

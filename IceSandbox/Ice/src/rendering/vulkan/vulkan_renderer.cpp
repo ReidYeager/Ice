@@ -222,25 +222,9 @@ b8 IvkRenderer::Shutdown()
 b8 IvkRenderer::Render(IceCamera* _camera)
 {
   {
-    glm::mat4& proj = shadow.viewProjMatrix;
-    proj = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, -100.0f, 100.0f);
-    proj[1][1] *= -1;
-    proj = proj * glm::lookAt(glm::vec3(tmpLights.directional.direction.x,
-                                        tmpLights.directional.direction.y,
-                                        tmpLights.directional.direction.z) * -10.0f,
-                              glm::vec3(0, 0, 0),
-                              glm::vec3(0, 1, 0));
-
-    FillBuffer(&globalDescriptorBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
-    FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
-  }
-
-  {
     ImGui::Begin("Directional light");
-    ImGui::InputFloat3("Light color", &tmpLights.directional.color.x);
-    ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction z", &tmpLights.directional.direction.z, -1.0f, 1.0f);
+    ImGui::DragFloat3("Light color", &tmpLights.directional.color.x);
+    ImGui::SliderFloat3("Direction", &tmpLights.directional.direction.x, -1.0f, 1.0f);
 
     // normalize direction
     f32 xsq = tmpLights.directional.direction.x * tmpLights.directional.direction.x;
@@ -254,6 +238,25 @@ b8 IvkRenderer::Render(IceCamera* _camera)
 
     ImGui::End();
   }
+
+  {
+    float size = 10.0f;
+    glm::mat4 proj = glm::ortho(-size, size, -size, size, -100.0f, 100.0f);
+    proj[1][1] *= -1;
+    glm::mat4 view = glm::lookAt(glm::vec3(tmpLights.directional.direction.x,
+                                           tmpLights.directional.direction.y,
+                                           tmpLights.directional.direction.z) * -10.0f,
+                                 glm::vec3(0, 0, 0),
+                                 glm::vec3(0, 1, 0));
+    shadow.viewProjMatrix = proj * view;
+
+    FillBuffer(&globalDescriptorBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+    FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
+  }
+
+  // TMP camera =====
+  FillBuffer(&globalDescriptorBuffer, (void*)&_camera->viewProjectionMatrix, 64);
+  FillBuffer(&globalDescriptorBuffer, (void*)&tmpLights, sizeof(IvkLights), 64);
 
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
@@ -273,10 +276,6 @@ b8 IvkRenderer::Render(IceCamera* _camera)
                                    VK_NULL_HANDLE,
                                    &swapchainImageIndex),
              "Failed to acquire the next swapchain image");
-
-  // TMP camera =====
-  FillBuffer(&globalDescriptorBuffer, (void*)&_camera->viewProjectionMatrix, 64);
-  FillBuffer(&globalDescriptorBuffer, (void*)&tmpLights, sizeof(IvkLights), 64);
 
   // Submit a command buffer =====
   RecordCommandBuffer(swapchainImageIndex);
