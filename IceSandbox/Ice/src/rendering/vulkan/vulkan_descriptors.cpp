@@ -34,7 +34,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
 {
   // Prepare buffer =====
   {
-    CreateBuffer(&viewProjBuffer,
+    CreateBuffer(&globalDescriptorBuffer,
                  64 + sizeof(IvkLights) + 64,
                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -104,7 +104,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
   // Update the global descriptor set =====
   {
     VkDescriptorBufferInfo bufferInfo {};
-    bufferInfo.buffer = viewProjBuffer.buffer;
+    bufferInfo.buffer = globalDescriptorBuffer.buffer;
     bufferInfo.offset = 0;
     bufferInfo.range = VK_WHOLE_SIZE;
 

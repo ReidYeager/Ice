@@ -28,12 +28,13 @@ private:
   };
 
   reIvkContext context;
+  std::vector<IvkShader> shaders;
   std::vector<IvkMaterial> materials;
   std::vector<IvkMesh> meshes;
   // This system is slow and will need to be upgraded later.
   std::vector<std::vector<IvkObject>> scene;
 
-  IvkBuffer viewProjBuffer;
+  IvkBuffer globalDescriptorBuffer;
   IvkLights tmpLights;
   reIvkImage texture;
   IvkShadow shadow;
@@ -139,6 +140,8 @@ private:
 
   // Material =====
 
+  u32 CreateShader(const IceShaderInfo& _info);
+  b8 CreateMaterialShaders(const std::vector<IceShaderInfo>& _shaders, IvkMaterial& _material);
   // Creates a simple pipeline layout
   b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
                           std::vector<VkDescriptorSetLayout> _layouts,
@@ -192,6 +195,8 @@ private:
   public:
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
+  // Reloads all shaders and re-creates the material pipelines
+  b8 ReloadMaterials();
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);
   b8 AddMeshToScene(IceObject* _object);

@@ -51,6 +51,12 @@ void reUpdate(float _deltaTime)
     app.cam.viewProjectionMatrix = proj * view;
   }
 
+  if (Input.OnKeyPressed(Ice_Key_P))
+  {
+    IceLogDebug("Reloading materials");
+    reRenderer.ReloadMaterials();
+  }
+
   if (Input.OnKeyPressed(Ice_Key_Escape))
   {
     rePlatform.Close();

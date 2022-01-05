@@ -11,33 +11,65 @@
 #include <vector>
 #include <string>
 
+u32 IvkRenderer::CreateShader(const IceShaderInfo& _info)
+{
+  u32 index = 0;
+
+  // Check for existing shader =====
+  {
+    for (auto& existingShader : shaders)
+    {
+      if (existingShader.info.directory.compare(_info.directory.c_str()) == 0)
+      {
+        return index;
+      }
+      index++;
+    }
+  }
+
+  // Create new shader =====
+  IvkShader newShader{};
+  newShader.info = _info;
+
+  CreateShaderModule(&newShader.module, _info.directory.c_str());
+
+  index = shaders.size();
+  shaders.push_back(newShader);
+
+  return index;
+}
+
 u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
 {
   IceLogInfo("===== Creating material %u", materials.size());
 
   IvkMaterial material;
 
-  // Load shader files =====
-  for (const auto& shader : _shaders)
+  // Load shaders =====
+  for (auto& s : _shaders)
   {
-    std::string name = shader.directory;
+    std::string name = s.directory;
     std::string tmpName = name;
-    if (shader.stages & Ice_Shader_Vertex)
+
+    if (s.stages & Ice_Shader_Vertex)
     {
       tmpName.append(".vert");
-      CreateShaderModule(&material.vertexModule.module, tmpName.c_str());
-      material.vertexModule.info = shader;
+      material.vertexShaderIndex = CreateShader({ tmpName, Ice_Shader_Vertex });
       tmpName = name;
     }
-    if (shader.stages & Ice_Shader_Fragment)
+
+    if (s.stages & Ice_Shader_Fragment)
     {
       tmpName.append(".frag");
-      CreateShaderModule(&material.fragmentModule.module, tmpName.c_str());
-      material.fragmentModule.info = shader;
+      material.fragmentShaderIndex = CreateShader({ tmpName, Ice_Shader_Fragment });
       tmpName = name;
     }
   }
 
+  // Create descriptor components =====
+
+  // TODO : Make this dynamic -- defined in a shader input file
+  // Should store this information for re-creation
   std::vector<IvkDescriptor> descriptors;
   descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
 
@@ -70,6 +102,43 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
 
   scene.resize(materials.size()); // Bad.
   return materials.size() - 1;
+}
+
+b8 IvkRenderer::ReloadMaterials()
+{
+  vkDeviceWaitIdle(context.device);
+
+  for (auto& s : shaders)
+  {
+    vkDestroyShaderModule(context.device, s.module, context.alloc);
+    CreateShaderModule(&s.module, s.info.directory.c_str());
+  }
+
+  for (auto& m : materials)
+  {
+    // Destroy fragile components =====
+    {
+      vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
+      vkDestroyPipeline(context.device, m.pipeline, context.alloc);
+      vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
+    }
+
+    // Re-create fragile components =====
+    {
+      std::vector<IvkDescriptor> descriptors;
+      descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
+
+      ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
+                                       { context.globalDescriptorSetLayout,
+                                         m.descriptorSetLayout,
+                                         context.objectDescriptorSetLayout },
+                                       {}));
+
+      ICE_ATTEMPT(CreatePipeline(m));
+    }
+  }
+
+  return true;
 }
 
 b8 IvkRenderer::CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
@@ -150,12 +219,12 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
 
   shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStageInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  shaderStageInfos[0].module = material.vertexModule.module;
+  shaderStageInfos[0].module = shaders[material.vertexShaderIndex].module;
   shaderStageInfos[0].pName = "main";
 
   shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  shaderStageInfos[1].module = material.fragmentModule.module;
+  shaderStageInfos[1].module = shaders[material.fragmentShaderIndex].module;
   shaderStageInfos[1].pName = "main";
 
   // Vertex Input State =====

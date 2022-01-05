@@ -1,10 +1,15 @@
 #version 450
 
+struct DirectionalLight
+{
+	vec3 direction;
+    vec3 color;
+    mat4 matrix;
+};
+
 layout(set = 0, binding = 0) uniform GlobalInfo {
     mat4 viewProj;
-    vec3 dLightDirection;
-    vec3 dLightColor;
-    mat4 dLightMatrix;
+    DirectionalLight dLight;
 } global;
 
 layout(set = 0, binding = 1) uniform sampler2D shadowMap;
@@ -21,7 +26,7 @@ layout(location = 0) out vec4 outColor;
 float textureProj(vec4 shadowCoord)
 {
 	float shadow = 1.0;
-	float bias = max(0.0001 * (1.0 - dot(normal, global.dLightDirection)), 0.0001); 
+	float bias = max(0.0001 * (1.0 - dot(normal, global.dLight.direction)), 0.0001); 
 	
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
 	{
@@ -37,5 +42,5 @@ float textureProj(vec4 shadowCoord)
 void main() {
     float shadow = textureProj(fragLightPos / fragLightPos.w);
 
-    outColor = vec4(global.dLightColor * shadow, 1.0);
+    outColor = vec4(global.dLight.color * shadow, 1.0);
 }

@@ -17,7 +17,6 @@
 
 #include <vector>
 
-// TODO : ~!!~ Shader hot-reload on update event
 // TODO : Deferred rendering
 //   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
 // TODO : Integrate cameras & lights into this scene system
@@ -129,7 +128,7 @@ b8 IvkRenderer::Shutdown()
   vkDeviceWaitIdle(context.device);
 
   // TMP =====
-  DestroyBuffer(&viewProjBuffer);
+  DestroyBuffer(&globalDescriptorBuffer);
 
   // ImGui =====
   vkDestroyDescriptorPool(context.device, context.imguiPool, nullptr);
@@ -144,11 +143,13 @@ b8 IvkRenderer::Shutdown()
   vkDestroyFramebuffer(context.device, shadow.framebuffer, context.alloc);
 
   // Material =====
+  for (auto& s : shaders)
+  {
+    vkDestroyShaderModule(context.device, s.module, context.alloc);
+  }
+
   for (const auto& mat : materials)
   {
-    vkDestroyShaderModule(context.device, mat.vertexModule.module, context.alloc);
-    vkDestroyShaderModule(context.device, mat.fragmentModule.module, context.alloc);
-
     vkDestroyPipeline(context.device, mat.shadowPipeline, context.alloc);
     vkDestroyPipeline(context.device, mat.pipeline, context.alloc);
     vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
@@ -230,7 +231,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
                               glm::vec3(0, 0, 0),
                               glm::vec3(0, 1, 0));
 
-    FillBuffer(&viewProjBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
+    FillBuffer(&globalDescriptorBuffer, (void*)&shadow.viewProjMatrix, 64, 64 + sizeof(IvkLights));
     FillBuffer(&shadow.lightMatrixBuffer, (void*)&shadow.viewProjMatrix, 64);
   }
 
@@ -274,8 +275,8 @@ b8 IvkRenderer::Render(IceCamera* _camera)
              "Failed to acquire the next swapchain image");
 
   // TMP camera =====
-  FillBuffer(&viewProjBuffer, (void*)&_camera->viewProjectionMatrix, 64);
-  FillBuffer(&viewProjBuffer, (void*)&tmpLights, sizeof(IvkLights), 64);
+  FillBuffer(&globalDescriptorBuffer, (void*)&_camera->viewProjectionMatrix, 64);
+  FillBuffer(&globalDescriptorBuffer, (void*)&tmpLights, sizeof(IvkLights), 64);
 
   // Submit a command buffer =====
   RecordCommandBuffer(swapchainImageIndex);

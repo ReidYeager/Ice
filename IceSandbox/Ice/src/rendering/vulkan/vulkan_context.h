@@ -112,7 +112,7 @@ typedef IceFlag IceShaderStageFlag;
 
 struct IceShaderInfo
 {
-  const char* directory;
+  std::string directory;
   IceShaderStageFlag stages;
 };
 
@@ -134,8 +134,8 @@ struct IvkMaterial
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
   VkPipeline shadowPipeline;
-  IvkShader vertexModule;
-  IvkShader fragmentModule;
+  u32 vertexShaderIndex;
+  u32 fragmentShaderIndex;
 };
 
 // =======================

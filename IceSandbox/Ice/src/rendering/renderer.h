@@ -40,6 +40,8 @@ public:
 
   void FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size);
 
+  void ReloadMaterials();
+
 } reRenderer;
 
 #endif // !define ICE_RENDERING_RE_RENDERER_H_
