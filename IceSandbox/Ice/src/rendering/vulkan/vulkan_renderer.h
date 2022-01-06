@@ -116,8 +116,8 @@ private:
                        VkExtent2D _extents,
                        std::vector<VkImageView> _views);
 
-  // Creates the main camera's depth image and its view
-  b8 CreateDepthImage();
+  // Creates the images rendered to in the geometry pass
+  b8 CreateGeometryPassImages();
 
   // Creates a frame buffer for each swapchain image
   b8 CreateMainFrameBuffers();
@@ -142,6 +142,7 @@ private:
 
   u32 CreateShader(const IceShaderInfo& _info);
   b8 CreateMaterialShaders(const std::vector<IceShaderInfo>& _shaders, IvkMaterial& _material);
+  b8 CreateFragileComponents(IvkMaterial& material);
   // Creates a simple pipeline layout
   b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
                           std::vector<VkDescriptorSetLayout> _layouts,

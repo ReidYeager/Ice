@@ -3,10 +3,13 @@
 \IceSandbox\Ice\src\rendering\mesh.h
 	Line    59 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    70 :--: // TODO : Make this dynamic -- defined in a shader input file
+	Line    47 :--: // TODO : REMOVE -- Temprarily used by the swapchain pipeline
+	Line   103 :--: // TODO : Make this dynamic -- defined in a shader input file
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
-	Line    19 :--: // TODO : Deferred rendering
-	Line    20 :--: // TODO : Integrate cameras & lights into this scene system
-	Line   650 :--: // TODO : Remove this and manually hand-off ownership of the images
+	Line    19 :--: // TODO : (ACTIVE) ~!!~ Deferred rendering
+	Line    20 :--: // TODO : Re-structure the geometry pass
+	Line    21 :--: // TODO : Render to a single screen quad, sampling from the geometry subpass buffers
+	Line    23 :--: // TODO : Integrate cameras & lights into this scene system
+	Line   661 :--: // TODO : Remove this and manually hand-off ownership of the images
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
 	Line    21 :--: // TODO : Remove/move everything in this private section

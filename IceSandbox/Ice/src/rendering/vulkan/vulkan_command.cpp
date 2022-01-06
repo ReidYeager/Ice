@@ -8,7 +8,6 @@
 #include "libraries/imgui/imgui_impl_vulkan.h"
 #include "libraries/imgui/imgui_impl_win32.h"
 
-
 b8 IvkRenderer::CreateCommandBuffers()
 {
   const u32 count = context.swapchainImages.size();
@@ -32,21 +31,22 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = 0;
 
-  VkClearValue clearValues[2] = {};
-  clearValues[0].color = { 0.3f, 0.3f, 0.3f };
-  clearValues[1].depthStencil = { 1, 0 };
+  VkClearValue clearValues[3] = {};
+  clearValues[0].color = { 0.0f, 0.0f, 0.0f };
+  clearValues[1].color = { 0.3f, 0.3f, 0.3f };
+  clearValues[2].depthStencil = { 1, 0 };
 
   // Shadow
   VkRenderPassBeginInfo shadowBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
   shadowBeginInfo.clearValueCount = 1;
-  shadowBeginInfo.pClearValues = &clearValues[1];
+  shadowBeginInfo.pClearValues = &clearValues[2];
   shadowBeginInfo.renderArea.extent = { shadowResolution, shadowResolution };
   shadowBeginInfo.renderArea.offset = { 0 , 0 };
   shadowBeginInfo.renderPass = shadow.renderpass;
   shadowBeginInfo.framebuffer = shadow.framebuffer;
   // Color
   VkRenderPassBeginInfo colorBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-  colorBeginInfo.clearValueCount = 2;
+  colorBeginInfo.clearValueCount = 3;
   colorBeginInfo.pClearValues = clearValues;
   colorBeginInfo.renderArea.extent = context.swapchainExtent;
   colorBeginInfo.renderArea.offset = { 0 , 0 };
@@ -62,50 +62,50 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   VkDeviceSize zero = 0;
 
   // Shadow pass =====
-  {
-    vkCmdBeginRenderPass(cmdBuffer, &shadowBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindDescriptorSets(cmdBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            context.globalPipelinelayout,
-                            0,
-                            1,
-                            &shadow.descriptorSet,
-                            0,
-                            nullptr);
+  //{
+  //  vkCmdBeginRenderPass(cmdBuffer, &shadowBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  //  vkCmdBindDescriptorSets(cmdBuffer,
+  //                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                          context.globalPipelinelayout,
+  //                          0,
+  //                          1,
+  //                          &shadow.descriptorSet,
+  //                          0,
+  //                          nullptr);
 
-    // Bind each material =====
-    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
-    {
-      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].shadowPipeline);
-      vkCmdBindDescriptorSets(cmdBuffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              materials[matIndex].pipelineLayout,
-                              1,
-                              1,
-                              &materials[matIndex].descriptorSet,
-                              0,
-                              nullptr);
+  //  // Bind each material =====
+  //  for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+  //  {
+  //    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].shadowPipeline);
+  //    vkCmdBindDescriptorSets(cmdBuffer,
+  //                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                            materials[matIndex].finalPipelineLayout,
+  //                            1,
+  //                            1,
+  //                            &materials[matIndex].finalDescriptorSet,
+  //                            0,
+  //                            nullptr);
 
-      // Draw each object =====
-      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
-      {
-        IvkObject& object = scene[matIndex][objectIndex];
-        vkCmdBindDescriptorSets(cmdBuffer,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                materials[matIndex].pipelineLayout,
-                                2,
-                                1,
-                                &object.descriptorSet,
-                                0,
-                                nullptr);
+  //    // Draw each object =====
+  //    for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+  //    {
+  //      IvkObject& object = scene[matIndex][objectIndex];
+  //      vkCmdBindDescriptorSets(cmdBuffer,
+  //                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                              materials[matIndex].finalPipelineLayout,
+  //                              2,
+  //                              1,
+  //                              &object.descriptorSet,
+  //                              0,
+  //                              nullptr);
 
-        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
-        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
-      }
-    }
-    vkCmdEndRenderPass(cmdBuffer);
-  }
+  //      vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+  //      vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+  //      vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+  //    }
+  //  }
+  //  vkCmdEndRenderPass(cmdBuffer);
+  //}
 
   // Color pass =====
   {
@@ -122,37 +122,77 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
     // Bind each material =====
     for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
     {
-      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
-      vkCmdBindDescriptorSets(cmdBuffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              materials[matIndex].pipelineLayout,
-                              1,
-                              1,
-                              &materials[matIndex].descriptorSet,
-                              0,
-                              nullptr);
-
-      // Draw each object =====
-      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+      // Depth subpass =====
       {
-        IvkObject& object = scene[matIndex][objectIndex];
+        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].geoPipeline);
         vkCmdBindDescriptorSets(cmdBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                materials[matIndex].pipelineLayout,
-                                2,
+                                materials[matIndex].geoPipelineLayout,
                                 1,
-                                &object.descriptorSet,
+                                1,
+                                &materials[matIndex].geoDescriptorSet,
                                 0,
                                 nullptr);
-
-        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
-        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+      
+        // Draw each object =====
+        for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+        {
+          IvkObject& object = scene[matIndex][objectIndex];
+          vkCmdBindDescriptorSets(cmdBuffer,
+                                  VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  materials[matIndex].geoPipelineLayout,
+                                  2,
+                                  1,
+                                  &object.descriptorSet,
+                                  0,
+                                  nullptr);
+      
+          vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+          vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+          vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+        }
       }
     }
 
     ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+    //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+
+    vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+    // Bind each material =====
+    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+    {
+      // Swapchain subpass =====
+      {
+        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].finalPipeline);
+        vkCmdBindDescriptorSets(cmdBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                materials[matIndex].finalPipelineLayout,
+                                1,
+                                1,
+                                &materials[matIndex].finalDescriptorSet,
+                                0,
+                                nullptr);
+
+        // Draw each object =====
+        for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+        {
+          IvkObject& object = scene[matIndex][objectIndex];
+          vkCmdBindDescriptorSets(cmdBuffer,
+                                  VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  materials[matIndex].finalPipelineLayout,
+                                  2,
+                                  1,
+                                  &object.descriptorSet,
+                                  0,
+                                  nullptr);
+
+          vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+          vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+          vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+        }
+      }
+    }
 
     vkCmdEndRenderPass(cmdBuffer);
   }

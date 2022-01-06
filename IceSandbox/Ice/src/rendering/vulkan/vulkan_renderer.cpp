@@ -17,7 +17,10 @@
 
 #include <vector>
 
-// TODO : Deferred rendering
+// TODO : (ACTIVE) ~!!~ Deferred rendering
+// TODO : Re-structure the geometry pass
+// TODO : Render to a single screen quad, sampling from the geometry subpass buffers
+
 // TODO : Integrate cameras & lights into this scene system
 
 b8 IvkRenderer::Initialize()
@@ -36,7 +39,7 @@ b8 IvkRenderer::Initialize()
   ICE_ATTEMPT(CreateCommandPool(true));
 
   ICE_ATTEMPT(CreateSwapchain());
-  ICE_ATTEMPT(CreateDepthImage());
+  ICE_ATTEMPT(CreateGeometryPassImages());
   ICE_ATTEMPT(CreateMainRenderPass());
 
   ICE_ATTEMPT(CreateMainFrameBuffers());
@@ -56,7 +59,6 @@ b8 IvkRenderer::Initialize()
   // Initialize IMGUI =====
   {
     //1: create descriptor pool for IMGUI
-  // the size of the pool is very oversize, but it's copied from imgui demo itself.
     VkDescriptorPoolSize pool_sizes[] =
     {
       { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -147,9 +149,12 @@ b8 IvkRenderer::Shutdown()
   for (const auto& mat : materials)
   {
     vkDestroyPipeline(context.device, mat.shadowPipeline, context.alloc);
-    vkDestroyPipeline(context.device, mat.pipeline, context.alloc);
-    vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
-    vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
+    vkDestroyPipeline(context.device, mat.finalPipeline, context.alloc);
+    vkDestroyPipeline(context.device, mat.geoPipeline, context.alloc);
+    vkDestroyPipelineLayout(context.device, mat.finalPipelineLayout, context.alloc);
+    vkDestroyPipelineLayout(context.device, mat.geoPipelineLayout, context.alloc);
+    vkDestroyDescriptorSetLayout(context.device, mat.finalDescriptorSetLayout, context.alloc);
+    vkDestroyDescriptorSetLayout(context.device, mat.geoDescriptorSetLayout, context.alloc);
   }
   DestroyImage(&texture);
 
@@ -198,6 +203,12 @@ b8 IvkRenderer::Shutdown()
     vkDestroyImage(context.device, d.image, context.alloc);
     vkDestroyImageView(context.device, d.view, context.alloc);
     vkFreeMemory(context.device, d.memory, context.alloc);
+  }
+  for (const auto& c : context.albedoImages)
+  {
+    vkDestroyImage(context.device, c.image, context.alloc);
+    vkDestroyImageView(context.device, c.view, context.alloc);
+    vkFreeMemory(context.device, c.memory, context.alloc);
   }
 
   for (const auto& v : context.swapchainImageViews)
@@ -736,10 +747,10 @@ b8 IvkRenderer::CreateSyncObjects()
 b8 IvkRenderer::CreateMainRenderPass()
 {
   // Attachments =====
-  const u32 attachmentCount = 2;
+  const u32 attachmentCount = 3;
   VkAttachmentDescription attachments[attachmentCount];
 
-  // Color
+  // Swapchain
   attachments[0].flags = 0;
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
   attachments[0].format = context.swapchainFormat;
@@ -749,56 +760,90 @@ b8 IvkRenderer::CreateMainRenderPass()
   attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  // Depth
+  // Color
   attachments[1].flags = 0;
   attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attachments[1].format = context.depthImages[0].format;
+  attachments[1].format = context.albedoImages[0].format;
   attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachments[1].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  attachments[1].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  // Depth
+  attachments[2].flags = 0;
+  attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[2].format = context.depthImages[0].format;
+  attachments[2].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[2].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  attachments[2].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
   // Subpasses =====
-  const u32 subpassCount = 1;
+  const u32 subpassCount = 2;
   VkSubpassDescription subpasses[subpassCount];
 
-  // Main color
+  // Geometry pass
+  VkAttachmentReference geoSubpassRefs[2];
 
-  VkAttachmentReference mainSubpassRefs[2];
   // Color
-  mainSubpassRefs[0].attachment = 0;
-  mainSubpassRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  geoSubpassRefs[0].attachment = 1;
+  geoSubpassRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   // Depth
-  mainSubpassRefs[1].attachment = 1;
-  mainSubpassRefs[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  geoSubpassRefs[1].attachment = 2;
+  geoSubpassRefs[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   subpasses[0].flags = 0;
   subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpasses[0].colorAttachmentCount = 1;
-  subpasses[0].pColorAttachments = &mainSubpassRefs[0];
-  subpasses[0].pDepthStencilAttachment = &mainSubpassRefs[1];
+  subpasses[0].pColorAttachments = &geoSubpassRefs[0];
+  subpasses[0].pDepthStencilAttachment = &geoSubpassRefs[1];
   subpasses[0].inputAttachmentCount = 0;
   subpasses[0].pInputAttachments = nullptr;
   subpasses[0].preserveAttachmentCount = 0;
   subpasses[0].pPreserveAttachments = nullptr;
   subpasses[0].pResolveAttachments = nullptr;
 
+  // Swapchain pass
+
+  VkAttachmentReference mainSubpassRefs[3];
+  // Color
+  mainSubpassRefs[0].attachment = 0;
+  mainSubpassRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Color
+  mainSubpassRefs[1].attachment = 1;
+  mainSubpassRefs[1].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  // Depth
+  mainSubpassRefs[2].attachment = 2;
+  mainSubpassRefs[2].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  subpasses[1].flags = 0;
+  subpasses[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpasses[1].colorAttachmentCount = 1;
+  subpasses[1].pColorAttachments = &mainSubpassRefs[0];
+  subpasses[1].pDepthStencilAttachment = nullptr;
+  subpasses[1].inputAttachmentCount = 2;
+  subpasses[1].pInputAttachments = &mainSubpassRefs[1];
+  subpasses[1].preserveAttachmentCount = 0;
+  subpasses[1].pPreserveAttachments = nullptr;
+  subpasses[1].pResolveAttachments = nullptr;
+
   // Dependencies =====
   const u32 dependencyCount = 2;
   VkSubpassDependency dependencies[dependencyCount];
 
-  // Color in
-  dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependencies[0].dstSubpass = 0;
+  // Pass geometry images to swapchain subpass
+  dependencies[0].srcSubpass = 0;
+  dependencies[0].dstSubpass = 1;
   dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
   dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
   dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-   // Color out
-  dependencies[1].srcSubpass = 0;
+   // Color out -- Dont need?
+  dependencies[1].srcSubpass = 1;
   dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
   dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;

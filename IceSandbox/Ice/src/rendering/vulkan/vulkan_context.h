@@ -128,12 +128,18 @@ struct IvkShader
 
 struct IvkMaterial
 {
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorSet descriptorSet;
-
-  VkPipelineLayout pipelineLayout;
-  VkPipeline pipeline;
   VkPipeline shadowPipeline;
+
+  VkDescriptorSetLayout geoDescriptorSetLayout;
+  VkDescriptorSet geoDescriptorSet;
+  VkPipelineLayout geoPipelineLayout;
+  VkPipeline geoPipeline;
+
+  VkDescriptorSetLayout finalDescriptorSetLayout;
+  VkDescriptorSet finalDescriptorSet;
+  VkPipelineLayout finalPipelineLayout;
+  VkPipeline finalPipeline;
+
   u32 vertexShaderIndex;
   u32 fragmentShaderIndex;
 };
@@ -214,8 +220,8 @@ struct IvkContext
 
   // Frame
   std::vector<IvkImage> depthImages;
-  // std::vector<IvkImage> albedoImages; // For deferred
-  // std::vector<IvkImage> normalImages; // For deferred
+  std::vector<IvkImage> albedoImages; // For deferred
+  //std::vector<IvkImage> normalImages; // For deferred
   // etc.
 
   std::vector<VkFramebuffer> frameBuffers;
