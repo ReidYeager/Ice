@@ -11,13 +11,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-struct reIceApplicationSettings
+struct IceApplicationSettings
 {
   const char* title;
   u32 version;
 
-  reIceWindowSettings windowSettings;
-  reIceRendererSettings rendererSettings;
+  IceWindowSettings windowSettings;
+  IceRendererSettings rendererSettings;
 
   void(*ClientInitialize)();
   void(*ClientUpdate)(float);
@@ -38,13 +38,13 @@ public:
   IceCamera cam;
   IceObject* sceneRoot;
 
-  u32 Run(reIceApplicationSettings* _settings);
+  u32 Run(IceApplicationSettings* _settings);
 
   IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
   u32 CreateMaterial(std::vector<IceShaderInfo> _shaders);
 
 private:
-  b8 Initialize(reIceApplicationSettings* _settings);
+  b8 Initialize(IceApplicationSettings* _settings);
   b8 Update();
   b8 Shutdown();
 

@@ -11,7 +11,7 @@
 
 #include <chrono>
 
-u32 reIceApplication::Run(reIceApplicationSettings* _settings)
+u32 reIceApplication::Run(IceApplicationSettings* _settings)
 {
   try
   {
@@ -42,7 +42,7 @@ u32 reIceApplication::Run(reIceApplicationSettings* _settings)
   }
 }
 
-b8 reIceApplication::Initialize(reIceApplicationSettings* _settings)
+b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
 {
   state.ClientInitialize = _settings->ClientInitialize;
   state.ClientUpdate = _settings->ClientUpdate;

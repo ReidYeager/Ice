@@ -35,7 +35,7 @@ struct IvkBuffer
 // Image
 // =======================
 
-struct reIvkImage
+struct IvkImage
 {
   vec2U extents;
   VkImage image = VK_NULL_HANDLE;
@@ -61,7 +61,7 @@ struct IvkDescriptor
 struct IvkDescriptorBinding
 {
   VkDescriptorType type;
-  reIvkImage* image = nullptr;
+  IvkImage* image = nullptr;
   IvkBuffer* buffer = nullptr;
 };
 
@@ -146,15 +146,15 @@ struct IvkLights
 {
   struct
   {
-    vec4 direction;
-    vec4 color;
+    vec4 direction = { 1.0f, -1.0f, 1.0f };
+    vec4 color = { 1.0f, 1.0f, 1.0f };
   } directional;
 };
 
 struct IvkShadow
 {
   VkFramebuffer framebuffer;
-  reIvkImage image;
+  IvkImage image;
   VkRenderPass renderpass = VK_NULL_HANDLE;
   VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
   IvkBuffer lightMatrixBuffer;
@@ -166,7 +166,7 @@ struct IvkShadow
 // Context
 // =======================
 
-struct reIvkGpu
+struct IvkGpu
 {
   VkPhysicalDevice                 device;
   VkPhysicalDeviceProperties       properties;
@@ -183,7 +183,7 @@ struct reIvkGpu
   u32 transientQueueIndex;
 };
 
-struct reIvkContext
+struct IvkContext
 {
   VkAllocationCallbacks* alloc = nullptr;
 
@@ -191,7 +191,7 @@ struct reIvkContext
   VkSurfaceKHR surface  = VK_NULL_HANDLE;
   VkSurfaceFormatKHR surfaceFormat;
   VkDevice     device   = VK_NULL_HANDLE;
-  reIvkGpu     gpu;
+  IvkGpu     gpu;
 
   VkQueue graphicsQueue;
   VkQueue presentQueue;
@@ -212,17 +212,24 @@ struct reIvkContext
   VkFormat swapchainFormat;
   VkExtent2D swapchainExtent;
 
-  reIvkImage depthImage;
+  // Frame
+  std::vector<IvkImage> depthImages;
+  // std::vector<IvkImage> albedoImages; // For deferred
+  // std::vector<IvkImage> normalImages; // For deferred
+  // etc.
 
-  VkRenderPass mainRenderpass;
   std::vector<VkFramebuffer> frameBuffers;
 
+  VkRenderPass mainRenderpass;
+
+  // Synchronization
   std::vector<VkFence> flightSlotAvailableFences;
   std::vector<VkSemaphore> renderCompleteSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
   u32 currentFlightIndex = 0;
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
 
+  // Pipelines
   VkDescriptorSetLayout objectDescriptorSetLayout;
 
   VkDescriptorSetLayout globalDescriptorSetLayout;

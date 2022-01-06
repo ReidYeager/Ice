@@ -15,23 +15,23 @@
 #undef CreateWindow // Gets rid of the windows.h preprocessor definition
 #undef CloseWindow // Gets rid of the windows.h preprocessor definition
 
-reIcePlatform rePlatform;
+IcePlatform rePlatform;
 
 // Retrieves the ms-windows instance handle and defines the window's process info
 b8 RegisterWindow();
 // Offsets window extents to make the render area fit the input extent
-void PlatformAdjustWindowForBorder(reIceWindowSettings& _window);
+void PlatformAdjustWindowForBorder(IceWindowSettings& _window);
 // Handles Windows event messages
 LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam);
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 rePlatformVendorData* vendorData = 0;
 
-b8 reIcePlatform::Initialize(reIceWindowSettings* _settings)
+b8 IcePlatform::Initialize(IceWindowSettings* _settings)
 {
   if (vendorData)
   {
-    IceLogError("reIcePlatform already initialized");
+    IceLogError("IcePlatform already initialized");
     return false;
   }
 
@@ -48,7 +48,7 @@ b8 reIcePlatform::Initialize(reIceWindowSettings* _settings)
   return true;
 }
 
-b8 reIcePlatform::Shutdown()
+b8 IcePlatform::Shutdown()
 {
   state.shouldClose = true; // Ensure the main loop stops
 
@@ -57,9 +57,9 @@ b8 reIcePlatform::Shutdown()
   return true;
 }
 
-b8 reIcePlatform::CreateWindow()
+b8 IcePlatform::CreateWindow()
 {
-  reIceWindowSettings& settings = state.windowSettings;
+  IceWindowSettings& settings = state.windowSettings;
 
   u32 window_style = WS_OVERLAPPEDWINDOW; //WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
   u32 window_ex_style = WS_EX_APPWINDOW;
@@ -103,7 +103,7 @@ b8 reIcePlatform::CreateWindow()
   return true;
 }
 
-void reIcePlatform::CloseWindow()
+void IcePlatform::CloseWindow()
 {
   if (vendorData)
   {
@@ -138,7 +138,7 @@ b8 RegisterWindow()
   return true;
 }
 
-void PlatformAdjustWindowForBorder(reIceWindowSettings& _window)
+void PlatformAdjustWindowForBorder(IceWindowSettings& _window)
 {
   u32 window_style = WS_OVERLAPPEDWINDOW; //WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
   u32 window_ex_style = WS_EX_APPWINDOW;
@@ -152,7 +152,7 @@ void PlatformAdjustWindowForBorder(reIceWindowSettings& _window)
   _window.extents.height += borderRect.bottom - borderRect.top;
 }
 
-b8 reIcePlatform::Update()
+b8 IcePlatform::Update()
 {
   MSG message;
   while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
@@ -247,7 +247,7 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
-void reIcePlatform::ConsolePrint(const char* _message, u32 _color)
+void IcePlatform::ConsolePrint(const char* _message, u32 _color)
 {
   //               Info , Debug, Error , Fatal
   //               White, Cyan , Yellow, White-on-Red

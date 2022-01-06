@@ -6,7 +6,7 @@
 	Line    70 :--: // TODO : Make this dynamic -- defined in a shader input file
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    19 :--: // TODO : Deferred rendering
-	Line    21 :--: // TODO : Integrate cameras & lights into this scene system
-	Line   651 :--: // TODO : Remove this and manually hand-off ownership of the images
+	Line    20 :--: // TODO : Integrate cameras & lights into this scene system
+	Line   650 :--: // TODO : Remove this and manually hand-off ownership of the images
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
 	Line    21 :--: // TODO : Remove/move everything in this private section

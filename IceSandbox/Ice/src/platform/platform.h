@@ -6,7 +6,7 @@
 
 #include "math/vector.h"
 
-struct reIceWindowSettings
+struct IceWindowSettings
 {
   vec2I screenPosition;
   vec2U extents;
@@ -27,19 +27,19 @@ struct rePlatformVendorData
 struct rePlatformVendorData {};
 #endif // ICE_PLATFORM_WINDOWS
 
-extern class reIcePlatform
+extern class IcePlatform
 {
 private:
   struct
   {
     rePlatformVendorData vendorData;
-    reIceWindowSettings windowSettings = {};
+    IceWindowSettings windowSettings = {};
     b8 shouldClose = false;
   } state;
 
 public:
   // Initializes any components that interact with the operating system
-  b8 Initialize(reIceWindowSettings* _settings);
+  b8 Initialize(IceWindowSettings* _settings);
   // Pumps the platform's queued events
   // Returns true when the window is closed
   b8 Update();
@@ -49,7 +49,7 @@ public:
   void Close() { state.shouldClose = true; }
 
   rePlatformVendorData const* GetVendorInfo() { return &state.vendorData; }
-  reIceWindowSettings const* GetWindowInfo() { return &state.windowSettings; }
+  IceWindowSettings const* GetWindowInfo() { return &state.windowSettings; }
 
   // Prints text to the platform's console
   void ConsolePrint(const char* _message, u32 _color);

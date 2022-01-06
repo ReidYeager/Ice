@@ -70,8 +70,8 @@ void reShutdown()
 
 int main()
 {
-  reIceApplicationSettings settings = {};
-  settings.title = "reIce";
+  IceApplicationSettings settings = {};
+  settings.title = "Ice";
   settings.version = 0;
   settings.ClientInitialize = reInit;
   settings.ClientUpdate = reUpdate;

@@ -18,7 +18,7 @@ enum IceRenderingApi
   Ice_Renderer_DirectX
 };
 
-struct reIceRendererSettings
+struct IceRendererSettings
 {
   IceRenderingApi api;
 };
@@ -29,7 +29,7 @@ private:
   IvkRenderer backend;
 
 public:
-  b8 Initialize(reIceRendererSettings* _settings);
+  b8 Initialize(IceRendererSettings* _settings);
   b8 Shutdown();
   b8 Render(IceCamera* _camera);
 

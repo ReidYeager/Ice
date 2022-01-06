@@ -8,7 +8,7 @@
 
 reIceRenderer reRenderer;
 
-b8 reIceRenderer::Initialize(reIceRendererSettings* _settings)
+b8 reIceRenderer::Initialize(IceRendererSettings* _settings)
 {
   if (!backend.Initialize())
   {

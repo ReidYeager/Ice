@@ -113,19 +113,25 @@ b8 IvkRenderer::CreateDepthImage()
     }
   }
 
-  context.depthImage.format = format;
+  context.depthImages.resize(context.swapchainImages.size());
 
-  // Create image =====
-  ICE_ATTEMPT(CreateImage(&context.depthImage,
-                          context.swapchainExtent,
-                          format,
-                          VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
-  context.depthImage.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-  // Create image view =====
-  ICE_ATTEMPT(CreateImageView(&context.depthImage.view,
-                              context.depthImage.image,
-                              context.depthImage.format,
-                              VK_IMAGE_ASPECT_DEPTH_BIT));
+  for (u32 i = 0; i < context.swapchainImages.size(); i++)
+  {
+    context.depthImages[i].format = format;
+
+    // Create image =====
+    ICE_ATTEMPT(CreateImage(&context.depthImages[i],
+                            context.swapchainExtent,
+                            format,
+                            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+    context.depthImages[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+
+    // Create image view =====
+    ICE_ATTEMPT(CreateImageView(&context.depthImages[i].view,
+                                context.depthImages[i].image,
+                                context.depthImages[i].format,
+                                VK_IMAGE_ASPECT_DEPTH_BIT));
+  }
 
   return true;
 }
@@ -164,7 +170,7 @@ b8 IvkRenderer::CreateMainFrameBuffers()
     ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
                                   context.mainRenderpass,
                                   context.swapchainExtent,
-                                  { context.swapchainImageViews[i], context.depthImage.view }));
+                                  { context.swapchainImageViews[i], context.depthImages[i].view}));
   }
 
   return true;

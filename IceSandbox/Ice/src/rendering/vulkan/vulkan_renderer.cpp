@@ -18,15 +18,11 @@
 #include <vector>
 
 // TODO : Deferred rendering
-//   https://docs.microsoft.com/en-us/windows/win32/fileio/obtaining-directory-change-notifications
 // TODO : Integrate cameras & lights into this scene system
 
 b8 IvkRenderer::Initialize()
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
-
-  tmpLights.directional.color = { 1.0f, 1.0f, 1.0f };
-  tmpLights.directional.direction = { -1.0f, -1.0f, -1.0f };
 
   // API initialization =====
   ICE_ATTEMPT(CreateInstance());
@@ -197,9 +193,12 @@ b8 IvkRenderer::Shutdown()
 
   vkDestroyRenderPass(context.device, context.mainRenderpass, context.alloc);
 
-  vkDestroyImage(context.device, context.depthImage.image, context.alloc);
-  vkDestroyImageView(context.device, context.depthImage.view, context.alloc);
-  vkFreeMemory(context.device, context.depthImage.memory, context.alloc);
+  for (const auto& d : context.depthImages)
+  {
+    vkDestroyImage(context.device, d.image, context.alloc);
+    vkDestroyImageView(context.device, d.view, context.alloc);
+    vkFreeMemory(context.device, d.memory, context.alloc);
+  }
 
   for (const auto& v : context.swapchainImageViews)
   {
@@ -376,7 +375,7 @@ b8 IvkRenderer::ChoosePhysicalDevice()
     return false;
 
   // Fill GPU information =====
-  reIvkGpu& gpu = context.gpu;
+  IvkGpu& gpu = context.gpu;
 
   vkGetPhysicalDeviceProperties(gpu.device, &gpu.properties);
   vkGetPhysicalDeviceFeatures(gpu.device, &gpu.features);
@@ -737,17 +736,10 @@ b8 IvkRenderer::CreateSyncObjects()
 b8 IvkRenderer::CreateMainRenderPass()
 {
   // Attachments =====
-  //std::vector<IvkAttachmentSettings> attachSettings(2);
-  // Color
-  //attachSettings[0].imageFormat = context.swapchainFormat;
-  //attachSettings[0].finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  //attachSettings[0].referenceLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  //// Depth
-  //attachSettings[1].imageFormat = context.depthImage.format;
-  //attachSettings[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  //attachSettings[1].referenceLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  const u32 attachmentCount = 2;
+  VkAttachmentDescription attachments[attachmentCount];
 
-  VkAttachmentDescription attachments[2];
+  // Color
   attachments[0].flags = 0;
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
   attachments[0].format = context.swapchainFormat;
@@ -757,10 +749,10 @@ b8 IvkRenderer::CreateMainRenderPass()
   attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
+  // Depth
   attachments[1].flags = 0;
   attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attachments[1].format = context.depthImage.format;
+  attachments[1].format = context.depthImages[0].format;
   attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   attachments[1].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   attachments[1].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -768,60 +760,60 @@ b8 IvkRenderer::CreateMainRenderPass()
   attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-  VkAttachmentReference references[2];
-  references[0].attachment = 0;
-  references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Subpasses =====
+  const u32 subpassCount = 1;
+  VkSubpassDescription subpasses[subpassCount];
 
-  references[1].attachment = 1;
-  references[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  // Main color
 
-  // Subpass =====
-  //IvkSubpassSettings subpasses;
-  //subpasses.colorIndices.push_back(0);
-  //subpasses.depthIndex = 1;
+  VkAttachmentReference mainSubpassRefs[2];
+  // Color
+  mainSubpassRefs[0].attachment = 0;
+  mainSubpassRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Depth
+  mainSubpassRefs[1].attachment = 1;
+  mainSubpassRefs[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-  VkSubpassDescription subpass;
-  subpass.flags = 0;
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &references[0];
-  subpass.pDepthStencilAttachment = &references[1];
-  subpass.inputAttachmentCount = 0;
-  subpass.pInputAttachments = nullptr;
-  subpass.preserveAttachmentCount = 0;
-  subpass.pPreserveAttachments = nullptr;
-  subpass.pResolveAttachments = nullptr;
+  subpasses[0].flags = 0;
+  subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpasses[0].colorAttachmentCount = 1;
+  subpasses[0].pColorAttachments = &mainSubpassRefs[0];
+  subpasses[0].pDepthStencilAttachment = &mainSubpassRefs[1];
+  subpasses[0].inputAttachmentCount = 0;
+  subpasses[0].pInputAttachments = nullptr;
+  subpasses[0].preserveAttachmentCount = 0;
+  subpasses[0].pPreserveAttachments = nullptr;
+  subpasses[0].pResolveAttachments = nullptr;
 
   // Dependencies =====
-  //IvkSubpassDependencies dependency {};
-  //dependency.srcIndex = VK_SUBPASS_EXTERNAL;
-  //dependency.dstIndex = 0;
+  const u32 dependencyCount = 2;
+  VkSubpassDependency dependencies[dependencyCount];
 
-  VkSubpassDependency dependencies[2];
+  // Color in
+  dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependencies[0].dstSubpass = 0;
+  dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+   // Color out
+  dependencies[1].srcSubpass = 0;
+  dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+  dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass = 0;
-	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	dependencies[1].srcSubpass = 0;
-	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-    // Creation =====
+  // Creation =====
   VkRenderPassCreateInfo createInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
   createInfo.flags = 0;
-  createInfo.attachmentCount = 2;
+  createInfo.attachmentCount = attachmentCount;
   createInfo.pAttachments    = attachments;
-  createInfo.subpassCount = 1;
-  createInfo.pSubpasses   = &subpass;
-  createInfo.dependencyCount = 2;
+  createInfo.subpassCount = subpassCount;
+  createInfo.pSubpasses   = subpasses;
+  createInfo.dependencyCount = dependencyCount;
   createInfo.pDependencies   = dependencies;
 
   IVK_ASSERT(vkCreateRenderPass(context.device, &createInfo, context.alloc, &context.mainRenderpass),

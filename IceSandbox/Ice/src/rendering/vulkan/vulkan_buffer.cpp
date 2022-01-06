@@ -3,7 +3,7 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 
-u32 FindMemoryTypeIndex(reIvkContext* _context,
+u32 FindMemoryTypeIndex(IvkContext* _context,
                         u32 _supportedMemoryTypes,
                         VkMemoryPropertyFlags _flags)
 {

@@ -27,7 +27,7 @@ private:
     VkDescriptorSet descriptorSet;
   };
 
-  reIvkContext context;
+  IvkContext context;
   std::vector<IvkShader> shaders;
   std::vector<IvkMaterial> materials;
   std::vector<IvkMesh> meshes;
@@ -36,7 +36,7 @@ private:
 
   IvkBuffer globalDescriptorBuffer;
   IvkLights tmpLights;
-  reIvkImage texture;
+  IvkImage texture;
   IvkShadow shadow;
 
   const u32 shadowResolution = 2048;
@@ -167,27 +167,27 @@ private:
   // Images =====
 
   // Creates a vulkan image
-  b8 CreateImage(reIvkImage* _image,
+  b8 CreateImage(IvkImage* _image,
                  VkExtent2D _extents,
                  VkFormat _format,
                  VkImageUsageFlags _usage);
-  void DestroyImage(const reIvkImage* _image);
+  void DestroyImage(const IvkImage* _image);
   // Creates a vulkan image view
   b8 CreateImageView(VkImageView* _view,
                      VkImage _image,
                      VkFormat _format,
                      VkImageAspectFlags _aspectMask);
   // Creates a vulkan image sampler
-  b8 CreateImageSampler(reIvkImage* _image);
+  b8 CreateImageSampler(IvkImage* _image);
   // Transitions the image into either the transfer-dst (!forSampling) or shader-read-only layout
-  void TransitionImageLayout(reIvkImage* _image,
+  void TransitionImageLayout(IvkImage* _image,
                              b8 _forSampling,
                              VkPipelineStageFlagBits _shaderStage);
   // Copies the information in the buffer into a vkImage
-  void CopyBufferToImage(IvkBuffer* _buffer, reIvkImage* _image);
+  void CopyBufferToImage(IvkBuffer* _buffer, IvkImage* _image);
 
   // Creates an image, view, and sampler for the input image file
-  b8 CreateTexture(reIvkImage* _image, const char* _directory);
+  b8 CreateTexture(IvkImage* _image, const char* _directory);
 
   // ====================
   // API
