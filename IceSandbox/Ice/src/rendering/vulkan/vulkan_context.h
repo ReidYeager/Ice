@@ -126,20 +126,26 @@ struct IvkShader
 // Material
 //=========================
 
+struct IvkGeoBuffer
+{
+  IvkImage position;
+  IvkImage normal;
+  IvkImage albedo;
+  IvkImage maps; // Specular, metallic, roughness, AO
+  IvkImage depth;
+
+  VkFramebuffer framebuffer;
+};
+
 struct IvkMaterial
 {
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+  std::vector<VkDescriptorSet> multiDescriptorSets;
+
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
   VkPipeline shadowPipeline;
-
-  VkDescriptorSetLayout geoDescriptorSetLayout;
-  VkDescriptorSet geoDescriptorSet;
-  VkPipelineLayout geoPipelineLayout;
-  VkPipeline geoPipeline;
-
-  VkDescriptorSetLayout finalDescriptorSetLayout;
-  VkDescriptorSet finalDescriptorSet;
-  VkPipelineLayout finalPipelineLayout;
-  VkPipeline finalPipeline;
-
   u32 vertexShaderIndex;
   u32 fragmentShaderIndex;
 };
@@ -219,10 +225,12 @@ struct IvkContext
   VkExtent2D swapchainExtent;
 
   // Frame
+  std::vector<IvkGeoBuffer> geoBuffers;
+  VkRenderPass deferredRenderpass;
+  IvkMaterial deferredMaterial;
+  std::vector<VkDescriptorSet> deferredGlobalDescritorSets;
+
   std::vector<IvkImage> depthImages;
-  std::vector<IvkImage> albedoImages; // For deferred
-  //std::vector<IvkImage> normalImages; // For deferred
-  // etc.
 
   std::vector<VkFramebuffer> frameBuffers;
 

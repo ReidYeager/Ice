@@ -17,14 +17,11 @@ void reInit()
   IceLogInfo("Client Init");
 
   //u32 blank = app.CreateMaterial({ {"blank", Ice_shader_VertFrag} });
-  u32 light =  app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
-                                    {"fresnel", Ice_Shader_Fragment} });
-  u32 shadow = app.CreateMaterial({ {"blank", Ice_Shader_Vertex},
-                                     {"shadow", Ice_Shader_Fragment}});
+  u32 def = app.CreateMaterial({ {"deferred", Ice_shader_VertFrag} });
 
-  app.AddObject("Plane.obj", light);
-  IceObject* obj = app.AddObject("Cube.obj", light);
-  app.AddObject("SphereSmooth.obj", light, obj);
+  app.AddObject("Plane.obj", def);
+  IceObject* obj = app.AddObject("Cube.obj", def);
+  app.AddObject("SphereSmooth.obj", def, obj);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

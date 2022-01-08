@@ -15,7 +15,7 @@ The functional end goal of this project is to have a renderer that allows for re
 
 ### Rendering methodologies
 - [x] Forward
-- [ ] Deferred
+- [x] Deferred
 - [ ] Hybrid RT (deferred)
 - [ ] Pure RT
 
@@ -29,7 +29,6 @@ The functional end goal of this project is to have a renderer that allows for re
 ---
 
 ## Roadmap
-- Implement shader hot-reloading
 > Start focusing primarily on shader development
 > Passively imroving renderpass/pipeline creation, making doing so an easier process done at higher levels of the application (namely source.cpp/the user application)
 - PBR and IBL

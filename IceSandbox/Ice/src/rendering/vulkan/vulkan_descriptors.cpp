@@ -42,7 +42,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
 
   // Create descriptor set layout =====
   {
-    const u32 bindingCount = 4;
+    const u32 bindingCount = 6;
     VkDescriptorSetLayoutBinding bindings[bindingCount];
     // Global uniform buffer
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -50,24 +50,42 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     bindings[0].binding = 0;
     bindings[0].stageFlags = VK_SHADER_STAGE_ALL;
     bindings[0].pImmutableSamplers = nullptr;
-    // Shadow depth map
-    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    //// Shadow depth map
+    //bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    //bindings[1].descriptorCount = 1;
+    //bindings[1].binding = 1;
+    //bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
+    //bindings[1].pImmutableSamplers = nullptr;
+    // Geo position
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     bindings[1].descriptorCount = 1;
     bindings[1].binding = 1;
-    bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[1].pImmutableSamplers = nullptr;
-    // Geo color texture
+    // Geo normal
     bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     bindings[2].descriptorCount = 1;
     bindings[2].binding = 2;
     bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[2].pImmutableSamplers = nullptr;
-    // Geo depth texture
+    // Geo albedo
     bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     bindings[3].descriptorCount = 1;
     bindings[3].binding = 3;
     bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[3].pImmutableSamplers = nullptr;
+    // Geo maps
+    bindings[4].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    bindings[4].descriptorCount = 1;
+    bindings[4].binding = 4;
+    bindings[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[4].pImmutableSamplers = nullptr;
+    // Geo depth
+    bindings[5].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    bindings[5].descriptorCount = 1;
+    bindings[5].binding = 5;
+    bindings[5].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[5].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     createInfo.flags = 0;
@@ -90,10 +108,15 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &context.globalDescriptorSetLayout;
 
-    IVK_ASSERT(vkAllocateDescriptorSets(context.device,
-                                        &allocInfo,
-                                        &context.globalDescritorSet),
-               "Failed to allocate global descriptor set");
+    context.deferredGlobalDescritorSets.resize(context.swapchainImages.size());
+
+    for (u32 i = 0; i < context.swapchainImages.size(); i++)
+    {
+      IVK_ASSERT(vkAllocateDescriptorSets(context.device,
+                                          &allocInfo,
+                                          &context.deferredGlobalDescritorSets[i]),
+                 "Failed to allocate global descriptor set");
+    }
   }
 
   // Create pipeline layout =====
@@ -125,59 +148,113 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     shadowInfo.imageView = shadow.image.view;
     shadowInfo.sampler = shadow.image.sampler;
 
-    VkDescriptorImageInfo geoColorInfo {};
-    geoColorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    geoColorInfo.imageView = context.albedoImages[0].view;
-    geoColorInfo.sampler = VK_NULL_HANDLE;
+    const u32 count = context.swapchainImages.size();
+    context.deferredGlobalDescritorSets.resize(count);
 
-    VkDescriptorImageInfo geoDepthInfo {};
-    geoDepthInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    geoDepthInfo.imageView = context.depthImages[0].view;
-    geoDepthInfo.sampler = VK_NULL_HANDLE;
+    for (u32 i = 0; i < count; i++)
+    {
+      IvkGeoBuffer& gb = context.geoBuffers[i];
 
-    const u32 writeCount = 4;
-    std::vector<VkWriteDescriptorSet> write(writeCount);
-    write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write[0].dstSet           = context.globalDescritorSet;
-    write[0].dstBinding       = 0;
-    write[0].dstArrayElement  = 0;
-    write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    write[0].descriptorCount  = 1;
-    write[0].pBufferInfo      = &bufferInfo;
-    write[0].pImageInfo       = nullptr;
-    write[0].pTexelBufferView = nullptr;
-    // Shadow map
-    write[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write[1].dstSet           = context.globalDescritorSet;
-    write[1].dstBinding       = 1;
-    write[1].dstArrayElement  = 0;
-    write[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    write[1].descriptorCount  = 1;
-    write[1].pBufferInfo      = nullptr;
-    write[1].pImageInfo       = &shadowInfo;
-    write[1].pTexelBufferView = nullptr;
-    // Geo color texture
-    write[2].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write[2].dstSet           = context.globalDescritorSet;
-    write[2].dstBinding       = 2;
-    write[2].dstArrayElement  = 0;
-    write[2].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    write[2].descriptorCount  = 1;
-    write[2].pBufferInfo      = nullptr;
-    write[2].pImageInfo       = &geoColorInfo;
-    write[2].pTexelBufferView = nullptr;
-    // Geo depth texture
-    write[3].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write[3].dstSet           = context.globalDescritorSet;
-    write[3].dstBinding       = 3;
-    write[3].dstArrayElement  = 0;
-    write[3].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    write[3].descriptorCount  = 1;
-    write[3].pBufferInfo      = nullptr;
-    write[3].pImageInfo       = &geoDepthInfo;
-    write[3].pTexelBufferView = nullptr;
+      VkDescriptorImageInfo geoPositionInfo {};
+      geoPositionInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      geoPositionInfo.imageView = gb.position.view;
+      geoPositionInfo.sampler = VK_NULL_HANDLE;
 
-    vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
+      VkDescriptorImageInfo geoNormalInfo {};
+      geoNormalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      geoNormalInfo.imageView = gb.normal.view;
+      geoNormalInfo.sampler = VK_NULL_HANDLE;
+
+      VkDescriptorImageInfo geoAlbedoInfo {};
+      geoAlbedoInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      geoAlbedoInfo.imageView = gb.albedo.view;
+      geoAlbedoInfo.sampler = VK_NULL_HANDLE;
+
+      VkDescriptorImageInfo geoMapsInfo {};
+      geoMapsInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      geoMapsInfo.imageView = gb.maps.view;
+      geoMapsInfo.sampler = VK_NULL_HANDLE;
+
+      VkDescriptorImageInfo geoDepthInfo {};
+      geoDepthInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      geoDepthInfo.imageView = gb.depth.view;
+      geoDepthInfo.sampler = VK_NULL_HANDLE;
+
+      const u32 writeCount = 6;
+      std::vector<VkWriteDescriptorSet> write(writeCount);
+      // Swapchain image
+      write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[0].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[0].dstBinding       = 0;
+      write[0].dstArrayElement  = 0;
+      write[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      write[0].descriptorCount  = 1;
+      write[0].pBufferInfo      = &bufferInfo;
+      write[0].pImageInfo       = nullptr;
+      write[0].pTexelBufferView = nullptr;
+      //// Shadow map
+      //write[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      //write[1].dstSet           = context.globalDescritorSet;
+      //write[1].dstBinding       = 1;
+      //write[1].dstArrayElement  = 0;
+      //write[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      //write[1].descriptorCount  = 1;
+      //write[1].pBufferInfo      = nullptr;
+      //write[1].pImageInfo       = &shadowInfo;
+      //write[1].pTexelBufferView = nullptr;
+      // Geo Position
+      write[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[1].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[1].dstBinding       = 1;
+      write[1].dstArrayElement  = 0;
+      write[1].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      write[1].descriptorCount  = 1;
+      write[1].pBufferInfo      = nullptr;
+      write[1].pImageInfo       = &geoPositionInfo;
+      write[1].pTexelBufferView = nullptr;
+      // Geo Normal
+      write[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[2].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[2].dstBinding       = 2;
+      write[2].dstArrayElement  = 0;
+      write[2].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      write[2].descriptorCount  = 1;
+      write[2].pBufferInfo      = nullptr;
+      write[2].pImageInfo       = &geoNormalInfo;
+      write[2].pTexelBufferView = nullptr;
+      // Geo Albedo
+      write[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[3].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[3].dstBinding       = 3;
+      write[3].dstArrayElement  = 0;
+      write[3].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      write[3].descriptorCount  = 1;
+      write[3].pBufferInfo      = nullptr;
+      write[3].pImageInfo       = &geoAlbedoInfo;
+      write[3].pTexelBufferView = nullptr;
+      // Geo Maps
+      write[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[4].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[4].dstBinding       = 4;
+      write[4].dstArrayElement  = 0;
+      write[4].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      write[4].descriptorCount  = 1;
+      write[4].pBufferInfo      = nullptr;
+      write[4].pImageInfo       = &geoMapsInfo;
+      write[4].pTexelBufferView = nullptr;
+      // Geo Depth
+      write[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[5].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[5].dstBinding       = 5;
+      write[5].dstArrayElement  = 0;
+      write[5].descriptorType   = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      write[5].descriptorCount  = 1;
+      write[5].pBufferInfo      = nullptr;
+      write[5].pImageInfo       = &geoDepthInfo;
+      write[5].pTexelBufferView = nullptr;
+
+      vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
+    }
   }
 
   // Scene object descriptor set layout =====

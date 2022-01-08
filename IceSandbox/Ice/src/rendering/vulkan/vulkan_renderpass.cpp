@@ -93,10 +93,10 @@ b8 IvkRenderer::CreateRenderpass(VkRenderPass* _renderpass,
   return true;
 }
 
-b8 IvkRenderer::CreateGeometryPassImages()
+b8 IvkRenderer::CreateDepthImage()
 {
   // Find depth format =====
-  VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
+  VkFormat format = VK_FORMAT_D32_SFLOAT;
   VkFormatProperties formatProperties;
   const u32 fCount = 3;
   VkFormat desiredFormats[fCount] = { VK_FORMAT_D32_SFLOAT,
@@ -108,44 +108,29 @@ b8 IvkRenderer::CreateGeometryPassImages()
 
     if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
     {
-      depthFormat = desiredFormats[i];
+      format = desiredFormats[i];
       break;
     }
   }
 
-  context.albedoImages.resize(context.swapchainImages.size());
   context.depthImages.resize(context.swapchainImages.size());
 
   for (u32 i = 0; i < context.swapchainImages.size(); i++)
   {
-    // Create albedo image =====
-    {
-      context.albedoImages[i].format = context.swapchainFormat;
-      ICE_ATTEMPT(CreateImage(&context.albedoImages[i],
-                              context.swapchainExtent,
-                              context.swapchainFormat,
-                              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT));
-      context.albedoImages[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-      ICE_ATTEMPT(CreateImageView(&context.albedoImages[i].view,
-                                  context.albedoImages[i].image,
-                                  context.albedoImages[i].format,
-                                  VK_IMAGE_ASPECT_COLOR_BIT));
-    }
+    context.depthImages[i].format = format;
 
-    // Create depth image =====
-    {
-      context.depthImages[i].format = depthFormat;
-      ICE_ATTEMPT(CreateImage(&context.depthImages[i],
-                              context.swapchainExtent,
-                              depthFormat,
-                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT));
-      context.depthImages[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    // Create image =====
+    ICE_ATTEMPT(CreateImage(&context.depthImages[i],
+                            context.swapchainExtent,
+                            format,
+                            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+    context.depthImages[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 
-      ICE_ATTEMPT(CreateImageView(&context.depthImages[i].view,
-                                  context.depthImages[i].image,
-                                  context.depthImages[i].format,
-                                  VK_IMAGE_ASPECT_DEPTH_BIT));
-    }
+    // Create image view =====
+    ICE_ATTEMPT(CreateImageView(&context.depthImages[i].view,
+                                context.depthImages[i].image,
+                                context.depthImages[i].format,
+                                VK_IMAGE_ASPECT_DEPTH_BIT));
   }
 
   return true;
@@ -185,7 +170,7 @@ b8 IvkRenderer::CreateMainFrameBuffers()
     ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
                                   context.mainRenderpass,
                                   context.swapchainExtent,
-                                  { context.swapchainImageViews[i], context.albedoImages[0].view, context.depthImages[0].view}));
+                                  { context.swapchainImageViews[i], context.depthImages[i].view}));
   }
 
   return true;

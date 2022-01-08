@@ -39,14 +39,65 @@ u32 IvkRenderer::CreateShader(const IceShaderInfo& _info)
   return index;
 }
 
+b8 IvkRenderer::CreateDeferredMaterial()
+{
+  IceLogInfo("===== Creating deferred quad material");
+
+  IvkMaterial& material = context.deferredMaterial;
+
+  // Load shaders =====
+  material.vertexShaderIndex = CreateShader({"deferredlight.vert", Ice_Shader_Vertex});
+  material.fragmentShaderIndex = CreateShader({"deferredlight.frag", Ice_Shader_Fragment});
+
+  // Create descriptor components =====
+
+  // Only runs  on the lighting subpass
+
+  std::vector<IvkDescriptor> descriptors;
+  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Position
+  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Normal
+  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Albedo
+  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Maps
+  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Depth
+
+  ICE_ATTEMPT(CreateDescriptorSet(descriptors,
+                                  &material.descriptorSetLayout,
+                                  &material.descriptorSet));
+
+  ICE_ATTEMPT(CreatePipelinelayout(&material.pipelineLayout,
+                                   { context.globalDescriptorSetLayout,
+                                     material.descriptorSetLayout,
+                                     context.objectDescriptorSetLayout },
+                                   {}));
+
+  ICE_ATTEMPT(CreatePipeline(material, 1));
+
+  std::vector<IvkDescriptorBinding> descriptorBindings;
+
+  //for (u32 i = 0; i < count; i++)
+  //{
+  //  IvkGeoBuffer& gb = context.geoBuffers[i];
+
+  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.position, nullptr });
+  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.normal, nullptr });
+  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.albedo, nullptr });
+  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.maps, nullptr });
+  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.depth, nullptr });
+
+
+  //  descriptorBindings.clear();
+  //}
+  UpdateDescriptorSet(material.descriptorSet, descriptorBindings);
+
+  IceLogInfo("===== Finished creating deferred quad material");
+  return true;
+}
+
 u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
 {
   IceLogInfo("===== Creating material %u", materials.size());
 
   IvkMaterial material;
-
-  // TODO : REMOVE -- Temprarily used by the swapchain pipeline
-  CreateShader({"depth.frag", Ice_Shader_Fragment});
 
   // Load shaders =====
   for (auto& s : _shaders)
@@ -80,16 +131,11 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
     ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
   }
 
-  std::vector<IvkDescriptorBinding> descriptorBindings(1);
-  descriptorBindings[0].image = &texture;
-  descriptorBindings[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  UpdateDescriptorSet(material.geoDescriptorSet, descriptorBindings);
+  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
 
-  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &context.albedoImages[0], nullptr });
-  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &context.depthImages[0], nullptr });
-
-  UpdateDescriptorSet(material.finalDescriptorSet, descriptorBindings);
+  UpdateDescriptorSet(material.descriptorSet, descriptorBindings);
 
   IceLogInfo("===== Finished creating material %u", materials.size());
 
@@ -105,32 +151,16 @@ b8 IvkRenderer::CreateFragileComponents(IvkMaterial& material)
   // Should store this information for re-creation
   std::vector<IvkDescriptor> descriptors;
 
-  // Geometry subpass =====
+  // Only runs  on the geometry subpass
   descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
 
   ICE_ATTEMPT(CreateDescriptorSet(descriptors,
-                                  &material.geoDescriptorSetLayout,
-                                  &material.geoDescriptorSet));
+                                  &material.descriptorSetLayout,
+                                  &material.descriptorSet));
 
-  ICE_ATTEMPT(CreatePipelinelayout(&material.geoPipelineLayout,
+  ICE_ATTEMPT(CreatePipelinelayout(&material.pipelineLayout,
                                    { context.globalDescriptorSetLayout,
-                                     material.geoDescriptorSetLayout,
-                                     context.objectDescriptorSetLayout },
-                                   {}));
-
-  // Swapchain subpass =====
-  // Geo color image
-  descriptors.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT});
-  // Geo depth image
-  descriptors.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT});
-
-  ICE_ATTEMPT(CreateDescriptorSet(descriptors,
-                                  &material.finalDescriptorSetLayout,
-                                  &material.finalDescriptorSet));
-
-  ICE_ATTEMPT(CreatePipelinelayout(&material.finalPipelineLayout,
-                                   { context.globalDescriptorSetLayout,
-                                     material.finalDescriptorSetLayout,
+                                     material.descriptorSetLayout,
                                      context.objectDescriptorSetLayout },
                                    {}));
 }
@@ -150,27 +180,41 @@ b8 IvkRenderer::ReloadMaterials()
     // Destroy fragile components =====
     {
       vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
-      vkDestroyPipeline(context.device, m.finalPipeline, context.alloc);
-      vkDestroyPipeline(context.device, m.geoPipeline, context.alloc);
-      vkDestroyPipelineLayout(context.device, m.finalPipelineLayout, context.alloc);
-      vkDestroyPipelineLayout(context.device, m.geoPipelineLayout, context.alloc);
+      vkDestroyPipeline(context.device, m.pipeline, context.alloc);
+      vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
     }
 
     // Re-create fragile components =====
     {
-      std::vector<IvkDescriptor> descriptors;
-      descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
+      //std::vector<IvkDescriptor> descriptors;
+      //descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
 
-      //ICE_ATTEMPT(CreatePipelinelayout(&m.finalPipelineLayout,
-      //                                 { context.globalDescriptorSetLayout,
-      //                                   m.finalDescriptorSetLayout,
-      //                                   context.objectDescriptorSetLayout },
-      //                                 {}));
-      CreateFragileComponents(m);
+      ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
+                                       { context.globalDescriptorSetLayout,
+                                         m.descriptorSetLayout,
+                                         context.objectDescriptorSetLayout },
+                                       {}));
 
       ICE_ATTEMPT(CreatePipeline(m));
     }
   }
+
+  // Recreate Deferred =====
+  {
+    vkDestroyPipeline(context.device, context.deferredMaterial.pipeline, context.alloc);
+    vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
+    vkDestroyPipelineLayout(context.device, context.deferredMaterial.pipelineLayout, context.alloc);
+
+    ICE_ATTEMPT(CreatePipelinelayout(&context.deferredMaterial.pipelineLayout,
+                                     { context.globalDescriptorSetLayout,
+                                       context.deferredMaterial.descriptorSetLayout,
+                                       context.objectDescriptorSetLayout },
+                                     {}));
+
+    ICE_ATTEMPT(CreatePipeline(context.deferredMaterial, 1));
+  }
+
+
 
   return true;
 }
@@ -244,7 +288,7 @@ b8 IvkRenderer::CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
   return true;
 }
 
-b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
+b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
 {
   // Shader Stages State =====
   // Insert shader modules
@@ -351,18 +395,19 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   depthStateInfo.depthBoundsTestEnable = VK_FALSE;
 
   // Color Blend State =====
-  VkPipelineColorBlendAttachmentState blendAttachmentState {};
-  blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                                        VK_COLOR_COMPONENT_G_BIT |
-                                        VK_COLOR_COMPONENT_B_BIT |
-                                        VK_COLOR_COMPONENT_A_BIT;
-  blendAttachmentState.blendEnable = VK_FALSE;
+  VkPipelineColorBlendAttachmentState blendAttachmentStates [4] {};
+  blendAttachmentStates[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                            VK_COLOR_COMPONENT_G_BIT |
+                                            VK_COLOR_COMPONENT_B_BIT |
+                                            VK_COLOR_COMPONENT_A_BIT;
+  blendAttachmentStates[0].blendEnable = VK_FALSE;
+  blendAttachmentStates[1] = blendAttachmentStates[2] = blendAttachmentStates[3] = blendAttachmentStates[0];
 
   VkPipelineColorBlendStateCreateInfo blendStateInfo {};
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = 1;
-  blendStateInfo.pAttachments = &blendAttachmentState;
+  blendStateInfo.attachmentCount = _subpass == 0 ? 4 : 1;
+  blendStateInfo.pAttachments = &blendAttachmentStates[0];
 
   // Dynamic States =====
   // States included here are capable of being set by dynamic state setting functions
@@ -385,42 +430,26 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material)
   createInfo.pDynamicState       = &dynamicStateInfo;
   createInfo.stageCount = shaderCount;
   createInfo.pStages    = shaderStageInfos;
-  createInfo.renderPass = context.mainRenderpass;
+  createInfo.renderPass = context.deferredRenderpass;
+  createInfo.layout     = material.pipelineLayout;
 
-  // Geometry subpass
-  createInfo.layout = material.geoPipelineLayout;
+  createInfo.subpass = _subpass;
+
+  IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
+                                       nullptr,
+                                       1,
+                                       &createInfo,
+                                       context.alloc,
+                                       &material.pipeline),
+             "Failed to create the graphics pipeline");
+
+  // Shadows =====
   createInfo.subpass = 0;
-  IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
-                                       nullptr,
-                                       1,
-                                       &createInfo,
-                                       context.alloc,
-                                       &material.geoPipeline),
-             "Failed to create the graphics pipeline");
-
-  // Final color subpass
-
-  shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  shaderStageInfos[1].module = shaders[0].module;
-  shaderStageInfos[1].pName = "main";
-
-  createInfo.layout = material.finalPipelineLayout;
-  createInfo.subpass = 1;
-  IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
-                                       nullptr,
-                                       1,
-                                       &createInfo,
-                                       context.alloc,
-                                       &material.finalPipeline),
-             "Failed to create the graphics pipeline");
-
   rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT; // Fix peter-panning
   createInfo.stageCount = 1;
   createInfo.pStages = shaderStageInfos;
   createInfo.renderPass = shadow.renderpass;
   createInfo.pViewportState = &shadowViewportStateInfo;
-  createInfo.subpass = 0;
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,
                                        1,

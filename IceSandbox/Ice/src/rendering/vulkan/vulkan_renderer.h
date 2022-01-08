@@ -84,6 +84,10 @@ private:
   // Ends recording and queues the command buffer
   b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
 
+  // Deferred =====
+  b8 CreateDeferredRenderpass();
+  b8 CreateDeferredFramebuffers();
+
   // Descriptors =====
 
   // Defines the descriptors and sets available for use
@@ -116,8 +120,8 @@ private:
                        VkExtent2D _extents,
                        std::vector<VkImageView> _views);
 
-  // Creates the images rendered to in the geometry pass
-  b8 CreateGeometryPassImages();
+  // Creates the main camera's depth image and its view
+  b8 CreateDepthImage();
 
   // Creates a frame buffer for each swapchain image
   b8 CreateMainFrameBuffers();
@@ -140,6 +144,9 @@ private:
 
   // Material =====
 
+  // Creates the material used by a screen-space quad to display deferred information
+  b8 CreateDeferredMaterial();
+
   u32 CreateShader(const IceShaderInfo& _info);
   b8 CreateMaterialShaders(const std::vector<IceShaderInfo>& _shaders, IvkMaterial& _material);
   b8 CreateFragileComponents(IvkMaterial& material);
@@ -148,7 +155,7 @@ private:
                           std::vector<VkDescriptorSetLayout> _layouts,
                           std::vector<VkPushConstantRange> _pushRanges);
   // Creates a presentation pipeline and a shadow-pass pipeline
-  b8 CreatePipeline(IvkMaterial& material);
+  b8 CreatePipeline(IvkMaterial& material, u32 _subpass = 0);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
@@ -189,6 +196,7 @@ private:
 
   // Creates an image, view, and sampler for the input image file
   b8 CreateTexture(IvkImage* _image, const char* _directory);
+  VkFormat GetDepthFormat();
 
   // ====================
   // API
