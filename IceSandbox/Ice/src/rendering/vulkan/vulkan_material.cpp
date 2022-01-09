@@ -163,6 +163,8 @@ b8 IvkRenderer::CreateFragileComponents(IvkMaterial& material)
                                      material.descriptorSetLayout,
                                      context.objectDescriptorSetLayout },
                                    {}));
+
+  return true;
 }
 
 b8 IvkRenderer::ReloadMaterials()

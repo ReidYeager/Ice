@@ -82,28 +82,6 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
   return true;
 }
 
-float averageSum = 0.0f;
-u32 averageCount = 0;
-
-void AddObjectToSceneGui(IceObject* _object, u32 index = 0)
-{
-  if (ImGui::TreeNode((void*)index, "object %d", index))
-  {
-    ImGui::DragFloat3("Position", &_object->transform.position[0], 0.01f);
-    ImGui::DragFloat3("Rotation", &_object->transform.rotation[0], 0.1f);
-    ImGui::DragFloat3("Scale", &_object->transform.scale[0], 0.01f);
-
-    _object->transform.UpdateMatrix();
-
-    for (const auto& o : _object->children)
-    {
-      AddObjectToSceneGui(o, ++index);
-    }
-
-    ImGui::TreePop(); // Done displaying this object's information
-  }
-}
-
 b8 reIceApplication::Update()
 {
   IceLogInfo("===== reApplication Main Loop =====");
@@ -117,30 +95,12 @@ b8 reIceApplication::Update()
 
   float deltaSum = 0.0f;
   u32 deltaCount = 0;
+
+  float totalAverageDeltaSum = 0.0f;
+  u32 totalAverageDeltaCount = 0;
  
   while (rePlatform.Update())
   {
-    // Start IMGUI frame
-    {
-      ImGui_ImplWin32_NewFrame();
-      ImGui_ImplVulkan_NewFrame();
-      ImGui::NewFrame();
-
-      //ImGui::ShowDemoWindow();
-    }
-
-    // Scene hierarchy
-    {
-      u32 index = 0;
-      ImGui::Begin("Scene");
-      for (auto& o : sceneRoot->children)
-      {
-        AddObjectToSceneGui(o, index++);
-      }
-      //AddObjectToSceneGui(sceneRoot, 0);
-      ImGui::End();
-    }
-
     state.ClientUpdate(deltaTime);
 
     ICE_ATTEMPT(reRenderer.Render(&cam));
@@ -160,8 +120,8 @@ b8 reIceApplication::Update()
         float averageSec = (deltaSum / deltaCount);
         IceLogInfo("%3.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
 
-        averageSum += averageSec;
-        averageCount++;
+        totalAverageDeltaSum += averageSec;
+        totalAverageDeltaCount++;
 
         deltaSum = 0;
         deltaCount = 0;
@@ -171,6 +131,11 @@ b8 reIceApplication::Update()
       Input.Update();
     }
   }
+
+  float totalAverageDelta = totalAverageDeltaSum / totalAverageDeltaCount;
+  IceLogInfo("Average delta : %3.3f ms -- %3.0f FPS",
+             totalAverageDelta * 1000.0f,
+             1.0f / totalAverageDelta);
 
   return true;
 }
@@ -188,11 +153,6 @@ void DestroyObjectAndChildren(IceObject* object)
 
 b8 reIceApplication::Shutdown()
 {
-  float totalAverageDelta = averageSum / averageCount;
-  IceLogInfo("Average delta : %3.3f ms -- %3.0f FPS",
-             totalAverageDelta * 1000.0f,
-             1.0f / totalAverageDelta);
-
   IceLogInfo("===== reApplication Shutdown =====");
   state.ClientShutdown();
 

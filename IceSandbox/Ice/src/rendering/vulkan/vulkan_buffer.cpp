@@ -36,7 +36,6 @@ b8 IvkRenderer::CreateBuffer(IvkBuffer* _buffer,
     {
       _buffer->size = (_size + alignment) & ~alignment;
     }
-    IceLogInfo("Buffer size : %lu -> %lu", _size, _buffer->size);
   }
 
   // Buffer creation =====

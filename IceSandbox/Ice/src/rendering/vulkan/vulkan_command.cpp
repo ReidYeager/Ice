@@ -4,11 +4,6 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 
-#include "libraries/imgui/imgui.h"
-#include "libraries/imgui/imgui_impl_vulkan.h"
-#include "libraries/imgui/imgui_impl_win32.h"
-
-
 b8 IvkRenderer::CreateCommandBuffers()
 {
   const u32 count = context.swapchainImages.size();
@@ -34,8 +29,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   const u32 clearCount = 6;
   VkClearValue clearValues[clearCount] = {};
-  clearValues[0].color = { 0.3f, 0.3f, 0.3f };
-  //clearValues[1].depthStencil = { 1, 0 };
+  clearValues[0].color = { 0.3f, 0.3f, 0.3f }; // Swapchain
   clearValues[1].color = { 0.0f, 0.0f, 0.0f }; // Position
   clearValues[2].color = { 0.0f, 0.0f, 0.0f }; // Normal
   clearValues[3].color = { 0.0f, 0.0f, 0.0f }; // Albedo
@@ -67,53 +61,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   VkDeviceSize zero = 0;
 
-  //// Shadow pass =====
-  //{
-  //  vkCmdBeginRenderPass(cmdBuffer, &shadowBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-  //  vkCmdBindDescriptorSets(cmdBuffer,
-  //                          VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                          context.globalPipelinelayout,
-  //                          0,
-  //                          1,
-  //                          &shadow.descriptorSet,
-  //                          0,
-  //                          nullptr);
-
-  //  // Bind each material =====
-  //  for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
-  //  {
-  //    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].shadowPipeline);
-  //    vkCmdBindDescriptorSets(cmdBuffer,
-  //                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                            materials[matIndex].pipelineLayout,
-  //                            1,
-  //                            1,
-  //                            &materials[matIndex].descriptorSet,
-  //                            0,
-  //                            nullptr);
-
-  //    // Draw each object =====
-  //    for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
-  //    {
-  //      IvkObject& object = scene[matIndex][objectIndex];
-  //      vkCmdBindDescriptorSets(cmdBuffer,
-  //                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                              materials[matIndex].pipelineLayout,
-  //                              2,
-  //                              1,
-  //                              &object.descriptorSet,
-  //                              0,
-  //                              nullptr);
-
-  //      vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
-  //      vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-  //      vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
-  //    }
-  //  }
-  //  vkCmdEndRenderPass(cmdBuffer);
-  //}
-
-  // Color pass =====
+  // Deferred pass =====
   {
     vkCmdBeginRenderPass(cmdBuffer, &colorBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindDescriptorSets(cmdBuffer,
@@ -156,9 +104,6 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
         vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
       }
     }
-
-    ImGui::Render();
-    //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
     // Deferred quad =====
     vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);

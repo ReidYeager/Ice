@@ -50,6 +50,11 @@ public:
   b8 Render(IceCamera* _camera);
 
 private:
+
+  //=========================
+  // Vulkan Initialization
+  //=========================
+
   // Ensures that all desired layer and extension functionality is present in the created instance
   b8 CreateInstance();
   // Selects the first compatible GPU among those available in the system
@@ -70,10 +75,9 @@ private:
   // Creates the fences and semaphores for CPU/GPU synchronization
   b8 CreateSyncObjects();
 
-  // Creates an image, view, and sampler for the directional light's shadow
-  b8 CreateShadowImages();
-
-  // Commands =====
+  //=========================
+  // Commands
+  //=========================
 
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
@@ -84,11 +88,9 @@ private:
   // Ends recording and queues the command buffer
   b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
 
-  // Deferred =====
-  b8 CreateDeferredRenderpass();
-  b8 CreateDeferredFramebuffers();
-
-  // Descriptors =====
+  //=========================
+  // Descriptors
+  //=========================
 
   // Defines the descriptors and sets available for use
   b8 CreateDescriptorPool();
@@ -105,7 +107,9 @@ private:
   // Creates the pipelineLayout and set for the shadow descriptors
   b8 PrepareShadowDescriptors();
 
-  // Renderpass =====
+  //=========================
+  // Renderpass
+  //=========================
 
   // Defines a renderpass attachment and its reference
   IvkAttachmentDescRef CreateAttachment(IvkAttachmentSettings _settings, u32 _index);
@@ -120,20 +124,22 @@ private:
                        VkExtent2D _extents,
                        std::vector<VkImageView> _views);
 
-  // Creates the main camera's depth image and its view
-  b8 CreateDepthImage();
+  // Directional shadow =====
 
-  // Creates a frame buffer for each swapchain image
-  b8 CreateMainFrameBuffers();
-  // Creates a frame buffer for the directional light's shadows
+  // Defines the shadow renderpass settings
+  b8 CreateShadowRenderpass();
+  // Creates a frame buffer for the directional light's shadow
   b8 CreateShadowFrameBuffer();
 
-  // Defines the settings used to create the presentation renderpass
-  b8 CreateMainRenderPass();
-  // Defines the settings used to create the light depth-buffer renderpass
-  b8 CreateShadowRenderpass();
+  // Deferred =====
 
-  // Platform =====
+  b8 CreateDeferredRenderpass();
+  // Creates the G-buffers and framebuffer for each swapchain image
+  b8 CreateDeferredFramebuffers();
+
+  //=========================
+  // Platform
+  //=========================
 
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
   void GetPlatformExtensions(std::vector<const char*>& _extensions);
@@ -142,7 +148,9 @@ private:
   // Returns the window width and height
   vec2U GetPlatformWindowExtents();
 
-  // Material =====
+  //=========================
+  // Material
+  //=========================
 
   // Creates the material used by a screen-space quad to display deferred information
   b8 CreateDeferredMaterial();
@@ -159,7 +167,9 @@ private:
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
-  // Buffers =====
+  //=========================
+  // Buffer
+  //=========================
 
   // Allocates a new block of memory on the GPU
   b8 CreateBuffer(IvkBuffer* _buffer,
@@ -172,7 +182,9 @@ private:
   // Destroys the input buffer and can free its memory
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
-  // Images =====
+  //=========================
+  // Image
+  //=========================
 
   // Creates a vulkan image
   b8 CreateImage(IvkImage* _image,
@@ -199,9 +211,9 @@ private:
   VkFormat GetDepthFormat();
 
   // ====================
-  // API
+  public: // API
   // ====================
-  public:
+
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
   // Reloads all shaders and re-creates the material pipelines

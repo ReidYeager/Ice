@@ -93,49 +93,6 @@ b8 IvkRenderer::CreateRenderpass(VkRenderPass* _renderpass,
   return true;
 }
 
-b8 IvkRenderer::CreateDepthImage()
-{
-  // Find depth format =====
-  VkFormat format = VK_FORMAT_D32_SFLOAT;
-  VkFormatProperties formatProperties;
-  const u32 fCount = 3;
-  VkFormat desiredFormats[fCount] = { VK_FORMAT_D32_SFLOAT,
-                                      VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                      VK_FORMAT_D24_UNORM_S8_UINT };
-  for (u32 i = 0; i < fCount; i++)
-  {
-    vkGetPhysicalDeviceFormatProperties(context.gpu.device, desiredFormats[i], &formatProperties);
-
-    if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-    {
-      format = desiredFormats[i];
-      break;
-    }
-  }
-
-  context.depthImages.resize(context.swapchainImages.size());
-
-  for (u32 i = 0; i < context.swapchainImages.size(); i++)
-  {
-    context.depthImages[i].format = format;
-
-    // Create image =====
-    ICE_ATTEMPT(CreateImage(&context.depthImages[i],
-                            context.swapchainExtent,
-                            format,
-                            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
-    context.depthImages[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-
-    // Create image view =====
-    ICE_ATTEMPT(CreateImageView(&context.depthImages[i].view,
-                                context.depthImages[i].image,
-                                context.depthImages[i].format,
-                                VK_IMAGE_ASPECT_DEPTH_BIT));
-  }
-
-  return true;
-}
-
 b8 IvkRenderer::CreateFrameBuffer(VkFramebuffer* _framebuffer,
                                   VkRenderPass& _renderpass,
                                   VkExtent2D _extents,
@@ -159,30 +116,3 @@ b8 IvkRenderer::CreateFrameBuffer(VkFramebuffer* _framebuffer,
 
   return true;
 }
-
-b8 IvkRenderer::CreateMainFrameBuffers()
-{
-  const u32 imageCount = context.swapchainImages.size();
-  context.frameBuffers.resize(imageCount);
-
-  for (u32 i = 0; i < imageCount; i++)
-  {
-    ICE_ATTEMPT(CreateFrameBuffer(&context.frameBuffers[i],
-                                  context.mainRenderpass,
-                                  context.swapchainExtent,
-                                  { context.swapchainImageViews[i], context.depthImages[i].view}));
-  }
-
-  return true;
-}
-
-b8 IvkRenderer::CreateShadowFrameBuffer()
-{
-  ICE_ATTEMPT(CreateFrameBuffer(&shadow.framebuffer,
-                                shadow.renderpass,
-                                { shadowResolution, shadowResolution },
-                                { shadow.image.view }));
-
-  return true;
-}
-

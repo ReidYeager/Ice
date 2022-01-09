@@ -12,10 +12,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include "libraries/imgui/imgui.h"
-#include "libraries/imgui/imgui_impl_vulkan.h"
-#include "libraries/imgui/imgui_impl_win32.h"
-
 #include <vector>
 
 // =======================
@@ -210,8 +206,6 @@ struct IvkContext
   VkQueue transientQueue;
 
   VkDescriptorPool descriptorPool;
-  VkDescriptorPool imguiPool;
-  ImGui_ImplVulkanH_Window imguiWindow;
 
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommandPool; // Used only for one-time commands
@@ -229,8 +223,6 @@ struct IvkContext
   VkRenderPass deferredRenderpass;
   IvkMaterial deferredMaterial;
   std::vector<VkDescriptorSet> deferredGlobalDescritorSets;
-
-  std::vector<IvkImage> depthImages;
 
   std::vector<VkFramebuffer> frameBuffers;
 
