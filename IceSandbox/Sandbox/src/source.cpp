@@ -20,8 +20,8 @@ void reInit()
   u32 def = app.CreateMaterial({ {"deferred", Ice_shader_VertFrag} });
 
   app.AddObject("Plane.obj", def);
-  IceObject* obj = app.AddObject("Cube.obj", def);
-  app.AddObject("SphereSmooth.obj", def, obj);
+  //IceObject* obj = app.AddObject("Cube.obj", def);
+  app.AddObject("SphereSmooth.obj", def);
 }
 
 float pitch = 0.0f, yaw = 0.0f;
@@ -79,6 +79,7 @@ int main()
   settings.windowSettings.screenPosition = { 250, 150 };
 
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
+  settings.rendererSettings.lightingShader = "_light_shadow";
 
   return app.Run(&settings);
 }

@@ -42,7 +42,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
 
   // Create descriptor set layout =====
   {
-    const u32 bindingCount = 6;
+    const u32 bindingCount = 7;
     VkDescriptorSetLayoutBinding bindings[bindingCount];
     // Global uniform buffer
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -50,12 +50,6 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     bindings[0].binding = 0;
     bindings[0].stageFlags = VK_SHADER_STAGE_ALL;
     bindings[0].pImmutableSamplers = nullptr;
-    //// Shadow depth map
-    //bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    //bindings[1].descriptorCount = 1;
-    //bindings[1].binding = 1;
-    //bindings[1].stageFlags = VK_SHADER_STAGE_ALL;
-    //bindings[1].pImmutableSamplers = nullptr;
     // Geo position
     bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     bindings[1].descriptorCount = 1;
@@ -86,6 +80,12 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     bindings[5].binding = 5;
     bindings[5].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     bindings[5].pImmutableSamplers = nullptr;
+    // Shadow depth map
+    bindings[6].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[6].descriptorCount = 1;
+    bindings[6].binding = 6;
+    bindings[6].stageFlags = VK_SHADER_STAGE_ALL;
+    bindings[6].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     createInfo.flags = 0;
@@ -180,7 +180,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
       geoDepthInfo.imageView = gb.depth.view;
       geoDepthInfo.sampler = VK_NULL_HANDLE;
 
-      const u32 writeCount = 6;
+      const u32 writeCount = 7;
       std::vector<VkWriteDescriptorSet> write(writeCount);
       // Swapchain image
       write[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -192,16 +192,6 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
       write[0].pBufferInfo      = &bufferInfo;
       write[0].pImageInfo       = nullptr;
       write[0].pTexelBufferView = nullptr;
-      //// Shadow map
-      //write[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      //write[1].dstSet           = context.globalDescritorSet;
-      //write[1].dstBinding       = 1;
-      //write[1].dstArrayElement  = 0;
-      //write[1].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      //write[1].descriptorCount  = 1;
-      //write[1].pBufferInfo      = nullptr;
-      //write[1].pImageInfo       = &shadowInfo;
-      //write[1].pTexelBufferView = nullptr;
       // Geo Position
       write[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       write[1].dstSet           = context.deferredGlobalDescritorSets[i];
@@ -252,6 +242,16 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
       write[5].pBufferInfo      = nullptr;
       write[5].pImageInfo       = &geoDepthInfo;
       write[5].pTexelBufferView = nullptr;
+      // Shadow map
+      write[6].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write[6].dstSet           = context.deferredGlobalDescritorSets[i];
+      write[6].dstBinding       = 6;
+      write[6].dstArrayElement  = 0;
+      write[6].descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      write[6].descriptorCount  = 1;
+      write[6].pBufferInfo      = nullptr;
+      write[6].pImageInfo       = &shadowInfo;
+      write[6].pTexelBufferView = nullptr;
 
       vkUpdateDescriptorSets(context.device, writeCount, write.data(), 0, nullptr);
     }

@@ -61,7 +61,7 @@ add_library (Ice STATIC
  "src/libraries/imgui/imstb_rectpack.h"
  "src/libraries/imgui/imstb_textedit.h"
  "src/libraries/imgui/imstb_truetype.h"
-  "src/rendering/vulkan/vulkan_deferred.cpp" "src/rendering/vulkan/vulkan_shadow.cpp")
+  "src/rendering/vulkan/vulkan_deferred.cpp" "src/rendering/vulkan/vulkan_shadow.cpp" "src/rendering/renderer_settings.h")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

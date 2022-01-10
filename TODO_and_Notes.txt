@@ -5,11 +5,11 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // TODO : --> Learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line   149 :--: // TODO : Make this dynamic -- defined in a shader input file
+	Line   134 :--: // TODO : Make this dynamic -- defined in a shader input file
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system
 	Line   182 :--: // TODO : Move out of IvkRenderer
 	Line   596 :--: // TODO : Remove this and manually hand-off ownership of the images
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
-	Line    21 :--: // TODO : Remove/move everything in this private section
+	Line    22 :--: // TODO : Remove/move everything in this private section

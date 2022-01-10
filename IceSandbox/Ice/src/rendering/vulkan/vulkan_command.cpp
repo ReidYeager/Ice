@@ -61,6 +61,52 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   VkDeviceSize zero = 0;
 
+  // Shadow pass =====
+  {
+    vkCmdBeginRenderPass(cmdBuffer, &shadowBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindDescriptorSets(cmdBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            context.globalPipelinelayout,
+                            0,
+                            1,
+                            &shadow.descriptorSet,
+                            0,
+                            nullptr);
+
+    // Bind each material =====
+    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+    {
+      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].shadowPipeline);
+      vkCmdBindDescriptorSets(cmdBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              materials[matIndex].pipelineLayout,
+                              1,
+                              1,
+                              &materials[matIndex].descriptorSet,
+                              0,
+                              nullptr);
+
+      // Draw each object =====
+      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+      {
+        IvkObject& object = scene[matIndex][objectIndex];
+        vkCmdBindDescriptorSets(cmdBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                materials[matIndex].pipelineLayout,
+                                2,
+                                1,
+                                &object.descriptorSet,
+                                0,
+                                nullptr);
+
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+      }
+    }
+    vkCmdEndRenderPass(cmdBuffer);
+  }
+
   // Deferred pass =====
   {
     vkCmdBeginRenderPass(cmdBuffer, &colorBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

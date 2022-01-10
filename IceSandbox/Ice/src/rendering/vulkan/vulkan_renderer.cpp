@@ -16,7 +16,7 @@
 // TODO : Rework the scene & object system
 // TODO : Integrate cameras & lights into this scene system
 
-b8 IvkRenderer::Initialize()
+b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 {
   IceLogDebug("===== Vulkan Renderer Init =====");
 
@@ -51,7 +51,7 @@ b8 IvkRenderer::Initialize()
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
-  ICE_ATTEMPT(CreateDeferredMaterial());
+  ICE_ATTEMPT(CreateDeferredMaterial(_settings.lightingShader));
 
   return true;
 }

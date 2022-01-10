@@ -8,6 +8,7 @@
 #include "core/camera.h"
 #include "core/object.h"
 #include "rendering/vulkan/vulkan_context.h"
+#include "rendering/renderer_settings.h"
 #include "rendering/mesh.h"
 
 #include <vulkan/vulkan.h>
@@ -43,7 +44,7 @@ private:
 
 public:
   // Initializes the components required to render
-  b8 Initialize();
+  b8 Initialize(const IceRendererSettings& _settings);
   // Destroys the components required to render, materials, and meshes
   b8 Shutdown();
   // Queues and presents a single frame's render
@@ -153,7 +154,7 @@ private:
   //=========================
 
   // Creates the material used by a screen-space quad to display deferred information
-  b8 CreateDeferredMaterial();
+  b8 CreateDeferredMaterial(const char* _lightingShader);
 
   u32 CreateShader(const IceShaderInfo& _info);
   b8 CreateMaterialShaders(const std::vector<IceShaderInfo>& _shaders, IvkMaterial& _material);

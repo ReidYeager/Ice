@@ -8,9 +8,9 @@
 
 reIceRenderer reRenderer;
 
-b8 reIceRenderer::Initialize(IceRendererSettings* _settings)
+b8 reIceRenderer::Initialize(const IceRendererSettings& _settings)
 {
-  if (!backend.Initialize())
+  if (!backend.Initialize(_settings))
   {
     IceLogFatal("Failed to initialize renderer backend");
     return false;

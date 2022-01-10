@@ -39,26 +39,24 @@ u32 IvkRenderer::CreateShader(const IceShaderInfo& _info)
   return index;
 }
 
-b8 IvkRenderer::CreateDeferredMaterial()
+b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
 {
   IceLogInfo("===== Creating deferred quad material");
 
   IvkMaterial& material = context.deferredMaterial;
 
+  std::string lightShader = _lightingShader;
+  lightShader.append(".frag");
+
   // Load shaders =====
-  material.vertexShaderIndex = CreateShader({"deferredlight.vert", Ice_Shader_Vertex});
-  material.fragmentShaderIndex = CreateShader({"deferredlight.frag", Ice_Shader_Fragment});
+  material.vertexShaderIndex = CreateShader({"_light_blank.vert", Ice_Shader_Vertex});
+  material.fragmentShaderIndex = CreateShader({lightShader.c_str(), Ice_Shader_Fragment});
 
   // Create descriptor components =====
 
   // Only runs  on the lighting subpass
 
   std::vector<IvkDescriptor> descriptors;
-  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Position
-  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Normal
-  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Albedo
-  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Maps
-  //descriptors.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT}); // Depth
 
   ICE_ATTEMPT(CreateDescriptorSet(descriptors,
                                   &material.descriptorSetLayout,
@@ -74,19 +72,6 @@ b8 IvkRenderer::CreateDeferredMaterial()
 
   std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  //for (u32 i = 0; i < count; i++)
-  //{
-  //  IvkGeoBuffer& gb = context.geoBuffers[i];
-
-  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.position, nullptr });
-  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.normal, nullptr });
-  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.albedo, nullptr });
-  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.maps, nullptr });
-  //  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, &gb.depth, nullptr });
-
-
-  //  descriptorBindings.clear();
-  //}
   UpdateDescriptorSet(material.descriptorSet, descriptorBindings);
 
   IceLogInfo("===== Finished creating deferred quad material");
@@ -188,9 +173,6 @@ b8 IvkRenderer::ReloadMaterials()
 
     // Re-create fragile components =====
     {
-      //std::vector<IvkDescriptor> descriptors;
-      //descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
-
       ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
                                        { context.globalDescriptorSetLayout,
                                          m.descriptorSetLayout,
@@ -403,7 +385,9 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
                                             VK_COLOR_COMPONENT_B_BIT |
                                             VK_COLOR_COMPONENT_A_BIT;
   blendAttachmentStates[0].blendEnable = VK_FALSE;
-  blendAttachmentStates[1] = blendAttachmentStates[2] = blendAttachmentStates[3] = blendAttachmentStates[0];
+  blendAttachmentStates[1] = blendAttachmentStates[0];
+  blendAttachmentStates[2] = blendAttachmentStates[0];
+  blendAttachmentStates[3] = blendAttachmentStates[0];
 
   VkPipelineColorBlendStateCreateInfo blendStateInfo {};
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

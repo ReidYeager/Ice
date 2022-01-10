@@ -60,7 +60,7 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
   Input.Initialize();
 
   // Initialize the renderer =====
-  if (!reRenderer.Initialize(&_settings->rendererSettings))
+  if (!reRenderer.Initialize(_settings->rendererSettings))
   {
     IceLogFatal("Ice Renderer failed to initialize");
     return false;
