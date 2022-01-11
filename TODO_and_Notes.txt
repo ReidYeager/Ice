@@ -1,7 +1,5 @@
 \IceSandbox\Ice\src\core\application.cpp
 	Line   205 :--: // TODO : Update children's matrices
-\IceSandbox\Ice\src\rendering\mesh.h
-	Line    59 :--: // NOTE : Make a better hash function http://www.azillionmonkeys.com/qed/hash.html
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // TODO : --> Learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
@@ -10,6 +8,7 @@
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system
 	Line   182 :--: // TODO : Move out of IvkRenderer
-	Line   596 :--: // TODO : Remove this and manually hand-off ownership of the images
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
-	Line    22 :--: // TODO : Remove/move everything in this private section
+	Line    19 :--: // TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
+	Line    24 :--: // TODO : Restructure the scene graph
+	Line    34 :--: // TODO : Remove/move all structs/variables defined here.

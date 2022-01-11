@@ -218,7 +218,7 @@ struct IvkContext
   VkFormat swapchainFormat;
   VkExtent2D swapchainExtent;
 
-  // Frame
+  // Frame =====
   std::vector<IvkGeoBuffer> geoBuffers;
   VkRenderPass deferredRenderpass;
   IvkMaterial deferredMaterial;
@@ -228,14 +228,14 @@ struct IvkContext
 
   VkRenderPass mainRenderpass;
 
-  // Synchronization
+  // Synchronization =====
   std::vector<VkFence> flightSlotAvailableFences;
   std::vector<VkSemaphore> renderCompleteSemaphores;
   std::vector<VkSemaphore> imageAvailableSemaphores;
   u32 currentFlightIndex = 0;
   #define RE_MAX_FLIGHT_IMAGE_COUNT 3
 
-  // Pipelines
+  // Pipelines =====
   VkDescriptorSetLayout objectDescriptorSetLayout;
 
   VkDescriptorSetLayout globalDescriptorSetLayout;

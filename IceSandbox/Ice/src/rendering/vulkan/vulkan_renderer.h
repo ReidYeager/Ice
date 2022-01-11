@@ -17,10 +17,22 @@
 
 #include <vector>
 
+// TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
+// [ ] Set shader descriptors from shader files
+// [ ] Allow source to define textures to use in materials
+// [ ] Allow source to change material pipeline settings
+
+// TODO : Restructure the scene graph
+// [ ] Establish a proper hierarchy in /core/
+// [ ] Create a structure in the renderer optimized for rendering
+// [ ] Link the core hierarchy to the rendering structure via core
+
 class IvkRenderer
 {
 private:
-  // TODO : Remove/move everything in this private section
+  IvkContext context;
+
+  // TODO : Remove/move all structs/variables defined here.
   struct IvkObject
   {
     IvkMesh mesh;
@@ -28,7 +40,6 @@ private:
     VkDescriptorSet descriptorSet;
   };
 
-  IvkContext context;
   std::vector<IvkShader> shaders;
   std::vector<IvkMaterial> materials;
   std::vector<IvkMesh> meshes;

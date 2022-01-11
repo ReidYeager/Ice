@@ -44,14 +44,14 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   shadowBeginInfo.renderArea.offset = { 0 , 0 };
   shadowBeginInfo.renderPass = shadow.renderpass;
   shadowBeginInfo.framebuffer = shadow.framebuffer;
-  // Color
-  VkRenderPassBeginInfo colorBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-  colorBeginInfo.clearValueCount = clearCount;
-  colorBeginInfo.pClearValues = clearValues;
-  colorBeginInfo.renderArea.extent = context.swapchainExtent;
-  colorBeginInfo.renderArea.offset = { 0 , 0 };
-  colorBeginInfo.renderPass = context.deferredRenderpass;
-  colorBeginInfo.framebuffer = context.geoBuffers[_commandIndex].framebuffer;
+  // Deferred
+  VkRenderPassBeginInfo deferredBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  deferredBeginInfo.clearValueCount = clearCount;
+  deferredBeginInfo.pClearValues = clearValues;
+  deferredBeginInfo.renderArea.extent = context.swapchainExtent;
+  deferredBeginInfo.renderArea.offset = { 0 , 0 };
+  deferredBeginInfo.renderPass = context.deferredRenderpass;
+  deferredBeginInfo.framebuffer = context.geoBuffers[_commandIndex].framebuffer;
 
   VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
 
@@ -109,7 +109,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
   // Deferred pass =====
   {
-    vkCmdBeginRenderPass(cmdBuffer, &colorBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmdBuffer, &deferredBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             context.globalPipelinelayout,

@@ -594,7 +594,6 @@ b8 IvkRenderer::CreateSwapchain()
     createInfo.minImageCount = imageCount;
     createInfo.surface = context.surface;
 
-    // TODO : Remove this and manually hand-off ownership of the images
     u32 indices[] = { context.gpu.graphicsQueueIndex, context.gpu.presentQueueIndex };
     if (context.gpu.graphicsQueueIndex != context.gpu.presentQueueIndex)
     {
@@ -604,6 +603,9 @@ b8 IvkRenderer::CreateSwapchain()
     }
     else
     {
+      // NOTE-: Using this, despite having different queues for graphics and presentation, seems to
+      // not only work, but improve frame times a bit (~100us on my laptop).
+      // I'm leaving in the above because I'm worried that it might later break if removed
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
