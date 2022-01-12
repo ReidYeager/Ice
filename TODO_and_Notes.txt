@@ -3,7 +3,8 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // TODO : --> Learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line   134 :--: // TODO : Make this dynamic -- defined in a shader input file
+	Line    44 :--: // NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
+	Line    91 :--: // TODO : Make this dynamic -- defined in a shader input file
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system

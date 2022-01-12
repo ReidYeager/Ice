@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "asserts.h"
 
+#include "rendering/render_context.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
@@ -97,24 +98,12 @@ struct IvkSubpassDependencies
 // Shader
 //=========================
 
-enum IceShaderStageFlagBits
-{
-  Ice_Shader_Invalid = 0,
-  Ice_Shader_Vertex = 1,
-  Ice_Shader_Fragment = 2,
-  Ice_shader_VertFrag = Ice_Shader_Vertex | Ice_Shader_Fragment
-};
-typedef IceFlag IceShaderStageFlag;
-
-struct IceShaderInfo
-{
-  std::string directory;
-  IceShaderStageFlag stages;
-};
-
 struct IvkShader
 {
   VkShaderModule module;
+  VkShaderStageFlagBits stage;
+
+  // TMP -- recreation
   IceShaderInfo info;
 };
 
@@ -142,8 +131,7 @@ struct IvkMaterial
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
   VkPipeline shadowPipeline;
-  u32 vertexShaderIndex;
-  u32 fragmentShaderIndex;
+  std::vector<IceHandle> shaderIndices;
 };
 
 // =======================
@@ -152,11 +140,7 @@ struct IvkMaterial
 
 struct IvkLights
 {
-  struct
-  {
-    vec4 direction = { 1.0f, -1.0f, 1.0f };
-    vec4 color = { 1.0f, 1.0f, 1.0f };
-  } directional;
+  IceLightDirectional directional;
 };
 
 struct IvkShadow

@@ -604,7 +604,7 @@ b8 IvkRenderer::CreateSwapchain()
     else
     {
       // NOTE-: Using this, despite having different queues for graphics and presentation, seems to
-      // not only work, but improve frame times a bit (~100us on my laptop).
+      // not only work, but improve frame times a bit (~100us for 1280x720 on gtx 1060).
       // I'm leaving in the above because I'm worried that it might later break if removed
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }

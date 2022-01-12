@@ -8,7 +8,7 @@
 #include "core/camera.h"
 #include "core/object.h"
 #include "rendering/vulkan/vulkan_context.h"
-#include "rendering/renderer_settings.h"
+#include "rendering/render_context.h"
 #include "rendering/mesh.h"
 
 #include <vulkan/vulkan.h>
@@ -167,9 +167,6 @@ private:
   // Creates the material used by a screen-space quad to display deferred information
   b8 CreateDeferredMaterial(const char* _lightingShader);
 
-  u32 CreateShader(const IceShaderInfo& _info);
-  b8 CreateMaterialShaders(const std::vector<IceShaderInfo>& _shaders, IvkMaterial& _material);
-  b8 CreateFragileComponents(IvkMaterial& material);
   // Creates a simple pipeline layout
   b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
                           std::vector<VkDescriptorSetLayout> _layouts,
@@ -227,9 +224,12 @@ private:
   // ====================
 
   // Creates a new material (descriptor set, pipeline layout, pipeline)
-  u32 CreateMaterial(const std::vector<IceShaderInfo>& _shaders);
+  u32 CreateMaterial(const std::vector<IceHandle>& _shaders);
   // Reloads all shaders and re-creates the material pipelines
   b8 ReloadMaterials();
+  IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
+
+
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);
   b8 AddMeshToScene(IceObject* _object);

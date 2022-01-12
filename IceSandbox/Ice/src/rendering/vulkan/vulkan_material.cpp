@@ -11,46 +11,47 @@
 #include <vector>
 #include <string>
 
-u32 IvkRenderer::CreateShader(const IceShaderInfo& _info)
+IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage _stage)
 {
-  u32 index = 0;
+  IvkShader newShader {};
 
-  // Check for existing shader =====
+  std::string name = _dir;
+
+  switch (_stage)
   {
-    for (auto& existingShader : shaders)
-    {
-      if (existingShader.info.directory.compare(_info.directory.c_str()) == 0)
-      {
-        return index;
-      }
-      index++;
-    }
+  case Ice_Shader_Vertex:
+  {
+    newShader.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    name.append(".vert");
+  } break;
+  case Ice_Shader_Fragment:
+  {
+    newShader.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    name.append(".frag");
+  } break;
+  default: IceLogError("Shader stage %u is unsupported", _stage); return -1;
   }
 
-  // Create new shader =====
-  IvkShader newShader{};
-  newShader.info = _info;
+  newShader.info = { name, _stage };
 
-  CreateShaderModule(&newShader.module, _info.directory.c_str());
+  CreateShaderModule(&newShader.module, name.c_str());
 
-  index = shaders.size();
+  IceHandle index = shaders.size();
   shaders.push_back(newShader);
 
   return index;
 }
 
+// NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
 b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
 {
   IceLogInfo("===== Creating deferred quad material");
 
   IvkMaterial& material = context.deferredMaterial;
 
-  std::string lightShader = _lightingShader;
-  lightShader.append(".frag");
-
   // Load shaders =====
-  material.vertexShaderIndex = CreateShader({"_light_blank.vert", Ice_Shader_Vertex});
-  material.fragmentShaderIndex = CreateShader({lightShader.c_str(), Ice_Shader_Fragment});
+  material.shaderIndices.push_back(CreateShader("_light_blank", Ice_Shader_Vertex));
+  material.shaderIndices.push_back(CreateShader(_lightingShader, Ice_Shader_Fragment));
 
   // Create descriptor components =====
 
@@ -78,60 +79,16 @@ b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
   return true;
 }
 
-u32 IvkRenderer::CreateMaterial(const std::vector<IceShaderInfo>& _shaders)
+u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 {
   IceLogInfo("===== Creating material %u", materials.size());
 
   IvkMaterial material;
 
-  // Load shaders =====
-  for (auto& s : _shaders)
-  {
-    std::string name = s.directory;
-    std::string tmpName = name;
+  material.shaderIndices = _shaders;
 
-    if (s.stages & Ice_Shader_Vertex)
-    {
-      tmpName.append(".vert");
-      material.vertexShaderIndex = CreateShader({ tmpName, Ice_Shader_Vertex });
-      tmpName = name;
-    }
+  // Set descriptors =====
 
-    if (s.stages & Ice_Shader_Fragment)
-    {
-      tmpName.append(".frag");
-      material.fragmentShaderIndex = CreateShader({ tmpName, Ice_Shader_Fragment });
-      tmpName = name;
-    }
-  }
-
-  // Create descriptor components =====
-
-  CreateFragileComponents(material);
-
-  ICE_ATTEMPT(CreatePipeline(material));
-
-  if (texture.sampler == VK_NULL_HANDLE)
-  {
-    ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
-  }
-
-  std::vector<IvkDescriptorBinding> descriptorBindings;
-
-  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
-
-  UpdateDescriptorSet(material.descriptorSet, descriptorBindings);
-
-  IceLogInfo("===== Finished creating material %u", materials.size());
-
-  materials.push_back(material);
-
-  scene.resize(materials.size()); // Bad.
-  return materials.size() - 1;
-}
-
-b8 IvkRenderer::CreateFragileComponents(IvkMaterial& material)
-{
   // TODO : Make this dynamic -- defined in a shader input file
   // Should store this information for re-creation
   std::vector<IvkDescriptor> descriptors;
@@ -149,7 +106,31 @@ b8 IvkRenderer::CreateFragileComponents(IvkMaterial& material)
                                      context.objectDescriptorSetLayout },
                                    {}));
 
-  return true;
+  // Pipeline =====
+
+  ICE_ATTEMPT(CreatePipeline(material));
+
+  // Update descriptors =====
+
+  if (texture.sampler == VK_NULL_HANDLE)
+  {
+    ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
+  }
+
+  std::vector<IvkDescriptorBinding> descriptorBindings;
+
+  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
+
+  ICE_ATTEMPT(UpdateDescriptorSet(material.descriptorSet, descriptorBindings));
+
+  // Complete =====
+
+  IceLogInfo("===== Finished creating material %u", materials.size());
+
+  materials.push_back(material);
+
+  scene.resize(materials.size()); // Bad.
+  return materials.size() - 1;
 }
 
 b8 IvkRenderer::ReloadMaterials()
@@ -276,18 +257,25 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
 {
   // Shader Stages State =====
   // Insert shader modules
-  const u32 shaderCount = 2;
-  VkPipelineShaderStageCreateInfo shaderStageInfos[shaderCount]{};
 
-  shaderStageInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  shaderStageInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  shaderStageInfos[0].module = shaders[material.vertexShaderIndex].module;
-  shaderStageInfos[0].pName = "main";
+  VkPipelineShaderStageCreateInfo vertexOnlyShaderStageInfo {};
+  std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos(material.shaderIndices.size());
+  for (u32 i = 0, shaderIndex = 0; i < shaderStageInfos.size(); i++)
+  {
+    shaderIndex = material.shaderIndices[i];
+    shaderStageInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStageInfos[i].stage = shaders[shaderIndex].stage;
+    shaderStageInfos[i].module = shaders[shaderIndex].module;
+    shaderStageInfos[i].pName = "main";
 
-  shaderStageInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  shaderStageInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  shaderStageInfos[1].module = shaders[material.fragmentShaderIndex].module;
-  shaderStageInfos[1].pName = "main";
+    if (shaders[shaderIndex].stage == VK_SHADER_STAGE_VERTEX_BIT)
+    {
+      vertexOnlyShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+      vertexOnlyShaderStageInfo.stage = shaders[shaderIndex].stage;
+      vertexOnlyShaderStageInfo.module = shaders[shaderIndex].module;
+      vertexOnlyShaderStageInfo.pName = "main";
+    }
+  }
 
   // Vertex Input State =====
   // Defines how vertex buffers are to be traversed
@@ -414,8 +402,8 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   createInfo.pDepthStencilState  = &depthStateInfo;
   createInfo.pColorBlendState    = &blendStateInfo;
   createInfo.pDynamicState       = &dynamicStateInfo;
-  createInfo.stageCount = shaderCount;
-  createInfo.pStages    = shaderStageInfos;
+  createInfo.stageCount = shaderStageInfos.size();
+  createInfo.pStages    = shaderStageInfos.data();
   createInfo.renderPass = context.deferredRenderpass;
   createInfo.layout     = material.pipelineLayout;
 
@@ -430,10 +418,16 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
              "Failed to create the graphics pipeline");
 
   // Shadows =====
+
+  if (vertexOnlyShaderStageInfo.sType == 0)
+  {
+    return true; // No shadow
+  }
+
   createInfo.subpass = 0;
   rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT; // Fix peter-panning
   createInfo.stageCount = 1;
-  createInfo.pStages = shaderStageInfos;
+  createInfo.pStages = &vertexOnlyShaderStageInfo;
   createInfo.renderPass = shadow.renderpass;
   createInfo.pViewportState = &shadowViewportStateInfo;
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,

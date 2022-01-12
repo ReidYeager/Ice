@@ -16,7 +16,8 @@ void reInit()
 {
   IceLogInfo("Client Init");
 
-  u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_shader_VertFrag} });
+  u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
+                                   {"blank_deferred", Ice_Shader_Fragment} });
 
   app.AddObject("Plane.obj", blank);
   //IceObject* obj = app.AddObject("Cube.obj", def);
