@@ -21,7 +21,7 @@ std::vector<char> FileSystem::LoadFile(const char* _directory)
   if (!inFile)
   {
     IceLogError("Failed to load file : %s", _directory);
-    abort();
+    return {};
   }
 
   size_t fileSize = inFile.tellg();

@@ -34,6 +34,7 @@ IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage
 
   newShader.info = { name, _stage };
 
+  ParseShaderDescriptors(newShader.descriptors, name.c_str());
   CreateShaderModule(&newShader.module, name.c_str());
 
   IceHandle index = shaders.size();
@@ -58,6 +59,14 @@ b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
   // Only runs  on the lighting subpass
 
   std::vector<IvkDescriptor> descriptors;
+
+  for (const auto& i : material.shaderIndices)
+  {
+    for (const auto& d : shaders[i].descriptors)
+    {
+      descriptors.push_back(d);
+    }
+  }
 
   ICE_ATTEMPT(CreateDescriptorSet(descriptors,
                                   &material.descriptorSetLayout,
@@ -93,8 +102,13 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
   // Should store this information for re-creation
   std::vector<IvkDescriptor> descriptors;
 
-  // Only runs  on the geometry subpass
-  descriptors.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL});
+  for (const auto& i : material.shaderIndices)
+  {
+    for (const auto& d : shaders[i].descriptors)
+    {
+      descriptors.push_back(d);
+    }
+  }
 
   ICE_ATTEMPT(CreateDescriptorSet(descriptors,
                                   &material.descriptorSetLayout,
@@ -437,6 +451,62 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
                                        context.alloc,
                                        &material.shadowPipeline),
              "Failed to create the shadow pipeline");
+
+  return true;
+}
+
+b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name)
+{
+  std::string directory = ICE_RESOURCE_SHADER_DIR;
+  directory.append(_name);
+  directory.append(".desc");
+
+  // Parse the descriptor file =====
+
+  std::vector<char> source = FileSystem::LoadFile(directory.c_str());
+
+  u32 bufferByteSize = 0;
+  u32 samplerCount = 0;
+
+  char state = '\0';
+
+  // TODO : Improve shader descriptor parsing -- This is the worst system I could have come up with.
+  // [ ] Implement standard shader buffer content options & automatically fill the buffer
+
+  for (const auto& c : source)
+  {
+    if (c == 'b' || c == 't')
+    {
+      state = c;
+    }
+    if (c >= '0' && c <= '9')
+    {
+      if (state == 'b')
+      {
+        bufferByteSize = (bufferByteSize * 10) + (c - '0');
+      }
+      else if (state == 't')
+      {
+        samplerCount = (samplerCount * 10) + (c - '0');
+      }
+    }
+    // else ignore the character
+  }
+
+  IceLogDebug("%s descriptors: buffer = %u bytes -- %u samplers",
+              _name, bufferByteSize, samplerCount);
+
+  // Define the descriptors =====
+
+  if (bufferByteSize)
+  {
+    _descriptors.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL });
+  }
+
+  for (u32 i = 0; i < samplerCount; i++)
+  {
+    _descriptors.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL });
+  }
 
   return true;
 }

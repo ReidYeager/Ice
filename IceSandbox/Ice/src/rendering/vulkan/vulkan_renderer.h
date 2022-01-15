@@ -18,7 +18,7 @@
 #include <vector>
 
 // TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
-// [ ] Set shader descriptors from shader files
+// [X] Set shader descriptors from shader files
 // [ ] Allow source to define textures to use in materials
 // [ ] Allow source to change material pipeline settings
 
@@ -173,6 +173,8 @@ private:
                           std::vector<VkPushConstantRange> _pushRanges);
   // Creates a presentation pipeline and a shadow-pass pipeline
   b8 CreatePipeline(IvkMaterial& material, u32 _subpass = 0);
+  // Loads and parses the shader's descriptor file -- (No file assumes no descriptors)
+  b8 ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 

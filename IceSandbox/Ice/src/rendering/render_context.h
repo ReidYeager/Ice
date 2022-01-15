@@ -28,6 +28,19 @@ enum IceShaderStage
   Ice_Shader_Fragment ,
 };
 
+enum IceShaderDescriptorType
+{
+  Ice_Descriptor_Type_Buffer,
+  Ice_Descriptor_Type_Sampled_Image
+};
+
+struct IceShaderDescriptor
+{
+  IceShaderDescriptorType type;
+  u32 bufferByteSize;
+  std::string imageName;
+};
+
 struct IceShaderInfo
 {
   std::string directory;
