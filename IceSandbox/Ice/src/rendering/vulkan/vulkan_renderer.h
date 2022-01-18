@@ -19,7 +19,8 @@
 
 // TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
 // [X] Set shader descriptors from shader files
-// [ ] Allow source to define textures to use in materials
+// [X] Allow source to define textures to use in materials
+//     [ ] Re-work descriptor definition to more cleanly take input data from source
 // [ ] Allow source to change material pipeline settings
 
 // TODO : Restructure the scene graph
@@ -40,6 +41,7 @@ private:
     VkDescriptorSet descriptorSet;
   };
 
+  std::vector<IvkTexture> textures;
   std::vector<IvkShader> shaders;
   std::vector<IvkMaterial> materials;
   std::vector<IvkMesh> meshes;
@@ -48,7 +50,7 @@ private:
 
   IvkBuffer globalDescriptorBuffer;
   IvkLights tmpLights;
-  IvkImage texture;
+  //IvkImage texture;
   IvkShadow shadow;
 
   const u32 shadowResolution = 2048;
@@ -111,7 +113,9 @@ private:
                          VkDescriptorSetLayout* _setLayout,
                          VkDescriptorSet* _set);
   // Binds the input values to the descriptor set
-  b8 UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<IvkDescriptorBinding> _bindings);
+  b8 UpdateDescriptorSet(VkDescriptorSet& _set,
+                         std::vector<IvkDescriptorBinding> _bindings,
+                         u32 _offset = 0);
   // Creates the images buffers used by the shadow renderpass
 
   // Creates the pipelineLayout and set for the global descriptors
@@ -218,7 +222,7 @@ private:
   void CopyBufferToImage(IvkBuffer* _buffer, IvkImage* _image);
 
   // Creates an image, view, and sampler for the input image file
-  b8 CreateTexture(IvkImage* _image, const char* _directory);
+  b8 PopulateTextureData(IvkTexture* _texture);
   VkFormat GetDepthFormat();
 
   // ====================
@@ -230,7 +234,8 @@ private:
   // Reloads all shaders and re-creates the material pipelines
   b8 ReloadMaterials();
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
-
+  u32 CreateTexture(const char* _directory);
+  void AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices);
 
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);

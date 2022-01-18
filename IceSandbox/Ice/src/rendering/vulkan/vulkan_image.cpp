@@ -128,11 +128,43 @@ b8 IvkRenderer::CreateImageSampler(IvkImage* _image)
   return true;
 }
 
-b8 IvkRenderer::CreateTexture(IvkImage* _image, const char* _directory)
+u32 IvkRenderer::CreateTexture(const char* _directory)
 {
+  // Look for existing texture =====
+  u32 index = 0;
+
+  for (const auto& t : textures)
+  {
+    if (t.directory.compare(_directory) == 0)
+    {
+      return index;
+    }
+    index++;
+  }
+
+  // Create new texture =====
+  IvkTexture tex;
+  index = textures.size();
+
+  std::string dir = ICE_RESOURCE_TEXTURE_DIR;
+  dir.append(_directory);
+
+  tex.directory = dir;
+
+  ICE_ATTEMPT(PopulateTextureData(&tex));
+
+  textures.push_back(tex);
+
+  return index;
+}
+
+b8 IvkRenderer::PopulateTextureData(IvkTexture* _texture)
+{
+  IvkImage* image = &_texture->image;
+
   // Load the image file =====
   int width, height;
-  void* imageSource = FileSystem::LoadImageFile(_directory, width, height);
+  void* imageSource = FileSystem::LoadImageFile(_texture->directory.c_str(), width, height);
   VkDeviceSize imageSize = 4 * (VkDeviceSize)width * (VkDeviceSize)height;
 
   // Create texture buffer =====
@@ -145,20 +177,20 @@ b8 IvkRenderer::CreateTexture(IvkImage* _image, const char* _directory)
 
   // Create an IceImage =====
   VkExtent2D extents = { (u32)width, (u32)height };
-  ICE_ATTEMPT(CreateImage(_image,
+  ICE_ATTEMPT(CreateImage(image,
                           extents,
                           VK_FORMAT_R8G8B8A8_UNORM,
                           VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
-  ICE_ATTEMPT(CreateImageView(&_image->view,
-                              _image->image,
-                              _image->format,
+  ICE_ATTEMPT(CreateImageView(&image->view,
+                              image->image,
+                              image->format,
                               VK_IMAGE_ASPECT_COLOR_BIT));
-  ICE_ATTEMPT(CreateImageSampler(_image));
+  ICE_ATTEMPT(CreateImageSampler(image));
 
   // Fill the image info =====
-  TransitionImageLayout(_image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-  CopyBufferToImage(&transferBuffer, _image);
-  TransitionImageLayout(_image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  TransitionImageLayout(image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  CopyBufferToImage(&transferBuffer, image);
+  TransitionImageLayout(image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
   DestroyBuffer(&transferBuffer, true);
 

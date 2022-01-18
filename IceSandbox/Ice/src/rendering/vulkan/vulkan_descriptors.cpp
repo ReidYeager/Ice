@@ -283,7 +283,8 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
 }
 
 b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
-                                    std::vector<IvkDescriptorBinding> _bindings)
+                                    std::vector<IvkDescriptorBinding> _bindings,
+                                    u32 _offset)
 {
   std::vector<VkDescriptorImageInfo> imageInfos;
   imageInfos.reserve(_bindings.size());
@@ -296,7 +297,7 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     VkWriteDescriptorSet write {};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstSet = _set;
-    write.dstBinding = i;
+    write.dstBinding = i + _offset;
     write.dstArrayElement = 0;
     write.descriptorType = _bindings[i].type;
     write.descriptorCount = 1;

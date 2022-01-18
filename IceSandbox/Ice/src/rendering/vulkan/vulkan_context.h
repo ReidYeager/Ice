@@ -45,6 +45,12 @@ struct IvkImage
   VkDeviceMemory memory;
 };
 
+struct IvkTexture
+{
+  IvkImage image;
+  std::string directory;
+};
+
 // =======================
 // Descriptor
 // =======================

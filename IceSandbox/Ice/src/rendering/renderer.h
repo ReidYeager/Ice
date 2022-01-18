@@ -13,6 +13,7 @@
 #include <glm/gtx/hash.hpp>
 
 #include <vector>
+#include <string>
 
 extern class reIceRenderer
 {
@@ -26,6 +27,7 @@ public:
   b8 Render(IceCamera* _camera);
 
   u32 CreateMaterial(std::vector<IceShaderInfo>& _shaders);
+  void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
 
   u32 CreateMesh(const char* _meshDir);
   void AddObjectToScene(IceObject* _object);

@@ -59,6 +59,20 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
   return backend.CreateMaterial(shaderIndices);
 }
 
+void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
+{
+  // Retrieve images (load or get index)
+  std::vector<IceHandle> texIndices(_images.size());
+
+  for (u32 i = 0; i < _images.size(); i++)
+  {
+    texIndices[i] = backend.CreateTexture(_images[i].c_str());
+  }
+
+  // Update all image samplers simultaneously
+  backend.AssignMaterialTextures(_material, texIndices);
+}
+
 u32 reIceRenderer::CreateMesh(const char* _meshDir)
 {
   return backend.CreateMesh(_meshDir);

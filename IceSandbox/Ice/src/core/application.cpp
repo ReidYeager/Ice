@@ -191,6 +191,11 @@ u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
   return reRenderer.CreateMaterial(_shaders);
 }
 
+void reIceApplication::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
+{
+  reRenderer.AssignMaterialTextures(_material, _images);
+}
+
 glm::mat4 IceTransform::UpdateMatrix()
 {
   matrix = parent->matrix;

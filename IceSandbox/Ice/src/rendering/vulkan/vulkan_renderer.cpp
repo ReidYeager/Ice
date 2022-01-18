@@ -83,7 +83,6 @@ b8 IvkRenderer::Shutdown()
     vkDestroyPipelineLayout(context.device, mat.pipelineLayout, context.alloc);
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
   }
-  DestroyImage(&texture);
 
   // Deferred material
   {

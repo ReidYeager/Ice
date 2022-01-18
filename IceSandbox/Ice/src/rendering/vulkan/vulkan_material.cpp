@@ -126,14 +126,14 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 
   // Update descriptors =====
 
-  if (texture.sampler == VK_NULL_HANDLE)
-  {
-    ICE_ATTEMPT(CreateTexture(&texture, "TestImage.png"));
-  }
+  //if (texture.sampler == VK_NULL_HANDLE)
+  //{
+  //  ICE_ATTEMPT(PopulateTexture(&texture, "TestImage.png"));
+  //}
 
   std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
+  //descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
 
   ICE_ATTEMPT(UpdateDescriptorSet(material.descriptorSet, descriptorBindings));
 
@@ -145,6 +145,20 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 
   scene.resize(materials.size()); // Bad.
   return materials.size() - 1;
+}
+
+void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices)
+{
+  std::vector<IvkDescriptorBinding> descriptorBindings;
+
+  for (const auto& t : _textureIndices)
+  {
+    descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                   &textures[t].image,
+                                   nullptr });
+  }
+
+  UpdateDescriptorSet(materials[_material].descriptorSet, descriptorBindings);
 }
 
 b8 IvkRenderer::ReloadMaterials()
