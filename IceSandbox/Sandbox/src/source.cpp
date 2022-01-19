@@ -19,7 +19,9 @@ void reInit()
   u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
 
+  IceLogDebug("Assigning texture to material");
   app.AssignMaterialTextures(blank, { "landscape.jpg" });
+  IceLogDebug("sdafdsafasdfasdfasdf");
 
   app.AddObject("Plane.obj", blank);
   //IceObject* obj = app.AddObject("Cube.obj", def);

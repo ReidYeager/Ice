@@ -9,7 +9,7 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system
-	Line   181 :--: // TODO : Move out of IvkRenderer
+	Line   189 :--: // TODO : Move out of IvkRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
 	Line    19 :--: // TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
 	Line    25 :--: // TODO : Restructure the scene graph

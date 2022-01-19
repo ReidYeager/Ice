@@ -186,11 +186,14 @@ b8 IvkRenderer::PopulateTextureData(IvkTexture* _texture)
                               image->format,
                               VK_IMAGE_ASPECT_COLOR_BIT));
   ICE_ATTEMPT(CreateImageSampler(image));
+  image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   // Fill the image info =====
   TransitionImageLayout(image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
   CopyBufferToImage(&transferBuffer, image);
   TransitionImageLayout(image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+  image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
   DestroyBuffer(&transferBuffer, true);
 

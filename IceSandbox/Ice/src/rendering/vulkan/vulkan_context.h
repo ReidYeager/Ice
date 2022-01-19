@@ -59,6 +59,7 @@ struct IvkDescriptor
 {
   VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL;
+  u32 binding;
 };
 
 struct IvkDescriptorBinding

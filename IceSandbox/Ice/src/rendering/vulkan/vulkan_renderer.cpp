@@ -84,6 +84,14 @@ b8 IvkRenderer::Shutdown()
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
   }
 
+  for (auto& t : textures)
+  {
+    vkDestroyImage(context.device, t.image.image, context.alloc);
+    vkDestroyImageView(context.device, t.image.view, context.alloc);
+    vkDestroySampler(context.device, t.image.sampler, context.alloc);
+    vkFreeMemory(context.device, t.image.memory, context.alloc);
+  }
+
   // Deferred material
   {
     vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
