@@ -17,11 +17,14 @@
 
 #include <vector>
 
-// TODO : ~!!~ Clean and abstract the renderer & backend for use in source.cpp
-// [X] Set shader descriptors from shader files
-// [X] Allow source to define textures to use in materials
-//     [ ] Re-work descriptor definition to more cleanly take input data from source
-// [ ] Allow source to change material pipeline settings
+// TODO : ~!!~ Shader descriptor rework
+// [ ] Parse all descriptors from set 1 using the glsl shader source directly
+// [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
+// [ ] Allow the definition of descriptors in any arbitrary order in source
+
+// TODO : UI renderpass (For now, only used with IMGUI)
+
+// TODO : Allow source to change material pipeline settings
 
 // TODO : Restructure the scene graph
 // [ ] Establish a proper hierarchy in /core/
