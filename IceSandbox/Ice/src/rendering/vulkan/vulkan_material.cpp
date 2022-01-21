@@ -477,7 +477,7 @@ b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors,
 
   // Parse the descriptor file =====
 
-  std::vector<char> source = FileSystem::LoadFile(directory.c_str());
+  std::vector<char> source = fileSystem.LoadFile(directory.c_str());
 
   u32 bufferByteSize = 0;
   u32 samplerCount = 0;
@@ -531,7 +531,7 @@ b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
   directory.append(_shader);
   directory.append(".spv");
 
-  std::vector<char> source = FileSystem::LoadFile(directory.c_str());
+  std::vector<char> source = fileSystem.LoadFile(directory.c_str());
 
   VkShaderModuleCreateInfo createInfo { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
   createInfo.codeSize = source.size();

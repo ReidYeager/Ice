@@ -9,9 +9,9 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system
-	Line   189 :--: // TODO : Move out of IvkRenderer
+	Line   173 :--: // TODO : Move out of IvkRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
-	Line    19 :--: // TODO : ~!!~ Shader descriptor rework
+	Line    19 :--: // TODO : Shader descriptor rework
 	Line    24 :--: // TODO : UI renderpass (For now, only used with IMGUI)
 	Line    26 :--: // TODO : Allow source to change material pipeline settings
 	Line    28 :--: // TODO : Restructure the scene graph

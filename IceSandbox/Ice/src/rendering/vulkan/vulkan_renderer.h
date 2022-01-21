@@ -17,7 +17,7 @@
 
 #include <vector>
 
-// TODO : ~!!~ Shader descriptor rework
+// TODO : Shader descriptor rework
 // [ ] Parse all descriptors from set 1 using the glsl shader source directly
 // [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
 // [ ] Allow the definition of descriptors in any arbitrary order in source
@@ -237,7 +237,7 @@ private:
   // Reloads all shaders and re-creates the material pipelines
   b8 ReloadMaterials();
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
-  u32 CreateTexture(const char* _directory);
+  u32 GetTexture(const char* _directory);
   void AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices);
 
   // Loads the mesh and fills its buffers

@@ -128,7 +128,7 @@ b8 IvkRenderer::CreateImageSampler(IvkImage* _image)
   return true;
 }
 
-u32 IvkRenderer::CreateTexture(const char* _directory)
+u32 IvkRenderer::GetTexture(const char* _directory)
 {
   // Look for existing texture =====
   u32 index = 0;
@@ -164,7 +164,7 @@ b8 IvkRenderer::PopulateTextureData(IvkTexture* _texture)
 
   // Load the image file =====
   int width, height;
-  void* imageSource = FileSystem::LoadImageFile(_texture->directory.c_str(), width, height);
+  void* imageSource = fileSystem.LoadImageFile(_texture->directory.c_str(), width, height);
   VkDeviceSize imageSize = 4 * (VkDeviceSize)width * (VkDeviceSize)height;
 
   // Create texture buffer =====

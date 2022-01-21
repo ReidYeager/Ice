@@ -39,6 +39,8 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
   // Load shaders =====
   for (auto& s : _shaderInfos)
   {
+    b8 shaderFound = false;
+
     // Check for existing shader =====
     for (auto& existingShader : shaders)
     {
@@ -46,8 +48,13 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
           existingShader.directory.compare(s.directory.c_str()) == 0)
       {
         shaderIndices.push_back(existingShader.backendModule);
+        shaderFound = true;
+        break;
       }
     }
+
+    if (shaderFound)
+      continue;
 
     // Create new shader =====
     s.backendModule = backend.CreateShader(s.directory, s.stage);
@@ -61,12 +68,12 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
 
 void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
 {
-  // Retrieve images (load or get index)
+  // Retrieve images
   std::vector<IceHandle> texIndices(_images.size());
 
   for (u32 i = 0; i < _images.size(); i++)
   {
-    texIndices[i] = backend.CreateTexture(_images[i].c_str());
+    texIndices[i] = backend.GetTexture(_images[i].c_str());
   }
 
   // Update all image samplers simultaneously

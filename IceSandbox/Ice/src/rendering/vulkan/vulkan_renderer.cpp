@@ -33,25 +33,28 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 
   ICE_ATTEMPT(CreateSwapchain());
 
-  // Deferred =====
-  ICE_ATTEMPT(CreateDeferredRenderpass());
-  ICE_ATTEMPT(CreateDeferredFramebuffers());
-
-  // Shadows =====
-  ICE_ATTEMPT(CreateShadowRenderpass());
-  ICE_ATTEMPT(CreateShadowFrameBuffer());
-
-  // Descriptors =====
-  ICE_ATTEMPT(PrepareGlobalDescriptors());
-  ICE_ATTEMPT(PrepareShadowDescriptors());
-
   // Others =====
   ICE_ATTEMPT(CreateSyncObjects());
   ICE_ATTEMPT(CreateCommandBuffers());
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
-  ICE_ATTEMPT(CreateDeferredMaterial(_settings.lightingShader));
+  // Remove from initialization? =====
+  {
+    // Deferred =====
+    ICE_ATTEMPT(CreateDeferredRenderpass());
+    ICE_ATTEMPT(CreateDeferredFramebuffers());
+
+    // Shadows =====
+    ICE_ATTEMPT(CreateShadowRenderpass());
+    ICE_ATTEMPT(CreateShadowFrameBuffer());
+
+    // Descriptors =====
+    ICE_ATTEMPT(PrepareGlobalDescriptors());
+    ICE_ATTEMPT(PrepareShadowDescriptors());
+
+    ICE_ATTEMPT(CreateDeferredMaterial(_settings.lightingShader));
+  }
 
   return true;
 }
@@ -86,10 +89,7 @@ b8 IvkRenderer::Shutdown()
 
   for (auto& t : textures)
   {
-    vkDestroyImage(context.device, t.image.image, context.alloc);
-    vkDestroyImageView(context.device, t.image.view, context.alloc);
-    vkDestroySampler(context.device, t.image.sampler, context.alloc);
-    vkFreeMemory(context.device, t.image.memory, context.alloc);
+    DestroyImage(&t.image);
   }
 
   // Deferred material
@@ -142,27 +142,11 @@ b8 IvkRenderer::Shutdown()
 
   for (const auto& g : context.geoBuffers)
   {
-    // Position
-    vkDestroyImage(context.device, g.position.image, context.alloc);
-    vkDestroyImageView(context.device, g.position.view, context.alloc);
-    vkFreeMemory(context.device, g.position.memory, context.alloc);
-    // Normal
-    vkDestroyImage(context.device, g.normal.image, context.alloc);
-    vkDestroyImageView(context.device, g.normal.view, context.alloc);
-    vkFreeMemory(context.device, g.normal.memory, context.alloc);
-    // Albedo
-    vkDestroyImage(context.device, g.albedo.image, context.alloc);
-    vkDestroyImageView(context.device, g.albedo.view, context.alloc);
-    vkFreeMemory(context.device, g.albedo.memory, context.alloc);
-    // Maps
-    vkDestroyImage(context.device, g.maps.image, context.alloc);
-    vkDestroyImageView(context.device, g.maps.view, context.alloc);
-    vkFreeMemory(context.device, g.maps.memory, context.alloc);
-    // Depth
-    vkDestroyImage(context.device, g.depth.image, context.alloc);
-    vkDestroyImageView(context.device, g.depth.view, context.alloc);
-    vkFreeMemory(context.device, g.depth.memory, context.alloc);
-    // Framebuffer
+    DestroyImage(&g.position);
+    DestroyImage(&g.normal);
+    DestroyImage(&g.albedo);
+    DestroyImage(&g.maps);
+    DestroyImage(&g.depth);
     vkDestroyFramebuffer(context.device, g.framebuffer, context.alloc);
   }
   vkDestroyRenderPass(context.device, context.deferredRenderpass, context.alloc);

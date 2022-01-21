@@ -8,16 +8,17 @@
 
 #include <vector>
 
-class FileSystem
+extern class IceFileSystem
 {
 public:
-  static std::vector<char> LoadFile(const char* _directory);
+  // Loads the given file as binary
+  std::vector<char> LoadFile(const char* _directory);
   // Loads a mesh with tinyobj and interprets it into an Ice mesh
-  static IvkMesh LoadMesh(const char* _directory);
+  IvkMesh LoadMesh(const char* _directory);
   // Loads an image using stbi
-  static void* LoadImageFile(const char* _directory, int& _width, int& _height);
-  // Frees a(n) stbi image
-  static void DestroyImageFile(void* _image);
-};
+  void* LoadImageFile(const char* _directory, int& _width, int& _height);
+  // Frees a stbi image
+  void DestroyImageFile(void* _image);
+} fileSystem;
 
 #endif // !PLATFORM_FILE_SYSTEM_H

@@ -21,7 +21,6 @@ void reInit()
   app.AssignMaterialTextures(blank, { "landscape.jpg" });
 
   app.AddObject("Plane.obj", blank);
-  //IceObject* obj = app.AddObject("Cube.obj", def);
   app.AddObject("SphereSmooth.obj", blank);
 }
 
@@ -44,8 +43,7 @@ void reUpdate(float _deltaTime)
     view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
 
     glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
-    // Not doing this incorrectly renders geometry, does not just flip the final image
-    proj[1][1] *= -1; // Flip the projection's Y
+    proj[1][1] *= -1;
     app.cam.viewProjectionMatrix = proj * view;
   }
 
