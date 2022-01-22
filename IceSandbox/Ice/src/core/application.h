@@ -42,7 +42,7 @@ public:
 
   IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
   // Creates a new material instance using the input shaders
-  u32 CreateMaterial(std::vector<IceShaderInfo> _shaders);
+  u32 CreateMaterial(std::vector<IceShader> _shaders);
   // Updates the material texture samplers
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
 

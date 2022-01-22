@@ -7,6 +7,7 @@
 #include "math/vector.h"
 
 #include <string>
+#include <vector>
 
 // Shaders are 16-byte aligned
 #define ALIGN_FOR_SHADER __declspec(align(16))
@@ -25,7 +26,7 @@ enum IceShaderStage
 {
   Ice_Shader_Invalid,
   Ice_Shader_Vertex,
-  Ice_Shader_Fragment ,
+  Ice_Shader_Fragment
 };
 
 enum IceShaderDescriptorType
@@ -36,17 +37,33 @@ enum IceShaderDescriptorType
 
 struct IceShaderDescriptor
 {
+  u8 bindingIndex = 255; // The binding value within set 1 (0-254, 255 invalid)
   IceShaderDescriptorType type;
-  u32 bufferByteSize;
-  std::string imageName;
 };
 
-struct IceShaderInfo
+struct IceShaderBinding
+{
+  IceShaderDescriptor descriptor;
+  void* backendData; // backend buffer, image, etc.
+};
+
+struct IceShader
 {
   std::string directory;
   IceShaderStage stage;
+  IceHandle backendShader;
+  std::vector<IceShaderDescriptor> descriptors;
+};
 
-  IceHandle backendModule;
+//=========================
+// Material
+//=========================
+
+struct IceMaterial
+{
+  std::vector<IceHandle> shaderIndices;
+  // data
+  std::vector<IceShaderBinding> bindings;
 };
 
 //=========================

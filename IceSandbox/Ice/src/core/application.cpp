@@ -118,7 +118,7 @@ b8 reIceApplication::Update()
       if (deltaSum >= 1.0f)
       {
         float averageSec = (deltaSum / deltaCount);
-        IceLogInfo("%3.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
+        IceLogInfo("%5.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
 
         totalAverageDeltaSum += averageSec;
         totalAverageDeltaCount++;
@@ -186,7 +186,7 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
   return obj;
 }
 
-u32 reIceApplication::CreateMaterial(std::vector<IceShaderInfo> _shaders)
+u32 reIceApplication::CreateMaterial(std::vector<IceShader> _shaders)
 {
   return reRenderer.CreateMaterial(_shaders);
 }

@@ -1,11 +1,14 @@
 \IceSandbox\Ice\src\core\application.cpp
 	Line   210 :--: // TODO : Update children's matrices
+\IceSandbox\Ice\src\rendering\material.h
+	Line    34 :--: // TODO : ~!!~
+	Line    66 :--: // TODO : create empty descriptors for unused bindings
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // TODO : --> Learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    45 :--: // NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
-	Line   100 :--: // TODO : Make this dynamic -- defined in a shader input file
-	Line   486 :--: // TODO : Improve shader descriptor parsing -- This is the worst system I could have come up with.
+	Line    46 :--: // NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
+	Line   101 :--: // TODO : Make this dynamic -- defined in a shader input file
+	Line   487 :--: // TODO : Improve shader descriptor parsing -- This is the worst system I could have come up with.
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line    15 :--: // TODO : Rework the scene & object system
 	Line    16 :--: // TODO : Integrate cameras & lights into this scene system

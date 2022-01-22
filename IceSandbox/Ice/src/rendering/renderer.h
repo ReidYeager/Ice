@@ -19,14 +19,14 @@ extern class reIceRenderer
 {
 private:
   IvkRenderer backend;
-  std::vector<IceShaderInfo> shaders;
+  std::vector<IceShader> shaders;
 
 public:
   b8 Initialize(const IceRendererSettings& _settings);
   b8 Shutdown();
   b8 Render(IceCamera* _camera);
 
-  u32 CreateMaterial(std::vector<IceShaderInfo>& _shaders);
+  u32 CreateMaterial(std::vector<IceShader>& _shaders);
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
 
   u32 CreateMesh(const char* _meshDir);

@@ -65,7 +65,7 @@ add_library (Ice STATIC
   "src/libraries/imgui/imstb_rectpack.h"
   "src/libraries/imgui/imstb_textedit.h"
   "src/libraries/imgui/imstb_truetype.h"
-)
+ "src/rendering/material.h")
 
 add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
 

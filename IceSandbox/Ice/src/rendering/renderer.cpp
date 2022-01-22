@@ -32,7 +32,7 @@ b8 reIceRenderer::Render(IceCamera* _camera)
   return true;
 }
 
-u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
+u32 reIceRenderer::CreateMaterial(std::vector<IceShader>& _shaderInfos)
 {
   std::vector<IceHandle> shaderIndices;
 
@@ -47,7 +47,7 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
       if (existingShader.stage == s.stage &&
           existingShader.directory.compare(s.directory.c_str()) == 0)
       {
-        shaderIndices.push_back(existingShader.backendModule);
+        shaderIndices.push_back(existingShader.backendShader);
         shaderFound = true;
         break;
       }
@@ -57,8 +57,8 @@ u32 reIceRenderer::CreateMaterial(std::vector<IceShaderInfo>& _shaderInfos)
       continue;
 
     // Create new shader =====
-    s.backendModule = backend.CreateShader(s.directory, s.stage);
-    shaderIndices.push_back(s.backendModule);
+    s.backendShader = backend.CreateShader(s.directory, s.stage);
+    shaderIndices.push_back(s.backendShader);
 
     shaders.push_back(s);
   }

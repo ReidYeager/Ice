@@ -32,7 +32,8 @@ IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage
   default: IceLogError("Shader stage %u is unsupported", _stage); return -1;
   }
 
-  newShader.info = { name, _stage };
+  newShader.info.directory = name;
+  newShader.info.stage = _stage;
 
   ParseShaderDescriptors(newShader.descriptors, name.c_str());
   CreateShaderModule(&newShader.module, name.c_str());

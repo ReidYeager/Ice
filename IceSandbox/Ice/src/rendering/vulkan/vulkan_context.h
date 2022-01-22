@@ -111,8 +111,8 @@ struct IvkShader
   VkShaderStageFlagBits stage;
   std::vector<IvkDescriptor> descriptors;
 
-  // TMP -- recreation
-  IceShaderInfo info;
+  // TMP -- for recreation
+  IceShader info;
 };
 
 //=========================
