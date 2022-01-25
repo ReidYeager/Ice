@@ -66,6 +66,11 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
     return false;
   }
 
+  // NOTE : Can not init a lighting material with CreateMaterial because it takes subpassInputs
+  // Need to include subpassInputs in shader descriptor parsing
+  //reRenderer.CreateMaterial({ { "_light_blank", Ice_Shader_Vertex },
+  //                            { _settings->rendererSettings.lightingShader, Ice_Shader_Fragment }});
+
   sceneRoot = new IceObject();
   sceneRoot->transform.matrix = glm::mat4(1.0f);
 

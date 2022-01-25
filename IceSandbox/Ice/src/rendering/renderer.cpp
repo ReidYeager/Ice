@@ -32,40 +32,6 @@ b8 reIceRenderer::Render(IceCamera* _camera)
   return true;
 }
 
-u32 reIceRenderer::CreateMaterial(std::vector<IceShader>& _shaderInfos)
-{
-  std::vector<IceHandle> shaderIndices;
-
-  // Load shaders =====
-  for (auto& s : _shaderInfos)
-  {
-    b8 shaderFound = false;
-
-    // Check for existing shader =====
-    for (auto& existingShader : shaders)
-    {
-      if (existingShader.stage == s.stage &&
-          existingShader.directory.compare(s.directory.c_str()) == 0)
-      {
-        shaderIndices.push_back(existingShader.backendShader);
-        shaderFound = true;
-        break;
-      }
-    }
-
-    if (shaderFound)
-      continue;
-
-    // Create new shader =====
-    s.backendShader = backend.CreateShader(s.directory, s.stage);
-    shaderIndices.push_back(s.backendShader);
-
-    shaders.push_back(s);
-  }
-
-  return backend.CreateMaterial(shaderIndices);
-}
-
 void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
 {
   // Retrieve images

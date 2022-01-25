@@ -134,7 +134,6 @@ struct IvkMaterial
 {
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
-  std::vector<VkDescriptorSet> multiDescriptorSets;
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;

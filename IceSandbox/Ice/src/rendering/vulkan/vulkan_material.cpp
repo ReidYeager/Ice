@@ -3,6 +3,7 @@
 #include "logger.h"
 
 #include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/render_context.h"
 
 #include "core/camera.h"
 #include "math/vector.h"
@@ -127,16 +128,9 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 
   // Update descriptors =====
 
-  //if (texture.sampler == VK_NULL_HANDLE)
-  //{
-  //  ICE_ATTEMPT(PopulateTexture(&texture, "TestImage.png"));
-  //}
+  //std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  std::vector<IvkDescriptorBinding> descriptorBindings;
-
-  //descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &texture , nullptr});
-
-  ICE_ATTEMPT(UpdateDescriptorSet(material.descriptorSet, descriptorBindings));
+  //ICE_ATTEMPT(UpdateDescriptorSet(material.descriptorSet, descriptorBindings));
 
   // Complete =====
 
@@ -470,6 +464,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   return true;
 }
 
+// TODO : Move to renderer
 b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name)
 {
   std::string directory = ICE_RESOURCE_SHADER_DIR;
