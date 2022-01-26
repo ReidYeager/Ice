@@ -1,6 +1,8 @@
 #version 450
 
 layout(set = 1, binding = 0) uniform sampler2D tex;
+layout(set = 1, binding = 1) uniform sampler2D alt;
+layout(set = 1, binding = 2) uniform sampler2D three;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -15,6 +17,13 @@ void main() {
     outPosition = vec4(inPosition, 1.0);
     outNormal = vec4(inNormal, 1.0);
     // outAlbedo = vec4(inUV, 0.0, 1.0);
-    outAlbedo = texture(tex, inUV);
+
+    vec3 col = texture(tex, inUV).xyz;
+    if (inUV.x > 0.67)
+        col = texture(three, inUV).xyz;
+    else if (inUV.x > 0.33)
+        col = texture(alt, inUV).xyz;
+
+    outAlbedo = vec4(col, 1.0);
     outMaps = vec4(0.5, 0.5, 0.5, 0.5);
 }

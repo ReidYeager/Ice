@@ -1,1 +1,12 @@
-b0t1
+buffer {
+    Camera_View_Projection_Matrix_X
+    Camera_View_Projection_Matrix_Y
+    Camera_View_Projection_Matrix_Z
+    Camera_View_Projection_Matrix_W
+    lsdkfjsdlkjf
+}
+bindings {
+    Sampler2D
+    Sampler2D
+    Sampler2D
+}

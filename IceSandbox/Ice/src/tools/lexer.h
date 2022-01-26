@@ -40,7 +40,7 @@ enum IceTokenTypes
   Ice_Token_Pipe
 };
 
-struct IceToken
+struct IceLexerToken
 {
   IceTokenTypes type{};
   std::string string{};
@@ -53,18 +53,19 @@ private:
 
 public:
   IceLexer(const char* _stream) : charStream(_stream) {};
-  IceToken NextToken();
+  IceLexerToken NextToken();
   b8 ExpectToken(const char* _expected);
+  b8 CheckForExpectedToken(const char* _expected);
 
 private:
-  IceToken GetSingleCharToken(IceTokenTypes _type)
+  IceLexerToken GetSingleCharToken(IceTokenTypes _type)
   {
     return {_type, std::string(std::string_view(charStream++, 1))};
   }
 
-  IceToken GetTextToken();
-  IceToken GetStringToken();
-  IceToken GetNumberToken();
+  IceLexerToken GetTextToken();
+  IceLexerToken GetStringToken();
+  IceLexerToken GetNumberToken();
 };
 
 bool isWhiteSpace(char _char)
@@ -125,7 +126,7 @@ bool isString(char _char)
   }
 }
 
-IceToken IceLexer::NextToken()
+IceLexerToken IceLexer::NextToken()
 {
   // Skip whitespace =====
   while(isWhiteSpace(*charStream))
@@ -185,7 +186,21 @@ b8 IceLexer::ExpectToken(const char* _expected)
   return NextToken().string.compare(_expected) == 0;
 }
 
-IceToken IceLexer::GetStringToken()
+b8 IceLexer::CheckForExpectedToken(const char* _expected)
+{
+  const char* prevCharHead = charStream;
+
+  if (ExpectToken(_expected))
+  {
+    return true;
+  }
+
+  // Undo token read
+  charStream = prevCharHead;
+  return false;
+}
+
+IceLexerToken IceLexer::GetStringToken()
 {
   const char* stringBegining = charStream++;
   u32 stringLength = 1;
@@ -199,7 +214,7 @@ IceToken IceLexer::GetStringToken()
   return { Ice_Token_String, std::string(std::string_view(stringBegining, stringLength)) };
 }
 
-IceToken IceLexer::GetNumberToken()
+IceLexerToken IceLexer::GetNumberToken()
 {
   const char* stringBegining = charStream++;
   u32 stringLength = 1;

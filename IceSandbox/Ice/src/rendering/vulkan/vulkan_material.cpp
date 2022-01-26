@@ -15,29 +15,22 @@
 IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage _stage)
 {
   IvkShader newShader {};
-
-  std::string name = _dir;
+  newShader.info.directory = _dir;
+  newShader.info.stage = _stage;
 
   switch (_stage)
   {
   case Ice_Shader_Vertex:
   {
     newShader.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    name.append(".vert");
   } break;
   case Ice_Shader_Fragment:
   {
     newShader.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    name.append(".frag");
   } break;
-  default: IceLogError("Shader stage %u is unsupported", _stage); return -1;
   }
 
-  newShader.info.directory = name;
-  newShader.info.stage = _stage;
-
-  ParseShaderDescriptors(newShader.descriptors, name.c_str());
-  CreateShaderModule(&newShader.module, name.c_str());
+  CreateShaderModule(&newShader.module, _dir.c_str());
 
   IceHandle index = shaders.size();
   shaders.push_back(newShader);
@@ -53,8 +46,14 @@ b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
   IvkMaterial& material = context.deferredMaterial;
 
   // Load shaders =====
-  material.shaderIndices.push_back(CreateShader("_light_blank", Ice_Shader_Vertex));
-  material.shaderIndices.push_back(CreateShader(_lightingShader, Ice_Shader_Fragment));
+  std::string vertDir(ICE_RESOURCE_SHADER_DIR);
+  vertDir.append("_light_blank.vert");
+  std::string fragDir(ICE_RESOURCE_SHADER_DIR);
+  fragDir.append(_lightingShader);
+  fragDir.append(".frag");
+
+  material.shaderIndices.push_back(CreateShader(vertDir, Ice_Shader_Vertex));
+  material.shaderIndices.push_back(CreateShader(fragDir, Ice_Shader_Fragment));
 
   // Create descriptor components =====
 
@@ -90,7 +89,8 @@ b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
   return true;
 }
 
-u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
+u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
+                                std::vector<IceShaderBinding>& _descBindings)
 {
   IceLogInfo("===== Creating material %u", materials.size());
 
@@ -100,15 +100,26 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 
   // Set descriptors =====
 
-  // TODO : > Remove this once descriptor parsing is complete in IceRenderer
   std::vector<IvkDescriptor> descriptors;
 
-  for (const auto& i : material.shaderIndices)
+  for (auto& d : _descBindings)
   {
-    for (const auto& d : shaders[i].descriptors)
+    IvkDescriptor newdesc{};
+    newdesc.binding = d.descriptor.bindingIndex;
+
+    switch (d.descriptor.type)
     {
-      descriptors.push_back(d);
+    case Ice_Descriptor_Type_Buffer:
+    {
+      newdesc.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    } break;
+    case Ice_Descriptor_Type_Sampler2D:
+    {
+      newdesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    } break;
     }
+
+    descriptors.push_back(newdesc);
   }
 
   ICE_ATTEMPT(CreateDescriptorSet(descriptors,
@@ -463,64 +474,9 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   return true;
 }
 
-// TODO : > Remove this once descriptor parsing is complete in IceRenderer
-b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name)
-{
-  std::string directory = ICE_RESOURCE_SHADER_DIR;
-  directory.append(_name);
-  directory.append(".desc");
-
-  // Parse the descriptor file =====
-
-  std::vector<char> source = fileSystem.LoadFile(directory.c_str());
-
-  u32 bufferByteSize = 0;
-  u32 samplerCount = 0;
-
-  char state = '\0';
-
-  for (const auto& c : source)
-  {
-    if (c == 'b' || c == 't')
-    {
-      state = c;
-    }
-    if (c >= '0' && c <= '9')
-    {
-      if (state == 'b')
-      {
-        bufferByteSize = (bufferByteSize * 10) + (c - '0');
-      }
-      else if (state == 't')
-      {
-        samplerCount = (samplerCount * 10) + (c - '0');
-      }
-    }
-    // else ignore the character
-  }
-
-  IceLogDebug("%s descriptors: buffer = %u bytes -- %u samplers",
-              _name, bufferByteSize, samplerCount);
-
-  // Define the descriptors =====
-
-  if (bufferByteSize)
-  {
-    _descriptors.push_back({ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL });
-  }
-
-  for (u32 i = 0; i < samplerCount; i++)
-  {
-    _descriptors.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_ALL });
-  }
-
-  return true;
-}
-
 b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
 {
-  std::string directory = ICE_RESOURCE_SHADER_DIR;
-  directory.append(_shader);
+  std::string directory = _shader;
   directory.append(".spv");
 
   std::vector<char> source = fileSystem.LoadFile(directory.c_str());

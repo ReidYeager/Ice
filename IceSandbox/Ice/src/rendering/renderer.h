@@ -37,7 +37,7 @@ public:
   u32 CreateMaterial(const std::vector<IceShader>& _shaders);
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
   u32 GetShader(const std::string& _directory, IceShaderStage _stage);
-  void GetShaderDescriptors(IceShader& _shader);
+  b8 GetShaderDescriptors(IceShader& _shader);
 
 } reRenderer;
 

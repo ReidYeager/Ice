@@ -181,8 +181,6 @@ private:
                           std::vector<VkPushConstantRange> _pushRanges);
   // Creates a presentation pipeline and a shadow-pass pipeline
   b8 CreatePipeline(IvkMaterial& material, u32 _subpass = 0);
-  // Loads and parses the shader's descriptor file -- (No file assumes no descriptors)
-  b8 ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
@@ -234,7 +232,8 @@ private:
   // ====================
 
   // Creates a new material (descriptor set, pipeline layout, pipeline)
-  u32 CreateMaterial(const std::vector<IceHandle>& _shaders);
+  u32 CreateMaterial(const std::vector<IceHandle>& _shaders,
+                     std::vector<IceShaderBinding>& _descBindings);
   // Reloads all shaders and re-creates the material pipelines
   b8 ReloadMaterials();
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);

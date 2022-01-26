@@ -18,7 +18,7 @@ void reInit()
 
   u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
-  app.AssignMaterialTextures(blank, { "landscape.jpg" });
+  app.AssignMaterialTextures(blank, { "landscape.jpg", "TestAlbedo.png", "TestNormal.png"});
 
   app.AddObject("Plane.obj", blank);
   app.AddObject("SphereSmooth.obj", blank);

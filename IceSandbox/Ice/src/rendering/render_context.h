@@ -22,6 +22,59 @@ typedef IceHandle IceBackendImage;
 // Shader
 //=========================
 
+// Each value represents 16 bytes of information
+#define ibi(x) Ice_Shader_Buffer_##x
+enum IceShaderBufferInputs
+{
+  ibi(Camera_View_Projection_Matrix_X),
+  ibi(Camera_View_Projection_Matrix_Y),
+  ibi(Camera_View_Projection_Matrix_Z),
+  ibi(Camera_View_Projection_Matrix_W),
+
+  ibi(Custom_0),
+  ibi(Custom_1),
+  ibi(Custom_2),
+  ibi(Custom_3),
+
+  ibi(Custom_4),
+  ibi(Custom_5),
+  ibi(Custom_6),
+  ibi(Custom_7),
+
+  ibi(Custom_8),
+  ibi(Custom_9),
+  ibi(Custom_10),
+  ibi(Custom_11),
+
+  ibi(Count)
+};
+#undef ibi
+
+#define ibi(x) #x
+static const char* IceShaderBufferInputNames[Ice_Shader_Buffer_Count] =
+{
+  ibi(Camera_View_Projection_Matrix_X),
+  ibi(Camera_View_Projection_Matrix_Y),
+  ibi(Camera_View_Projection_Matrix_Z),
+  ibi(Camera_View_Projection_Matrix_W),
+
+  ibi(Custom_0),
+  ibi(Custom_1),
+  ibi(Custom_2),
+  ibi(Custom_3),
+
+  ibi(Custom_4),
+  ibi(Custom_5),
+  ibi(Custom_6),
+  ibi(Custom_7),
+
+  ibi(Custom_8),
+  ibi(Custom_9),
+  ibi(Custom_10),
+  ibi(Custom_11),
+};
+#undef ibi
+
 enum IceShaderStage
 {
   Ice_Shader_Invalid,
@@ -29,11 +82,23 @@ enum IceShaderStage
   Ice_Shader_Fragment
 };
 
+#define idt(x) Ice_Descriptor_Type_##x
 enum IceShaderDescriptorType
 {
-  Ice_Descriptor_Type_Buffer,
-  Ice_Descriptor_Type_Sampled_Image
+  idt(Buffer),
+  idt(Sampler2D),
+
+  idt(Count)
 };
+#undef idt
+
+#define idt(x) #x
+static const char* IceDescriptorTypeNames[Ice_Descriptor_Type_Count] =
+{
+  idt(Buffer),
+  idt(Sampler2D)
+};
+#undef idt
 
 struct IceShaderDescriptor
 {
@@ -53,6 +118,7 @@ struct IceShader
   IceShaderStage stage;
   IceHandle backendShader;
   std::vector<IceShaderDescriptor> descriptors;
+  std::vector<u32> bufferParameterIndices;
 };
 
 //=========================

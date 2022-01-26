@@ -2,6 +2,7 @@
 #include "defines.h"
 #include "logger.h"
 
+#include "platform/file_system.h"
 #include "rendering/renderer.h"
 #include "tools/lexer.h"
 
@@ -14,52 +15,23 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
   IceMaterial newMaterial;
   newMaterial.shaderIndices.resize(_shaders.size());
   u32 matIndex = 0;
-  u32 maxBindingIndex = 0;
 
   // Get shaders =====
   for (u32 i = 0; i < _shaders.size(); i++)
   {
     newMaterial.shaderIndices[i] = GetShader(_shaders[i].directory, _shaders[i].stage);
-
-    if (shaders[i].descriptors.size() > 0)
-    {
-      u32 shaderMaxBindingIndex = shaders[i].descriptors[shaders[i].descriptors.size() - 1].bindingIndex;
-      if (shaderMaxBindingIndex > maxBindingIndex)
-      {
-        maxBindingIndex = shaderMaxBindingIndex;
-      }
-    }
   }
 
-  // TODO : ~!!~ Get descriptors with the lexer
-  /*
-  * Need to get proper descriptor parsing up & running first
-
   // Get descriptors =====
-  newMaterial.bindings.resize(maxBindingIndex);
-  // TODO : create empty descriptors for unused bindings
-
   std::vector<IceShaderBinding>& mBinds = newMaterial.bindings;
 
   for (const auto& sIdx : newMaterial.shaderIndices)
   {
     for (const auto& desc : shaders[sIdx].descriptors)
     {
-      //if (newMaterial.bindings[desc.bindingIndex].descriptor.type != desc.type)
-      if (mBinds[desc.bindingIndex].descriptor.bindingIndex == 255)
-      {
-        // Add the new binding
-        mBinds[desc.bindingIndex].descriptor = desc;
-      }
-      else if (mBinds[desc.bindingIndex].descriptor.type != desc.type)
-      {
-        IceLogFatal("Conflicting shader binding %u : %u -- %u",
-                    desc.bindingIndex, mBinds[desc.bindingIndex].descriptor.type, desc.type);
-        return false;
-      }
+      mBinds.push_back({desc, nullptr});
     }
   }
-  */
 
   std::vector<IceHandle> backendShaderIndices;
   for (const IceHandle& s : newMaterial.shaderIndices)
@@ -68,7 +40,7 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
   }
 
   // Need to sync front and backend shaders (Init the lighting material with this)
-  return backend.CreateMaterial(backendShaderIndices);
+  return backend.CreateMaterial(backendShaderIndices, newMaterial.bindings);
 }
 
 u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
@@ -90,13 +62,26 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
     std::string fullDir = ICE_RESOURCE_SHADER_DIR;
     fullDir.append(_directory);
 
+    switch (_stage)
+    {
+    case Ice_Shader_Vertex:
+    {
+      fullDir.append(".vert");
+    } break;
+    case Ice_Shader_Fragment:
+    {
+      fullDir.append(".frag");
+    } break;
+    default: IceLogError("Shader stage %u is unsupported", _stage); return -1;
+    }
+
     IceShader newShader = { fullDir, _stage, -1, {} };
 
-    newShader.backendShader = backend.CreateShader(_directory, _stage);
+    newShader.backendShader = backend.CreateShader(fullDir, _stage);
 
     // Get descriptors =====
     // Store descriptors sorted by binding index
-    GetShaderDescriptors(newShader);
+    ICE_ATTEMPT(GetShaderDescriptors(newShader));
 
     // Create backend assets =====
     // backend.CreateShader(newShader.descriptors);
@@ -106,12 +91,77 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
   return index;
 }
 
-void reIceRenderer::GetShaderDescriptors(IceShader& _shader)
+b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
 {
-  IceLogError("Renderer descriptor parsing not yet implemented.");
-
   std::string descDir = _shader.directory;
   descDir.append(".desc");
 
-  std::fstream descFile(descDir.c_str());
+  std::vector<char> descriptorSource = fileSystem.LoadFile(descDir.c_str());
+
+  if (descriptorSource.size() == 0)
+    return true; // No descriptors to look for
+
+  IceLexer lexer(descriptorSource.data());
+  IceLexerToken token;
+
+  if (lexer.CheckForExpectedToken("buffer") && lexer.ExpectToken("{"))
+  {
+    while (!lexer.CheckForExpectedToken("}"))
+    {
+      token = lexer.NextToken();
+
+      u32 bufferParameterIndex = -1;
+
+      for (u32 i = 0; i < Ice_Shader_Buffer_Count; i++)
+      {
+        if (token.string.compare(IceShaderBufferInputNames[i]) == 0)
+        {
+          bufferParameterIndex = i;
+          break;
+        }
+      }
+
+      if (bufferParameterIndex == -1)
+      {
+        IceLogError("%s contains invalid buffer parameter '%s'",
+                    descDir.c_str(), token.string.c_str());
+        continue;
+      }
+
+      _shader.bufferParameterIndices.push_back(bufferParameterIndex);
+    }
+
+  }
+
+  if (lexer.CheckForExpectedToken("bindings") && lexer.ExpectToken("{"))
+  {
+    while (!lexer.CheckForExpectedToken("}"))
+    {
+      token = lexer.NextToken();
+
+      u32 descTypeIndex = -1;
+
+      for (u32 i = 0; i < Ice_Shader_Buffer_Count; i++)
+      {
+        if (token.string.compare(IceDescriptorTypeNames[i]) == 0)
+        {
+          descTypeIndex = i;
+          break;
+        }
+      }
+
+      if (descTypeIndex == -1)
+      {
+        IceLogError("%s contains invalid descriptor '%s'",
+                    descDir.c_str(), token.string.c_str());
+        continue;
+      }
+
+      //_shader.bufferParameterIndices.push_back(bufferParameterIndex);
+      IceShaderDescriptor newDesc = { (u8)_shader.descriptors.size(), (IceShaderDescriptorType)descTypeIndex };
+      _shader.descriptors.push_back(newDesc);
+    }
+  }
+
+  return true;
 }
