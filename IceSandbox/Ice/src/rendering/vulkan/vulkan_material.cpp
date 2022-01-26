@@ -100,8 +100,7 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders)
 
   // Set descriptors =====
 
-  // TODO : Make this dynamic -- defined in a shader input file
-  // Should store this information for re-creation
+  // TODO : > Remove this once descriptor parsing is complete in IceRenderer
   std::vector<IvkDescriptor> descriptors;
 
   for (const auto& i : material.shaderIndices)
@@ -464,7 +463,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   return true;
 }
 
-// TODO : Move to renderer
+// TODO : > Remove this once descriptor parsing is complete in IceRenderer
 b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors, const char* _name)
 {
   std::string directory = ICE_RESOURCE_SHADER_DIR;
@@ -479,9 +478,6 @@ b8 IvkRenderer::ParseShaderDescriptors(std::vector<IvkDescriptor>& _descriptors,
   u32 samplerCount = 0;
 
   char state = '\0';
-
-  // TODO : Improve shader descriptor parsing -- This is the worst system I could have come up with.
-  // [ ] Implement standard shader buffer content options & automatically fill the buffer
 
   for (const auto& c : source)
   {

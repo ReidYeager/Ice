@@ -13,9 +13,6 @@
 
 #include <vector>
 
-// TODO : Rework the scene & object system
-// TODO : Integrate cameras & lights into this scene system
-
 b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 {
   IceLogDebug("===== Vulkan Renderer Init =====");

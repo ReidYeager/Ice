@@ -3,6 +3,7 @@
 #include "logger.h"
 
 #include "rendering/renderer.h"
+#include "tools/lexer.h"
 
 #include <vector>
 #include <fstream>
@@ -30,6 +31,7 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
     }
   }
 
+  // TODO : ~!!~ Get descriptors with the lexer
   /*
   * Need to get proper descriptor parsing up & running first
 

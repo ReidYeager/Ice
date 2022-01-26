@@ -30,6 +30,7 @@
 // [ ] Establish a proper hierarchy in /core/
 // [ ] Create a structure in the renderer optimized for rendering
 // [ ] Link the core hierarchy to the rendering structure via core
+// [ ] Integrate cameras & lights into this scene system
 
 class IvkRenderer
 {

@@ -146,7 +146,7 @@ b8 IvkRenderer::CreateDeferredRenderpass()
   const u32 dependencyCount = 3;
   VkSubpassDependency dependencies[dependencyCount];
 
-  // TODO : --> Learn more about stage/access masks
+  // NOTE : Should learn more about stage/access masks
   // External to geometry subpass
   dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
   dependencies[0].dstSubpass = 0;

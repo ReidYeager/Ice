@@ -2,21 +2,19 @@
 	Line    68 :--: // NOTE : Can not init a lighting material with CreateMaterial because it takes subpassInputs
 	Line   215 :--: // TODO : Update children's matrices
 \IceSandbox\Ice\src\rendering\material.cpp
-	Line    37 :--: // TODO : create empty descriptors for unused bindings
+	Line    33 :--: // TODO : ~!!~ Get descriptors with the lexer
+	Line    39 :--: // TODO : create empty descriptors for unused bindings
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
-	Line   148 :--: // TODO : --> Learn more about stage/access masks
+	Line   148 :--: // NOTE : Should learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line    47 :--: // NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
-	Line   102 :--: // TODO : Make this dynamic -- defined in a shader input file
-	Line   466 :--: // TODO : Move to renderer
-	Line   482 :--: // TODO : Improve shader descriptor parsing -- This is the worst system I could have come up with.
+	Line   102 :--: // TODO : > Remove this once descriptor parsing is complete in IceRenderer
+	Line   465 :--: // TODO : > Remove this once descriptor parsing is complete in IceRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
-	Line    15 :--: // TODO : Rework the scene & object system
-	Line    16 :--: // TODO : Integrate cameras & lights into this scene system
-	Line   173 :--: // TODO : Move out of IvkRenderer
+	Line   170 :--: // TODO : Move out of IvkRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
 	Line    19 :--: // TODO : Shader descriptor rework
 	Line    24 :--: // TODO : UI renderpass (For now, only used with IMGUI)
 	Line    26 :--: // TODO : Allow source to change material pipeline settings
 	Line    28 :--: // TODO : Restructure the scene graph
-	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
+	Line    39 :--: // TODO : Remove/move all structs/variables defined here.
