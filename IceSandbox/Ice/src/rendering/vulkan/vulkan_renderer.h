@@ -18,7 +18,7 @@
 #include <vector>
 
 // TODO : Shader descriptor rework
-// [ ] Parse all descriptors from set 1 using the glsl shader source directly
+// [X] Parse all descriptors from set 1 using the glsl shader source directly
 // [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
 // [ ] Allow the definition of descriptors in any arbitrary order in source
 
@@ -224,7 +224,7 @@ private:
   void CopyBufferToImage(IvkBuffer* _buffer, IvkImage* _image);
 
   // Creates an image, view, and sampler for the input image file
-  b8 PopulateTextureData(IvkTexture* _texture);
+  b8 LoadTextureFile(IvkTexture* _texture);
   VkFormat GetDepthFormat();
 
   // ====================
@@ -234,9 +234,14 @@ private:
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   u32 CreateMaterial(const std::vector<IceHandle>& _shaders,
                      std::vector<IceShaderBinding>& _descBindings);
-  // Reloads all shaders and re-creates the material pipelines
-  b8 ReloadMaterials();
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
+  // Destroys and re-creates the shader module
+  b8 RecreateShader(const IceShader& _shader);
+  // Destroys and re-creates the material's pipelines
+  b8 RecreateMaterial(IceHandle _backendMaterial,
+                      const std::vector<IceHandle>& _shaders,
+                      std::vector<IceShaderBinding>& _descBindings);
+  b8 RecreateDeferredMaterial();
   u32 GetTexture(const char* _directory);
   void AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices);
 

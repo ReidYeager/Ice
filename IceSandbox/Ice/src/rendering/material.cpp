@@ -12,6 +12,25 @@
 
 u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
 {
+  #ifdef ICE_DEBUG
+  {
+    std::string materialDebugString = "Creating material with {";
+    for (const auto& s : _shaders)
+    {
+      materialDebugString.append(s.directory);
+      switch (s.stage)
+      {
+      case Ice_Shader_Vertex: materialDebugString.append(".vert"); break;
+      case Ice_Shader_Fragment: materialDebugString.append(".frag"); break;
+      }
+      materialDebugString.append(", ");
+    }
+    materialDebugString.erase(materialDebugString.size() - 2, 2);
+    materialDebugString.append("}");
+    IceLogInfo(materialDebugString.c_str());
+  }
+  #endif // ICE_DEBUG
+
   IceMaterial newMaterial;
   newMaterial.shaderIndices.resize(_shaders.size());
   u32 matIndex = 0;
@@ -40,7 +59,11 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
   }
 
   // Need to sync front and backend shaders (Init the lighting material with this)
-  return backend.CreateMaterial(backendShaderIndices, newMaterial.bindings);
+  u32 index = materials.size();
+  newMaterial.backendMaterial = backend.CreateMaterial(backendShaderIndices, newMaterial.bindings);
+  materials.push_back(newMaterial);
+
+  return index;
 }
 
 u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
@@ -158,10 +181,44 @@ b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
       }
 
       //_shader.bufferParameterIndices.push_back(bufferParameterIndex);
-      IceShaderDescriptor newDesc = { (u8)_shader.descriptors.size(), (IceShaderDescriptorType)descTypeIndex };
+      IceShaderDescriptor newDesc = { (u8)_shader.descriptors.size(),
+                                      (IceShaderDescriptorType)descTypeIndex };
       _shader.descriptors.push_back(newDesc);
     }
   }
 
   return true;
+}
+
+void reIceRenderer::ReloadMaterials()
+{
+  for (auto& s : shaders)
+  {
+    backend.RecreateShader(s);
+    s.descriptors.clear();
+    GetShaderDescriptors(s);
+  }
+
+  for (auto& m : materials)
+  {
+    // Get descriptors =====
+    for (const auto& shaderIndex : m.shaderIndices)
+    {
+      for (const auto& desc : shaders[shaderIndex].descriptors)
+      {
+        m.bindings.push_back({desc, nullptr});
+      }
+    }
+
+    std::vector<IceHandle> backendShaderIndices;
+    for (const IceHandle& s : m.shaderIndices)
+    {
+      backendShaderIndices.push_back(shaders[s].backendShader);
+    }
+
+    backend.RecreateMaterial(m.backendMaterial, backendShaderIndices, m.bindings);
+  }
+
+  // TODO : > Remove this once the deferred material uses the material system
+  backend.RecreateDeferredMaterial();
 }

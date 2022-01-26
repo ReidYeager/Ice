@@ -1,10 +1,13 @@
 \IceSandbox\Ice\src\core\application.cpp
 	Line    68 :--: // NOTE : Can not init a lighting material with CreateMaterial because it takes subpassInputs
 	Line   215 :--: // TODO : Update children's matrices
+\IceSandbox\Ice\src\rendering\material.cpp
+	Line   221 :--: // TODO : > Remove this once the deferred material uses the material system
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // NOTE : Should learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    40 :--: // NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
+	Line    14 :--: // TODO : > Remove this once the deferred material uses the material system
+	Line   193 :--: // TODO : > Remove this once the deferred material uses the material system
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
 	Line   170 :--: // TODO : Move out of IvkRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h

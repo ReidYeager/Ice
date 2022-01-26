@@ -146,19 +146,16 @@ u32 IvkRenderer::GetTexture(const char* _directory)
   IvkTexture tex;
   index = textures.size();
 
-  std::string dir = ICE_RESOURCE_TEXTURE_DIR;
-  dir.append(_directory);
+  tex.directory = _directory;
 
-  tex.directory = dir;
-
-  ICE_ATTEMPT(PopulateTextureData(&tex));
+  ICE_ATTEMPT(LoadTextureFile(&tex));
 
   textures.push_back(tex);
 
   return index;
 }
 
-b8 IvkRenderer::PopulateTextureData(IvkTexture* _texture)
+b8 IvkRenderer::LoadTextureFile(IvkTexture* _texture)
 {
   IvkImage* image = &_texture->image;
 

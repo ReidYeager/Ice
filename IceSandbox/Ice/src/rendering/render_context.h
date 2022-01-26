@@ -128,8 +128,8 @@ struct IceShader
 struct IceMaterial
 {
   std::vector<IceHandle> shaderIndices;
-  // data
   std::vector<IceShaderBinding> bindings;
+  IceHandle backendMaterial;
 };
 
 //=========================

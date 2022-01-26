@@ -12,11 +12,12 @@
 #include <vector>
 #include <string>
 
+// TODO : > Remove this once the deferred material uses the material system
+std::string tmpDeferredFragShaderDir;
+
 IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage _stage)
 {
   IvkShader newShader {};
-  newShader.info.directory = _dir;
-  newShader.info.stage = _stage;
 
   switch (_stage)
   {
@@ -38,10 +39,20 @@ IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage
   return index;
 }
 
-// NOTE : Abstract this in case I want to use multiple lighting techniques simultaneously?
+b8 IvkRenderer::RecreateShader(const IceShader& _shader)
+{
+  vkDeviceWaitIdle(context.device);
+
+  vkDestroyShaderModule(context.device, shaders[_shader.backendShader].module, context.alloc);
+  return CreateShaderModule(&shaders[_shader.backendShader].module, _shader.directory.c_str());
+}
+
+// Abstract this in case I want to use multiple lighting techniques simultaneously?
 b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
 {
   IceLogInfo("===== Creating deferred quad material");
+
+  tmpDeferredFragShaderDir = _lightingShader;
 
   IvkMaterial& material = context.deferredMaterial;
 
@@ -92,8 +103,6 @@ b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
 u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
                                 std::vector<IceShaderBinding>& _descBindings)
 {
-  IceLogInfo("===== Creating material %u", materials.size());
-
   IvkMaterial material;
 
   material.shaderIndices = _shaders;
@@ -133,19 +142,9 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
                                    {}));
 
   // Pipeline =====
-
   ICE_ATTEMPT(CreatePipeline(material));
 
-  // Update descriptors =====
-
-  //std::vector<IvkDescriptorBinding> descriptorBindings;
-
-  //ICE_ATTEMPT(UpdateDescriptorSet(material.descriptorSet, descriptorBindings));
-
   // Complete =====
-
-  IceLogInfo("===== Finished creating material %u", materials.size());
-
   materials.push_back(material);
 
   scene.resize(materials.size()); // Bad.
@@ -166,55 +165,57 @@ void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<u32> _
   UpdateDescriptorSet(materials[_material].descriptorSet, descriptorBindings);
 }
 
-b8 IvkRenderer::ReloadMaterials()
+b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
+                                 const std::vector<IceHandle>& _shaders,
+                                 std::vector<IceShaderBinding>& _descBindings)
 {
-  vkDeviceWaitIdle(context.device);
-
-  for (auto& s : shaders)
+  auto& m = materials[_backendMaterial];
+  // Destroy fragile components =====
   {
-    vkDestroyShaderModule(context.device, s.module, context.alloc);
-    CreateShaderModule(&s.module, s.info.directory.c_str());
+    vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
+    vkDestroyPipeline(context.device, m.pipeline, context.alloc);
+    vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
   }
 
-  for (auto& m : materials)
+  // Re-create fragile components =====
   {
-    // Destroy fragile components =====
-    {
-      vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
-      vkDestroyPipeline(context.device, m.pipeline, context.alloc);
-      vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
-    }
+    ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
+                                      { context.globalDescriptorSetLayout,
+                                        m.descriptorSetLayout,
+                                        context.objectDescriptorSetLayout },
+                                      {}));
 
-    // Re-create fragile components =====
-    {
-      ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
-                                       { context.globalDescriptorSetLayout,
-                                         m.descriptorSetLayout,
-                                         context.objectDescriptorSetLayout },
-                                       {}));
-
-      ICE_ATTEMPT(CreatePipeline(m));
-    }
+    ICE_ATTEMPT(CreatePipeline(m));
   }
-
-  // Recreate Deferred =====
-  {
-    vkDestroyPipeline(context.device, context.deferredMaterial.pipeline, context.alloc);
-    vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
-    vkDestroyPipelineLayout(context.device, context.deferredMaterial.pipelineLayout, context.alloc);
-
-    ICE_ATTEMPT(CreatePipelinelayout(&context.deferredMaterial.pipelineLayout,
-                                     { context.globalDescriptorSetLayout,
-                                       context.deferredMaterial.descriptorSetLayout,
-                                       context.objectDescriptorSetLayout },
-                                     {}));
-
-    ICE_ATTEMPT(CreatePipeline(context.deferredMaterial, 1));
-  }
-
-
 
   return true;
+}
+
+// TODO : > Remove this once the deferred material uses the material system
+b8 IvkRenderer::RecreateDeferredMaterial()
+{
+  std::string vertDir(ICE_RESOURCE_SHADER_DIR);
+  vertDir.append("_light_blank.vert");
+  std::string fragDir(ICE_RESOURCE_SHADER_DIR);
+  fragDir.append(tmpDeferredFragShaderDir);
+  fragDir.append(".frag");
+  IceShader vert = {vertDir, Ice_Shader_Vertex, 0};
+  IceShader frag = {fragDir, Ice_Shader_Fragment, 1};
+
+  RecreateShader(vert);
+  RecreateShader(frag);
+
+  vkDestroyPipeline(context.device, context.deferredMaterial.pipeline, context.alloc);
+  vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
+  vkDestroyPipelineLayout(context.device, context.deferredMaterial.pipelineLayout, context.alloc);
+
+  ICE_ATTEMPT(CreatePipelinelayout(&context.deferredMaterial.pipelineLayout,
+    { context.globalDescriptorSetLayout,
+      context.deferredMaterial.descriptorSetLayout,
+      context.objectDescriptorSetLayout },
+    {}));
+
+  ICE_ATTEMPT(CreatePipeline(context.deferredMaterial, 1));
 }
 
 b8 IvkRenderer::CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,

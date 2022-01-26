@@ -60,8 +60,3 @@ void reIceRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size)
 {
   backend.FillBuffer(_buffer, _data, _size);
 }
-
-void reIceRenderer::ReloadMaterials()
-{
-  backend.ReloadMaterials();
-}
