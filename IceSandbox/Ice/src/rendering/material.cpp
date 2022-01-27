@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 
-u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex)
+IceHandle reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex)
 {
   #ifdef ICE_DEBUG
   {
@@ -39,6 +39,12 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u32 _s
   for (u32 i = 0; i < _shaders.size(); i++)
   {
     newMaterial.shaderIndices[i] = GetShader(_shaders[i].directory, _shaders[i].stage);
+    if (newMaterial.shaderIndices[i] == ICE_NULL_HANDLE)
+    {
+      IceLogError("Material attempting to use invalid shader : '%s' in stage %u",
+                  _shaders[i].directory.c_str(), _shaders[i].stage);
+      return ICE_NULL_HANDLE;
+    }
   }
 
   // Get descriptors =====
@@ -72,10 +78,13 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
 {
   u32 index = 0;
 
+  std::string fullDir = ICE_RESOURCE_SHADER_DIR;
+  fullDir.append(_directory);
+
   // Look for existing shader =====
   for (const auto& s : shaders)
   {
-    if (s.directory.compare(_directory.c_str()) == 0 && s.stage & _stage)
+    if (s.directory.compare(fullDir.c_str()) == 0 && s.stage & _stage)
     {
       return index;
     }
@@ -84,8 +93,7 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
 
   // Create new shader =====
   {
-    std::string fullDir = ICE_RESOURCE_SHADER_DIR;
-    fullDir.append(_directory);
+    IceShader newShader = { fullDir, _stage, ICE_NULL_HANDLE, {} };
 
     switch (_stage)
     {
@@ -97,12 +105,12 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
     {
       fullDir.append(".frag");
     } break;
-    default: IceLogError("Shader stage %u is unsupported", _stage); return -1;
+    default: IceLogError("Shader stage %u is unsupported", _stage); return ICE_NULL_HANDLE;
     }
 
-    IceShader newShader = { fullDir, _stage, -1, {} };
-
     newShader.backendShader = backend.CreateShader(fullDir, _stage);
+    if (newShader.backendShader == ICE_NULL_HANDLE)
+      return ICE_NULL_HANDLE;
 
     // Get descriptors =====
     // Store descriptors sorted by binding index
@@ -119,6 +127,17 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
 b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
 {
   std::string descDir = _shader.directory;
+  switch (_shader.stage)
+  {
+  case Ice_Shader_Vertex:
+  {
+    descDir.append(".vert");
+  } break;
+  case Ice_Shader_Fragment:
+  {
+    descDir.append(".frag");
+  } break;
+  }
   descDir.append(".desc");
 
   std::vector<char> descriptorSource = fileSystem.LoadFile(descDir.c_str());

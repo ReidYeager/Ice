@@ -12,16 +12,22 @@
 
 reIceApplication app;
 
+u32 albedoLight;
+u32 shadowLight;
+b8 usingAlbedoLight;
+
 void reInit()
 {
   IceLogInfo("Client Init");
 
-  u32 lightMat = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
-                                              { "_light_blank", Ice_Shader_Fragment } });
-                                              //{ "_light_shadow", Ice_Shader_Fragment } });
+  albedoLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
+                                             { "_light_blank", Ice_Shader_Fragment } });
+  shadowLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
+                                             { "_light_shadow", Ice_Shader_Fragment } });
 
-  if (!app.SetLightingMaterial(lightMat))
+  if (!app.SetLightingMaterial(albedoLight))
     return;
+  usingAlbedoLight = true;
 
   u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
@@ -58,6 +64,15 @@ void reUpdate(float _deltaTime)
   {
     IceLogDebug("Reloading materials");
     renderer.ReloadMaterials();
+  }
+
+  if (Input.OnKeyPressed(Ice_Key_L))
+  {
+    IceLogDebug("Switching lighting material to : %s", usingAlbedoLight ? "shadow" : "albedo");
+    if (app.SetLightingMaterial(usingAlbedoLight ? shadowLight : albedoLight))
+    {
+      usingAlbedoLight = !usingAlbedoLight;
+    }
   }
 
   if (Input.OnKeyPressed(Ice_Key_Escape))

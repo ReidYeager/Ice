@@ -34,9 +34,9 @@ public:
 
   void ReloadMaterials();
 
-  u32 CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
+  IceHandle CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
-  u32 GetShader(const std::string& _directory, IceShaderStage _stage);
+  IceHandle GetShader(const std::string& _directory, IceShaderStage _stage);
   b8 GetShaderDescriptors(IceShader& _shader);
 
   b8 SetLightingMaterial(IceHandle _material);

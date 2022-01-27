@@ -249,9 +249,9 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
 
 void IcePlatform::ConsolePrint(const char* _message, u32 _color)
 {
-  //               Info , Debug, Error , Fatal
-  //               White, Cyan , Yellow, White-on-Red
-  u32 colors[] = { 0xf  , 0xb  , 0xe   , 0xcf };
+  //               Info , Debug, Warning, Error , Fatal
+  //               White, Cyan , Yellow , Red   , White-on-Red
+  u32 colors[] = { 0xf  , 0xb  , 0xe    , 0x4   , 0xcf };
 
   HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
   SetConsoleTextAttribute(console, colors[_color]);

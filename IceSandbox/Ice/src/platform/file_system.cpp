@@ -22,7 +22,7 @@ std::vector<char> IceFileSystem::LoadFile(const char* _directory)
   inFile.open(_directory, std::ios::ate | std::ios::binary);
   if (!inFile)
   {
-    IceLogError("Failed to load file : %s", _directory);
+    IceLogWarning("Failed to load file : %s", _directory);
     return {};
   }
 

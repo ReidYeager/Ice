@@ -12,6 +12,7 @@ enum IceLogTypes
 {
   Ice_Log_Info,
   Ice_Log_Debug,
+  Ice_Log_Warning,
   Ice_Log_Error,
   Ice_Log_Fatal
 };
@@ -46,9 +47,16 @@ inline void ICE_API IceConsoleLogMessage(IceLogTypes _type, const char* _message
   IceConsoleLogMessage(Ice_Log_Debug, message, __VA_ARGS__); \
   IceConsoleLogMessage(Ice_Log_Debug, "\n");                 \
 }
+
+#define IceLogWarning(message, ...)                            \
+{                                                              \
+  IceConsoleLogMessage(Ice_Log_Warning, message, __VA_ARGS__); \
+  IceConsoleLogMessage(Ice_Log_Warning, "\n");                 \
+}
 #else
 #define IceLogInfo(message, ...)
 #define IceLogDebug(message, ...)
+#define IceLogWarning(message, ...)
 #endif // ICE_DEBUG
 
 #define IceLogError(message, ...)                            \

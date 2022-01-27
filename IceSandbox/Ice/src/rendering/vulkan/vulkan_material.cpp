@@ -28,7 +28,8 @@ IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage
   } break;
   }
 
-  CreateShaderModule(&newShader.module, _dir.c_str());
+  if (!CreateShaderModule(&newShader.module, _dir.c_str()))
+    return ICE_NULL_HANDLE;
 
   IceHandle index = shaders.size();
   shaders.push_back(newShader);
@@ -41,7 +42,19 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
   vkDeviceWaitIdle(context.device);
 
   vkDestroyShaderModule(context.device, shaders[_shader.backendShader].module, context.alloc);
-  return CreateShaderModule(&shaders[_shader.backendShader].module, _shader.directory.c_str());
+  std::string fullDir = _shader.directory;
+  switch (_shader.stage)
+  {
+  case Ice_Shader_Vertex:
+  {
+    fullDir.append(".vert");
+  } break;
+  case Ice_Shader_Fragment:
+  {
+    fullDir.append(".frag");
+  } break;
+  }
+  return CreateShaderModule(&shaders[_shader.backendShader].module, fullDir.c_str());
 }
 
 u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
@@ -405,6 +418,8 @@ b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
   directory.append(".spv");
 
   std::vector<char> source = fileSystem.LoadFile(directory.c_str());
+  if (source.size() == 0)
+    return false;
 
   VkShaderModuleCreateInfo createInfo { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
   createInfo.codeSize = source.size();

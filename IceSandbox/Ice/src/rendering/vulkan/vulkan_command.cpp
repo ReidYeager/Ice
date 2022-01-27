@@ -152,14 +152,16 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
     }
 
     // Deferred quad =====
+    const IvkMaterial& lMat = materials[context.deferredMaterialIndex];
+
     vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[0].pipeline);
+    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lMat.pipeline);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            materials[0].pipelineLayout,
+                            lMat.pipelineLayout,
                             1,
                             1,
-                            &materials[0].descriptorSet,
+                            &lMat.descriptorSet,
                             0,
                             nullptr);
     vkCmdDraw(cmdBuffer, 6, 1, 0, 0);

@@ -684,7 +684,7 @@ VkFormat IvkRenderer::GetDepthFormat()
 
 b8 IvkRenderer::SetDeferredLightingMaterial(IceHandle _material)
 {
-  if (materials.size() < _material && materials[_material].subpassIndex != 1)
+  if (materials.size() < _material || materials[_material].subpassIndex != 1)
   {
     return false;
   }

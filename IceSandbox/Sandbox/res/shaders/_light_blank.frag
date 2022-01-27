@@ -11,5 +11,5 @@ layout(location = 0) in vec2 inUV;
 layout(location = 0) out vec4 outSwapchain;
 
 void main() {
-    outSwapchain = vec4(subpassLoad(inAlbedo).xyz, 1.0);
+    outSwapchain = vec4(subpassLoad(inAlbedo).rgb, 1.0);
 }
