@@ -49,8 +49,6 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
     // Descriptors =====
     ICE_ATTEMPT(PrepareGlobalDescriptors());
     ICE_ATTEMPT(PrepareShadowDescriptors());
-
-    ICE_ATTEMPT(CreateDeferredMaterial(_settings.lightingShader));
   }
 
   return true;
@@ -87,14 +85,6 @@ b8 IvkRenderer::Shutdown()
   for (auto& t : textures)
   {
     DestroyImage(&t.image);
-  }
-
-  // Deferred material
-  {
-    vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
-    vkDestroyPipeline(context.device, context.deferredMaterial.pipeline, context.alloc);
-    vkDestroyPipelineLayout(context.device, context.deferredMaterial.pipelineLayout, context.alloc);
-    vkDestroyDescriptorSetLayout(context.device, context.deferredMaterial.descriptorSetLayout, context.alloc);
   }
 
   for (u32 i = 0; i < scene.size(); i++)
@@ -690,6 +680,18 @@ VkFormat IvkRenderer::GetDepthFormat()
   }
 
   return format;
+}
+
+b8 IvkRenderer::SetDeferredLightingMaterial(IceHandle _material)
+{
+  if (materials.size() < _material && materials[_material].subpassIndex != 1)
+  {
+    return false;
+  }
+
+  context.deferredMaterialIndex = _material;
+
+  return true;
 }
 
 //=========================

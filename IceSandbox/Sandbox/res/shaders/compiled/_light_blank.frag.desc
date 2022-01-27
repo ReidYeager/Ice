@@ -1,0 +1,7 @@
+bindings {
+    SubpassInput
+    SubpassInput
+    SubpassInput
+    SubpassInput
+    SubpassInput
+}

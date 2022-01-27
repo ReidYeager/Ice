@@ -60,16 +60,11 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
   Input.Initialize();
 
   // Initialize the renderer =====
-  if (!reRenderer.Initialize(_settings->rendererSettings))
+  if (!renderer.Initialize(_settings->rendererSettings))
   {
     IceLogFatal("Ice Renderer failed to initialize");
     return false;
   }
-
-  // NOTE : Can not init a lighting material with CreateMaterial because it takes subpassInputs
-  // Need to include subpassInputs in shader descriptor parsing
-  //reRenderer.CreateMaterial({ { "_light_blank", Ice_Shader_Vertex },
-  //                            { _settings->rendererSettings.lightingShader, Ice_Shader_Fragment }});
 
   sceneRoot = new IceObject();
   sceneRoot->transform.matrix = glm::mat4(1.0f);
@@ -108,7 +103,7 @@ b8 reIceApplication::Update()
   {
     state.ClientUpdate(deltaTime);
 
-    ICE_ATTEMPT(reRenderer.Render(&cam));
+    ICE_ATTEMPT(renderer.Render(&cam));
 
     // Update timing =====
     {
@@ -163,7 +158,7 @@ b8 reIceApplication::Shutdown()
 
   DestroyObjectAndChildren(sceneRoot);
 
-  reRenderer.Shutdown();
+  renderer.Shutdown();
   rePlatform.Shutdown();
   return true;
 }
@@ -172,7 +167,7 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
 {
   IceObject* obj = new IceObject();
   obj->materialHandle = _material;
-  obj->meshHandle = reRenderer.CreateMesh(_meshDir);
+  obj->meshHandle = renderer.CreateMesh(_meshDir);
 
   if (_parent != nullptr)
   {
@@ -185,7 +180,7 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
     sceneRoot->children.push_back(obj);
   }
 
-  reRenderer.AddObjectToScene(obj);
+  renderer.AddObjectToScene(obj);
   obj->transform.UpdateMatrix();
 
   return obj;
@@ -193,12 +188,22 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
 
 u32 reIceApplication::CreateMaterial(std::vector<IceShader> _shaders)
 {
-  return reRenderer.CreateMaterial(_shaders);
+  return renderer.CreateMaterial(_shaders, 0);
+}
+
+u32 reIceApplication::CreateLightingMaterial(std::vector<IceShader> _shaders)
+{
+  return renderer.CreateMaterial(_shaders, 1);
+}
+
+b8 reIceApplication::SetLightingMaterial(IceHandle _material)
+{
+  return renderer.SetLightingMaterial(_material);
 }
 
 void reIceApplication::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
 {
-  reRenderer.AssignMaterialTextures(_material, _images);
+  renderer.AssignMaterialTextures(_material, _images);
 }
 
 glm::mat4 IceTransform::UpdateMatrix()
@@ -211,7 +216,7 @@ glm::mat4 IceTransform::UpdateMatrix()
   matrix = glm::rotate(matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
   matrix = glm::scale(matrix, scale);
 
-  reRenderer.FillBuffer(&buffer, &matrix, 64);
+  renderer.FillBuffer(&buffer, &matrix, 64);
 
   // TODO : Update children's matrices
 

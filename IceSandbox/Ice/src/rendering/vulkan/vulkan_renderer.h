@@ -17,8 +17,10 @@
 
 #include <vector>
 
+// TODO : ~!!~ Auto-fill shader bindings with blank data
+
 // TODO : Shader descriptor rework
-// [X] Parse all descriptors from set 1 using the glsl shader source directly
+// [X] Parse all descriptors from set 1 using a descriptor file
 // [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
 // [ ] Allow the definition of descriptors in any arbitrary order in source
 
@@ -233,7 +235,8 @@ private:
 
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   u32 CreateMaterial(const std::vector<IceHandle>& _shaders,
-                     std::vector<IceShaderBinding>& _descBindings);
+                     std::vector<IceShaderBinding>& _descBindings,
+                     u32 _subpassIndex = 0);
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
   // Destroys and re-creates the shader module
   b8 RecreateShader(const IceShader& _shader);
@@ -244,6 +247,7 @@ private:
   b8 RecreateDeferredMaterial();
   u32 GetTexture(const char* _directory);
   void AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices);
+  b8 SetDeferredLightingMaterial(IceHandle _material);
 
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);

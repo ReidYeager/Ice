@@ -153,13 +153,13 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
 
     // Deferred quad =====
     vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.deferredMaterial.pipeline);
+    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[0].pipeline);
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            context.deferredMaterial.pipelineLayout,
+                            materials[0].pipelineLayout,
                             1,
                             1,
-                            &context.deferredMaterial.descriptorSet,
+                            &materials[0].descriptorSet,
                             0,
                             nullptr);
     vkCmdDraw(cmdBuffer, 6, 1, 0, 0);

@@ -109,7 +109,6 @@ struct IvkShader
 {
   VkShaderModule module;
   VkShaderStageFlagBits stage;
-  std::vector<IvkDescriptor> descriptors;
 };
 
 //=========================
@@ -134,6 +133,7 @@ struct IvkMaterial
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
+  u32 subpassIndex = 0;
   VkPipeline shadowPipeline;
   std::vector<IceHandle> shaderIndices;
 };
@@ -209,7 +209,7 @@ struct IvkContext
   // Frame =====
   std::vector<IvkGeoBuffer> geoBuffers;
   VkRenderPass deferredRenderpass;
-  IvkMaterial deferredMaterial;
+  IceHandle deferredMaterialIndex = -1;
   std::vector<VkDescriptorSet> deferredGlobalDescritorSets;
 
   std::vector<VkFramebuffer> frameBuffers;

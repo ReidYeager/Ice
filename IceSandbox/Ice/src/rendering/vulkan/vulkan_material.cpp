@@ -12,9 +12,6 @@
 #include <vector>
 #include <string>
 
-// TODO : > Remove this once the deferred material uses the material system
-std::string tmpDeferredFragShaderDir;
-
 IceHandle IvkRenderer::CreateShader(const std::string _dir, const IceShaderStage _stage)
 {
   IvkShader newShader {};
@@ -47,65 +44,14 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
   return CreateShaderModule(&shaders[_shader.backendShader].module, _shader.directory.c_str());
 }
 
-// Abstract this in case I want to use multiple lighting techniques simultaneously?
-b8 IvkRenderer::CreateDeferredMaterial(const char* _lightingShader)
-{
-  IceLogInfo("===== Creating deferred quad material");
-
-  tmpDeferredFragShaderDir = _lightingShader;
-
-  IvkMaterial& material = context.deferredMaterial;
-
-  // Load shaders =====
-  std::string vertDir(ICE_RESOURCE_SHADER_DIR);
-  vertDir.append("_light_blank.vert");
-  std::string fragDir(ICE_RESOURCE_SHADER_DIR);
-  fragDir.append(_lightingShader);
-  fragDir.append(".frag");
-
-  material.shaderIndices.push_back(CreateShader(vertDir, Ice_Shader_Vertex));
-  material.shaderIndices.push_back(CreateShader(fragDir, Ice_Shader_Fragment));
-
-  // Create descriptor components =====
-
-  // Only runs  on the lighting subpass
-
-  std::vector<IvkDescriptor> descriptors;
-
-  for (const auto& i : material.shaderIndices)
-  {
-    for (const auto& d : shaders[i].descriptors)
-    {
-      descriptors.push_back(d);
-    }
-  }
-
-  ICE_ATTEMPT(CreateDescriptorSet(descriptors,
-                                  &material.descriptorSetLayout,
-                                  &material.descriptorSet));
-
-  ICE_ATTEMPT(CreatePipelinelayout(&material.pipelineLayout,
-                                   { context.globalDescriptorSetLayout,
-                                     material.descriptorSetLayout,
-                                     context.objectDescriptorSetLayout },
-                                   {}));
-
-  ICE_ATTEMPT(CreatePipeline(material, 1));
-
-  std::vector<IvkDescriptorBinding> descriptorBindings;
-
-  UpdateDescriptorSet(material.descriptorSet, descriptorBindings);
-
-  IceLogInfo("===== Finished creating deferred quad material");
-  return true;
-}
-
 u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
-                                std::vector<IceShaderBinding>& _descBindings)
+                                std::vector<IceShaderBinding>& _descBindings,
+                                u32 _subpassIndex)
 {
   IvkMaterial material;
 
   material.shaderIndices = _shaders;
+  material.subpassIndex = _subpassIndex;
 
   // Set descriptors =====
 
@@ -126,6 +72,11 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
     {
       newdesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     } break;
+    case Ice_Descriptor_Type_SubpassInput:
+    {
+      newdesc.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      newdesc.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    } break;
     }
 
     descriptors.push_back(newdesc);
@@ -142,7 +93,7 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
                                    {}));
 
   // Pipeline =====
-  ICE_ATTEMPT(CreatePipeline(material));
+  ICE_ATTEMPT(CreatePipeline(material, _subpassIndex));
 
   // Complete =====
   materials.push_back(material);
@@ -185,37 +136,10 @@ b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
                                         context.objectDescriptorSetLayout },
                                       {}));
 
-    ICE_ATTEMPT(CreatePipeline(m));
+    ICE_ATTEMPT(CreatePipeline(m, m.subpassIndex));
   }
 
   return true;
-}
-
-// TODO : > Remove this once the deferred material uses the material system
-b8 IvkRenderer::RecreateDeferredMaterial()
-{
-  std::string vertDir(ICE_RESOURCE_SHADER_DIR);
-  vertDir.append("_light_blank.vert");
-  std::string fragDir(ICE_RESOURCE_SHADER_DIR);
-  fragDir.append(tmpDeferredFragShaderDir);
-  fragDir.append(".frag");
-  IceShader vert = {vertDir, Ice_Shader_Vertex, 0};
-  IceShader frag = {fragDir, Ice_Shader_Fragment, 1};
-
-  RecreateShader(vert);
-  RecreateShader(frag);
-
-  vkDestroyPipeline(context.device, context.deferredMaterial.pipeline, context.alloc);
-  vkDestroyPipeline(context.device, context.deferredMaterial.shadowPipeline, context.alloc);
-  vkDestroyPipelineLayout(context.device, context.deferredMaterial.pipelineLayout, context.alloc);
-
-  ICE_ATTEMPT(CreatePipelinelayout(&context.deferredMaterial.pipelineLayout,
-    { context.globalDescriptorSetLayout,
-      context.deferredMaterial.descriptorSetLayout,
-      context.objectDescriptorSetLayout },
-    {}));
-
-  ICE_ATTEMPT(CreatePipeline(context.deferredMaterial, 1));
 }
 
 b8 IvkRenderer::CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,

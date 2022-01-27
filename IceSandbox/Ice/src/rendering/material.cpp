@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 
-u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
+u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex)
 {
   #ifdef ICE_DEBUG
   {
@@ -60,7 +60,9 @@ u32 reIceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders)
 
   // Need to sync front and backend shaders (Init the lighting material with this)
   u32 index = materials.size();
-  newMaterial.backendMaterial = backend.CreateMaterial(backendShaderIndices, newMaterial.bindings);
+  newMaterial.backendMaterial = backend.CreateMaterial(backendShaderIndices,
+                                                       newMaterial.bindings,
+                                                       _subpassIndex);
   materials.push_back(newMaterial);
 
   return index;
@@ -164,7 +166,7 @@ b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
 
       u32 descTypeIndex = -1;
 
-      for (u32 i = 0; i < Ice_Shader_Buffer_Count; i++)
+      for (u32 i = 0; i < Ice_Descriptor_Type_Count; i++)
       {
         if (token.string.compare(IceDescriptorTypeNames[i]) == 0)
         {
@@ -180,7 +182,6 @@ b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
         continue;
       }
 
-      //_shader.bufferParameterIndices.push_back(bufferParameterIndex);
       IceShaderDescriptor newDesc = { (u8)_shader.descriptors.size(),
                                       (IceShaderDescriptorType)descTypeIndex };
       _shader.descriptors.push_back(newDesc);
@@ -218,7 +219,4 @@ void reIceRenderer::ReloadMaterials()
 
     backend.RecreateMaterial(m.backendMaterial, backendShaderIndices, m.bindings);
   }
-
-  // TODO : > Remove this once the deferred material uses the material system
-  backend.RecreateDeferredMaterial();
 }

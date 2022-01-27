@@ -41,8 +41,11 @@ public:
   u32 Run(IceApplicationSettings* _settings);
 
   IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
-  // Creates a new material instance using the input shaders
+  // Creates a new material instance using the input shaders for subpass 0
   u32 CreateMaterial(std::vector<IceShader> _shaders);
+  // Creates a new material for subpass 1
+  u32 CreateLightingMaterial(std::vector<IceShader> _shaders);
+  b8 SetLightingMaterial(IceHandle _material);
   // Updates the material texture samplers
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
 

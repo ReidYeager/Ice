@@ -16,6 +16,13 @@ void reInit()
 {
   IceLogInfo("Client Init");
 
+  u32 lightMat = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
+                                              { "_light_blank", Ice_Shader_Fragment } });
+                                              //{ "_light_shadow", Ice_Shader_Fragment } });
+
+  if (!app.SetLightingMaterial(lightMat))
+    return;
+
   u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
   app.AssignMaterialTextures(blank, { "landscape.jpg", "TestAlbedo.png", "TestNormal.png"});
@@ -50,7 +57,7 @@ void reUpdate(float _deltaTime)
   if (Input.OnKeyPressed(Ice_Key_P))
   {
     IceLogDebug("Reloading materials");
-    reRenderer.ReloadMaterials();
+    renderer.ReloadMaterials();
   }
 
   if (Input.OnKeyPressed(Ice_Key_Escape))
@@ -77,7 +84,6 @@ int main()
   settings.windowSettings.screenPosition = { 400, 150 };
 
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
-  //settings.rendererSettings.lightingShader = "_light_shadow";
 
   return app.Run(&settings);
 }

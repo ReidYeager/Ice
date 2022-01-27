@@ -7,7 +7,7 @@
 
 #include <string>
 
-reIceRenderer reRenderer;
+reIceRenderer renderer;
 
 b8 reIceRenderer::Initialize(const IceRendererSettings& _settings)
 {
@@ -44,6 +44,11 @@ void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<std:
 
   // Update all image samplers simultaneously
   backend.AssignMaterialTextures(_material, texIndices);
+}
+
+b8 reIceRenderer::SetLightingMaterial(IceHandle _material)
+{
+  return backend.SetDeferredLightingMaterial(_material);
 }
 
 u32 reIceRenderer::CreateMesh(const char* _meshDir)

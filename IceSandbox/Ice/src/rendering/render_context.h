@@ -87,6 +87,7 @@ enum IceShaderDescriptorType
 {
   idt(Buffer),
   idt(Sampler2D),
+  idt(SubpassInput),
 
   idt(Count)
 };
@@ -96,7 +97,9 @@ enum IceShaderDescriptorType
 static const char* IceDescriptorTypeNames[Ice_Descriptor_Type_Count] =
 {
   idt(Buffer),
-  idt(Sampler2D)
+  idt(Sampler2D),
+  idt(SubpassInput),
+
 };
 #undef idt
 
@@ -162,7 +165,6 @@ enum IceRenderingApi
 struct IceRendererSettings
 {
   IceRenderingApi api = Ice_Renderer_Vulkan;
-  const char* lightingShader = "_light_blank"; // used by deferred rendering
 };
 
 #endif // !define ICE_RENDERING_RENDERER_SETTINGS_H_

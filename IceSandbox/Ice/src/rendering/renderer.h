@@ -34,11 +34,13 @@ public:
 
   void ReloadMaterials();
 
-  u32 CreateMaterial(const std::vector<IceShader>& _shaders);
+  u32 CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
   void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
   u32 GetShader(const std::string& _directory, IceShaderStage _stage);
   b8 GetShaderDescriptors(IceShader& _shader);
 
-} reRenderer;
+  b8 SetLightingMaterial(IceHandle _material);
+
+} renderer;
 
 #endif // !define ICE_RENDERING_RE_RENDERER_H_
