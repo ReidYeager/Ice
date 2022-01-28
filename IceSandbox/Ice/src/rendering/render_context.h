@@ -44,11 +44,6 @@ struct IceTexture
 #define ibi(x) Ice_Shader_Buffer_##x
 enum IceShaderBufferInputs
 {
-  ibi(Camera_View_Projection_Matrix_X),
-  ibi(Camera_View_Projection_Matrix_Y),
-  ibi(Camera_View_Projection_Matrix_Z),
-  ibi(Camera_View_Projection_Matrix_W),
-
   ibi(Custom_0),
   ibi(Custom_1),
   ibi(Custom_2),
@@ -71,11 +66,6 @@ enum IceShaderBufferInputs
 #define ibi(x) #x
 static const char* IceShaderBufferInputNames[Ice_Shader_Buffer_Count] =
 {
-  ibi(Camera_View_Projection_Matrix_X),
-  ibi(Camera_View_Projection_Matrix_Y),
-  ibi(Camera_View_Projection_Matrix_Z),
-  ibi(Camera_View_Projection_Matrix_W),
-
   ibi(Custom_0),
   ibi(Custom_1),
   ibi(Custom_2),
@@ -125,19 +115,20 @@ struct IceShaderDescriptor
 {
   u8 bindingIndex = 255; // The binding value within set 1 (0-254, 255 invalid)
   IceShaderDescriptorType type;
+  u32 data; // Buffer size, image type, etc.
 };
 
 struct IceShaderBinding
 {
   IceShaderDescriptor descriptor;
-  void* backendData; // backend buffer, image, etc.
+  IceHandle backendHandle = ICE_NULL_HANDLE; // For backend buffer, image, etc.
 };
 
 struct IceShader
 {
   std::string directory;
   IceShaderStage stage;
-  IceHandle backendShader;
+  IceHandle backendShader = ICE_NULL_HANDLE;
   std::vector<IceShaderDescriptor> descriptors;
   std::vector<u32> bufferParameterIndices;
 };
@@ -150,7 +141,7 @@ struct IceMaterial
 {
   std::vector<IceHandle> shaderIndices;
   std::vector<IceShaderBinding> bindings;
-  IceHandle backendMaterial;
+  IceHandle backendMaterial = ICE_NULL_HANDLE;
 };
 
 //=========================

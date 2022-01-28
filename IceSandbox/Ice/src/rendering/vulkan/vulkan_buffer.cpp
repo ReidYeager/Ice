@@ -63,7 +63,7 @@ b8 IvkRenderer::CreateBuffer(IvkBuffer* _buffer,
   _buffer->offset = 0;
 
   // Should auto-binding even be in place?
-  BindBuffer(_buffer, 0);
+  BindBufferAndMemory(_buffer, 0);
 
   // Fill the buffer =====
   if (_data != nullptr)
@@ -74,7 +74,7 @@ b8 IvkRenderer::CreateBuffer(IvkBuffer* _buffer,
   return true;
 }
 
-b8 IvkRenderer::BindBuffer(IvkBuffer* _buffer, u64 _offset)
+b8 IvkRenderer::BindBufferAndMemory(IvkBuffer* _buffer, u64 _offset)
 {
   // Bind the buffer and memory =====
   IVK_ASSERT(vkBindBufferMemory(context.device, _buffer->buffer, _buffer->memory, _offset),

@@ -7,9 +7,9 @@
 
 #include <string>
 
-reIceRenderer renderer;
+IceRenderer renderer;
 
-b8 reIceRenderer::Initialize(const IceRendererSettings& _settings)
+b8 IceRenderer::Initialize(const IceRendererSettings& _settings)
 {
   if (!backend.Initialize(_settings))
   {
@@ -20,19 +20,19 @@ b8 reIceRenderer::Initialize(const IceRendererSettings& _settings)
   return true;
 }
 
-b8 reIceRenderer::Shutdown()
+b8 IceRenderer::Shutdown()
 {
   backend.Shutdown();
   return true;
 }
 
-b8 reIceRenderer::Render(IceCamera* _camera)
+b8 IceRenderer::Render(IceCamera* _camera)
 {
   ICE_ATTEMPT_BOOL(backend.Render(_camera));
   return true;
 }
 
-void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures)
+void IceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures)
 {
   // Retrieve images
   std::vector<IceHandle> texIndices(_textures.size());
@@ -62,22 +62,22 @@ void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceT
   backend.AssignMaterialTextures(_material, texIndices);
 }
 
-b8 reIceRenderer::SetLightingMaterial(IceHandle _material)
+b8 IceRenderer::SetLightingMaterial(IceHandle _material)
 {
   return backend.SetDeferredLightingMaterial(_material);
 }
 
-u32 reIceRenderer::CreateMesh(const char* _meshDir)
+u32 IceRenderer::CreateMesh(const char* _meshDir)
 {
   return backend.CreateMesh(_meshDir);
 }
 
-void reIceRenderer::AddObjectToScene(IceObject* _object)
+void IceRenderer::AddObjectToScene(IceObject* _object)
 {
   backend.AddMeshToScene(_object);
 }
 
-void reIceRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size)
+void IceRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size)
 {
   backend.FillBuffer(_buffer, _data, _size);
 }

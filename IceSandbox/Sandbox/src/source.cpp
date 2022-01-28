@@ -15,6 +15,7 @@ reIceApplication app;
 u32 albedoLight;
 u32 shadowLight;
 b8 usingAlbedoLight;
+u32 blank;
 
 void reInit()
 {
@@ -29,8 +30,9 @@ void reInit()
     return;
   usingAlbedoLight = true;
 
-  u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
+  blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
+
   app.AssignMaterialTextures(blank,
                              {{"", Ice_Image_Color},
                               {"", Ice_Image_Normal},
@@ -80,6 +82,9 @@ void reUpdate(float _deltaTime)
     }
   }
 
+  vec4 value = { (sin(app.totalTime) * 0.5f) + 0.5f, 0.0f, 0.0f, 0.0f};
+  app.SetMaterialBufferData(blank, &value);
+
   if (Input.OnKeyPressed(Ice_Key_Escape))
   {
     rePlatform.Close();
@@ -101,7 +106,7 @@ int main()
   settings.ClientShutdown = reShutdown;
 
   settings.windowSettings.extents = { 1280, 720 };
-  settings.windowSettings.screenPosition = { 400, 50 };
+  settings.windowSettings.screenPosition = { 200, 75 };
 
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
 

@@ -32,7 +32,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   clearValues[0].color = { 0.3f, 0.3f, 0.3f }; // Swapchain
   clearValues[1].color = { 0.0f, 0.0f, 0.0f }; // Position
   clearValues[2].color = { 0.0f, 0.0f, 0.0f }; // Normal
-  clearValues[3].color = { 0.0f, 0.0f, 0.0f }; // Albedo
+  clearValues[3].color = { 0.5f, 0.5f, 0.5f }; // Albedo
   clearValues[4].color = { 0.0f, 0.0f, 0.0f }; // Maps
   clearValues[5].depthStencil = { 1, 0 }; // Depth
 

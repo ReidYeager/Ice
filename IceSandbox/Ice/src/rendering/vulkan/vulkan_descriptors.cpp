@@ -308,9 +308,10 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
     {
       VkDescriptorBufferInfo info {};
-      info.buffer = _bindings[i].buffer->buffer;
-      info.offset = _bindings[i].buffer->offset;
-      info.range = _bindings[i].buffer->size;
+      IvkBuffer* b = &materialBuffers[_bindings[i].data];
+      info.buffer = b->buffer;
+      info.offset = b->offset;
+      info.range = b->size;
 
       bufferInfos.push_back(info);
 
@@ -320,9 +321,9 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
     {
       VkDescriptorImageInfo info {};
-      info.imageLayout = _bindings[i].image->layout;
-      info.imageView = _bindings[i].image->view;
-      info.sampler = _bindings[i].image->sampler;
+      info.imageLayout = textures[_bindings[i].data].image.layout;
+      info.imageView = textures[_bindings[i].data].image.view;
+      info.sampler = textures[_bindings[i].data].image.sampler;
 
       imageInfos.push_back(info);
 
@@ -331,9 +332,9 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     } break;
     case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
     {
-      VkDescriptorImageInfo info {};
+      VkDescriptorImageInfo info{};
       info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      info.imageView = _bindings[i].image->view;
+      info.imageView = textures[_bindings[i].data].image.view;
       info.sampler = VK_NULL_HANDLE;
 
       imageInfos.push_back(info);

@@ -15,7 +15,7 @@
 #include <vector>
 #include <string>
 
-extern class reIceRenderer
+extern class IceRenderer
 {
 private:
   IvkRenderer backend;
@@ -41,6 +41,7 @@ public:
   b8 GetShaderDescriptors(IceShader& _shader);
 
   b8 SetLightingMaterial(IceHandle _material);
+  b8 SetMaterialBufferData(IceHandle _material, void* _data);
 
 } renderer;
 

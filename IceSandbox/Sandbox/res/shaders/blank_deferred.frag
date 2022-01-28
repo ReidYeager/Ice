@@ -3,6 +3,9 @@
 layout(set = 1, binding = 0) uniform sampler2D tex;
 layout(set = 1, binding = 1) uniform sampler2D alt;
 layout(set = 1, binding = 2) uniform sampler2D three;
+layout(set = 1, binding = 3) uniform testBuffer {
+    vec4 x;
+} buf;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -23,6 +26,8 @@ void main() {
         col = texture(three, inUV).xyz;
     else if (inUV.x > 0.33)
         col = texture(alt, inUV).xyz;
+
+    col = col * buf.x.r;
 
     outAlbedo = vec4(col, 1.0);
     outMaps = vec4(0.5, 0.5, 0.5, 0.5);

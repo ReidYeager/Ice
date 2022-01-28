@@ -17,11 +17,9 @@
 
 #include <vector>
 
-// TODO : ~!!~ Create & bind default data to shader bindings upon material creation
-
-// TODO : Shader descriptor rework (1/3)
+// TODO : Shader descriptor rework (2/3)
 // [X] Parse all descriptors from set 1 using a descriptor file
-// [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
+// [X] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
 // [ ] Allow the definition of descriptors in any arbitrary order in source
 
 // TODO : UI renderpass (For now, only used with IMGUI)
@@ -50,6 +48,7 @@ private:
   std::vector<IvkTexture> textures;
   std::vector<IvkShader> shaders;
   std::vector<IvkMaterial> materials;
+  std::vector<IvkBuffer> materialBuffers;
   std::vector<IvkMesh> meshes;
   // This system is slow and will need to be upgraded later.
   std::vector<std::vector<IvkObject>> scene;
@@ -174,9 +173,6 @@ private:
   // Material
   //=========================
 
-  // Creates the material used by a screen-space quad to display deferred information
-  b8 CreateDeferredMaterial(const char* _lightingShader);
-
   // Creates a simple pipeline layout
   b8 CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
                           std::vector<VkDescriptorSetLayout> _layouts,
@@ -197,7 +193,7 @@ private:
                   VkMemoryPropertyFlags _memoryProperties,
                   void* _data = nullptr);
   // Binds the buffer to the memory starting at the offset
-  b8 BindBuffer(IvkBuffer* _buffer, u64 _offset);
+  b8 BindBufferAndMemory(IvkBuffer* _buffer, u64 _offset);
   // Destroys the input buffer and can free its memory
   void DestroyBuffer(const IvkBuffer* _buffer, b8 _freeMemory = true);
 
@@ -244,10 +240,11 @@ private:
   b8 RecreateMaterial(IceHandle _backendMaterial,
                       const std::vector<IceHandle>& _shaders,
                       std::vector<IceShaderBinding>& _descBindings);
-  b8 RecreateDeferredMaterial();
   IceHandle GetTexture(const char* _directory, IceImageType _type);
   void AssignMaterialTextures(IceHandle _material, std::vector<IceHandle> _textures);
   b8 SetDeferredLightingMaterial(IceHandle _material);
+  b8 FillMaterialBuffer(IceHandle _buffer, void* _data);
+  void DestroyMaterial(IceHandle _material);
 
   // Loads the mesh and fills its buffers
   u32 CreateMesh(const char* _directory);

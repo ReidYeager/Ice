@@ -86,6 +86,12 @@ b8 IvkRenderer::Shutdown()
     vkDestroyDescriptorSetLayout(context.device, mat.descriptorSetLayout, context.alloc);
   }
 
+  for (auto& b : materialBuffers)
+  {
+    vkDestroyBuffer(context.device, b.buffer, context.alloc);
+    vkFreeMemory(context.device, b.memory, context.alloc);
+  }
+
   for (auto& t : textures)
   {
     DestroyImage(&t.image);

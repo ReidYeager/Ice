@@ -112,6 +112,8 @@ b8 reIceApplication::Update()
       deltaTime = microsecDelta.count() * microToSecond;
       start = end;
 
+      totalTime += deltaTime;
+
       // Timing log =====
       deltaSum += deltaTime;
       deltaCount++;
@@ -205,6 +207,11 @@ void reIceApplication::AssignMaterialTextures(IceHandle _material,
                                               std::vector<IceTexture> _textures)
 {
   renderer.AssignMaterialTextures(_material, _textures);
+}
+
+b8 reIceApplication::SetMaterialBufferData(IceHandle _material, void* _data)
+{
+  return renderer.SetMaterialBufferData(_material, _data);
 }
 
 glm::mat4 IceTransform::UpdateMatrix()

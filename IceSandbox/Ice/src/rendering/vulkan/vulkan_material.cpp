@@ -58,7 +58,7 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
 }
 
 u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
-                                std::vector<IceShaderBinding>& _descBindings,
+                                std::vector<IceShaderBinding>& _materialBindings,
                                 u32 _subpassIndex)
 {
   IvkMaterial material;
@@ -69,24 +69,45 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
   // Set descriptors =====
 
   std::vector<IvkDescriptor> descriptors;
+  std::vector<IvkDescriptorBinding> bindings;
 
-  for (auto& d : _descBindings)
+  for (auto& d : _materialBindings)
   {
     IvkDescriptorBinding binding {};
 
     IvkDescriptor& newdesc = binding.descriptor;
-    newdesc.binding = d.descriptor.bindingIndex;
-
+    newdesc.bindingIndex = d.descriptor.bindingIndex;
 
     switch (d.descriptor.type)
     {
     case Ice_Descriptor_Type_Buffer:
     {
+      if (d.descriptor.data == 0)
+        continue; // Don't add a buffer descriptor if it is empty
+
       newdesc.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+      IvkBuffer b;
+      b8 result = CreateBuffer(&b,
+                               d.descriptor.data,
+                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+      if (!result)
+      {
+        IceLogFatal("Failed to create a shader buffer");
+        return ICE_NULL_HANDLE;
+      }
+
+      d.backendHandle = materialBuffers.size();
+      materialBuffers.push_back(b);
     } break;
     case Ice_Descriptor_Type_Sampler2D:
     {
       newdesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+      d.backendHandle = GetTexture("", (IceImageType)d.descriptor.data);
     } break;
     case Ice_Descriptor_Type_SubpassInput:
     {
@@ -95,6 +116,7 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
     } break;
     }
 
+    binding.data = d.backendHandle;
     descriptors.push_back(newdesc);
     material.bindings.push_back(binding);
   }
@@ -108,6 +130,8 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
                                      material.descriptorSetLayout,
                                      context.objectDescriptorSetLayout },
                                    {}));
+
+  UpdateDescriptorSet(material.descriptorSet, material.bindings);
 
   // Pipeline =====
   ICE_ATTEMPT_BOOL(CreatePipeline(material, _subpassIndex));
@@ -125,9 +149,7 @@ void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceHan
 
   for (const auto& t : _textures)
   {
-    descriptorBindings.push_back({ {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
-                                   &textures[t].image,
-                                   nullptr });
+    descriptorBindings.push_back({ {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, t});
   }
 
   //for (auto& b : materials[_material].bindings)
@@ -139,6 +161,15 @@ void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceHan
   //}
 
   UpdateDescriptorSet(materials[_material].descriptorSet, descriptorBindings);
+}
+
+b8 IvkRenderer::FillMaterialBuffer(IceHandle _buffer, void* _data)
+{
+  ICE_ATTEMPT_BOOL(FillBuffer(&materialBuffers[_buffer],
+                              _data,
+                              materialBuffers[_buffer].size,
+                              materialBuffers[_buffer].offset));
+  return true;
 }
 
 b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,

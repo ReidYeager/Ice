@@ -38,6 +38,8 @@ public:
   IceCamera cam;
   IceObject* sceneRoot;
 
+  float totalTime = 0.0f;
+
   u32 Run(IceApplicationSettings* _settings);
 
   IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
@@ -48,6 +50,7 @@ public:
   b8 SetLightingMaterial(IceHandle _material);
   // Updates the material texture samplers
   void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);
+  b8 SetMaterialBufferData(IceHandle _material, void* _data);
 
 private:
   b8 Initialize(IceApplicationSettings* _settings);

@@ -59,14 +59,13 @@ struct IvkDescriptor
 {
   VkDescriptorType type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   VkShaderStageFlags stageFlags = VK_SHADER_STAGE_ALL;
-  u32 binding;
+  u32 bindingIndex;
 };
 
 struct IvkDescriptorBinding
 {
   IvkDescriptor descriptor;
-  IvkImage* image = nullptr;
-  IvkBuffer* buffer = nullptr;
+  IceHandle data = ICE_NULL_HANDLE;
 };
 
 //=========================
