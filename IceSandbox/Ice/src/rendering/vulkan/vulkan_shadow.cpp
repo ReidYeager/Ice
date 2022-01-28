@@ -66,21 +66,21 @@ b8 IvkRenderer::CreateShadowFrameBuffer()
 {
   // Create depth map =====
 
-  ICE_ATTEMPT(CreateImage(&shadow.image,
+  ICE_ATTEMPT_BOOL(CreateImage(&shadow.image,
                           { shadowResolution, shadowResolution },
                           VK_FORMAT_D16_UNORM,
                           VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT));
   shadow.image.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-  ICE_ATTEMPT(CreateImageView(&shadow.image.view,
+  ICE_ATTEMPT_BOOL(CreateImageView(&shadow.image.view,
                               shadow.image.image,
                               shadow.image.format,
                               VK_IMAGE_ASPECT_DEPTH_BIT));
-  ICE_ATTEMPT(CreateImageSampler(&shadow.image));
+  ICE_ATTEMPT_BOOL(CreateImageSampler(&shadow.image));
 
   // Create framebuffer =====
 
-  ICE_ATTEMPT(CreateFrameBuffer(&shadow.framebuffer,
+  ICE_ATTEMPT_BOOL(CreateFrameBuffer(&shadow.framebuffer,
                                 shadow.renderpass,
                                 { shadowResolution, shadowResolution },
                                 { shadow.image.view }));

@@ -64,8 +64,20 @@ typedef u32 IceHandle;
 #define ICE_RESOURCE_SHADER_DIR "../../../Sandbox/res/shaders/compiled/"
 #define ICE_RESOURCE_MODEL_DIR "../../../Sandbox/res/models/"
 
-#define ICE_ATTEMPT(x) \
-if (!x)                \
+#define ICE_ATTEMPT_BOOL(x) \
+if (!x)                     \
+  return false;
+
+#define ICE_ATTEMPT_HANDLE(x) \
+if (x == ICE_NULL_HANDLE)     \
+  return ICE_NULL_HANDLE;
+
+#define ICE_ATTEMPT_BOOL_HANDLE(x) \
+if (!x)                            \
+  return ICE_NULL_HANDLE;
+
+#define ICE_ATTEMPT_HANDLE_BOOL(x) \
+if (x == ICE_NULL_HANDLE)          \
   return false;
 
 #endif // !DEFINES_H

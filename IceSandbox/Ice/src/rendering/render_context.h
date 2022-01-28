@@ -16,7 +16,25 @@
 // Images
 //=========================
 
-typedef IceHandle IceBackendImage;
+enum IceImageType
+{
+  Ice_Image_Color,
+  Ice_Image_Normal,
+  Ice_Image_Depth,
+  Ice_Image_Map
+};
+
+struct IceImage
+{
+  IceImageType type = Ice_Image_Color;
+  IceHandle backendImage = (u32)ICE_NULL_HANDLE;
+};
+
+struct IceTexture
+{
+  std::string directory;
+  IceImage image {};
+};
 
 //=========================
 // Shader

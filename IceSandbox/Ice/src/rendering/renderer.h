@@ -21,6 +21,7 @@ private:
   IvkRenderer backend;
   std::vector<IceShader> shaders;
   std::vector<IceMaterial> materials;
+  std::vector<IceTexture> textures;
 
 public:
   b8 Initialize(const IceRendererSettings& _settings);
@@ -35,7 +36,7 @@ public:
   void ReloadMaterials();
 
   IceHandle CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
-  void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
+  void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);
   IceHandle GetShader(const std::string& _directory, IceShaderStage _stage);
   b8 GetShaderDescriptors(IceShader& _shader);
 

@@ -68,7 +68,7 @@ b8 IvkRenderer::CreateBuffer(IvkBuffer* _buffer,
   // Fill the buffer =====
   if (_data != nullptr)
   {
-    ICE_ATTEMPT(FillBuffer(_buffer, _data, _size));
+    ICE_ATTEMPT_BOOL(FillBuffer(_buffer, _data, _size));
   }
 
   return true;

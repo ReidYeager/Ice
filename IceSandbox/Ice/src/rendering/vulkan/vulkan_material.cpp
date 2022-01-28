@@ -72,8 +72,11 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
 
   for (auto& d : _descBindings)
   {
-    IvkDescriptor newdesc{};
+    IvkDescriptorBinding binding {};
+
+    IvkDescriptor& newdesc = binding.descriptor;
     newdesc.binding = d.descriptor.bindingIndex;
+
 
     switch (d.descriptor.type)
     {
@@ -93,20 +96,21 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
     }
 
     descriptors.push_back(newdesc);
+    material.bindings.push_back(binding);
   }
 
-  ICE_ATTEMPT(CreateDescriptorSet(descriptors,
+  ICE_ATTEMPT_BOOL(CreateDescriptorSet(descriptors,
                                   &material.descriptorSetLayout,
                                   &material.descriptorSet));
 
-  ICE_ATTEMPT(CreatePipelinelayout(&material.pipelineLayout,
+  ICE_ATTEMPT_BOOL(CreatePipelinelayout(&material.pipelineLayout,
                                    { context.globalDescriptorSetLayout,
                                      material.descriptorSetLayout,
                                      context.objectDescriptorSetLayout },
                                    {}));
 
   // Pipeline =====
-  ICE_ATTEMPT(CreatePipeline(material, _subpassIndex));
+  ICE_ATTEMPT_BOOL(CreatePipeline(material, _subpassIndex));
 
   // Complete =====
   materials.push_back(material);
@@ -115,16 +119,24 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
   return materials.size() - 1;
 }
 
-void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices)
+void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceHandle> _textures)
 {
   std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  for (const auto& t : _textureIndices)
+  for (const auto& t : _textures)
   {
-    descriptorBindings.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+    descriptorBindings.push_back({ {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},
                                    &textures[t].image,
                                    nullptr });
   }
+
+  //for (auto& b : materials[_material].bindings)
+  //{
+  //  if (b.descriptor.type != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+  //    continue;
+
+  //  
+  //}
 
   UpdateDescriptorSet(materials[_material].descriptorSet, descriptorBindings);
 }
@@ -143,13 +155,13 @@ b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
 
   // Re-create fragile components =====
   {
-    ICE_ATTEMPT(CreatePipelinelayout(&m.pipelineLayout,
+    ICE_ATTEMPT_BOOL(CreatePipelinelayout(&m.pipelineLayout,
                                       { context.globalDescriptorSetLayout,
                                         m.descriptorSetLayout,
                                         context.objectDescriptorSetLayout },
                                       {}));
 
-    ICE_ATTEMPT(CreatePipeline(m, m.subpassIndex));
+    ICE_ATTEMPT_BOOL(CreatePipeline(m, m.subpassIndex));
   }
 
   return true;

@@ -47,7 +47,7 @@ public:
   u32 CreateLightingMaterial(std::vector<IceShader> _shaders);
   b8 SetLightingMaterial(IceHandle _material);
   // Updates the material texture samplers
-  void AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images);
+  void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);
 
 private:
   b8 Initialize(IceApplicationSettings* _settings);

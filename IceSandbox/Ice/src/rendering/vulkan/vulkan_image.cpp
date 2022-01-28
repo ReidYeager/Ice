@@ -128,18 +128,34 @@ b8 IvkRenderer::CreateImageSampler(IvkImage* _image)
   return true;
 }
 
-u32 IvkRenderer::GetTexture(const char* _directory)
+IceHandle IvkRenderer::GetTexture(const char* _directory, IceImageType _type)
 {
   // Look for existing texture =====
   u32 index = 0;
 
-  for (const auto& t : textures)
+  if (_directory[0] == '\0')
   {
-    if (t.directory.compare(_directory) == 0)
+    switch (_type)
     {
-      return index;
+    case Ice_Image_Color:
+    {
+      return context.defaultColorImage;
     }
-    index++;
+    case Ice_Image_Normal:
+    {
+      return context.defaultNormalImage;
+    }
+    case Ice_Image_Depth:
+    case Ice_Image_Map:
+    {
+      return context.defaultDepthMapImage;
+    }
+    default:
+    {
+      IceLogError("Invalid texture type : %u", _type);
+      return ICE_NULL_HANDLE;
+    } break;
+    }
   }
 
   // Create new texture =====
@@ -148,7 +164,7 @@ u32 IvkRenderer::GetTexture(const char* _directory)
 
   tex.directory = _directory;
 
-  ICE_ATTEMPT(LoadTextureFile(&tex));
+  ICE_ATTEMPT_BOOL_HANDLE(LoadTextureFile(&tex));
 
   textures.push_back(tex);
 
@@ -174,15 +190,15 @@ b8 IvkRenderer::LoadTextureFile(IvkTexture* _texture)
 
   // Create an IceImage =====
   VkExtent2D extents = { (u32)width, (u32)height };
-  ICE_ATTEMPT(CreateImage(image,
+  ICE_ATTEMPT_BOOL(CreateImage(image,
                           extents,
                           VK_FORMAT_R8G8B8A8_UNORM,
                           VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
-  ICE_ATTEMPT(CreateImageView(&image->view,
+  ICE_ATTEMPT_BOOL(CreateImageView(&image->view,
                               image->image,
                               image->format,
                               VK_IMAGE_ASPECT_COLOR_BIT));
-  ICE_ATTEMPT(CreateImageSampler(image));
+  ICE_ATTEMPT_BOOL(CreateImageSampler(image));
   image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   // Fill the image info =====

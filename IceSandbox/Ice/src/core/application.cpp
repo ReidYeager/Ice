@@ -103,7 +103,7 @@ b8 reIceApplication::Update()
   {
     state.ClientUpdate(deltaTime);
 
-    ICE_ATTEMPT(renderer.Render(&cam));
+    ICE_ATTEMPT_BOOL(renderer.Render(&cam));
 
     // Update timing =====
     {
@@ -201,9 +201,10 @@ b8 reIceApplication::SetLightingMaterial(IceHandle _material)
   return renderer.SetLightingMaterial(_material);
 }
 
-void reIceApplication::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
+void reIceApplication::AssignMaterialTextures(IceHandle _material,
+                                              std::vector<IceTexture> _textures)
 {
-  renderer.AssignMaterialTextures(_material, _images);
+  renderer.AssignMaterialTextures(_material, _textures);
 }
 
 glm::mat4 IceTransform::UpdateMatrix()

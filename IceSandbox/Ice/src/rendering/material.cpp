@@ -114,7 +114,7 @@ u32 reIceRenderer::GetShader(const std::string& _directory, IceShaderStage _stag
 
     // Get descriptors =====
     // Store descriptors sorted by binding index
-    ICE_ATTEMPT(GetShaderDescriptors(newShader));
+    ICE_ATTEMPT_BOOL(GetShaderDescriptors(newShader));
 
     // Create backend assets =====
     // backend.CreateShader(newShader.descriptors);
@@ -177,6 +177,7 @@ b8 reIceRenderer::GetShaderDescriptors(IceShader& _shader)
 
   }
 
+  // TODO : Define descriptor bind index, Define sampler image default value? (normal, white, black)
   if (lexer.CheckForExpectedToken("bindings") && lexer.ExpectToken("{"))
   {
     while (!lexer.CheckForExpectedToken("}"))

@@ -18,37 +18,41 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
   IceLogDebug("===== Vulkan Renderer Init =====");
 
   // API initialization =====
-  ICE_ATTEMPT(CreateInstance());
-  ICE_ATTEMPT(CreateSurface());
-  ICE_ATTEMPT(ChoosePhysicalDevice());
-  ICE_ATTEMPT(CreateLogicalDevice());
+  ICE_ATTEMPT_BOOL(CreateInstance());
+  ICE_ATTEMPT_BOOL(CreateSurface());
+  ICE_ATTEMPT_BOOL(ChoosePhysicalDevice());
+  ICE_ATTEMPT_BOOL(CreateLogicalDevice());
 
   // Rendering components =====
-  ICE_ATTEMPT(CreateDescriptorPool());
-  ICE_ATTEMPT(CreateCommandPool());
-  ICE_ATTEMPT(CreateCommandPool(true));
+  ICE_ATTEMPT_BOOL(CreateDescriptorPool());
+  ICE_ATTEMPT_BOOL(CreateCommandPool());
+  ICE_ATTEMPT_BOOL(CreateCommandPool(true));
 
-  ICE_ATTEMPT(CreateSwapchain());
+  ICE_ATTEMPT_BOOL(CreateSwapchain());
 
   // Others =====
-  ICE_ATTEMPT(CreateSyncObjects());
-  ICE_ATTEMPT(CreateCommandBuffers());
+  ICE_ATTEMPT_BOOL(CreateSyncObjects());
+  ICE_ATTEMPT_BOOL(CreateCommandBuffers());
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
+
+  context.defaultColorImage = GetTexture("PixelBlack.png", Ice_Image_Color);
+  context.defaultNormalImage = GetTexture("EmptyNormal.png", Ice_Image_Normal);
+  context.defaultDepthMapImage = GetTexture("PixelWhite.png", Ice_Image_Depth);
 
   // Remove from initialization? =====
   {
     // Deferred =====
-    ICE_ATTEMPT(CreateDeferredRenderpass());
-    ICE_ATTEMPT(CreateDeferredFramebuffers());
+    ICE_ATTEMPT_BOOL(CreateDeferredRenderpass());
+    ICE_ATTEMPT_BOOL(CreateDeferredFramebuffers());
 
     // Shadows =====
-    ICE_ATTEMPT(CreateShadowRenderpass());
-    ICE_ATTEMPT(CreateShadowFrameBuffer());
+    ICE_ATTEMPT_BOOL(CreateShadowRenderpass());
+    ICE_ATTEMPT_BOOL(CreateShadowFrameBuffer());
 
     // Descriptors =====
-    ICE_ATTEMPT(PrepareGlobalDescriptors());
-    ICE_ATTEMPT(PrepareShadowDescriptors());
+    ICE_ATTEMPT_BOOL(PrepareGlobalDescriptors());
+    ICE_ATTEMPT_BOOL(PrepareShadowDescriptors());
   }
 
   return true;
@@ -612,7 +616,7 @@ b8 IvkRenderer::CreateSwapchain()
 
     for (u32 i = 0; i < imageCount; i++)
     {
-      ICE_ATTEMPT(CreateImageView(&context.swapchainImageViews[i],
+      ICE_ATTEMPT_BOOL(CreateImageView(&context.swapchainImageViews[i],
                                   context.swapchainImages[i],
                                   context.swapchainFormat,
                                   VK_IMAGE_ASPECT_COLOR_BIT));

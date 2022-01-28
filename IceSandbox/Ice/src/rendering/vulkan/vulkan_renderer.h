@@ -17,9 +17,9 @@
 
 #include <vector>
 
-// TODO : ~!!~ Auto-fill shader bindings with blank data
+// TODO : ~!!~ Create & bind default data to shader bindings upon material creation
 
-// TODO : Shader descriptor rework
+// TODO : Shader descriptor rework (1/3)
 // [X] Parse all descriptors from set 1 using a descriptor file
 // [ ] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
 // [ ] Allow the definition of descriptors in any arbitrary order in source
@@ -28,7 +28,7 @@
 
 // TODO : Allow source to change material pipeline settings
 
-// TODO : Restructure the scene graph
+// TODO : Restructure the scene graph (0/4)
 // [ ] Establish a proper hierarchy in /core/
 // [ ] Create a structure in the renderer optimized for rendering
 // [ ] Link the core hierarchy to the rendering structure via core
@@ -59,7 +59,7 @@ private:
   //IvkImage texture;
   IvkShadow shadow;
 
-  const u32 shadowResolution = 2048;
+  const u32 shadowResolution = 512;
 
 public:
   // Initializes the components required to render
@@ -245,8 +245,8 @@ private:
                       const std::vector<IceHandle>& _shaders,
                       std::vector<IceShaderBinding>& _descBindings);
   b8 RecreateDeferredMaterial();
-  u32 GetTexture(const char* _directory);
-  void AssignMaterialTextures(IceHandle _material, std::vector<u32> _textureIndices);
+  IceHandle GetTexture(const char* _directory, IceImageType _type);
+  void AssignMaterialTextures(IceHandle _material, std::vector<IceHandle> _textures);
   b8 SetDeferredLightingMaterial(IceHandle _material);
 
   // Loads the mesh and fills its buffers

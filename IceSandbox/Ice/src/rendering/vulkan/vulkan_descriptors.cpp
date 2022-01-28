@@ -299,11 +299,11 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     write.dstSet = _set;
     write.dstBinding = i + _offset;
     write.dstArrayElement = 0;
-    write.descriptorType = _bindings[i].type;
+    write.descriptorType = _bindings[i].descriptor.type;
     write.descriptorCount = 1;
     write.pTexelBufferView = nullptr;
 
-    switch (_bindings[i].type)
+    switch (_bindings[i].descriptor.type)
     {
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
     {

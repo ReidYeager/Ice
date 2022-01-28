@@ -64,7 +64,7 @@ struct IvkDescriptor
 
 struct IvkDescriptorBinding
 {
-  VkDescriptorType type;
+  IvkDescriptor descriptor;
   IvkImage* image = nullptr;
   IvkBuffer* buffer = nullptr;
 };
@@ -130,6 +130,7 @@ struct IvkMaterial
 {
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
+  std::vector<IvkDescriptorBinding> bindings;
 
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
@@ -229,6 +230,10 @@ struct IvkContext
   VkDescriptorSetLayout globalDescriptorSetLayout;
   VkDescriptorSet globalDescritorSet;
   VkPipelineLayout globalPipelinelayout;
+
+  IceHandle defaultColorImage = ICE_NULL_HANDLE;
+  IceHandle defaultNormalImage = ICE_NULL_HANDLE;
+  IceHandle defaultDepthMapImage = ICE_NULL_HANDLE;
 };
 
 // =======================

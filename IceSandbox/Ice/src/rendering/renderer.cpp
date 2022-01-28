@@ -28,18 +28,34 @@ b8 reIceRenderer::Shutdown()
 
 b8 reIceRenderer::Render(IceCamera* _camera)
 {
-  ICE_ATTEMPT(backend.Render(_camera));
+  ICE_ATTEMPT_BOOL(backend.Render(_camera));
   return true;
 }
 
-void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<std::string> _images)
+void reIceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures)
 {
   // Retrieve images
-  std::vector<IceHandle> texIndices(_images.size());
+  std::vector<IceHandle> texIndices(_textures.size());
 
-  for (u32 i = 0; i < _images.size(); i++)
+  for (u32 i = 0; i < _textures.size(); i++)
   {
-    texIndices[i] = backend.GetTexture(_images[i].c_str());
+    u32 index = ICE_NULL_HANDLE;
+
+    // Get existing gexture =====
+    for (const auto& t : textures)
+    {
+      if (_textures[i].directory.compare(t.directory) == 0)
+      {
+        index = t.image.backendImage;
+        break;
+      }
+    }
+
+    // Create new or use default =====
+    if (index == ICE_NULL_HANDLE)
+      index = backend.GetTexture(_textures[i].directory.c_str(), _textures[i].image.type);
+
+    texIndices[i] = index;
   }
 
   // Update all image samplers simultaneously

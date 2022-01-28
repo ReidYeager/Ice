@@ -31,10 +31,15 @@ void reInit()
 
   u32 blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
                                    {"blank_deferred", Ice_Shader_Fragment} });
-  app.AssignMaterialTextures(blank, { "landscape.jpg", "TestAlbedo.png", "TestNormal.png"});
+  app.AssignMaterialTextures(blank,
+                             {{"", Ice_Image_Color},
+                              {"", Ice_Image_Normal},
+                              {"", Ice_Image_Map}});
 
   app.AddObject("Plane.obj", blank);
   app.AddObject("SphereSmooth.obj", blank);
+  //app.AddObject("Sphere.obj", blank);
+  //app.AddObject("Cube.obj", blank);
 }
 
 float pitch = 0.0f, yaw = 0.0f;
@@ -96,7 +101,7 @@ int main()
   settings.ClientShutdown = reShutdown;
 
   settings.windowSettings.extents = { 1280, 720 };
-  settings.windowSettings.screenPosition = { 400, 150 };
+  settings.windowSettings.screenPosition = { 400, 50 };
 
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
 
