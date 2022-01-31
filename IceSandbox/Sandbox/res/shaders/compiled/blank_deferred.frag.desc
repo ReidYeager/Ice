@@ -4,6 +4,6 @@ buffer {
 bindings {
     Sampler2D
     Sampler2D
-    Sampler2D
     Buffer
+    Sampler2D
 }

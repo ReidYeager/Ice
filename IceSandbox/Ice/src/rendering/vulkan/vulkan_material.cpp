@@ -57,11 +57,12 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
   return CreateShaderModule(&shaders[_shader.backendShader].module, fullDir.c_str());
 }
 
-u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
-                                std::vector<IceShaderBinding>& _materialBindings,
-                                u32 _subpassIndex)
+b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
+                               const std::vector<IceHandle>& _shaders,
+                               std::vector<IceShaderDescriptor>& _materialDescriptors,
+                               u32 _subpassIndex)
 {
-  IvkMaterial material;
+  IvkMaterial& material = *_newMaterial;
 
   material.shaderIndices = _shaders;
   material.subpassIndex = _subpassIndex;
@@ -70,26 +71,40 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
 
   std::vector<IvkDescriptor> descriptors;
   std::vector<IvkDescriptorBinding> bindings;
+  IceHandle existingBuffer = ICE_NULL_HANDLE;
+  u32 bindingIndex = 0;
 
-  for (auto& d : _materialBindings)
+  for (auto& d : _materialDescriptors)
   {
     IvkDescriptorBinding binding {};
 
-    IvkDescriptor& newdesc = binding.descriptor;
-    newdesc.bindingIndex = d.descriptor.bindingIndex;
+    IvkDescriptor& vkDesc = binding.descriptor;
+    vkDesc.bindingIndex = d.bindingIndex = bindingIndex++;
 
-    switch (d.descriptor.type)
+    switch (d.type)
     {
     case Ice_Descriptor_Type_Buffer:
     {
-      if (d.descriptor.data == 0)
-        continue; // Don't add a buffer descriptor if it is empty
+      vkDesc.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
-      newdesc.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      if (d.backendHandle != ICE_NULL_HANDLE)
+      {
+        existingBuffer = d.backendHandle;
+        break;
+      }
+
+      if (existingBuffer != ICE_NULL_HANDLE)
+      {
+        d.backendHandle = existingBuffer;
+        break;
+      }
+
+      if (d.data == 0)
+        continue; // Don't add a buffer descriptor if it is empty
 
       IvkBuffer b;
       b8 result = CreateBuffer(&b,
-                               d.descriptor.data,
+                               d.data,
                                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -97,70 +112,102 @@ u32 IvkRenderer::CreateMaterial(const std::vector<IceHandle>& _shaders,
       if (!result)
       {
         IceLogFatal("Failed to create a shader buffer");
-        return ICE_NULL_HANDLE;
+        return false;
       }
 
       d.backendHandle = materialBuffers.size();
+      existingBuffer = d.backendHandle;
       materialBuffers.push_back(b);
     } break;
     case Ice_Descriptor_Type_Sampler2D:
     {
-      newdesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      vkDesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
-      d.backendHandle = GetTexture("", (IceImageType)d.descriptor.data);
+      if (d.backendHandle != ICE_NULL_HANDLE)
+        break;
+
+      d.backendHandle = GetTexture("", (IceImageType)d.data);
     } break;
     case Ice_Descriptor_Type_SubpassInput:
     {
-      newdesc.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-      newdesc.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+      vkDesc.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      vkDesc.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     } break;
     }
 
     binding.data = d.backendHandle;
-    descriptors.push_back(newdesc);
+    descriptors.push_back(vkDesc);
     material.bindings.push_back(binding);
   }
 
-  ICE_ATTEMPT_BOOL(CreateDescriptorSet(descriptors,
-                                  &material.descriptorSetLayout,
-                                  &material.descriptorSet));
+  ICE_ATTEMPT_BOOL(CreateDescriptorSetAndLayout(descriptors,
+                                                &material.descriptorSetLayout,
+                                                &material.descriptorSet));
 
   ICE_ATTEMPT_BOOL(CreatePipelinelayout(&material.pipelineLayout,
-                                   { context.globalDescriptorSetLayout,
-                                     material.descriptorSetLayout,
-                                     context.objectDescriptorSetLayout },
-                                   {}));
+                                        { context.globalDescriptorSetLayout,
+                                          material.descriptorSetLayout,
+                                          context.objectDescriptorSetLayout },
+                                        {}));
 
   UpdateDescriptorSet(material.descriptorSet, material.bindings);
 
   // Pipeline =====
   ICE_ATTEMPT_BOOL(CreatePipeline(material, _subpassIndex));
 
-  // Complete =====
+  return true;
+}
+
+IceHandle IvkRenderer::CreateNewMaterial(const std::vector<IceHandle>& _shaders,
+                                         std::vector<IceShaderDescriptor>& _materialDescriptors,
+                                         u32 _subpassIndex)
+{
+  IvkMaterial material;
+  ICE_ATTEMPT_BOOL_HANDLE(CreateMaterial(&material, _shaders, _materialDescriptors, _subpassIndex));
+
   materials.push_back(material);
 
   scene.resize(materials.size()); // Bad.
+
   return materials.size() - 1;
 }
 
-void IvkRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceHandle> _textures)
+b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
+                                 const std::vector<IceHandle>& _shaders,
+                                 std::vector<IceShaderDescriptor>& _descriptors)
+{
+  auto& m = materials[_backendMaterial];
+  // Destroy components =====
+  {
+    vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
+    vkDestroyPipeline(context.device, m.pipeline, context.alloc);
+    vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
+    vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &m.descriptorSet);
+    vkDestroyDescriptorSetLayout(context.device, m.descriptorSetLayout, context.alloc);
+  }
+  m.bindings.clear();
+
+  // Recreate the material =====
+  ICE_ATTEMPT_BOOL(CreateMaterial(&m, _shaders, _descriptors, m.subpassIndex));
+
+  return true;
+}
+
+void IvkRenderer::AssignMaterialTextures(IceMaterial& _material, std::vector<IceHandle> _textures)
 {
   std::vector<IvkDescriptorBinding> descriptorBindings;
 
-  for (const auto& t : _textures)
+  for (u32 descIndex = 0, texIndex = 0; descIndex < _material.descriptors.size() && texIndex < _textures.size(); descIndex++)
   {
-    descriptorBindings.push_back({ {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, t});
+    if (_material.descriptors[descIndex].type != Ice_Descriptor_Type_Sampler2D)
+      continue;
+
+    _material.descriptors[descIndex].backendHandle = _textures[texIndex];
+    descriptorBindings.push_back({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, descIndex }, _textures[texIndex]});
+    texIndex++;
   }
 
-  //for (auto& b : materials[_material].bindings)
-  //{
-  //  if (b.descriptor.type != VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-  //    continue;
-
-  //  
-  //}
-
-  UpdateDescriptorSet(materials[_material].descriptorSet, descriptorBindings);
+  UpdateDescriptorSet(materials[_material.backendMaterial].descriptorSet, descriptorBindings);
 }
 
 b8 IvkRenderer::FillMaterialBuffer(IceHandle _buffer, void* _data)
@@ -172,35 +219,9 @@ b8 IvkRenderer::FillMaterialBuffer(IceHandle _buffer, void* _data)
   return true;
 }
 
-b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
-                                 const std::vector<IceHandle>& _shaders,
-                                 std::vector<IceShaderBinding>& _descBindings)
-{
-  auto& m = materials[_backendMaterial];
-  // Destroy fragile components =====
-  {
-    vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
-    vkDestroyPipeline(context.device, m.pipeline, context.alloc);
-    vkDestroyPipelineLayout(context.device, m.pipelineLayout, context.alloc);
-  }
-
-  // Re-create fragile components =====
-  {
-    ICE_ATTEMPT_BOOL(CreatePipelinelayout(&m.pipelineLayout,
-                                      { context.globalDescriptorSetLayout,
-                                        m.descriptorSetLayout,
-                                        context.objectDescriptorSetLayout },
-                                      {}));
-
-    ICE_ATTEMPT_BOOL(CreatePipeline(m, m.subpassIndex));
-  }
-
-  return true;
-}
-
-b8 IvkRenderer::CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
-                                    VkDescriptorSetLayout* _setLayout,
-                                    VkDescriptorSet* _set)
+b8 IvkRenderer::CreateDescriptorSetAndLayout(std::vector<IvkDescriptor>& _descriptors,
+                                             VkDescriptorSetLayout* _setLayout,
+                                             VkDescriptorSet* _set)
 {
   const u32 count = _descriptors.size();
 

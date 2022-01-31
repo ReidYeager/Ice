@@ -16,7 +16,7 @@ b8 IvkRenderer::CreateDescriptorPool()
 
   // Creation =====
   VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-  createInfo.flags = 0;
+  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   createInfo.maxSets = 100; // (max possible) 0: Global, 1: per-shader, 2: per-material, 3: per-object
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
@@ -297,7 +297,7 @@ b8 IvkRenderer::UpdateDescriptorSet(VkDescriptorSet& _set,
     VkWriteDescriptorSet write {};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstSet = _set;
-    write.dstBinding = i + _offset;
+    write.dstBinding = _bindings[i].descriptor.bindingIndex;
     write.dstArrayElement = 0;
     write.descriptorType = _bindings[i].descriptor.type;
     write.descriptorCount = 1;

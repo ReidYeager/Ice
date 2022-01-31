@@ -17,10 +17,11 @@
 
 #include <vector>
 
-// TODO : Shader descriptor rework (2/3)
+// TODO : ~!!~ Shader descriptor rework (3/4)
 // [X] Parse all descriptors from set 1 using a descriptor file
 // [X] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
-// [ ] Allow the definition of descriptors in any arbitrary order in source
+// [X] Allow the definition of descriptors in any arbitrary order in source
+// [ ] Enforce defining descriptor bind index in descriptor file (to check for shader conflicts)
 
 // TODO : UI renderpass (For now, only used with IMGUI)
 
@@ -114,9 +115,9 @@ private:
   // Defines the descriptors and sets available for use
   b8 CreateDescriptorPool();
   // Creates a descriptor set and its layout
-  b8 CreateDescriptorSet(std::vector<IvkDescriptor>& _descriptors,
-                         VkDescriptorSetLayout* _setLayout,
-                         VkDescriptorSet* _set);
+  b8 CreateDescriptorSetAndLayout(std::vector<IvkDescriptor>& _descriptors,
+                                  VkDescriptorSetLayout* _setLayout,
+                                  VkDescriptorSet* _set);
   // Binds the input values to the descriptor set
   b8 UpdateDescriptorSet(VkDescriptorSet& _set,
                          std::vector<IvkDescriptorBinding> _bindings,
@@ -182,6 +183,11 @@ private:
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
+  b8 CreateMaterial(IvkMaterial* _newMaterial,
+                    const std::vector<IceHandle>& _shaders,
+                    std::vector<IceShaderDescriptor>& _materialDescriptors,
+                    u32 _subpassIndex = 0);
+
   //=========================
   // Buffer
   //=========================
@@ -230,18 +236,18 @@ private:
   // ====================
 
   // Creates a new material (descriptor set, pipeline layout, pipeline)
-  u32 CreateMaterial(const std::vector<IceHandle>& _shaders,
-                     std::vector<IceShaderBinding>& _descBindings,
-                     u32 _subpassIndex = 0);
+  IceHandle CreateNewMaterial(const std::vector<IceHandle>& _shaders,
+                              std::vector<IceShaderDescriptor>& _materialDescriptors,
+                              u32 _subpassIndex = 0);
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
   // Destroys and re-creates the shader module
   b8 RecreateShader(const IceShader& _shader);
   // Destroys and re-creates the material's pipelines
   b8 RecreateMaterial(IceHandle _backendMaterial,
                       const std::vector<IceHandle>& _shaders,
-                      std::vector<IceShaderBinding>& _descBindings);
+                      std::vector<IceShaderDescriptor>& _descriptors);
   IceHandle GetTexture(const char* _directory, IceImageType _type);
-  void AssignMaterialTextures(IceHandle _material, std::vector<IceHandle> _textures);
+  void AssignMaterialTextures(IceMaterial& _material, std::vector<IceHandle> _textures);
   b8 SetDeferredLightingMaterial(IceHandle _material);
   b8 FillMaterialBuffer(IceHandle _buffer, void* _data);
   void DestroyMaterial(IceHandle _material);

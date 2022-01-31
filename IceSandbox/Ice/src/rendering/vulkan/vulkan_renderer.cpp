@@ -36,7 +36,7 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 
   IceLogDebug("===== Vulkan Renderer Init Complete =====");
 
-  context.defaultColorImage = GetTexture("PixelBlack.png", Ice_Image_Color);
+  context.defaultColorImage = GetTexture("TestAlbedo.png", Ice_Image_Color);
   context.defaultNormalImage = GetTexture("EmptyNormal.png", Ice_Image_Normal);
   context.defaultDepthMapImage = GetTexture("PixelWhite.png", Ice_Image_Depth);
 

@@ -50,13 +50,13 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
   }
 
   // Get descriptors =====
-  std::vector<IceShaderBinding>& mBinds = newMaterial.bindings;
+  std::vector<IceShaderDescriptor>& mBinds = newMaterial.descriptors;
 
   for (const auto& sIdx : newMaterial.shaderIndices)
   {
     for (const auto& desc : shaders[sIdx].descriptors)
     {
-      mBinds.push_back({desc, ICE_NULL_HANDLE});
+      mBinds.push_back(desc);
     }
   }
 
@@ -66,14 +66,12 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
     backendShaderIndices.push_back(shaders[s].backendShader);
   }
 
-  // Need to sync front and backend shaders (Init the lighting material with this)
-  u32 index = materials.size();
-  newMaterial.backendMaterial = backend.CreateMaterial(backendShaderIndices,
-                                                       newMaterial.bindings,
-                                                       _subpassIndex);
+  newMaterial.backendMaterial = backend.CreateNewMaterial(backendShaderIndices,
+                                                          newMaterial.descriptors,
+                                                          _subpassIndex);
   materials.push_back(newMaterial);
 
-  return index;
+  return materials.size() - 1;
 }
 
 u32 IceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
@@ -151,6 +149,7 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
   IceLexerToken token;
 
   // Buffer info =====
+  u32 bufferParameterCount = 0;
   if (lexer.CheckForExpectedToken("buffer") && lexer.ExpectToken("{"))
   {
     while (!lexer.CheckForExpectedToken("}"))
@@ -175,7 +174,8 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
         continue;
       }
 
-      _shader.bufferParameterIndices.push_back(bufferParameterIndex);
+      _shader.bufferParameters |= (1 << bufferParameterIndex);
+      bufferParameterCount++;
     }
 
   }
@@ -206,13 +206,14 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
         continue;
       }
 
-      IceShaderDescriptor newDesc = { (u8)_shader.descriptors.size(),
-                                      (IceShaderDescriptorType)descTypeIndex,
-                                      0};
+      IceShaderDescriptor newDesc = { (IceShaderDescriptorType)descTypeIndex,
+                                      (u8)_shader.descriptors.size(),
+                                      0,
+                                      ICE_NULL_HANDLE};
 
       if (descTypeIndex == Ice_Descriptor_Type_Buffer)
       {
-        newDesc.data = _shader.bufferParameterIndices.size() * 16;
+        newDesc.data = bufferParameterCount * 16;
       }
 
       _shader.descriptors.push_back(newDesc);
@@ -227,22 +228,63 @@ void IceRenderer::ReloadMaterials()
 {
   for (auto& s : shaders)
   {
+    s.descriptors.clear();
+    GetShaderDescriptors(s);
     backend.RecreateShader(s);
-    //s.descriptors.clear();
-    //GetShaderDescriptors(s);
   }
 
   for (auto& m : materials)
   {
-    // Get descriptors =====
-    //m.bindings.clear();
-    //for (const auto& shaderIndex : m.shaderIndices)
-    //{
-    //  for (const auto& desc : shaders[shaderIndex].descriptors)
-    //  {
-    //    m.bindings.push_back({desc, ICE_NULL_HANDLE});
-    //  }
-    //}
+    // Save the descriptors =====
+    std::vector<IceShaderDescriptor> bufferStack;
+    std::vector<IceShaderDescriptor> samplerStack;
+    for (i32 i = m.descriptors.size() - 1; i >= 0; i--)
+    {
+      IceShaderDescriptor d = m.descriptors[i];
+
+      switch (d.type)
+      {
+      case Ice_Descriptor_Type_Buffer : bufferStack.push_back(d); break;
+      case Ice_Descriptor_Type_Sampler2D : samplerStack.push_back(d); break;
+      default: break;
+      }
+    }
+
+    i32 bsEnd = bufferStack.size() - 1;
+    i32 ssEnd = samplerStack.size() - 1;
+
+    // Reuse the material's old descriptors =====
+    m.descriptors.clear();
+    for (auto& sIdx : m.shaderIndices)
+    {
+      for (auto& desc : shaders[sIdx].descriptors)
+      {
+        // Attempt to reuse a descriptor =====
+        switch (desc.type)
+        {
+        case Ice_Descriptor_Type_Buffer:
+        {
+          if (bsEnd < 0)
+            break;
+
+          m.descriptors.push_back(bufferStack[bsEnd]);
+          bsEnd--;
+        } continue;
+        case Ice_Descriptor_Type_Sampler2D:
+        {
+          if (ssEnd < 0)
+            break;
+
+          m.descriptors.push_back(samplerStack[ssEnd]);
+          ssEnd--;
+        } continue;
+        default: break;
+        }
+
+        // Use the new descriptor =====
+        m.descriptors.push_back(desc);
+      }
+    }
 
     std::vector<IceHandle> backendShaderIndices;
     for (const IceHandle& s : m.shaderIndices)
@@ -250,7 +292,7 @@ void IceRenderer::ReloadMaterials()
       backendShaderIndices.push_back(shaders[s].backendShader);
     }
 
-    backend.RecreateMaterial(m.backendMaterial, backendShaderIndices, m.bindings);
+    backend.RecreateMaterial(m.backendMaterial, backendShaderIndices, m.descriptors);
   }
 }
 
@@ -260,11 +302,11 @@ b8 IceRenderer::SetMaterialBufferData(IceHandle _material, void* _data)
 
   IceMaterial& mat = materials[_material];
 
-  for (u32 i = 0; i < mat.bindings.size(); i++)
+  for (u32 i = 0; i < mat.descriptors.size(); i++)
   {
-    if (mat.bindings[i].descriptor.type == Ice_Descriptor_Type_Buffer)
+    if (mat.descriptors[i].type == Ice_Descriptor_Type_Buffer)
     {
-      bindingIndex = mat.bindings[i].backendHandle;
+      bindingIndex = mat.descriptors[i].backendHandle;
       break;
     }
   }

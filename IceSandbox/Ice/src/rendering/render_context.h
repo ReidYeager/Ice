@@ -113,14 +113,9 @@ static const char* IceDescriptorTypeNames[Ice_Descriptor_Type_Count] =
 
 struct IceShaderDescriptor
 {
+  IceShaderDescriptorType type = Ice_Descriptor_Type_Sampler2D;
   u8 bindingIndex = 255; // The binding value within set 1 (0-254, 255 invalid)
-  IceShaderDescriptorType type;
-  u32 data; // Buffer size, image type, etc.
-};
-
-struct IceShaderBinding
-{
-  IceShaderDescriptor descriptor;
+  u32 data = 0; // Buffer size, image type, etc.
   IceHandle backendHandle = ICE_NULL_HANDLE; // For backend buffer, image, etc.
 };
 
@@ -130,7 +125,7 @@ struct IceShader
   IceShaderStage stage;
   IceHandle backendShader = ICE_NULL_HANDLE;
   std::vector<IceShaderDescriptor> descriptors;
-  std::vector<u32> bufferParameterIndices;
+  u32 bufferParameters;
 };
 
 //=========================
@@ -140,7 +135,7 @@ struct IceShader
 struct IceMaterial
 {
   std::vector<IceHandle> shaderIndices;
-  std::vector<IceShaderBinding> bindings;
+  std::vector<IceShaderDescriptor> descriptors;
   IceHandle backendMaterial = ICE_NULL_HANDLE;
 };
 

@@ -56,10 +56,35 @@ void IceRenderer::AssignMaterialTextures(IceHandle _material, std::vector<IceTex
       index = backend.GetTexture(_textures[i].directory.c_str(), _textures[i].image.type);
 
     texIndices[i] = index;
+
   }
 
+  //for (u32 desc = 0, tex = 0; desc < materials[_material].descriptors.size() && tex < _textures.size(); desc++)
+  //{
+  //  if (materials[_material].descriptors[desc].type != Ice_Descriptor_Type_Sampler2D)
+  //    continue;
+
+  //  IceHandle index = ICE_NULL_HANDLE;
+  //  // Try to get existing texture =====
+  //  for (const auto& t : textures)
+  //  {
+  //    if (_textures[tex].directory.compare(t.directory) == 0)
+  //    {
+  //      index = t.image.backendImage;
+  //      break;
+  //    }
+  //  }
+
+  //  // Create new or use default =====
+  //  if (index == ICE_NULL_HANDLE)
+  //    index = backend.GetTexture(_textures[tex].directory.c_str(), _textures[tex].image.type);
+
+  //  texIndices[tex] = index;
+  //}
+
   // Update all image samplers simultaneously
-  backend.AssignMaterialTextures(_material, texIndices);
+  backend.AssignMaterialTextures(materials[_material], texIndices);
+  IceLogInfo("----");
 }
 
 b8 IceRenderer::SetLightingMaterial(IceHandle _material)
