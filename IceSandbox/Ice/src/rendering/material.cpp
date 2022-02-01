@@ -77,6 +77,15 @@ b8 IceRenderer::PopulateMaterialDescriptors(IceMaterial* _material,
       if (bindIndex >= matDescs.size())
       {
         matDescs.resize(bindIndex + 1);
+
+        // Not my favorite workaround for handling gaps
+        u32 tmpIndex = 0;
+        for (auto& tmpd : matDescs)
+        {
+          if (tmpd.bindingIndex == 255)
+            tmpd.bindingIndex = tmpIndex;
+          tmpIndex++;
+        }
       }
 
       if (matDescs[bindIndex].type == Ice_Descriptor_Type_Invalid)
@@ -313,8 +322,9 @@ b8 IceRenderer::ReloadMaterials()
                                               backendShaderIndices,
                                               m.descriptors));
 
-    return true;
   }
+
+  return true;
 }
 
 b8 IceRenderer::SetMaterialBufferData(IceHandle _material, void* _data)

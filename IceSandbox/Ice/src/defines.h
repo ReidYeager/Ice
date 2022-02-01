@@ -80,13 +80,5 @@ if (!x)                            \
 if (x == ICE_NULL_HANDLE)          \
   return false;
 
-#define ICE_ATTEMPT_BOOL_BREAK(x) \
-if (!x)                           \
-  abort();
-
-#define ICE_ATTEMPT_HANDLE_BREAK(x) \
-if (x == ICE_NULL_HANDLE)           \
-  abort();
-
 
 #endif // !DEFINES_H
