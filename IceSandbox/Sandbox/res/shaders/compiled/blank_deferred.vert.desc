@@ -3,7 +3,4 @@ buffer {
 }
 bindings {
     Sampler2D, 0
-    Sampler2D, 1
-    Buffer, 3
-    Sampler2D, 2
 }

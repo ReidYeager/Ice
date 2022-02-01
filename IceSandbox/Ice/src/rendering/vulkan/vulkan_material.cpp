@@ -42,19 +42,7 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
   vkDeviceWaitIdle(context.device);
 
   vkDestroyShaderModule(context.device, shaders[_shader.backendShader].module, context.alloc);
-  std::string fullDir = _shader.directory;
-  switch (_shader.stage)
-  {
-  case Ice_Shader_Vertex:
-  {
-    fullDir.append(".vert");
-  } break;
-  case Ice_Shader_Fragment:
-  {
-    fullDir.append(".frag");
-  } break;
-  }
-  return CreateShaderModule(&shaders[_shader.backendShader].module, fullDir.c_str());
+  return CreateShaderModule(&shaders[_shader.backendShader].module, _shader.directory.c_str());
 }
 
 b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
@@ -72,14 +60,14 @@ b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
   std::vector<IvkDescriptor> descriptors;
   std::vector<IvkDescriptorBinding> bindings;
   IceHandle existingBuffer = ICE_NULL_HANDLE;
-  u32 bindingIndex = 0;
 
   for (auto& d : _materialDescriptors)
   {
     IvkDescriptorBinding binding {};
 
     IvkDescriptor& vkDesc = binding.descriptor;
-    vkDesc.bindingIndex = d.bindingIndex = bindingIndex++;
+
+    vkDesc.bindingIndex = d.bindingIndex;
 
     switch (d.type)
     {
@@ -119,6 +107,7 @@ b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
       existingBuffer = d.backendHandle;
       materialBuffers.push_back(b);
     } break;
+    case Ice_Descriptor_Type_Invalid: // Blank descriptors' default
     case Ice_Descriptor_Type_Sampler2D:
     {
       vkDesc.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -232,7 +221,7 @@ b8 IvkRenderer::CreateDescriptorSetAndLayout(std::vector<IvkDescriptor>& _descri
     for (u32 i = 0; i < count; i++)
     {
       bindings[i].descriptorCount = 1;
-      bindings[i].binding = i;
+      bindings[i].binding = _descriptors[i].bindingIndex;
       bindings[i].pImmutableSamplers = nullptr;
       // Customizable =====
       bindings[i].descriptorType = _descriptors[i].type;

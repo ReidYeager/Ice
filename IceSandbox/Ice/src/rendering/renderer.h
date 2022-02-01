@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 extern class IceRenderer
 {
@@ -33,9 +34,11 @@ public:
 
   void FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size);
 
-  void ReloadMaterials();
+  b8 ReloadMaterials();
 
   IceHandle CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
+  b8 PopulateMaterialDescriptors(IceMaterial* _material,
+    std::unordered_map<IceShaderDescriptorType, std::vector<IceShaderDescriptor>>* _stacks = nullptr);
   void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);
   IceHandle GetShader(const std::string& _directory, IceShaderStage _stage);
   b8 GetShaderDescriptors(IceShader& _shader);

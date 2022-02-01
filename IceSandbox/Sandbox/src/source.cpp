@@ -70,7 +70,10 @@ void reUpdate(float _deltaTime)
   if (Input.OnKeyPressed(Ice_Key_P))
   {
     IceLogDebug("Reloading materials");
-    renderer.ReloadMaterials();
+    if (!renderer.ReloadMaterials())
+    {
+      throw "Failed to reload materials";
+    }
   }
 
   if (Input.OnKeyPressed(Ice_Key_L))

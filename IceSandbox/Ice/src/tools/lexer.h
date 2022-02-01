@@ -11,7 +11,8 @@
 enum IceTokenTypes
 {
   Ice_Token_String,
-  Ice_Token_Number,
+  Ice_Token_Int,
+  Ice_Token_Float,
 
   Ice_Token_Hyphen,
   Ice_Token_Comma,
@@ -56,6 +57,23 @@ public:
   IceLexerToken NextToken();
   b8 ExpectToken(const char* _expected);
   b8 CheckForExpectedToken(const char* _expected);
+
+  u32 UintFromToken(const IceLexerToken* _token)
+  {
+    u32 value = 0;
+
+    for (char c : _token->string)
+    {
+      if (c == '.')
+      {
+        return value;
+      }
+
+      value = (value * 10) + (c - '0');
+    }
+
+    return value;
+  }
 
 private:
   IceLexerToken GetSingleCharToken(IceTokenTypes _type)
@@ -219,13 +237,20 @@ IceLexerToken IceLexer::GetNumberToken()
   const char* stringBegining = charStream++;
   u32 stringLength = 1;
 
+  IceTokenTypes type = Ice_Token_Int;
+
   while (isNumber(*charStream))
   {
+    if (*charStream == '.')
+    {
+      type = Ice_Token_Float;
+    }
+
     charStream++;
     stringLength++;
   }
 
-  return { Ice_Token_Number, std::string(std::string_view(stringBegining, stringLength)) };
+  return { type, std::string(std::string_view(stringBegining, stringLength)) };
 }
 
 #endif // !define ICE_TOOLS_LEXER_H_

@@ -18,11 +18,6 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
     for (const auto& s : _shaders)
     {
       materialDebugString.append(s.directory);
-      switch (s.stage)
-      {
-      case Ice_Shader_Vertex: materialDebugString.append(".vert"); break;
-      case Ice_Shader_Fragment: materialDebugString.append(".frag"); break;
-      }
       materialDebugString.append(", ");
     }
     materialDebugString.erase(materialDebugString.size() - 2, 2);
@@ -35,7 +30,7 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
   newMaterial.shaderIndices.resize(_shaders.size());
   u32 matIndex = 0;
 
-  // Get shaders =====
+  // Shaders =====
   for (u32 i = 0; i < _shaders.size(); i++)
   {
     IceHandle nextShader = GetShader(_shaders[i].directory, _shaders[i].stage);
@@ -49,16 +44,8 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
     newMaterial.shaderIndices[i] = nextShader;
   }
 
-  // Get descriptors =====
-  std::vector<IceShaderDescriptor>& mBinds = newMaterial.descriptors;
-
-  for (const auto& sIdx : newMaterial.shaderIndices)
-  {
-    for (const auto& desc : shaders[sIdx].descriptors)
-    {
-      mBinds.push_back(desc);
-    }
-  }
+  // Descriptors =====
+  ICE_ATTEMPT_BOOL_HANDLE(PopulateMaterialDescriptors(&newMaterial));
 
   std::vector<IceHandle> backendShaderIndices;
   for (const IceHandle& s : newMaterial.shaderIndices)
@@ -66,6 +53,7 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
     backendShaderIndices.push_back(shaders[s].backendShader);
   }
 
+  // Create =====
   newMaterial.backendMaterial = backend.CreateNewMaterial(backendShaderIndices,
                                                           newMaterial.descriptors,
                                                           _subpassIndex);
@@ -74,17 +62,82 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
   return materials.size() - 1;
 }
 
-u32 IceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
+b8 IceRenderer::PopulateMaterialDescriptors(IceMaterial* _material,
+    std::unordered_map<IceShaderDescriptorType, std::vector<IceShaderDescriptor>>* _stacks)
+{
+  std::vector<IceShaderDescriptor>& matDescs = _material->descriptors;
+  matDescs.clear();
+
+  for (const auto& shaderIndex : _material->shaderIndices)
+  {
+    for (const auto& descriptor : shaders[shaderIndex].descriptors)
+    {
+      u32 bindIndex = descriptor.bindingIndex;
+
+      if (bindIndex >= matDescs.size())
+      {
+        matDescs.resize(bindIndex + 1);
+      }
+
+      if (matDescs[bindIndex].type == Ice_Descriptor_Type_Invalid)
+      {
+        // Reuse a descriptor
+        if (_stacks != nullptr)
+        {
+          auto& stack = _stacks->at(descriptor.type);
+
+          if (stack.size() != 0)
+          {
+            matDescs[bindIndex] = stack[stack.size() - 1];
+            matDescs[bindIndex].bindingIndex = bindIndex;
+            stack.pop_back();
+            continue;
+          }
+        }
+
+        // Add a new descriptor
+        matDescs[bindIndex] = descriptor;
+      }
+      else if (matDescs[bindIndex].type != descriptor.type)
+      {
+        IceLogFatal("Descriptor type conflict : Binding %u in '%s'\n\t%s vs %s -- Keeping %s",
+          bindIndex,
+          shaders[shaderIndex].directory.c_str(),
+          IceDescriptorTypeNames[matDescs[bindIndex].type],
+          IceDescriptorTypeNames[descriptor.type],
+          IceDescriptorTypeNames[matDescs[bindIndex].type]);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+IceHandle IceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
 {
   u32 index = 0;
 
   std::string fullDir = ICE_RESOURCE_SHADER_DIR;
   fullDir.append(_directory);
 
+  switch (_stage)
+  {
+  case Ice_Shader_Vertex:
+  {
+    fullDir.append(".vert");
+  } break;
+  case Ice_Shader_Fragment:
+  {
+    fullDir.append(".frag");
+  } break;
+  default: IceLogError("Shader stage %u is unsupported", _stage); return ICE_NULL_HANDLE;
+  }
+
   // Look for existing shader =====
   for (const auto& s : shaders)
   {
-    if (s.directory.compare(fullDir.c_str()) == 0 && s.stage & _stage)
+    if (s.directory.compare(fullDir.c_str()) == 0)
     {
       return index;
     }
@@ -95,26 +148,13 @@ u32 IceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
   {
     IceShader newShader = { fullDir, _stage, ICE_NULL_HANDLE, {} };
 
-    switch (_stage)
-    {
-    case Ice_Shader_Vertex:
-    {
-      fullDir.append(".vert");
-    } break;
-    case Ice_Shader_Fragment:
-    {
-      fullDir.append(".frag");
-    } break;
-    default: IceLogError("Shader stage %u is unsupported", _stage); return ICE_NULL_HANDLE;
-    }
-
     newShader.backendShader = backend.CreateShader(fullDir, _stage);
     if (newShader.backendShader == ICE_NULL_HANDLE)
       return ICE_NULL_HANDLE;
 
     // Get descriptors =====
     // Store descriptors sorted by binding index
-    ICE_ATTEMPT_BOOL(GetShaderDescriptors(newShader));
+    ICE_ATTEMPT_BOOL_HANDLE(GetShaderDescriptors(newShader));
 
     // Create backend assets =====
     // backend.CreateShader(newShader.descriptors);
@@ -127,17 +167,6 @@ u32 IceRenderer::GetShader(const std::string& _directory, IceShaderStage _stage)
 b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
 {
   std::string descDir = _shader.directory;
-  switch (_shader.stage)
-  {
-  case Ice_Shader_Vertex:
-  {
-    descDir.append(".vert");
-  } break;
-  case Ice_Shader_Fragment:
-  {
-    descDir.append(".frag");
-  } break;
-  }
   descDir.append(".desc");
 
   std::vector<char> descriptorSource = fileSystem.LoadFile(descDir.c_str());
@@ -147,6 +176,8 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
 
   IceLexer lexer(descriptorSource.data());
   IceLexerToken token;
+
+  i32 maxBindingIndex = -1;
 
   // Buffer info =====
   u32 bufferParameterCount = 0;
@@ -181,7 +212,6 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
   }
 
   // Bindings =====
-  // TODO : Define descriptor bind index, Define sampler image default value? (normal, white, black)
   if (lexer.CheckForExpectedToken("bindings") && lexer.ExpectToken("{"))
   {
     while (!lexer.CheckForExpectedToken("}"))
@@ -206,10 +236,37 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
         continue;
       }
 
+      // Additional descriptor info =====
+      u32 bindingIndex = 255;
+
+      while (lexer.CheckForExpectedToken(","))
+      {
+        token = lexer.NextToken();
+        switch (token.type)
+        {
+        case Ice_Token_Int:
+        case Ice_Token_Float:
+        {
+          bindingIndex = lexer.UintFromToken(&token);
+        } break;
+        default: break;
+        }
+      }
+
+      if (bindingIndex == 255)
+      {
+        return false;
+      }
+
       IceShaderDescriptor newDesc = { (IceShaderDescriptorType)descTypeIndex,
-                                      (u8)_shader.descriptors.size(),
+                                      (u8)bindingIndex,
                                       0,
                                       ICE_NULL_HANDLE};
+
+      if (bindingIndex > maxBindingIndex)
+      {
+        maxBindingIndex = bindingIndex;
+      }
 
       if (descTypeIndex == Ice_Descriptor_Type_Buffer)
       {
@@ -223,8 +280,7 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
   return true;
 }
 
-// TODO : Rework descriptors/bindings to account for reloading materials
-void IceRenderer::ReloadMaterials()
+b8 IceRenderer::ReloadMaterials()
 {
   for (auto& s : shaders)
   {
@@ -236,55 +292,16 @@ void IceRenderer::ReloadMaterials()
   for (auto& m : materials)
   {
     // Save the descriptors =====
-    std::vector<IceShaderDescriptor> bufferStack;
-    std::vector<IceShaderDescriptor> samplerStack;
+    std::unordered_map<IceShaderDescriptorType, std::vector<IceShaderDescriptor>> stacks;
+
     for (i32 i = m.descriptors.size() - 1; i >= 0; i--)
     {
       IceShaderDescriptor d = m.descriptors[i];
-
-      switch (d.type)
-      {
-      case Ice_Descriptor_Type_Buffer : bufferStack.push_back(d); break;
-      case Ice_Descriptor_Type_Sampler2D : samplerStack.push_back(d); break;
-      default: break;
-      }
+      stacks[d.type].push_back(d);
     }
 
-    i32 bsEnd = bufferStack.size() - 1;
-    i32 ssEnd = samplerStack.size() - 1;
-
-    // Reuse the material's old descriptors =====
-    m.descriptors.clear();
-    for (auto& sIdx : m.shaderIndices)
-    {
-      for (auto& desc : shaders[sIdx].descriptors)
-      {
-        // Attempt to reuse a descriptor =====
-        switch (desc.type)
-        {
-        case Ice_Descriptor_Type_Buffer:
-        {
-          if (bsEnd < 0)
-            break;
-
-          m.descriptors.push_back(bufferStack[bsEnd]);
-          bsEnd--;
-        } continue;
-        case Ice_Descriptor_Type_Sampler2D:
-        {
-          if (ssEnd < 0)
-            break;
-
-          m.descriptors.push_back(samplerStack[ssEnd]);
-          ssEnd--;
-        } continue;
-        default: break;
-        }
-
-        // Use the new descriptor =====
-        m.descriptors.push_back(desc);
-      }
-    }
+    // Recreate material =====
+    ICE_ATTEMPT_BOOL(PopulateMaterialDescriptors(&m, &stacks));
 
     std::vector<IceHandle> backendShaderIndices;
     for (const IceHandle& s : m.shaderIndices)
@@ -292,7 +309,11 @@ void IceRenderer::ReloadMaterials()
       backendShaderIndices.push_back(shaders[s].backendShader);
     }
 
-    backend.RecreateMaterial(m.backendMaterial, backendShaderIndices, m.descriptors);
+    ICE_ATTEMPT_BOOL(backend.RecreateMaterial(m.backendMaterial,
+                                              backendShaderIndices,
+                                              m.descriptors));
+
+    return true;
   }
 }
 

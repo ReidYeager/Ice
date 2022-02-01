@@ -17,13 +17,7 @@
 
 #include <vector>
 
-// TODO : ~!!~ Shader descriptor rework (3/4)
-// [X] Parse all descriptors from set 1 using a descriptor file
-// [X] Create the resources to hold descriptor input data (buffers, auto-fill image with white)
-// [X] Allow the definition of descriptors in any arbitrary order in source
-// [ ] Enforce defining descriptor bind index in descriptor file (to check for shader conflicts)
-
-// TODO : UI renderpass (For now, only used with IMGUI)
+// TODO : ~!!~ UI renderpass (For now, only used with IMGUI)
 
 // TODO : Allow source to change material pipeline settings
 

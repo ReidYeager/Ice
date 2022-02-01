@@ -97,7 +97,8 @@ enum IceShaderDescriptorType
   idt(Sampler2D),
   idt(SubpassInput),
 
-  idt(Count)
+  idt(Count),
+  idt(Invalid)
 };
 #undef idt
 
@@ -113,7 +114,7 @@ static const char* IceDescriptorTypeNames[Ice_Descriptor_Type_Count] =
 
 struct IceShaderDescriptor
 {
-  IceShaderDescriptorType type = Ice_Descriptor_Type_Sampler2D;
+  IceShaderDescriptorType type = Ice_Descriptor_Type_Invalid; // Using count as the invalid type
   u8 bindingIndex = 255; // The binding value within set 1 (0-254, 255 invalid)
   u32 data = 0; // Buffer size, image type, etc.
   IceHandle backendHandle = ICE_NULL_HANDLE; // For backend buffer, image, etc.
