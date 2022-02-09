@@ -188,9 +188,9 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
   return obj;
 }
 
-IceHandle reIceApplication::CreateMaterial(std::vector<IceShader> _shaders)
+IceHandle reIceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<IceShader> _shaders)
 {
-  IceHandle mat = renderer.CreateMaterial(_shaders, 0);
+  IceHandle mat = renderer.CreateMaterial(_shaders, _type, 0);
 
   if (mat == ICE_NULL_HANDLE)
   {
@@ -202,7 +202,7 @@ IceHandle reIceApplication::CreateMaterial(std::vector<IceShader> _shaders)
 
 u32 reIceApplication::CreateLightingMaterial(std::vector<IceShader> _shaders)
 {
-  return renderer.CreateMaterial(_shaders, 1);
+  return renderer.CreateMaterial(_shaders, Ice_Mat_Deferred_Light, 1);
 }
 
 b8 reIceApplication::SetLightingMaterial(IceHandle _material)

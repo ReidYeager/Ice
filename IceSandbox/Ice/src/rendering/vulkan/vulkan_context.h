@@ -127,6 +127,8 @@ struct IvkGeoBuffer
 
 struct IvkMaterial
 {
+  IceMaterialTypes type;
+
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
   std::vector<IvkDescriptorBinding> bindings;
@@ -212,9 +214,8 @@ struct IvkContext
   IceHandle deferredMaterialIndex = -1;
   std::vector<VkDescriptorSet> deferredGlobalDescritorSets;
 
-  std::vector<VkFramebuffer> frameBuffers;
-
-  VkRenderPass mainRenderpass;
+  VkRenderPass forwardRenderpass;
+  std::vector<VkFramebuffer> forwardFrameBuffers;
 
   // Synchronization =====
   std::vector<VkFence> flightSlotAvailableFences;

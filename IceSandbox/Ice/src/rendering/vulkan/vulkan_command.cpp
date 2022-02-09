@@ -52,6 +52,18 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   deferredBeginInfo.renderArea.offset = { 0 , 0 };
   deferredBeginInfo.renderPass = context.deferredRenderpass;
   deferredBeginInfo.framebuffer = context.geoBuffers[_commandIndex].framebuffer;
+  // Forward
+  VkClearValue fwdClearValues[2] = {};
+  fwdClearValues[0].color = { 0.3f, 0.3f, 0.3f }; // Swapchain
+  fwdClearValues[1].depthStencil = { 1, 0 }; // Depth
+
+  VkRenderPassBeginInfo forwardBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  forwardBeginInfo.clearValueCount = 2;
+  forwardBeginInfo.pClearValues = fwdClearValues;
+  forwardBeginInfo.renderArea.extent = context.swapchainExtent;
+  forwardBeginInfo.renderArea.offset = { 0 , 0 };
+  forwardBeginInfo.renderPass = context.forwardRenderpass;
+  forwardBeginInfo.framebuffer = context.forwardFrameBuffers[_commandIndex];
 
   VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
 
@@ -122,6 +134,10 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
     // Bind each material =====
     for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
     {
+      // TODO : Remove this branch
+      if (materials[matIndex].type != Ice_Mat_Deferred)
+        continue;
+
       vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -165,6 +181,57 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
                             0,
                             nullptr);
     vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+
+    vkCmdEndRenderPass(cmdBuffer);
+  }
+
+  // Forward pass =====
+  {
+    vkCmdBeginRenderPass(cmdBuffer, &forwardBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindDescriptorSets(cmdBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            context.globalPipelinelayout,
+                            0,
+                            1,
+                            &context.deferredGlobalDescritorSets[_commandIndex],
+                            0,
+                            nullptr);
+
+    // Bind each material =====
+    for (u32 matIndex = 0; matIndex < materials.size(); matIndex++)
+    {
+      // TODO : Remove this branch
+      if (materials[matIndex].type != Ice_Mat_Forward)
+        continue;
+
+      vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, materials[matIndex].pipeline);
+      vkCmdBindDescriptorSets(cmdBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              materials[matIndex].pipelineLayout,
+                              1,
+                              1,
+                              &materials[matIndex].descriptorSet,
+                              0,
+                              nullptr);
+
+      // Draw each object =====
+      for (u32 objectIndex = 0; objectIndex < scene[matIndex].size(); objectIndex++)
+      {
+        IvkObject& object = scene[matIndex][objectIndex];
+        vkCmdBindDescriptorSets(cmdBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                materials[matIndex].pipelineLayout,
+                                2,
+                                1,
+                                &object.descriptorSet,
+                                0,
+                                nullptr);
+
+        vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &object.mesh.vertBuffer.buffer, &zero);
+        vkCmdBindIndexBuffer(cmdBuffer, object.mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuffer, object.mesh.indices.size(), 1, 0, 0, 0);
+      }
+    }
 
     vkCmdEndRenderPass(cmdBuffer);
   }

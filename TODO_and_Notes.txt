@@ -1,9 +1,13 @@
 \IceSandbox\Ice\src\core\application.cpp
 	Line   235 :--: // TODO : Update children's matrices
+\IceSandbox\Ice\src\rendering\vulkan\vulkan_command.cpp
+	Line   136 :--: // TODO : Remove this branch
+	Line   202 :--: // TODO : Remove this branch
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_deferred.cpp
 	Line   148 :--: // NOTE : Should learn more about stage/access masks
+	Line   278 :--: 
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.cpp
-	Line   170 :--: // TODO : Move out of IvkRenderer
+	Line   174 :--: // TODO : Move out of IvkRenderer
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_renderer.h
 	Line    19 :--: // TODO : ~!!~ UI renderpass (For now, only used with IMGUI)
 	Line    21 :--: // TODO : Allow source to change material pipeline settings

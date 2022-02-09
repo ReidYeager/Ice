@@ -36,7 +36,9 @@ public:
 
   b8 ReloadMaterials();
 
-  IceHandle CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex);
+  IceHandle CreateMaterial(const std::vector<IceShader>& _shaders,
+                           IceMaterialTypes _type,
+                           u32 _subpassIndex);
   b8 PopulateMaterialDescriptors(IceMaterial* _material,
     std::unordered_map<IceShaderDescriptorType, std::vector<IceShaderDescriptor>>* _stacks = nullptr);
   void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);

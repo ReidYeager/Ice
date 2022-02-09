@@ -50,6 +50,10 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
     ICE_ATTEMPT_BOOL(CreateShadowRenderpass());
     ICE_ATTEMPT_BOOL(CreateShadowFrameBuffer());
 
+    // Forward =====
+    ICE_ATTEMPT_BOOL(CreateForwardRenderpass());
+    ICE_ATTEMPT_BOOL(CreateForwardFramebuffers());
+
     // Descriptors =====
     ICE_ATTEMPT_BOOL(PrepareGlobalDescriptors());
     ICE_ATTEMPT_BOOL(PrepareShadowDescriptors());
@@ -130,12 +134,12 @@ b8 IvkRenderer::Shutdown()
     vkDestroySemaphore(context.device, context.imageAvailableSemaphores[i], context.alloc);
   }
 
-  for (const auto& f : context.frameBuffers)
+  // Forward rendering =====
+  vkDestroyRenderPass(context.device, context.forwardRenderpass, context.alloc);
+  for (const auto& f : context.forwardFrameBuffers)
   {
     vkDestroyFramebuffer(context.device, f, context.alloc);
   }
-
-  vkDestroyRenderPass(context.device, context.mainRenderpass, context.alloc);
 
   for (const auto& g : context.geoBuffers)
   {

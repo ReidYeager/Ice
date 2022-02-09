@@ -133,6 +133,13 @@ struct IceShader
 // Material
 //=========================
 
+enum IceMaterialTypes
+{
+  Ice_Mat_Deferred,
+  Ice_Mat_Deferred_Light,
+  Ice_Mat_Forward
+};
+
 struct IceMaterial
 {
   std::vector<IceHandle> shaderIndices;

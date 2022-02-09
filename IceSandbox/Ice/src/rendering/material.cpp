@@ -10,7 +10,9 @@
 #include <fstream>
 #include <iostream>
 
-IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u32 _subpassIndex)
+IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders,
+                                      IceMaterialTypes _type,
+                                      u32 _subpassIndex)
 {
   #ifdef ICE_DEBUG
   {
@@ -56,6 +58,7 @@ IceHandle IceRenderer::CreateMaterial(const std::vector<IceShader>& _shaders, u3
   // Create =====
   newMaterial.backendMaterial = backend.CreateNewMaterial(backendShaderIndices,
                                                           newMaterial.descriptors,
+                                                          _type,
                                                           _subpassIndex);
   materials.push_back(newMaterial);
 

@@ -153,6 +153,10 @@ private:
   // Creates the G-buffers and framebuffer for each swapchain image
   b8 CreateDeferredFramebuffers();
 
+  // Forward =====
+  b8 CreateForwardRenderpass();
+  b8 CreateForwardFramebuffers();
+
   //=========================
   // Platform
   //=========================
@@ -173,13 +177,14 @@ private:
                           std::vector<VkDescriptorSetLayout> _layouts,
                           std::vector<VkPushConstantRange> _pushRanges);
   // Creates a presentation pipeline and a shadow-pass pipeline
-  b8 CreatePipeline(IvkMaterial& material, u32 _subpass = 0);
+  b8 CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u32 _subpass = 0);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 
   b8 CreateMaterial(IvkMaterial* _newMaterial,
                     const std::vector<IceHandle>& _shaders,
                     std::vector<IceShaderDescriptor>& _materialDescriptors,
+                    IceMaterialTypes _type,
                     u32 _subpassIndex = 0);
 
   //=========================
@@ -225,6 +230,14 @@ private:
   b8 LoadTextureFile(IvkTexture* _texture);
   VkFormat GetDepthFormat();
 
+  //=========================
+  // GUI
+  //=========================
+  b8 InitImgui();
+  void IvkRenderer::ShutdownImgui();
+  void IvkRenderer::RenderImgui();
+
+
   // ====================
   public: // API
   // ====================
@@ -232,6 +245,7 @@ private:
   // Creates a new material (descriptor set, pipeline layout, pipeline)
   IceHandle CreateNewMaterial(const std::vector<IceHandle>& _shaders,
                               std::vector<IceShaderDescriptor>& _materialDescriptors,
+                              IceMaterialTypes _type,
                               u32 _subpassIndex = 0);
   IceHandle CreateShader(const std::string _dir, const IceShaderStage _stage);
   // Destroys and re-creates the shader module

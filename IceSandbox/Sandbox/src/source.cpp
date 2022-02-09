@@ -30,8 +30,13 @@ void reInit()
     return;
   usingAlbedoLight = true;
 
-  blank = app.CreateMaterial({ {"blank_deferred", Ice_Shader_Vertex},
-                                   {"blank_deferred", Ice_Shader_Fragment} });
+  blank = app.CreateMaterial(Ice_Mat_Deferred,
+                             { {"blank_deferred", Ice_Shader_Vertex},
+                               {"blank_deferred", Ice_Shader_Fragment} });
+
+  u32 fwdMat = app.CreateMaterial(Ice_Mat_Forward,
+                                  { {"blank_forward", Ice_Shader_Vertex},
+                                    {"blank_forward", Ice_Shader_Fragment} });
 
   app.AssignMaterialTextures(blank,
                              {{"", Ice_Image_Color},
@@ -39,9 +44,9 @@ void reInit()
                               {"", Ice_Image_Map}});
 
   app.AddObject("Plane.obj", blank);
-  app.AddObject("SphereSmooth.obj", blank);
+  app.AddObject("SphereSmooth.obj", fwdMat);
   //app.AddObject("Sphere.obj", blank);
-  //app.AddObject("Cube.obj", blank);
+  app.AddObject("Cube.obj", blank);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

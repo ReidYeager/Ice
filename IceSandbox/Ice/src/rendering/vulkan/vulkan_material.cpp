@@ -48,12 +48,14 @@ b8 IvkRenderer::RecreateShader(const IceShader& _shader)
 b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
                                const std::vector<IceHandle>& _shaders,
                                std::vector<IceShaderDescriptor>& _materialDescriptors,
+                               IceMaterialTypes _type,
                                u32 _subpassIndex)
 {
   IvkMaterial& material = *_newMaterial;
 
   material.shaderIndices = _shaders;
   material.subpassIndex = _subpassIndex;
+  material.type = _type;
 
   // Set descriptors =====
 
@@ -142,17 +144,18 @@ b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
   UpdateDescriptorSet(material.descriptorSet, material.bindings);
 
   // Pipeline =====
-  ICE_ATTEMPT_BOOL(CreatePipeline(material, _subpassIndex));
+  ICE_ATTEMPT_BOOL(CreatePipeline(material, _type, _subpassIndex));
 
   return true;
 }
 
 IceHandle IvkRenderer::CreateNewMaterial(const std::vector<IceHandle>& _shaders,
                                          std::vector<IceShaderDescriptor>& _materialDescriptors,
+                                         IceMaterialTypes _type,
                                          u32 _subpassIndex)
 {
   IvkMaterial material;
-  ICE_ATTEMPT_BOOL_HANDLE(CreateMaterial(&material, _shaders, _materialDescriptors, _subpassIndex));
+  ICE_ATTEMPT_BOOL_HANDLE(CreateMaterial(&material, _shaders, _materialDescriptors, _type, _subpassIndex));
 
   materials.push_back(material);
 
@@ -177,7 +180,7 @@ b8 IvkRenderer::RecreateMaterial(IceHandle _backendMaterial,
   m.bindings.clear();
 
   // Recreate the material =====
-  ICE_ATTEMPT_BOOL(CreateMaterial(&m, _shaders, _descriptors, m.subpassIndex));
+  ICE_ATTEMPT_BOOL(CreateMaterial(&m, _shaders, _descriptors, m.type, m.subpassIndex));
 
   return true;
 }
@@ -277,7 +280,7 @@ b8 IvkRenderer::CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
   return true;
 }
 
-b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
+b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u32 _subpass)
 {
   // Shader Stages State =====
   // Insert shader modules
@@ -404,7 +407,17 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   VkPipelineColorBlendStateCreateInfo blendStateInfo {};
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = _subpass == 0 ? 4 : 1;
+  switch (_type)
+  {
+  case Ice_Mat_Deferred:
+    blendStateInfo.attachmentCount = 4;
+    break;
+  case Ice_Mat_Deferred_Light:
+  case Ice_Mat_Forward:
+  default:
+    blendStateInfo.attachmentCount = 1;
+    break;
+  }
   blendStateInfo.pAttachments = &blendAttachmentStates[0];
 
   // Dynamic States =====
@@ -428,9 +441,20 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, u32 _subpass)
   createInfo.pDynamicState       = &dynamicStateInfo;
   createInfo.stageCount = shaderStageInfos.size();
   createInfo.pStages    = shaderStageInfos.data();
-  createInfo.renderPass = context.deferredRenderpass;
   createInfo.layout     = material.pipelineLayout;
 
+  switch (_type)
+  {
+  case Ice_Mat_Deferred:
+  case Ice_Mat_Deferred_Light:
+    createInfo.renderPass = context.deferredRenderpass;
+    break;
+  case Ice_Mat_Forward:
+    createInfo.renderPass = context.forwardRenderpass;
+    break;
+  default: break;
+
+  }
   createInfo.subpass = _subpass;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
