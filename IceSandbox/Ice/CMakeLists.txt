@@ -51,6 +51,7 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_deferred.cpp"
   "src/rendering/vulkan/vulkan_shadow.cpp"
   "src/rendering/vulkan/vulkan_forward.cpp"
+  "src/rendering/vulkan/vulkan_imgui.cpp"
 
   "src/libraries/imgui/imconfig.h"
   "src/libraries/imgui/imgui.h"

@@ -82,8 +82,8 @@ void IvkRenderer::ShutdownImgui()
   ImGui_ImplWin32_Shutdown();
 }
 
-void IvkRenderer::RenderImgui()
+void IvkRenderer::RenderImgui(VkCommandBuffer& _cmdBuffer)
 {
   ImGui::Render();
-  //ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), _cmdBuffer);
 }

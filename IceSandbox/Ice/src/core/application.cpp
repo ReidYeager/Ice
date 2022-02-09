@@ -5,11 +5,33 @@
 #include "core/application.h"
 #include "core/input.h"
 #include "core/object.h"
+#include "libraries/imgui/imgui.h"
+#include "libraries/imgui/imgui_impl_win32.h"
+#include "libraries/imgui/imgui_impl_vulkan.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
 #include <chrono>
+
+void AddObjectToSceneGui(IceObject* _object, u32 index = 0)
+{
+  if (ImGui::TreeNode((void*)index, "object %d", index))
+  {
+    ImGui::DragFloat3("Position", &_object->transform.position[0], 0.01f);
+    ImGui::DragFloat3("Rotation", &_object->transform.rotation[0], 0.1f);
+    ImGui::DragFloat3("Scale", &_object->transform.scale[0], 0.01f);
+
+    _object->transform.UpdateMatrix();
+
+    for (const auto& o : _object->children)
+    {
+      AddObjectToSceneGui(o, ++index);
+    }
+
+    ImGui::TreePop(); // Done displaying this object's information
+  }
+}
 
 u32 reIceApplication::Run(IceApplicationSettings* _settings)
 {
@@ -101,6 +123,27 @@ b8 reIceApplication::Update()
  
   while (rePlatform.Update())
   {
+    // Start IMGUI frame
+    {
+      ImGui_ImplWin32_NewFrame();
+      ImGui_ImplVulkan_NewFrame();
+      ImGui::NewFrame();
+
+      ImGui::ShowDemoWindow();
+    }
+
+    // Scene hierarchy
+    {
+      u32 index = 0;
+      ImGui::Begin("Scene");
+      for (auto& o : sceneRoot->children)
+      {
+        AddObjectToSceneGui(o, index++);
+      }
+      //AddObjectToSceneGui(sceneRoot, 0);
+      ImGui::End();
+    }
+
     state.ClientUpdate(deltaTime);
 
     ICE_ATTEMPT_BOOL(renderer.Render(&cam));

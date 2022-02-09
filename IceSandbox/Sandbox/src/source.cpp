@@ -44,9 +44,9 @@ void reInit()
                               {"", Ice_Image_Map}});
 
   app.AddObject("Plane.obj", blank);
-  app.AddObject("SphereSmooth.obj", fwdMat);
+  app.AddObject("BadCactus.obj", blank);
   //app.AddObject("Sphere.obj", blank);
-  app.AddObject("Cube.obj", blank);
+  app.AddObject("Cube.obj", fwdMat);
 }
 
 float pitch = 0.0f, yaw = 0.0f;

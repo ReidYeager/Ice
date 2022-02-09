@@ -17,15 +17,13 @@
 
 #include <vector>
 
-// TODO : ~!!~ UI renderpass (For now, only used with IMGUI)
-
-// TODO : Allow source to change material pipeline settings
-
-// TODO : Restructure the scene graph (0/4)
+// TODO : ~!!~ Restructure the scene graph (0/4)
 // [ ] Establish a proper hierarchy in /core/
 // [ ] Create a structure in the renderer optimized for rendering
 // [ ] Link the core hierarchy to the rendering structure via core
 // [ ] Integrate cameras & lights into this scene system
+
+// TODO : Allow source to change material pipeline settings
 
 class IvkRenderer
 {
@@ -234,9 +232,8 @@ private:
   // GUI
   //=========================
   b8 InitImgui();
-  void IvkRenderer::ShutdownImgui();
-  void IvkRenderer::RenderImgui();
-
+  void ShutdownImgui();
+  void RenderImgui(VkCommandBuffer& _cmdBuffer);
 
   // ====================
   public: // API

@@ -233,6 +233,8 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
       }
     }
 
+    RenderImgui(cmdBuffer);
+
     vkCmdEndRenderPass(cmdBuffer);
   }
 
