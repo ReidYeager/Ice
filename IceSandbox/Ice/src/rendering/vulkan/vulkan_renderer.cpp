@@ -146,14 +146,14 @@ b8 IvkRenderer::Shutdown()
   }
 
   // Deferred rendering =====
-  for (const auto& g : context.geoBuffers)
+  DestroyImage(&context.geoBuffer.position);
+  DestroyImage(&context.geoBuffer.normal);
+  DestroyImage(&context.geoBuffer.albedo);
+  DestroyImage(&context.geoBuffer.maps);
+  DestroyImage(&context.geoBuffer.depth);
+  for (const auto& f : context.deferredFramebuffers)
   {
-    DestroyImage(&g.position);
-    DestroyImage(&g.normal);
-    DestroyImage(&g.albedo);
-    DestroyImage(&g.maps);
-    DestroyImage(&g.depth);
-    vkDestroyFramebuffer(context.device, g.framebuffer, context.alloc);
+    vkDestroyFramebuffer(context.device, f, context.alloc);
   }
   vkDestroyRenderPass(context.device, context.deferredRenderpass, context.alloc);
 

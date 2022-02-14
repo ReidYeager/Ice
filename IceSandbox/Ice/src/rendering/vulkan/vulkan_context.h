@@ -121,8 +121,6 @@ struct IvkGeoBuffer
   IvkImage albedo;
   IvkImage maps; // Specular, metallic, roughness, AO
   IvkImage depth;
-
-  VkFramebuffer framebuffer;
 };
 
 struct IvkMaterial
@@ -209,10 +207,10 @@ struct IvkContext
   VkExtent2D swapchainExtent;
 
   // Frame =====
-  std::vector<IvkGeoBuffer> geoBuffers;
+  std::vector<VkFramebuffer> deferredFramebuffers;
+  IvkGeoBuffer geoBuffer;
   VkRenderPass deferredRenderpass;
   IceHandle deferredMaterialIndex = -1;
-  std::vector<VkDescriptorSet> deferredGlobalDescritorSets;
 
   VkRenderPass forwardRenderpass;
   std::vector<VkFramebuffer> forwardFrameBuffers;

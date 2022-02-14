@@ -19,7 +19,7 @@ b8 IvkRenderer::CreateForwardRenderpass()
   // Depth
   attachments[1].flags = 0;
   attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attachments[1].format = context.geoBuffers[0].depth.format;
+  attachments[1].format = context.geoBuffer.depth.format;
   attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   attachments[1].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   attachments[1].loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -93,7 +93,7 @@ b8 IvkRenderer::CreateForwardFramebuffers()
                                        context.forwardRenderpass,
                                        context.swapchainExtent,
                                        {context.swapchainImageViews[i],
-                                        context.geoBuffers[i].depth.view}));
+                                        context.geoBuffer.depth.view}));
   }
 
   return true;

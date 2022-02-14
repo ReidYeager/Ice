@@ -51,7 +51,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   deferredBeginInfo.renderArea.extent = context.swapchainExtent;
   deferredBeginInfo.renderArea.offset = { 0 , 0 };
   deferredBeginInfo.renderPass = context.deferredRenderpass;
-  deferredBeginInfo.framebuffer = context.geoBuffers[_commandIndex].framebuffer;
+  deferredBeginInfo.framebuffer = context.deferredFramebuffers[_commandIndex];
   // Forward
   VkClearValue fwdClearValues[2] = {};
   fwdClearValues[0].color = { 0.3f, 0.3f, 0.3f }; // Swapchain
@@ -127,7 +127,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
                             context.globalPipelinelayout,
                             0,
                             1,
-                            &context.deferredGlobalDescritorSets[_commandIndex],
+                            &context.globalDescritorSet,
                             0,
                             nullptr);
 
@@ -193,7 +193,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
                             context.globalPipelinelayout,
                             0,
                             1,
-                            &context.deferredGlobalDescritorSets[_commandIndex],
+                            &context.globalDescritorSet,
                             0,
                             nullptr);
 

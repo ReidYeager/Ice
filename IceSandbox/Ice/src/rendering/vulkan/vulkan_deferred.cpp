@@ -6,8 +6,8 @@
 b8 IvkRenderer::CreateDeferredRenderpass()
 {
   // Defining formats here to simplify future uses
-  context.geoBuffers.push_back({});
-  IvkGeoBuffer& gb = context.geoBuffers[0];
+  IvkGeoBuffer& gb = context.geoBuffer;
+
   gb.position.format = gb.normal.format = VK_FORMAT_R32G32B32A32_SFLOAT; // 32-bit [signed float]
   gb.albedo.format = gb.maps.format = VK_FORMAT_R8G8B8A8_UNORM, // 8-bit [0 to 1]
   gb.depth.format = GetDepthFormat();
@@ -190,78 +190,76 @@ b8 IvkRenderer::CreateDeferredRenderpass()
 
 b8 IvkRenderer::CreateDeferredFramebuffers()
 {
-  const u32 count = context.swapchainImages.size();
   VkExtent2D extent = context.swapchainExtent;
 
-  context.geoBuffers.resize(count);
-  IvkGeoBuffer& formatBuffers = context.geoBuffers[0];
+  IvkGeoBuffer& gb = context.geoBuffer;
 
+  // Position =====
+  CreateImage(&gb.position,
+              extent,
+              gb.position.format,
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+  CreateImageView(&gb.position.view,
+                  gb.position.image,
+                  gb.position.format,
+                  VK_IMAGE_ASPECT_COLOR_BIT);
+  //gb.position.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  gb.position.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Normal =====
+  CreateImage(&gb.normal,
+              extent,
+              gb.normal.format,
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+  CreateImageView(&gb.normal.view,
+                  gb.normal.image,
+                  gb.normal.format,
+                  VK_IMAGE_ASPECT_COLOR_BIT);
+  //gb.normal.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  gb.normal.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Albedo =====
+  CreateImage(&gb.albedo,
+              extent,
+              gb.albedo.format,
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+  CreateImageView(&gb.albedo.view,
+                  gb.albedo.image,
+                  gb.albedo.format,
+                  VK_IMAGE_ASPECT_COLOR_BIT);
+  //gb.albedo.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  gb.albedo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Maps =====
+  CreateImage(&gb.maps,
+              extent,
+              gb.maps.format,
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+  CreateImageView(&gb.maps.view,
+                  gb.maps.image,
+                  gb.maps.format,
+                  VK_IMAGE_ASPECT_COLOR_BIT);
+  //gb.maps.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  gb.maps.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Depth =====
+  CreateImage(&gb.depth,
+              extent,
+              gb.depth.format,
+              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+  CreateImageView(&gb.depth.view,
+                  gb.depth.image,
+                  gb.depth.format,
+                  VK_IMAGE_ASPECT_DEPTH_BIT);
+  //gb.depth.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  gb.depth.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+
+  const u32 count = context.swapchainImages.size();
+  context.deferredFramebuffers.resize(count);
   for (u32 i = 0; i < count; i++)
   {
-    IvkGeoBuffer& gb = context.geoBuffers[i];
-
-    // Position =====
-    CreateImage(&gb.position,
-                extent,
-                formatBuffers.position.format,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-    CreateImageView(&gb.position.view,
-                    gb.position.image,
-                    gb.position.format,
-                    VK_IMAGE_ASPECT_COLOR_BIT);
-    //gb.position.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    gb.position.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // Normal =====
-    CreateImage(&gb.normal,
-                extent,
-                formatBuffers.normal.format,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-    CreateImageView(&gb.normal.view,
-                    gb.normal.image,
-                    gb.normal.format,
-                    VK_IMAGE_ASPECT_COLOR_BIT);
-    //gb.normal.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    gb.normal.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // Albedo =====
-    CreateImage(&gb.albedo,
-                extent,
-                formatBuffers.albedo.format,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-    CreateImageView(&gb.albedo.view,
-                    gb.albedo.image,
-                    gb.albedo.format,
-                    VK_IMAGE_ASPECT_COLOR_BIT);
-    //gb.albedo.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    gb.albedo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // Maps =====
-    CreateImage(&gb.maps,
-                extent,
-                formatBuffers.maps.format,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-    CreateImageView(&gb.maps.view,
-                    gb.maps.image,
-                    gb.maps.format,
-                    VK_IMAGE_ASPECT_COLOR_BIT);
-    //gb.maps.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    gb.maps.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // Depth =====
-    CreateImage(&gb.depth,
-                extent,
-                formatBuffers.depth.format,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-    CreateImageView(&gb.depth.view,
-                    gb.depth.image,
-                    gb.depth.format,
-                    VK_IMAGE_ASPECT_DEPTH_BIT);
-    //gb.depth.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    gb.depth.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-
     // Framebuffer =====
-    CreateFrameBuffer(&gb.framebuffer,
+    CreateFrameBuffer(&context.deferredFramebuffers[i],
                       context.deferredRenderpass,
                       extent,
                       { context.swapchainImageViews[i],
