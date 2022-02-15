@@ -12,6 +12,7 @@ The functional end goal of this project is to have a renderer that allows for re
 
 ### Notable shaders
 - Shadow mapping
+- PBR
 
 ### Rendering methodologies
 - [x] Forward
@@ -35,5 +36,4 @@ The functional end goal of this project is to have a renderer that allows for re
 - Post-processing
 
 #### Shaders
-- Physically Based Rendering
 - Image Based Lighting

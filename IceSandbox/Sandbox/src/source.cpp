@@ -22,7 +22,7 @@ void reInit()
   IceLogInfo("Client Init");
 
   albedoLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
-                                             { "_light_blank", Ice_Shader_Fragment } });
+                                             { "_light_pbr", Ice_Shader_Fragment } });
   shadowLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
                                              { "_light_shadow", Ice_Shader_Fragment } });
 
@@ -34,19 +34,42 @@ void reInit()
                              { {"blank_deferred", Ice_Shader_Vertex},
                                {"blank_deferred", Ice_Shader_Fragment} });
 
+  u32 pbr = app.CreateMaterial(Ice_Mat_Deferred,
+                               { {"pbr", Ice_Shader_Vertex},
+                                 {"pbr", Ice_Shader_Fragment} });
+
+  app.AssignMaterialTextures(pbr,
+                             {{"TestAlbedo.png", Ice_Image_Color},  // Albedo
+                              {"TestNormal.png", Ice_Image_Normal}, // Normal
+                              {"PixelBlack.png", Ice_Image_Map},    // Metallic
+                              {"PixelBlack.png", Ice_Image_Map},    // Roughness
+                              {"PixelWhite.png", Ice_Image_Map}     // AO
+                              });
+
+  u32 gun = app.CreateMaterial(Ice_Mat_Deferred,
+                               { {"pbr", Ice_Shader_Vertex},
+                                 {"pbr", Ice_Shader_Fragment} });
+
+  app.AssignMaterialTextures(gun,
+                             {{"CyborgWeapon/Weapon_albedo.png", Ice_Image_Color},  // Albedo
+                              {"CyborgWeapon/Weapon_normal.png", Ice_Image_Normal}, // Normal
+                              {"CyborgWeapon/Weapon_metallic.png", Ice_Image_Map},  // Metallic
+                              {"CyborgWeapon/Weapon_roughness.png", Ice_Image_Map}, // Roughness
+                              {"CyborgWeapon/Weapon_ao.png", Ice_Image_Map}         // AO
+                              });
+
   u32 fwdMat = app.CreateMaterial(Ice_Mat_Forward,
                                   { {"blank_forward", Ice_Shader_Vertex},
                                     {"blank_forward", Ice_Shader_Fragment} });
 
-  app.AssignMaterialTextures(blank,
-                             {{"", Ice_Image_Color},
-                              {"", Ice_Image_Normal},
-                              {"", Ice_Image_Map}});
-
-  app.AddObject("Plane.obj", blank);
-  app.AddObject("BadCactus.obj", blank);
+  app.AddObject("Plane.obj", pbr);
+  //app.AddObject("BadCactus.obj", blank);
   //app.AddObject("Sphere.obj", blank);
-  app.AddObject("Cube.obj", fwdMat);
+  //app.AddObject("Cube.obj", pbr);
+  IceObject* g = app.AddObject("Cyborg_Weapon.obj", gun);
+
+  g->transform.scale = {4.0f, 4.0f, 4.0f};
+  g->transform.UpdateMatrix();
 }
 
 float pitch = 0.0f, yaw = 0.0f;

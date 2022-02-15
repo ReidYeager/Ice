@@ -109,7 +109,7 @@ void* IceFileSystem::LoadImageFile(const char* _directory, int& _width, int& _he
   std::string dir(ICE_RESOURCE_TEXTURE_DIR);
   dir.append(_directory);
 
-  IceLogInfo("Attempting to load %s", dir.c_str());
+  IceLogInfo("Attempting to load image '%s'", dir.c_str());
 
   int channels;
   stbi_uc* image = stbi_load(dir.c_str(), &_width, &_height, &channels, STBI_rgb_alpha);

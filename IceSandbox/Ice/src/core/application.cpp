@@ -128,8 +128,6 @@ b8 reIceApplication::Update()
       ImGui_ImplWin32_NewFrame();
       ImGui_ImplVulkan_NewFrame();
       ImGui::NewFrame();
-
-      ImGui::ShowDemoWindow();
     }
 
     // Scene hierarchy

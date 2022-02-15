@@ -154,7 +154,7 @@ struct IceMaterial
 struct IceLightDirectional
 {
   ALIGN_FOR_SHADER vec3 direction = { -1.0f, -1.0f, -1.0f };
-  ALIGN_FOR_SHADER vec3 color = { 1.0f, 1.0f, 1.0f };
+  ALIGN_FOR_SHADER vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f};
 };
 
 struct IceLightPoint

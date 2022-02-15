@@ -184,7 +184,8 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   // TODO : Move out of IvkRenderer
   {
     ImGui::Begin("Directional light");
-    ImGui::InputFloat3("Light color", &tmpLights.directional.color.x);
+    ImGui::DragFloat3("Light color", &tmpLights.directional.color.x, 0.01f, 0.0f, 1.0f);
+    ImGui::DragFloat("Light intensity", &tmpLights.directional.color.w, 0.1f);
     ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
     ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
     ImGui::SliderFloat("direction z", &tmpLights.directional.direction.z, -1.0f, 1.0f);

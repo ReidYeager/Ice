@@ -40,7 +40,7 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
   }
 
-  // Create descriptor set layout =====
+  // Create descriptor set & layout =====
   {
     std::vector<IvkDescriptor> descriptors(7);
     // Global uniform buffer
@@ -105,8 +105,6 @@ b8 IvkRenderer::PrepareGlobalDescriptors()
     shadowInfo.imageLayout = shadow.image.layout;
     shadowInfo.imageView = shadow.image.view;
     shadowInfo.sampler = shadow.image.sampler;
-
-    const u32 count = context.swapchainImages.size();
 
     IvkGeoBuffer& gb = context.geoBuffer;
 
