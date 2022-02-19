@@ -205,7 +205,7 @@ b8 IvkRenderer::CreateDeferredFramebuffers()
                   VK_IMAGE_ASPECT_COLOR_BIT);
   //gb.position.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   gb.position.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   // Normal =====
   CreateImage(&gb.normal,
               extent,
@@ -217,7 +217,7 @@ b8 IvkRenderer::CreateDeferredFramebuffers()
                   VK_IMAGE_ASPECT_COLOR_BIT);
   //gb.normal.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   gb.normal.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   // Albedo =====
   CreateImage(&gb.albedo,
               extent,
@@ -229,7 +229,7 @@ b8 IvkRenderer::CreateDeferredFramebuffers()
                   VK_IMAGE_ASPECT_COLOR_BIT);
   //gb.albedo.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   gb.albedo.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   // Maps =====
   CreateImage(&gb.maps,
               extent,
@@ -241,7 +241,7 @@ b8 IvkRenderer::CreateDeferredFramebuffers()
                   VK_IMAGE_ASPECT_COLOR_BIT);
   //gb.maps.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   gb.maps.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   // Depth =====
   CreateImage(&gb.depth,
               extent,
@@ -268,7 +268,6 @@ b8 IvkRenderer::CreateDeferredFramebuffers()
                         gb.albedo.view,
                         gb.maps.view,
                         gb.depth.view });
-
   }
 
   return true;

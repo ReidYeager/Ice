@@ -63,6 +63,8 @@ public:
 
 private:
 
+  b8 Resize();
+
   //=========================
   // Vulkan Initialization
   //=========================

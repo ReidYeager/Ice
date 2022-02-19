@@ -26,6 +26,7 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 rePlatformVendorData* vendorData = 0;
+IceWindowSettings* windowSettings = 0;
 
 b8 IcePlatform::Initialize(IceWindowSettings* _settings)
 {
@@ -38,6 +39,7 @@ b8 IcePlatform::Initialize(IceWindowSettings* _settings)
   vendorData = &state.vendorData;
 
   state.windowSettings = *_settings;
+  windowSettings = &state.windowSettings;
 
   if (!CreateWindow())
   {
@@ -238,6 +240,12 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
     {
       Input.ProcessMouseButton(button, pressed);
     }
+  } break;
+  case WM_SIZE:
+  {
+    u32 width = LOWORD(lparam);
+    u32 height = HIWORD(lparam);
+    windowSettings->extents = { width, height };
   } break;
   default:
     break;

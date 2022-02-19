@@ -5,6 +5,9 @@
 
 #include "rendering/vulkan/vulkan_renderer.h"
 
+// Only included for ReloadMaterials()
+#include "rendering/renderer.h"
+
 #include "core/input.h"
 #include "core/camera.h"
 #include "platform/platform.h"
@@ -70,9 +73,6 @@ b8 IvkRenderer::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
 
-  // TMP =====
-  DestroyBuffer(&globalDescriptorBuffer);
-
   // Shadow =====
   DestroyBuffer(&shadow.lightMatrixBuffer, true);
   DestroyImage(&shadow.image);
@@ -122,6 +122,7 @@ b8 IvkRenderer::Shutdown()
   }
 
   // Global descriptors =====
+  DestroyBuffer(&globalDescriptorBuffer);
   vkDestroyPipelineLayout(context.device, context.globalPipelinelayout, context.alloc);
   vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorSetLayout, context.alloc);
 
@@ -201,10 +202,8 @@ b8 IvkRenderer::Render(IceCamera* _camera)
     tmpLights.directional.direction.z /= sq;
 
     ImGui::End();
-  }
 
-  // Update buffer data =====
-  {
+    // Update buffer data =====
     // Directional light matrix =====
     float size = 10.0f;
     glm::mat4 proj = glm::ortho(-size, size, -size, size, -100.0f, 100.0f);
@@ -227,6 +226,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
 
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
+  VkResult result;
 
   // Wait for oldest in-flight slot to return =====
   IVK_ASSERT(vkWaitForFences(context.device,
@@ -236,13 +236,22 @@ b8 IvkRenderer::Render(IceCamera* _camera)
                              3000000000), // 3 second timeout
              "Flight slot wait fence failed");
 
-  IVK_ASSERT(vkAcquireNextImageKHR(context.device,
-                                   context.swapchain,
-                                   UINT64_MAX,
-                                   context.imageAvailableSemaphores[flightSlotIndex],
-                                   VK_NULL_HANDLE,
-                                   &swapchainImageIndex),
-             "Failed to acquire the next swapchain image");
+  result = vkAcquireNextImageKHR(context.device,
+                                 context.swapchain,
+                                 UINT64_MAX,
+                                 context.imageAvailableSemaphores[flightSlotIndex],
+                                 VK_NULL_HANDLE,
+                                 &swapchainImageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    Resize();
+    return true;
+  }
+  else if (result != VK_SUCCESS)
+  {
+    return false;
+  }
 
   // Submit a command buffer =====
   RecordCommandBuffer(swapchainImageIndex);
@@ -276,10 +285,73 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
   presentInfo.pImageIndices = &swapchainImageIndex;
 
-  IVK_ASSERT(vkQueuePresentKHR(context.presentQueue, &presentInfo),
-             "Failed to present the swapchain");
+  result = vkQueuePresentKHR(context.presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    Resize();
+  }
+  else if (result != VK_SUCCESS)
+  {
+    IceLogFatal("Failed to present the swapchain");
+    return false;
+  }
 
   flightSlotIndex = (flightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
+
+  return true;
+}
+
+b8 IvkRenderer::Resize()
+{
+  vkDeviceWaitIdle(context.device);
+
+  IceLogDebug("Resizing");
+
+  // Destroy resolution dependents =====
+  DestroyBuffer(&globalDescriptorBuffer);
+  vkDestroyPipelineLayout(context.device, context.globalPipelinelayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorSetLayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorSetLayout, context.alloc);
+
+  DestroyImage(&context.geoBuffer.position);
+  DestroyImage(&context.geoBuffer.normal);
+  DestroyImage(&context.geoBuffer.albedo);
+  DestroyImage(&context.geoBuffer.maps);
+  DestroyImage(&context.geoBuffer.depth);
+  for (auto& f : context.deferredFramebuffers)
+  {
+    vkDestroyFramebuffer(context.device, f, context.alloc);
+  }
+  context.deferredFramebuffers.clear();
+  vkDestroyRenderPass(context.device, context.deferredRenderpass, context.alloc);
+
+  for (auto& f : context.forwardFrameBuffers)
+  {
+    vkDestroyFramebuffer(context.device, f, context.alloc);
+  }
+  context.forwardFrameBuffers.clear();
+  vkDestroyRenderPass(context.device, context.forwardRenderpass, context.alloc);
+
+  for (auto& v : context.swapchainImageViews)
+  {
+    vkDestroyImageView(context.device, v, context.alloc);
+  }
+  context.swapchainImageViews.clear();
+  vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
+
+  // Recreate resolution dependents =====
+  ICE_ATTEMPT_BOOL(CreateSwapchain());
+
+  ICE_ATTEMPT_BOOL(CreateDeferredRenderpass());
+  ICE_ATTEMPT_BOOL(CreateDeferredFramebuffers());
+
+  ICE_ATTEMPT_BOOL(CreateForwardRenderpass());
+  ICE_ATTEMPT_BOOL(CreateForwardFramebuffers());
+
+  ICE_ATTEMPT_BOOL(PrepareGlobalDescriptors());
+
+  ICE_ATTEMPT_BOOL(renderer.ReloadMaterials());
 
   return true;
 }
@@ -589,16 +661,20 @@ b8 IvkRenderer::CreateSwapchain()
     //present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
     context.presentMode = present;
 
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu.device, context.surface, &context.gpu.surfaceCapabilities);
+
     // Image dimensions =====
     VkExtent2D extent;
     if (context.gpu.surfaceCapabilities.currentExtent.width != -1u)
     {
       extent = context.gpu.surfaceCapabilities.currentExtent;
+      IceLogDebug("Swapchain using current extent: (%u, %u)", extent.width, extent.height);
     }
     else
     {
       vec2U e = GetPlatformWindowExtents();
       extent = { e.width, e.height };
+      IceLogDebug("Swapchain using platform extents: (%u, %u)", extent.width, extent.height);
     }
 
     // Creation =====

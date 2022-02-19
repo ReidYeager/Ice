@@ -9,6 +9,9 @@
 #include "libraries/imgui/imgui_impl_win32.h"
 #include "libraries/imgui/imgui_impl_vulkan.h"
 
+// Only used for GetPlatformWindowExtn
+#include "platform/platform.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
@@ -93,7 +96,8 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
 
   // Set camera default state =====
   glm::mat4 viewProj = glm::mat4(1);
-  viewProj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
+  vec2U extents = rePlatform.GetWindowInfo()->extents;
+  viewProj = glm::perspective(glm::radians(90.0f), float(extents.x) / float(extents.y), 0.01f, 1000.0f);
   viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
   viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
   cam.viewProjectionMatrix = viewProj;

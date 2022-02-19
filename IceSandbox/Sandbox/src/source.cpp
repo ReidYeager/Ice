@@ -23,6 +23,7 @@ void reInit()
 
   albedoLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
                                              { "_light_pbr", Ice_Shader_Fragment } });
+                                             //{ "_light_blank", Ice_Shader_Fragment } });
   shadowLight = app.CreateLightingMaterial({ { "_light_blank", Ice_Shader_Vertex },
                                              { "_light_shadow", Ice_Shader_Fragment } });
 
@@ -62,11 +63,11 @@ void reInit()
                                   { {"blank_forward", Ice_Shader_Vertex},
                                     {"blank_forward", Ice_Shader_Fragment} });
 
-  app.AddObject("Plane.obj", pbr);
+  app.AddObject("Plane.obj", blank);
   //app.AddObject("BadCactus.obj", blank);
   //app.AddObject("Sphere.obj", blank);
-  //app.AddObject("Cube.obj", pbr);
   IceObject* g = app.AddObject("Cyborg_Weapon.obj", gun);
+  //app.AddObject("Cube.obj", fwdMat);
 
   g->transform.scale = {4.0f, 4.0f, 4.0f};
   g->transform.UpdateMatrix();
@@ -90,7 +91,8 @@ void reUpdate(float _deltaTime)
     view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1280.0f / 720.0f, 0.01f, 1000.0f);
+    vec2U extents = rePlatform.GetWindowInfo()->extents;
+    glm::mat4 proj = glm::perspective(glm::radians(90.0f), float(extents.x) / float(extents.y), 0.01f, 1000.0f);
     proj[1][1] *= -1;
     app.cam.viewProjectionMatrix = proj * view;
   }
