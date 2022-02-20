@@ -1,7 +1,7 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 #include "math/vector.h"
 #include "platform/file_system.h"

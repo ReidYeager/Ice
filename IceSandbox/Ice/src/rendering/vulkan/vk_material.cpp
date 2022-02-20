@@ -2,8 +2,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/vulkan/vulkan_renderer.h"
-#include "rendering/render_context.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 #include "core/camera.h"
 #include "math/vector.h"
@@ -144,7 +143,7 @@ b8 IvkRenderer::CreateMaterial(IvkMaterial* _newMaterial,
   UpdateDescriptorSet(material.descriptorSet, material.bindings);
 
   // Pipeline =====
-  ICE_ATTEMPT_BOOL(CreatePipeline(material, _type, _subpassIndex));
+  ICE_ATTEMPT_BOOL(CreatePipeline(material));
 
   return true;
 }
@@ -280,16 +279,16 @@ b8 IvkRenderer::CreatePipelinelayout(VkPipelineLayout* _pipelineLayout,
   return true;
 }
 
-b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u32 _subpass)
+b8 IvkRenderer::CreatePipeline(IvkMaterial& _material)
 {
   // Shader Stages State =====
   // Insert shader modules
 
   VkPipelineShaderStageCreateInfo vertexOnlyShaderStageInfo {};
-  std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos(material.shaderIndices.size());
+  std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos(_material.shaderIndices.size());
   for (u32 i = 0, shaderIndex = 0; i < shaderStageInfos.size(); i++)
   {
-    shaderIndex = material.shaderIndices[i];
+    shaderIndex = _material.shaderIndices[i];
     shaderStageInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfos[i].stage = shaders[shaderIndex].stage;
     shaderStageInfos[i].module = shaders[shaderIndex].module;
@@ -407,7 +406,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u3
   VkPipelineColorBlendStateCreateInfo blendStateInfo {};
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  switch (_type)
+  switch (_material.type)
   {
   case Ice_Mat_Deferred:
     blendStateInfo.attachmentCount = 4;
@@ -441,9 +440,9 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u3
   createInfo.pDynamicState       = &dynamicStateInfo;
   createInfo.stageCount = shaderStageInfos.size();
   createInfo.pStages    = shaderStageInfos.data();
-  createInfo.layout     = material.pipelineLayout;
+  createInfo.layout     = _material.pipelineLayout;
 
-  switch (_type)
+  switch (_material.type)
   {
   case Ice_Mat_Deferred:
   case Ice_Mat_Deferred_Light:
@@ -455,14 +454,14 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u3
   default: break;
 
   }
-  createInfo.subpass = _subpass;
+  createInfo.subpass = _material.subpassIndex;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       &material.pipeline),
+                                       &_material.pipeline),
              "Failed to create the graphics pipeline");
 
   // Shadows =====
@@ -483,7 +482,7 @@ b8 IvkRenderer::CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u3
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       &material.shadowPipeline),
+                                       &_material.shadowPipeline),
              "Failed to create the shadow pipeline");
 
   return true;

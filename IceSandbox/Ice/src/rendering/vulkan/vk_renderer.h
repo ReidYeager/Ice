@@ -7,7 +7,7 @@
 #include "math/vector.h"
 #include "core/camera.h"
 #include "core/object.h"
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/vulkan/vk_context.h"
 #include "rendering/render_context.h"
 #include "rendering/mesh.h"
 
@@ -17,7 +17,15 @@
 
 #include <vector>
 
-// TODO : ~!!~ Restructure the scene graph (0/4)
+// TODO : ~!!~ Better rendering backend asset management (0/4)
+// Organize the code itself -- Separate functionality domains while maintaining convenience
+// Work on making data access during Render() as efficient as possible -- Namely keep it cache friendly
+// [ ] Buffers
+// [ ] Images
+// [ ] Shaders
+// [ ] Materials
+
+// TODO : Restructure the scene graph (0/4)
 // [ ] Establish a proper hierarchy in /core/
 // [ ] Create a structure in the renderer optimized for rendering
 // [ ] Link the core hierarchy to the rendering structure via core
@@ -177,7 +185,7 @@ private:
                           std::vector<VkDescriptorSetLayout> _layouts,
                           std::vector<VkPushConstantRange> _pushRanges);
   // Creates a presentation pipeline and a shadow-pass pipeline
-  b8 CreatePipeline(IvkMaterial& material, IceMaterialTypes _type, u32 _subpass = 0);
+  b8 CreatePipeline(IvkMaterial& material);
   // Creates a vulkan shader module
   b8 CreateShaderModule(VkShaderModule* _module, const char* _shader);
 

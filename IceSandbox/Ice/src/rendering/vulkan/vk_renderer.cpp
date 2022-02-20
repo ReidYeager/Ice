@@ -3,17 +3,14 @@
 #include "asserts.h"
 #include "logger.h"
 
-#include "rendering/vulkan/vulkan_renderer.h"
-
-// Only included for ReloadMaterials()
-#include "rendering/renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 #include "core/input.h"
 #include "core/camera.h"
+#include "libraries/imgui/imgui.h"
 #include "platform/platform.h"
 #include "platform/file_system.h"
 #include "rendering/mesh.h"
-#include "libraries/imgui/imgui.h"
 
 #include <vector>
 
@@ -308,12 +305,17 @@ b8 IvkRenderer::Resize()
 
   IceLogDebug("Resizing");
 
-  // Destroy resolution dependents =====
-  DestroyBuffer(&globalDescriptorBuffer);
-  vkDestroyPipelineLayout(context.device, context.globalPipelinelayout, context.alloc);
-  vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorSetLayout, context.alloc);
-  vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorSetLayout, context.alloc);
+  // Swapchain =====
+  for (auto& v : context.swapchainImageViews)
+  {
+    vkDestroyImageView(context.device, v, context.alloc);
+  }
+  context.swapchainImageViews.clear();
+  vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
 
+  ICE_ATTEMPT_BOOL(CreateSwapchain());
+
+  // Deferred =====
   DestroyImage(&context.geoBuffer.position);
   DestroyImage(&context.geoBuffer.normal);
   DestroyImage(&context.geoBuffer.albedo);
@@ -326,6 +328,10 @@ b8 IvkRenderer::Resize()
   context.deferredFramebuffers.clear();
   vkDestroyRenderPass(context.device, context.deferredRenderpass, context.alloc);
 
+  ICE_ATTEMPT_BOOL(CreateDeferredRenderpass());
+  ICE_ATTEMPT_BOOL(CreateDeferredFramebuffers());
+
+  // Forward =====
   for (auto& f : context.forwardFrameBuffers)
   {
     vkDestroyFramebuffer(context.device, f, context.alloc);
@@ -333,25 +339,24 @@ b8 IvkRenderer::Resize()
   context.forwardFrameBuffers.clear();
   vkDestroyRenderPass(context.device, context.forwardRenderpass, context.alloc);
 
-  for (auto& v : context.swapchainImageViews)
-  {
-    vkDestroyImageView(context.device, v, context.alloc);
-  }
-  context.swapchainImageViews.clear();
-  vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
-
-  // Recreate resolution dependents =====
-  ICE_ATTEMPT_BOOL(CreateSwapchain());
-
-  ICE_ATTEMPT_BOOL(CreateDeferredRenderpass());
-  ICE_ATTEMPT_BOOL(CreateDeferredFramebuffers());
-
   ICE_ATTEMPT_BOOL(CreateForwardRenderpass());
   ICE_ATTEMPT_BOOL(CreateForwardFramebuffers());
 
+  // Update descriptors =====
+  DestroyBuffer(&globalDescriptorBuffer);
+  vkDestroyPipelineLayout(context.device, context.globalPipelinelayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorSetLayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorSetLayout, context.alloc);
+
   ICE_ATTEMPT_BOOL(PrepareGlobalDescriptors());
 
-  ICE_ATTEMPT_BOOL(renderer.ReloadMaterials());
+  // Materials =====
+  for (auto& m : materials)
+  {
+    vkDestroyPipeline(context.device, m.pipeline, context.alloc);
+    vkDestroyPipeline(context.device, m.shadowPipeline, context.alloc);
+    CreatePipeline(m);
+  }
 
   return true;
 }
@@ -668,14 +673,13 @@ b8 IvkRenderer::CreateSwapchain()
     if (context.gpu.surfaceCapabilities.currentExtent.width != -1u)
     {
       extent = context.gpu.surfaceCapabilities.currentExtent;
-      IceLogDebug("Swapchain using current extent: (%u, %u)", extent.width, extent.height);
     }
     else
     {
       vec2U e = GetPlatformWindowExtents();
       extent = { e.width, e.height };
-      IceLogDebug("Swapchain using platform extents: (%u, %u)", extent.width, extent.height);
     }
+    IceLogDebug("Swapchain using extents : (%u, %u)", extent.width, extent.height);
 
     // Creation =====
     VkSwapchainCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };

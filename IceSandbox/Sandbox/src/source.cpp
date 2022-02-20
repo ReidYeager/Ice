@@ -10,7 +10,7 @@
 #include <iostream>
 #include <math.h>
 
-reIceApplication app;
+IceApplication app;
 
 u32 albedoLight;
 u32 shadowLight;
@@ -70,6 +70,8 @@ void reInit()
   //app.AddObject("Cube.obj", fwdMat);
 
   g->transform.scale = {4.0f, 4.0f, 4.0f};
+  g->transform.position = {-0.5f, 0.0f, 0.5f};
+  g->transform.rotation = {0.0f, -40.0f, 0.0f};
   g->transform.UpdateMatrix();
 }
 

@@ -36,7 +36,7 @@ void AddObjectToSceneGui(IceObject* _object, u32 index = 0)
   }
 }
 
-u32 reIceApplication::Run(IceApplicationSettings* _settings)
+u32 IceApplication::Run(IceApplicationSettings* _settings)
 {
   try
   {
@@ -67,7 +67,7 @@ u32 reIceApplication::Run(IceApplicationSettings* _settings)
   }
 }
 
-b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
+b8 IceApplication::Initialize(IceApplicationSettings* _settings)
 {
   state.ClientInitialize = _settings->ClientInitialize;
   state.ClientUpdate = _settings->ClientUpdate;
@@ -108,7 +108,7 @@ b8 reIceApplication::Initialize(IceApplicationSettings* _settings)
   return true;
 }
 
-b8 reIceApplication::Update()
+b8 IceApplication::Update()
 {
   IceLogInfo("===== reApplication Main Loop =====");
 
@@ -198,7 +198,7 @@ void DestroyObjectAndChildren(IceObject* object)
   free(object);
 }
 
-b8 reIceApplication::Shutdown()
+b8 IceApplication::Shutdown()
 {
   IceLogInfo("===== reApplication Shutdown =====");
   state.ClientShutdown();
@@ -210,7 +210,7 @@ b8 reIceApplication::Shutdown()
   return true;
 }
 
-IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceObject* _parent)
+IceObject* IceApplication::AddObject(const char* _meshDir, u32 _material, IceObject* _parent)
 {
   IceObject* obj = new IceObject();
   obj->materialHandle = _material;
@@ -233,7 +233,7 @@ IceObject* reIceApplication::AddObject(const char* _meshDir, u32 _material, IceO
   return obj;
 }
 
-IceHandle reIceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<IceShader> _shaders)
+IceHandle IceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<IceShader> _shaders)
 {
   IceHandle mat = renderer.CreateMaterial(_shaders, _type, 0);
 
@@ -245,23 +245,23 @@ IceHandle reIceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<I
   return mat;
 }
 
-u32 reIceApplication::CreateLightingMaterial(std::vector<IceShader> _shaders)
+u32 IceApplication::CreateLightingMaterial(std::vector<IceShader> _shaders)
 {
   return renderer.CreateMaterial(_shaders, Ice_Mat_Deferred_Light, 1);
 }
 
-b8 reIceApplication::SetLightingMaterial(IceHandle _material)
+b8 IceApplication::SetLightingMaterial(IceHandle _material)
 {
   return renderer.SetLightingMaterial(_material);
 }
 
-void reIceApplication::AssignMaterialTextures(IceHandle _material,
+void IceApplication::AssignMaterialTextures(IceHandle _material,
                                               std::vector<IceTexture> _textures)
 {
   renderer.AssignMaterialTextures(_material, _textures);
 }
 
-b8 reIceApplication::SetMaterialBufferData(IceHandle _material, void* _data)
+b8 IceApplication::SetMaterialBufferData(IceHandle _material, void* _data)
 {
   return renderer.SetMaterialBufferData(_material, _data);
 }

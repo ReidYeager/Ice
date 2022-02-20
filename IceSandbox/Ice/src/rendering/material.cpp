@@ -2,8 +2,9 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "platform/file_system.h"
 #include "rendering/renderer.h"
+
+#include "platform/file_system.h"
 #include "tools/lexer.h"
 
 #include <vector>

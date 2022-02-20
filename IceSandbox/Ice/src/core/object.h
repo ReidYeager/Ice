@@ -6,7 +6,7 @@
 
 #include "math/vector.h"
 
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/vulkan/vk_context.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>

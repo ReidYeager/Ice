@@ -1,7 +1,7 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 b8 IvkRenderer::CreateShadowRenderpass()
 {

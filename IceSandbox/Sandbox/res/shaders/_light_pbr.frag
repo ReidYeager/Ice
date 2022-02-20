@@ -85,7 +85,8 @@ vec3 CalculatePBRLighting(vec3 N, vec3 V, vec3 L, vec3 H, vec3 F0, vec3 albedo, 
 	vec3 specular = numerator / max(denominator, 0.001);
 
 	float NdotL = max(dot(N, L), 0.0);
-	return (kD * albedo / PI + specular) * NdotL;
+	// return vec3(kS);
+	return (kD * (albedo / PI) + specular) * NdotL;
 }
 
 void main() {
@@ -111,7 +112,8 @@ void main() {
 
 	vec3 ambient = vec3(0.05) * albedo * ao;
 
-	final = ambient + finalLight;
+	// final = ambient + finalLight;
+	final = finalLight;
 
     outSwapchain = vec4(final, 1.0);
 }

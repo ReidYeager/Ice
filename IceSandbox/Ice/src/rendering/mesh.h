@@ -2,7 +2,7 @@
 #ifndef ICE_RENDERING_MESH_H_
 #define ICE_RENDERING_MESH_H_
 
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/vulkan/vk_context.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>

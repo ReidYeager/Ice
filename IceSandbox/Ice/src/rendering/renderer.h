@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "rendering/render_context.h"
-#include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 #include "core/camera.h"
 #include "core/object.h"
 

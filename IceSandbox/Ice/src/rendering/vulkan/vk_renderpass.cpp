@@ -2,7 +2,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 
 IvkAttachmentDescRef IvkRenderer::CreateAttachment(IvkAttachmentSettings _settings, u32 _index)

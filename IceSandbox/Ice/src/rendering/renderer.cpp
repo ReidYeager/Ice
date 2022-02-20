@@ -3,7 +3,7 @@
 #include "logger.h"
 
 #include "rendering/renderer.h"
-#include "rendering/vulkan/vulkan_renderer.h"
+#include "rendering/vulkan/vk_renderer.h"
 
 #include <string>
 

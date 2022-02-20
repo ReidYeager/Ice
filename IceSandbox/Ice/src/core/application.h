@@ -24,7 +24,7 @@ struct IceApplicationSettings
   void(*ClientShutdown)();
 };
 
-class reIceApplication
+class IceApplication
 {
 private:
   struct
