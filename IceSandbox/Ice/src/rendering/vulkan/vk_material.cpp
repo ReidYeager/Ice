@@ -493,7 +493,7 @@ b8 IvkRenderer::CreateShaderModule(VkShaderModule* _module, const char* _shader)
   std::string directory = _shader;
   directory.append(".spv");
 
-  std::vector<char> source = fileSystem.LoadFile(directory.c_str());
+  std::vector<char> source = Ice::LoadFile(directory.c_str());
   if (source.size() == 0)
     return false;
 

@@ -2,6 +2,7 @@
 #include "defines.h"
 
 #include "rendering/vulkan/vk_renderer.h"
+#include "zplatform/zplatform.h"
 
 u32 FindMemoryTypeIndex(IvkContext* _context,
                         u32 _supportedMemoryTypes,
@@ -89,7 +90,7 @@ b8 IvkRenderer::FillBuffer(IvkBuffer* _buffer, void* _data, u64 _size /*= 0*/, u
   u64 usedSize = _size == 0 ? _buffer->size : _size;
 
   vkMapMemory(context.device, _buffer->memory, _buffer->offset + _offset, usedSize, 0, &mappedMemory);
-  rePlatform.MemCopy(_data, mappedMemory, usedSize);
+  Ice::MemoryCopy(_data, mappedMemory, usedSize);
   vkUnmapMemory(context.device, _buffer->memory);
 
   return true;

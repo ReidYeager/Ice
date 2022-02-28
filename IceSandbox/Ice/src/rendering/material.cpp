@@ -182,7 +182,7 @@ b8 IceRenderer::GetShaderDescriptors(IceShader& _shader)
   std::string descDir = _shader.directory;
   descDir.append(".desc");
 
-  std::vector<char> descriptorSource = fileSystem.LoadFile(descDir.c_str());
+  std::vector<char> descriptorSource = Ice::LoadFile(descDir.c_str());
 
   if (descriptorSource.size() == 0)
     return true; // No descriptors to look for

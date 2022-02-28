@@ -239,7 +239,8 @@ IceHandle IceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<Ice
 
   if (mat == ICE_NULL_HANDLE)
   {
-    throw "Failed to create a material";
+    IceLogError("Failed to create a material");
+    return ICE_NULL_HANDLE;
   }
 
   return mat;

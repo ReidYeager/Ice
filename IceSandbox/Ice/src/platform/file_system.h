@@ -8,9 +8,8 @@
 
 #include <vector>
 
-extern class IceFileSystem
+namespace Ice
 {
-public:
   // Loads the given file as binary
   std::vector<char> LoadFile(const char* _directory);
   // Loads a mesh with tinyobj and interprets it into an Ice mesh
@@ -19,6 +18,6 @@ public:
   void* LoadImageFile(const char* _directory, int& _width, int& _height);
   // Frees a stbi image
   void DestroyImageFile(void* _image);
-} fileSystem;
+}
 
 #endif // !PLATFORM_FILE_SYSTEM_H

@@ -14,9 +14,7 @@
 #include <string>
 #include <unordered_map>
 
-IceFileSystem fileSystem;
-
-std::vector<char> IceFileSystem::LoadFile(const char* _directory)
+std::vector<char> Ice::LoadFile(const char* _directory)
 {
   std::ifstream inFile;
   inFile.open(_directory, std::ios::ate | std::ios::binary);
@@ -35,7 +33,7 @@ std::vector<char> IceFileSystem::LoadFile(const char* _directory)
   return rawData;
 }
 
-IvkMesh IceFileSystem::LoadMesh(const char* _directory)
+IvkMesh Ice::LoadMesh(const char* _directory)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -104,7 +102,7 @@ IvkMesh IceFileSystem::LoadMesh(const char* _directory)
 #include <limits.h>
 #include <iostream>
 
-void* IceFileSystem::LoadImageFile(const char* _directory, int& _width, int& _height)
+void* Ice::LoadImageFile(const char* _directory, int& _width, int& _height)
 {
   std::string dir(ICE_RESOURCE_TEXTURE_DIR);
   dir.append(_directory);
@@ -117,7 +115,7 @@ void* IceFileSystem::LoadImageFile(const char* _directory, int& _width, int& _he
   return image;
 }
 
-void IceFileSystem::DestroyImageFile(void* _image)
+void Ice::DestroyImageFile(void* _image)
 {
   stbi_image_free(_image);
 }

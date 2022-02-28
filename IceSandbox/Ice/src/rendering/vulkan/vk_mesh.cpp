@@ -20,7 +20,7 @@ u32 IvkRenderer::CreateMesh(const char* _directory)
   }
 
   // Load mesh =====
-  IvkMesh mesh = fileSystem.LoadMesh(_directory);
+  IvkMesh mesh = Ice::LoadMesh(_directory);
   mesh.directory = _directory;
 
   CreateBuffer(&mesh.vertBuffer,

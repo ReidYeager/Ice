@@ -70,9 +70,9 @@ add_library (Ice STATIC
   "src/libraries/imgui/imstb_truetype.h"
 
   "src/tools/lexer.h"
-)
+ "src/zcore/zapplication.h" "src/zplatform/zplatform.h" "src/zplatform/zwindow.h"  "src/zplatform/zplatform_win32.cpp" "src/zplatform/zwindow_win32.cpp" "src/zcore/zapplication.cpp")
 
-add_compile_definitions(Ice _DEBUG ICE_DLL_EXPORT)
+add_compile_definitions(_DEBUG ICE_DLL_EXPORT)
 
 target_include_directories(Ice PUBLIC
   ./src/

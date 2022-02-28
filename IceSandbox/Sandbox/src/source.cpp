@@ -10,6 +10,10 @@
 #include <iostream>
 #include <math.h>
 
+#include "zcore/zapplication.h"
+
+#define UseNewSystems 1
+
 IceApplication app;
 
 u32 albedoLight;
@@ -104,7 +108,8 @@ void reUpdate(float _deltaTime)
     IceLogDebug("Reloading materials");
     if (!renderer.ReloadMaterials())
     {
-      throw "Failed to reload materials";
+      IceLogError("Failed to reload materials");
+      //return false;
     }
   }
 
@@ -131,8 +136,42 @@ void reShutdown()
   IceLogInfo("Client Shutdown");
 }
 
+b8 zinit()
+{
+  IceLogInfo("zGame init");
+  return true;
+}
+
+b8 zupdate()
+{
+  return true;
+}
+
+b8 zshutdown()
+{
+  f64 avgDelta = Ice::time.realTime / Ice::time.frameCount;
+  IceLogInfo("Game shutdown : Runtime of %f, %lu frames\n\tAvg delta of %lf ms -- %lf FPS",
+             Ice::time.realTime,
+             Ice::time.frameCount,
+             avgDelta,
+             1.0f / avgDelta);
+  return true;
+}
+
 int main()
 {
+  #ifdef UseNewSystems
+  Ice::zIceApplicationSettings tmpappsettings;
+  tmpappsettings.gameInit = zinit;
+  tmpappsettings.gameUpdate = zupdate;
+  tmpappsettings.gameShutdown = zshutdown;
+  tmpappsettings.windowSettings.title = "Z window";
+  tmpappsettings.windowSettings.extents = { 800, 600 };
+  tmpappsettings.windowSettings.position = { 50, 50 };
+  tmpappsettings.rendererSettings.api = Ice_Renderer_Vulkan;
+
+  return Ice::Run(tmpappsettings);
+  #else
   IceApplicationSettings settings = {};
   settings.title = "Ice";
   settings.version = 0;
@@ -146,4 +185,5 @@ int main()
   settings.rendererSettings.api = Ice_Renderer_Vulkan;
 
   return app.Run(&settings);
+  #endif // UseNewSystems
 }

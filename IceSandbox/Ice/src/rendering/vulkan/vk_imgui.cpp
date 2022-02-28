@@ -2,6 +2,7 @@
 #include "defines.h"
 
 #include "rendering/vulkan/vk_renderer.h"
+#include "platform/platform.h"
 #include "libraries/imgui/imgui.h"
 #include "libraries/imgui/imgui_impl_vulkan.h"
 #include "libraries/imgui/imgui_impl_win32.h"

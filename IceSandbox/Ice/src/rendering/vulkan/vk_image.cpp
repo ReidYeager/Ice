@@ -177,7 +177,7 @@ b8 IvkRenderer::LoadTextureFile(IvkTexture* _texture)
 
   // Load the image file =====
   int width, height;
-  void* imageSource = fileSystem.LoadImageFile(_texture->directory.c_str(), width, height);
+  void* imageSource = Ice::LoadImageFile(_texture->directory.c_str(), width, height);
   VkDeviceSize imageSize = 4 * (VkDeviceSize)width * (VkDeviceSize)height;
 
   // Create texture buffer =====
