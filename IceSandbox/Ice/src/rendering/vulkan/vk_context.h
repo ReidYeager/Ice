@@ -288,17 +288,17 @@ inline const char* VulkanResultToString(VkResult _result)
   #undef ETS
 }
 
-#define IVK_ASSERT(function, errorMsg, ...)                                      \
-{                                                                                \
-  VkResult result = function;                                                    \
-  if (result != VK_SUCCESS)                                                      \
-  {                                                                              \
-    char msg[2048];                                                              \
-    sprintf(msg, errorMsg, __VA_ARGS__);                                         \
-    ICE_ASSERT_MSG(result == VK_SUCCESS,                                         \
-                   "%s\nVulkan result : %s", msg, VulkanResultToString(result)); \
-    return false;                                                                \
-  }                                                                              \
+#define IVK_ASSERT(function, errorMsg, ...)                                            \
+{                                                                                      \
+  VkResult result = function;                                                          \
+  if (result != VK_SUCCESS)                                                            \
+  {                                                                                    \
+    char msg[2048];                                                                    \
+    sprintf(msg, errorMsg, __VA_ARGS__);                                               \
+    ICE_ASSERT_MSG(result == VK_SUCCESS,                                               \
+                   ">> %s\n>> Vulkan result : %s", msg, VulkanResultToString(result)); \
+    return false;                                                                      \
+  }                                                                                    \
 }
 
 #endif // !define ICE_RENDERING_VULKAN_RE_RENDERER_VULKAN_CONTEXT_H_

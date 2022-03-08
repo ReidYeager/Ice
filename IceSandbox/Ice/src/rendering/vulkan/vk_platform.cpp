@@ -17,13 +17,14 @@ void IvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions)
   _extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 }
 
-b8 IvkRenderer::CreateSurface()
+b8 IvkRenderer::CreateSurface(zIceWindow* _window)
 {
-  rePlatformVendorData const* vendorData = rePlatform.GetVendorInfo();
+  //rePlatformVendorData const* vendorData = rePlatform.GetVendorInfo();
+  zIceWindowVendorData const vendorData = _window->GetData();
 
   VkWin32SurfaceCreateInfoKHR createInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
-  createInfo.hinstance = vendorData->hinstance;
-  createInfo.hwnd = vendorData->hwnd;
+  createInfo.hinstance = vendorData.hinstance;
+  createInfo.hwnd = vendorData.hwnd;
   createInfo.flags = 0;
 
   IVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,

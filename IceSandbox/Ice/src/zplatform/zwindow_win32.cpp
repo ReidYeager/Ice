@@ -5,6 +5,7 @@
 #include "zplatform/zwindow.h"
 
 #include "zplatform/zplatform.h"
+#include "core/input.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -23,8 +24,8 @@ b8 zIceWindow::Initialize(zIceWindowSettings _settings)
   u32 windowExStyle = WS_EX_APPWINDOW;
   const char* windowClassName = "IceApplicationWindowClass";
 
-  vec2U extents = _settings.extents;
-  vec2I position = _settings.position;
+  vec2U windowExtents = _settings.extents;
+  vec2I windowPosition = _settings.position;
 
   // Register window =====
   {
@@ -54,16 +55,16 @@ b8 zIceWindow::Initialize(zIceWindowSettings _settings)
     RECT borderRect = {0, 0, 0, 0};
     AdjustWindowRectEx(&borderRect, windowStyle, 0, windowExStyle);
 
-    position.x += borderRect.left;
-    position.y += borderRect.top;
-    extents.width += borderRect.right - borderRect.left;
-    extents.height += borderRect.bottom - borderRect.top;
+    windowPosition.x += borderRect.left;
+    windowPosition.y += borderRect.top;
+    windowExtents.width += borderRect.right - borderRect.left;
+    windowExtents.height += borderRect.bottom - borderRect.top;
   }
   IceLogInfo("Window using (%u, %u) at (%d, %d)",
-             extents.width,
-             extents.height,
-             position.x,
-             position.y);
+             windowExtents.width,
+             windowExtents.height,
+             windowPosition.x,
+             windowPosition.y);
 
   // Create window =====
   {
@@ -71,10 +72,10 @@ b8 zIceWindow::Initialize(zIceWindowSettings _settings)
                                       windowClassName,
                                       _settings.title,
                                       windowStyle,
-                                      position.x,
-                                      position.y,
-                                      extents.width,
-                                      extents.height,
+                                      windowPosition.x,
+                                      windowPosition.y,
+                                      windowExtents.width,
+                                      windowExtents.height,
                                       0,
                                       0,
                                       vendorData.hinstance,
@@ -139,6 +140,76 @@ LRESULT CALLBACK zProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPA
     inputWindow->Close();
     return false;
   }
+
+  // Keyboard =====
+  case WM_KEYDOWN:
+  case WM_SYSKEYDOWN:
+  {
+    Input.ProcessKeyboardKey(wparam, true);
+  } break;
+  case WM_KEYUP:
+  case WM_SYSKEYUP:
+  {
+    Input.ProcessKeyboardKey(wparam, false);
+  } break;
+
+  // Mouse =====
+  case WM_MOUSEMOVE:
+  {
+    Input.ProcessMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+  } break;
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_RBUTTONDOWN:
+  case WM_RBUTTONUP:
+  case WM_MBUTTONDOWN:
+  case WM_MBUTTONUP:
+  case WM_XBUTTONDOWN:
+  case WM_XBUTTONUP:
+  {
+    b8 pressed = message == WM_LBUTTONDOWN ||
+                 message == WM_RBUTTONDOWN ||
+                 message == WM_MBUTTONDOWN ||
+                 message == WM_XBUTTONDOWN;
+
+    IceMouseButtonFlag button = Ice_Mouse_Max;
+    switch (message)
+    {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+      button = Ice_Mouse_Left; break;
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+      button = Ice_Mouse_Right; break;
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+      button = Ice_Mouse_Middle; break;
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    {
+      u32 xButton = GET_XBUTTON_WPARAM(wparam);
+      switch (xButton)
+      {
+        case 1: button = Ice_Mouse_Back; break;
+        case 2: button = Ice_Mouse_Forward; break;
+        default: button = Ice_Mouse_Extra; break;
+      }
+    } break;
+    default:
+      break;
+    }
+
+    if (button != Ice_Mouse_Max)
+    {
+      Input.ProcessMouseButton(button, pressed);
+    }
+  } break;
+  //case WM_SIZE:
+  //{
+  //  u32 width = LOWORD(lparam);
+  //  u32 height = HIWORD(lparam);
+  //  //extents = { width, height };
+  //} break;
   default:
     return DefWindowProcA(hwnd, message, wparam, lparam);
   }

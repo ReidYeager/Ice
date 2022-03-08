@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #include "math/vector.h"
+#include "zplatform/zwindow.h"
 
 #include <string>
 #include <vector>
@@ -177,6 +178,7 @@ enum IceRenderingApi
 struct IceRendererSettings
 {
   IceRenderingApi api = Ice_Renderer_Vulkan;
+  zIceWindow* window = nullptr;
 };
 
 #endif // !define ICE_RENDERING_RENDERER_SETTINGS_H_

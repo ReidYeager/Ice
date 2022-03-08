@@ -20,7 +20,7 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 
   // API initialization =====
   ICE_ATTEMPT_BOOL(CreateInstance());
-  ICE_ATTEMPT_BOOL(CreateSurface());
+  ICE_ATTEMPT_BOOL(CreateSurface(_settings.window));
   ICE_ATTEMPT_BOOL(ChoosePhysicalDevice());
   ICE_ATTEMPT_BOOL(CreateLogicalDevice());
 
@@ -60,7 +60,7 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
     ICE_ATTEMPT_BOOL(PrepareShadowDescriptors());
 
     // GUI =====
-    InitImgui();
+    //InitImgui();
   }
 
   return true;
@@ -163,7 +163,7 @@ b8 IvkRenderer::Shutdown()
   vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
 
   // GUI =====
-  ShutdownImgui();
+  //ShutdownImgui();
 
   // Command pool =====
   vkDestroyCommandPool(context.device, context.graphicsCommandPool, context.alloc);
@@ -181,24 +181,24 @@ b8 IvkRenderer::Render(IceCamera* _camera)
 {
   // TODO : Move out of IvkRenderer
   {
-    ImGui::Begin("Directional light");
-    ImGui::DragFloat3("Light color", &tmpLights.directional.color.x, 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat("Light intensity", &tmpLights.directional.color.w, 0.1f);
-    ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
-    ImGui::SliderFloat("direction z", &tmpLights.directional.direction.z, -1.0f, 1.0f);
+    //ImGui::Begin("Directional light");
+    //ImGui::DragFloat3("Light color", &tmpLights.directional.color.x, 0.01f, 0.0f, 1.0f);
+    //ImGui::DragFloat("Light intensity", &tmpLights.directional.color.w, 0.1f);
+    //ImGui::SliderFloat("direction x", &tmpLights.directional.direction.x, -1.0f, 1.0f);
+    //ImGui::SliderFloat("direction y", &tmpLights.directional.direction.y, -1.0f, 1.0f);
+    //ImGui::SliderFloat("direction z", &tmpLights.directional.direction.z, -1.0f, 1.0f);
 
-    // normalize direction
-    f32 xsq = tmpLights.directional.direction.x * tmpLights.directional.direction.x;
-    f32 ysq = tmpLights.directional.direction.y * tmpLights.directional.direction.y;
-    f32 zsq = tmpLights.directional.direction.z * tmpLights.directional.direction.z;
-    f32 sq = xsq + ysq + zsq;
-    sq = sqrt(sq);
-    tmpLights.directional.direction.x /= sq;
-    tmpLights.directional.direction.y /= sq;
-    tmpLights.directional.direction.z /= sq;
+    //// normalize direction
+    //f32 xsq = tmpLights.directional.direction.x * tmpLights.directional.direction.x;
+    //f32 ysq = tmpLights.directional.direction.y * tmpLights.directional.direction.y;
+    //f32 zsq = tmpLights.directional.direction.z * tmpLights.directional.direction.z;
+    //f32 sq = xsq + ysq + zsq;
+    //sq = sqrt(sq);
+    //tmpLights.directional.direction.x /= sq;
+    //tmpLights.directional.direction.y /= sq;
+    //tmpLights.directional.direction.z /= sq;
 
-    ImGui::End();
+    //ImGui::End();
 
     // Update buffer data =====
     // Directional light matrix =====

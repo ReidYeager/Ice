@@ -172,7 +172,7 @@ private:
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
   void GetPlatformExtensions(std::vector<const char*>& _extensions);
   // Creates a vendor-specific surface for display
-  b8 CreateSurface();
+  b8 CreateSurface(zIceWindow* _window);
   // Returns the window width and height
   vec2U GetPlatformWindowExtents();
 

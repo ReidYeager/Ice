@@ -37,6 +37,8 @@ public:
   b8 SetVisiblity(b8 _isVisible);
   b8 Update();
   void Close();
+
+  zIceWindowVendorData GetData() { return vendorData; }
 };
 
 #endif // !define ICE_ZPLATFORM_ZWINDOW_H_
