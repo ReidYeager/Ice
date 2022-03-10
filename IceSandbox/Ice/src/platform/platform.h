@@ -1,69 +1,76 @@
 
-#ifndef ICE_PLATFORM_RE_PLATFORM_H_
-#define ICE_PLATFORM_RE_PLATFORM_H_
+#ifndef ICE_PLATFORM_PLATFORM_H_
+#define ICE_PLATFORM_PLATFORM_H_
 
 #include "defines.h"
 
 #include "math/vector.h"
 
-struct IceWindowSettings
-{
-  vec2I screenPosition;
-  vec2U extents;
-  const char* title;
-};
-
-// Vendor-specific information required to maintain a window
 #ifdef ICE_PLATFORM_WINDOWS
-#include <Windows.h>
-#undef CreateWindow // Gets rid of the windows.h preprocessor definition
-#undef CloseWindow // Gets rid of the windows.h preprocessor definition
-struct rePlatformVendorData
-{
-  HWND hwnd;
-  HINSTANCE hinstance;
-};
+#include <windows.h>
+#undef CreateWindow // Remove unnecessary windows definitions
+#undef CloseWindow  // Remove unnecessary windows definitions
 #else
-struct rePlatformVendorData {};
 #endif // ICE_PLATFORM_WINDOWS
 
-extern class IcePlatform
-{
-private:
-  struct
+namespace Ice {
+
+  //=========================
+  // Memory
+  //=========================
+  void* MemoryAllocate(u64 _size);
+  void MemorySet(void* _data, u64 _size, u32 _value);
+  void MemoryCopy(void* _source, void* _destination, u64 _size);
+  void MemoryFree(void* _data);
+
+  inline void MemoryZero(void* _data, u64 _size) { MemorySet(_data, _size, 0); }
+
+  //=========================
+  // Console
+  //=========================
+  void PrintToConsole(const char* _message, u32 _color);
+
+  //=========================
+  // Window
+  //=========================
+  struct WindowSettings
   {
-    rePlatformVendorData vendorData;
-    IceWindowSettings windowSettings = {};
-    b8 shouldClose = false;
-  } state;
+    vec2I position;
+    vec2U extents;
+    const char* title;
+  };
 
-public:
-  // Initializes any components that interact with the operating system
-  b8 Initialize(IceWindowSettings* _settings);
-  // Pumps the platform's queued events
-  // Returns true when the window is closed
-  b8 Update();
-  // Destroys the window and frees its allocated memory
-  b8 Shutdown();
+  #ifdef ICE_PLATFORM_WINDOWS
+  struct WindowData
+  {
+    HWND hwnd;
+    HINSTANCE hinstance;
 
-  void Close() { state.shouldClose = true; }
+    WindowSettings settings;
+  };
+  #else
+  struct WindowData
+  {
+    WindowSettings settings;
+  };
+  #endif // ICE_PLATFORM_WINDOWS
 
-  rePlatformVendorData const* GetVendorInfo() { return &state.vendorData; }
-  IceWindowSettings const* GetWindowInfo() { return &state.windowSettings; }
+  //=========================
+  // Platform data
+  //=========================
+  extern class Platform
+  {
+  private:
+    WindowData window;
 
-  // Prints text to the platform's console
-  void ConsolePrint(const char* _message, u32 _color);
+  public:
+    b8 Update();
+    b8 Shutdown();
+    void CloseWindow(Ice::WindowData* _window = nullptr);
 
-  void* MemAlloc(u64 _size) { return malloc(_size); }
-  void MemSet(void* _data, u64 _size, u32 _value) { memset(_data, _value, _size); }
-  void MemZero(void* _data, u64 _size) { MemSet(_data, _size, 0); }
-  void MemFree(void* _data) { free(_data); }
-  void MemCopy(void* _src, void* _dst, u64 _size) { memcpy(_dst, _src, _size); }
+    b8 CreateNewWindow(Ice::WindowSettings _settings);
+    WindowData* GetWindow() { return &window; }
+  } platform;
 
-private:
-  b8 CreateWindow();
-  void CloseWindow();
-
-} rePlatform;
-
-#endif // !define ICE_PLATFORM_RE_PLATFORM_H_
+}
+#endif // !ICE_PLATFORM_PLATFORM_H_

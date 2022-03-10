@@ -3,283 +3,140 @@
 #include "logger.h"
 
 #include "core/application.h"
+
 #include "core/input.h"
-#include "core/object.h"
-#include "libraries/imgui/imgui.h"
-#include "libraries/imgui/imgui_impl_win32.h"
-#include "libraries/imgui/imgui_impl_vulkan.h"
-
-// Only used for GetPlatformWindowExtn
 #include "platform/platform.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtx/hash.hpp>
+#include "rendering/vulkan/vulkan.h"
 
 #include <chrono>
 
-void AddObjectToSceneGui(IceObject* _object, u32 index = 0)
+b8(*GameUpdateFunc)();
+b8(*GameShutdownFunc)();
+Ice::Renderer* renderer;
+
+//=========================
+// Time
+//=========================
+
+Ice::IceTime Ice::time;
+// Setup time =====
+std::chrono::steady_clock::time_point realtimeStart, frameStart, frameEnd;
+const float microToSecond = 0.000001f;
+
+void InitTime()
 {
-  if (ImGui::TreeNode((void*)index, "object %d", index))
-  {
-    ImGui::DragFloat3("Position", &_object->transform.position[0], 0.01f);
-    ImGui::DragFloat3("Rotation", &_object->transform.rotation[0], 0.1f);
-    ImGui::DragFloat3("Scale", &_object->transform.scale[0], 0.01f);
+  Ice::time.deltaTime = 0.0f;
+  Ice::time.totalTime = 0.0f;
+  Ice::time.frameCount = 0;
 
-    _object->transform.UpdateMatrix();
+  realtimeStart = std::chrono::steady_clock::now();
+  frameStart = frameEnd = realtimeStart;
 
-    for (const auto& o : _object->children)
-    {
-      AddObjectToSceneGui(o, ++index);
-    }
-
-    ImGui::TreePop(); // Done displaying this object's information
-  }
+  Ice::time.deltaTime = 0.0f;
 }
 
-u32 IceApplication::Run(IceApplicationSettings* _settings)
+void UpdateTime()
 {
-  try
-  {
-    if (!Initialize(_settings))
-    {
-      IceLogFatal("IceApplication Initialization failed");
-      return -1;
-    }
+  frameEnd = std::chrono::steady_clock::now();
 
-    if (!Update())
-    {
-      IceLogFatal("IceApplication Update failed");
-      return -2;
-    }
+  Ice::time.deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(frameEnd - frameStart).count() * microToSecond;
+  Ice::time.totalTime = std::chrono::duration_cast<std::chrono::microseconds>(frameEnd - realtimeStart).count() * microToSecond;
 
-    if (!Shutdown())
-    {
-      IceLogFatal("IceApplication Shutdown failed");
-      return -3;
-    }
+  Ice::time.frameCount++;
 
-    return 0;
-  }
-  catch (const char* error)
-  {
-    IceLogFatal("Ice caught :: %s", error);
-    return -4;
-  }
+  frameStart = frameEnd;
 }
 
-b8 IceApplication::Initialize(IceApplicationSettings* _settings)
+//=========================
+// Application
+//=========================
+
+b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 {
-  state.ClientInitialize = _settings->ClientInitialize;
-  state.ClientUpdate = _settings->ClientUpdate;
-  state.ClientShutdown = _settings->ClientShutdown;
-
-  IceLogInfo("===== reApplication Initialize =====");
-
-  // Initialize the platform =====
-  _settings->windowSettings.title = _settings->title;
-  if (!rePlatform.Initialize(&_settings->windowSettings))
+  // Platform =====
+  if (!Ice::platform.CreateNewWindow(_settings.window))
   {
-    IceLogFatal("Ice Platform failed to initialize");
+    IceLogFatal("Failed to initialize the renderer");
     return false;
   }
   Input.Initialize();
 
-  // Initialize the renderer =====
-  if (!renderer.Initialize(_settings->rendererSettings))
+  // Rendering =====
+  if (_settings.renderer.api == Ice::Renderer_Vulkan)
   {
-    IceLogFatal("Ice Renderer failed to initialize");
-    return false;
-  }
-
-  sceneRoot = new IceObject();
-  sceneRoot->transform.matrix = glm::mat4(1.0f);
-
-  // Set camera default state =====
-  glm::mat4 viewProj = glm::mat4(1);
-  vec2U extents = rePlatform.GetWindowInfo()->extents;
-  viewProj = glm::perspective(glm::radians(90.0f), float(extents.x) / float(extents.y), 0.01f, 1000.0f);
-  viewProj[1][1] *= -1; // Account for Vulkan's inverted Y screen coord
-  viewProj = glm::translate(viewProj, glm::vec3(0.0f, 0.0f, -3.0f));
-  cam.viewProjectionMatrix = viewProj;
-
-  // Initialize the client game =====
-  state.ClientInitialize();
-
-  return true;
-}
-
-b8 IceApplication::Update()
-{
-  IceLogInfo("===== reApplication Main Loop =====");
-
-  auto start = std::chrono::steady_clock::now();
-  auto end = start;
-  auto microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-  float deltaTime = 0.0f;
-  const float microToMilli = 0.001f;
-  const float microToSecond = microToMilli * 0.001f;
-
-  float deltaSum = 0.0f;
-  u32 deltaCount = 0;
-
-  float totalAverageDeltaSum = 0.0f;
-  u32 totalAverageDeltaCount = 0;
- 
-  while (rePlatform.Update())
-  {
-    // Start IMGUI frame
-    {
-      ImGui_ImplWin32_NewFrame();
-      ImGui_ImplVulkan_NewFrame();
-      ImGui::NewFrame();
-    }
-
-    // Scene hierarchy
-    {
-      u32 index = 0;
-      ImGui::Begin("Scene");
-      for (auto& o : sceneRoot->children)
-      {
-        AddObjectToSceneGui(o, index++);
-      }
-      //AddObjectToSceneGui(sceneRoot, 0);
-      ImGui::End();
-    }
-
-    state.ClientUpdate(deltaTime);
-
-    ICE_ATTEMPT_BOOL(renderer.Render(&cam));
-
-    // Update timing =====
-    {
-      end = std::chrono::steady_clock::now();
-      microsecDelta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-      deltaTime = microsecDelta.count() * microToSecond;
-      start = end;
-
-      totalTime += deltaTime;
-
-      // Timing log =====
-      deltaSum += deltaTime;
-      deltaCount++;
-      if (deltaSum >= 1.0f)
-      {
-        float averageSec = (deltaSum / deltaCount);
-        IceLogInfo("%5.3f ms -- %3.0f FPS", averageSec * 1000.0f, 1.0f / averageSec);
-
-        totalAverageDeltaSum += averageSec;
-        totalAverageDeltaCount++;
-
-        deltaSum = 0;
-        deltaCount = 0;
-      }
-
-      // Update input =====
-      Input.Update();
-    }
-  }
-
-  float totalAverageDelta = totalAverageDeltaSum / totalAverageDeltaCount;
-  IceLogInfo("Average delta : %3.3f ms -- %3.0f FPS",
-             totalAverageDelta * 1000.0f,
-             1.0f / totalAverageDelta);
-
-  return true;
-}
-
-void DestroyObjectAndChildren(IceObject* object)
-{
-  for (auto& o : object->children)
-  {
-    DestroyObjectAndChildren(o);
-  }
-
-  object->children.clear();
-  free(object);
-}
-
-b8 IceApplication::Shutdown()
-{
-  IceLogInfo("===== reApplication Shutdown =====");
-  state.ClientShutdown();
-
-  DestroyObjectAndChildren(sceneRoot);
-
-  renderer.Shutdown();
-  rePlatform.Shutdown();
-  return true;
-}
-
-IceObject* IceApplication::AddObject(const char* _meshDir, u32 _material, IceObject* _parent)
-{
-  IceObject* obj = new IceObject();
-  obj->materialHandle = _material;
-  obj->meshHandle = renderer.CreateMesh(_meshDir);
-
-  if (_parent != nullptr)
-  {
-    obj->transform.parent = &_parent->transform;
-    _parent->children.push_back(obj);
+    renderer = new Ice::RendererVulkan();
   }
   else
   {
-    obj->transform.parent = &sceneRoot->transform;
-    sceneRoot->children.push_back(obj);
+    IceLogFatal("Selected API not supported");
+    return false;
   }
 
-  renderer.AddObjectToScene(obj);
-  obj->transform.UpdateMatrix();
-
-  return obj;
-}
-
-IceHandle IceApplication::CreateMaterial(IceMaterialTypes _type, std::vector<IceShader> _shaders)
-{
-  IceHandle mat = renderer.CreateMaterial(_shaders, _type, 0);
-
-  if (mat == ICE_NULL_HANDLE)
+  if (!renderer->Init(_settings.renderer))
   {
-    IceLogError("Failed to create a material");
-    return ICE_NULL_HANDLE;
+    IceLogFatal("Failed to initialize the renderer");
+    return false;
   }
 
-  return mat;
+  // Game =====
+  GameUpdateFunc = _settings.clientUpdateFunction;
+  GameShutdownFunc = _settings.clientShutdownFunction;
+
+  return true;
 }
 
-u32 IceApplication::CreateLightingMaterial(std::vector<IceShader> _shaders)
+b8 IceApplicationUpdate()
 {
-  return renderer.CreateMaterial(_shaders, Ice_Mat_Deferred_Light, 1);
+  InitTime();
+
+  while (Ice::platform.Update())
+  {
+    ICE_ATTEMPT_BOOL(GameUpdateFunc());
+
+    Input.Update();
+    UpdateTime();
+  }
+
+  return true;
 }
 
-b8 IceApplication::SetLightingMaterial(IceHandle _material)
+b8 IceApplicationShutdown()
 {
-  return renderer.SetLightingMaterial(_material);
+  ICE_ATTEMPT_BOOL(GameShutdownFunc());
+
+  renderer->Shutdown();
+
+  Input.Shutdown();
+  Ice::CloseWindow();
+  Ice::platform.Shutdown();
+
+  return true;
 }
 
-void IceApplication::AssignMaterialTextures(IceHandle _material,
-                                              std::vector<IceTexture> _textures)
+u32 Ice::Run(ApplicationSettings _settings)
 {
-  renderer.AssignMaterialTextures(_material, _textures);
+  if (!IceApplicationInitialize(_settings))
+  {
+    IceLogFatal("Ice application initialization failed");
+    return -1;
+  }
+
+  if (!IceApplicationUpdate())
+  {
+    IceLogFatal("Ice application update failed");
+    return -2;
+  }
+
+  if (!IceApplicationShutdown())
+  {
+    IceLogFatal("Ice application shutdown failed");
+    return -3;
+  }
+
+  return 0;
 }
 
-b8 IceApplication::SetMaterialBufferData(IceHandle _material, void* _data)
+void Ice::CloseWindow()
 {
-  return renderer.SetMaterialBufferData(_material, _data);
-}
-
-glm::mat4 IceTransform::UpdateMatrix()
-{
-  matrix = parent->matrix;
-
-  matrix = glm::translate(matrix, position);
-  matrix = glm::rotate(matrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-  matrix = glm::rotate(matrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-  matrix = glm::rotate(matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-  matrix = glm::scale(matrix, scale);
-
-  renderer.FillBuffer(&buffer, &matrix, 64);
-
-  // TODO : Update children's matrices
-
-  return matrix;
+  platform.CloseWindow();
 }

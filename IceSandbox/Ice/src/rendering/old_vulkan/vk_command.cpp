@@ -7,7 +7,7 @@
 b8 IvkRenderer::CreateCommandBuffers()
 {
   const u32 count = context.swapchainImages.size();
-  context.commandsBuffers.resize(count);
+  context.commandBuffers.resize(count);
 
   VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -16,7 +16,7 @@ b8 IvkRenderer::CreateCommandBuffers()
 
   IVK_ASSERT(vkAllocateCommandBuffers(context.device,
                                       &allocInfo,
-                                      context.commandsBuffers.data()),
+                                      context.commandBuffers.data()),
              "Failed to allocate command buffers");
 
   return true;
@@ -65,7 +65,7 @@ b8 IvkRenderer::RecordCommandBuffer(u32 _commandIndex)
   forwardBeginInfo.renderPass = context.forwardRenderpass;
   forwardBeginInfo.framebuffer = context.forwardFrameBuffers[_commandIndex];
 
-  VkCommandBuffer& cmdBuffer = context.commandsBuffers[_commandIndex];
+  VkCommandBuffer& cmdBuffer = context.commandBuffers[_commandIndex];
 
   // Begin recording =====
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),

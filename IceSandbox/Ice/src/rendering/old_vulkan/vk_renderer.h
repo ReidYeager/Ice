@@ -5,8 +5,6 @@
 #include "defines.h"
 
 #include "math/vector.h"
-#include "core/camera.h"
-#include "core/object.h"
 #include "rendering/vulkan/vk_context.h"
 #include "rendering/render_context.h"
 #include "rendering/mesh.h"
@@ -170,7 +168,7 @@ private:
   //=========================
 
   // Retrieves all of the extensions the platform requires to render and present with Vulkan
-  void GetPlatformExtensions(std::vector<const char*>& _extensions);
+  void GetRequiredPlatformExtensions(std::vector<const char*>& _extensions);
   // Creates a vendor-specific surface for display
   b8 CreateSurface(zIceWindow* _window);
   // Returns the window width and height

@@ -1,14 +1,12 @@
-\IceSandbox\Ice\src\core\application.cpp
-	Line   281 :--: // TODO : Update children's matrices
-\IceSandbox\Ice\src\rendering\vulkan\vk_command.cpp
+\IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
 	Line   136 :--: // TODO : Remove this branch
 	Line   202 :--: // TODO : Remove this branch
-\IceSandbox\Ice\src\rendering\vulkan\vk_deferred.cpp
+\IceSandbox\Ice\src\rendering\old_vulkan\vk_deferred.cpp
 	Line   148 :--: // NOTE : Should learn more about stage/access masks
-\IceSandbox\Ice\src\rendering\vulkan\vk_renderer.cpp
+\IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.cpp
 	Line   181 :--: // TODO : Move out of IvkRenderer
-\IceSandbox\Ice\src\rendering\vulkan\vk_renderer.h
-	Line    19 :--: // TODO : ~!!~ Better rendering backend asset management (0/4)
-	Line    27 :--: // TODO : Restructure the scene graph (0/4)
-	Line    33 :--: // TODO : Allow source to change material pipeline settings
-	Line    40 :--: // TODO : Remove/move all structs/variables defined here.
+\IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.h
+	Line    17 :--: // TODO : ~!!~ Better rendering backend asset management (0/4)
+	Line    25 :--: // TODO : Restructure the scene graph (0/4)
+	Line    31 :--: // TODO : Allow source to change material pipeline settings
+	Line    38 :--: // TODO : Remove/move all structs/variables defined here.

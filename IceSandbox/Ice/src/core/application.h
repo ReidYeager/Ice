@@ -1,62 +1,47 @@
 
-#ifndef ICE_CORE_RE_APPLICATION_H_
-#define ICE_CORE_RE_APPLICATION_H_
+#ifndef ICE_CORE_APPLICATION_H_
+#define ICE_CORE_APPLICATION_H_
 
 #include "defines.h"
 
-#include "core/scene.h"
 #include "platform/platform.h"
 #include "rendering/renderer.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtx/hash.hpp>
+namespace Ice {
 
-struct IceApplicationSettings
-{
-  const char* title;
-  u32 version;
-
-  IceWindowSettings windowSettings;
-  IceRendererSettings rendererSettings;
-
-  void(*ClientInitialize)();
-  void(*ClientUpdate)(float);
-  void(*ClientShutdown)();
-};
-
-class IceApplication
-{
-private:
-  struct
+  //=========================
+  // Time
+  //=========================
+  extern struct IceTime
   {
-    void(*ClientInitialize)();
-    void(*ClientUpdate)(float);
-    void(*ClientShutdown)();
-  } state;
+    // Real-time in seconds since the application started
+    union
+    {
+      f32 totalTime;
+      f32 realTime;
+    };
 
-public:
-  IceCamera cam;
-  IceObject* sceneRoot;
+    f32 deltaTime; // Time in seconds taken by the previous tick
 
-  float totalTime = 0.0f;
+    u32 frameCount; // Number of frames rendered before this tick
+  } time;
 
-  u32 Run(IceApplicationSettings* _settings);
+  //=========================
+  // Application
+  //=========================
 
-  IceObject* AddObject(const char* _meshDir, u32 _material, IceObject* _parent = nullptr);
-  // Creates a new material instance using the input shaders for subpass 0
-  u32 CreateMaterial(IceMaterialTypes _type, std::vector<IceShader> _shaders);
-  // Creates a new material for subpass 1
-  u32 CreateLightingMaterial(std::vector<IceShader> _shaders);
-  b8 SetLightingMaterial(IceHandle _material);
-  // Updates the material texture samplers
-  void AssignMaterialTextures(IceHandle _material, std::vector<IceTexture> _textures);
-  b8 SetMaterialBufferData(IceHandle _material, void* _data);
+  struct ApplicationSettings
+  {
+    Ice::RendererSettings renderer;
+    Ice::WindowSettings window;
+    b8(*clientInitFunction)();
+    b8(*clientUpdateFunction)();
+    b8(*clientShutdownFunction)();
+  };
 
-private:
-  b8 Initialize(IceApplicationSettings* _settings);
-  b8 Update();
-  b8 Shutdown();
+  u32 Run(ApplicationSettings);
 
-};
+  void CloseWindow();
 
-#endif // !define ICE_CORE_RE_APPLICATION_H_
+}
+#endif // !ICE_CORE_APPLICATION_H_

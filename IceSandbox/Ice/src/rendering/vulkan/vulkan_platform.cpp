@@ -1,30 +1,28 @@
 
 #include "defines.h"
 
-#include "rendering/vulkan/vk_renderer.h"
+#include "rendering/vulkan/vulkan.h"
+
 #include "platform/platform.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>
 
-#include <vector>
-
 #ifdef ICE_PLATFORM_WINDOWS
 
-void IvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions)
+void Ice::RendererVulkan::GetRequiredPlatformExtensions(std::vector<const char*>& _extensions)
 {
   _extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 }
 
-b8 IvkRenderer::CreateSurface(zIceWindow* _window)
+b8 Ice::RendererVulkan::CreateSurface()
 {
-  //rePlatformVendorData const* vendorData = rePlatform.GetVendorInfo();
-  zIceWindowVendorData const vendorData = _window->GetData();
+  Ice::WindowData const* window = Ice::platform.GetWindow();
 
   VkWin32SurfaceCreateInfoKHR createInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
-  createInfo.hinstance = vendorData.hinstance;
-  createInfo.hwnd = vendorData.hwnd;
+  createInfo.hinstance = window->hinstance;
+  createInfo.hwnd = window->hwnd;
   createInfo.flags = 0;
 
   IVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,
@@ -36,15 +34,22 @@ b8 IvkRenderer::CreateSurface(zIceWindow* _window)
   return context.surface != VK_NULL_HANDLE;
 }
 
-vec2U IvkRenderer::GetPlatformWindowExtents()
+vec2U Ice::RendererVulkan::GetWindowExtents()
 {
-  return rePlatform.GetWindowInfo()->extents;
+  return Ice::platform.GetWindow()->settings.extents;
 }
 
-// End ICE_PLATFORM_WINDOWS
 #else
+void Ice::RendererVulkan::GetRequiredPlatformExtensions(std::vector<const char*>& _extensions) {}
 
-void IvkRenderer::GetPlatformExtensions(std::vector<const char*>& _extensions) {}
-b8 IvkRenderer::CreateSurface() { return false; }
+b8 Ice::RendererVulkan::CreateSurface()
+{
+  return false;
+}
 
+vec2U Ice::RendererVulkan::GetWindowExtents()
+{
+  return { 0, 0 };
+}
 #endif
+

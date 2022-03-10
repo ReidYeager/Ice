@@ -2,19 +2,19 @@
 #include "logger.h"
 
 #include "core/input.h"
-#include "zplatform/zplatform.h"
+#include "platform/platform.h"
 
 IceInput Input;
 
 void IceInput::Initialize()
 {
   Ice::MemoryZero(&m_states, sizeof(InputStates));
-  IceLogInfo("Initialized Input system");
+  IceLogDebug("Initialized Input system");
 }
 
 void IceInput::Shutdown()
 {
-  IceLogInfo("Shutdown Input system");
+  IceLogDebug("Shutdown Input system");
 }
 
 void IceInput::Update()

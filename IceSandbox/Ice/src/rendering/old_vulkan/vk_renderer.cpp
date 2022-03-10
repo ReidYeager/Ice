@@ -16,7 +16,7 @@
 
 b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
 {
-  IceLogDebug("===== Vulkan Renderer Init =====");
+  LOG_DEBUG("===== Vulkan Renderer Init =====");
 
   // API initialization =====
   ICE_ATTEMPT_BOOL(CreateInstance());
@@ -35,7 +35,7 @@ b8 IvkRenderer::Initialize(const IceRendererSettings& _settings)
   ICE_ATTEMPT_BOOL(CreateSyncObjects());
   ICE_ATTEMPT_BOOL(CreateCommandBuffers());
 
-  IceLogDebug("===== Vulkan Renderer Init Complete =====");
+  LOG_DEBUG("===== Vulkan Renderer Init Complete =====");
 
   context.defaultColorImage = GetTexture("TestAlbedo.png", Ice_Image_Color);
   context.defaultNormalImage = GetTexture("EmptyNormal.png", Ice_Image_Normal);
@@ -126,10 +126,10 @@ b8 IvkRenderer::Shutdown()
   // Rendering components =====
   vkFreeCommandBuffers(context.device,
                        context.graphicsCommandPool,
-                       context.commandsBuffers.size(),
-                       context.commandsBuffers.data());
+                       context.commandBuffers.size(),
+                       context.commandBuffers.data());
 
-  for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
+  for (u32 i = 0; i < ICE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
     vkDestroyFence(context.device, context.flightSlotAvailableFences[i], context.alloc);
     vkDestroySemaphore(context.device, context.renderCompleteSemaphores[i], context.alloc);
@@ -260,7 +260,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
   submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[flightSlotIndex];
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &context.commandsBuffers[swapchainImageIndex];
+  submitInfo.pCommandBuffers = &context.commandBuffers[swapchainImageIndex];
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
 
@@ -294,7 +294,7 @@ b8 IvkRenderer::Render(IceCamera* _camera)
     return false;
   }
 
-  flightSlotIndex = (flightSlotIndex + 1) % RE_MAX_FLIGHT_IMAGE_COUNT;
+  flightSlotIndex = (flightSlotIndex + 1) % ICE_MAX_FLIGHT_IMAGE_COUNT;
 
   return true;
 }
@@ -303,7 +303,7 @@ b8 IvkRenderer::Resize()
 {
   vkDeviceWaitIdle(context.device);
 
-  IceLogDebug("Resizing");
+  LOG_DEBUG("Resizing");
 
   // Swapchain =====
   for (auto& v : context.swapchainImageViews)
@@ -365,7 +365,7 @@ b8 IvkRenderer::CreateInstance()
 {
   // Retrieve and validate extensions and layers to enable
   std::vector<const char*> extensions;
-  GetPlatformExtensions(extensions);
+  GetRequiredPlatformExtensions(extensions);
   extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
   #ifdef ICE_DEBUG
   extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -562,7 +562,7 @@ b8 IvkRenderer::CreateLogicalDevice()
                                    context.gpu.presentQueueIndex,
                                    context.gpu.transientQueueIndex };
 
-  IceLogInfo("%s -- Graphics : %u -- Presentation : %u -- Transfer : %u",
+  ICE_LOG_INFO("%s -- Graphics : %u -- Presentation : %u -- Transfer : %u",
              context.gpu.properties.deviceName, queueIndices[0], queueIndices[1], queueIndices[2]);
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueCount);
@@ -679,7 +679,7 @@ b8 IvkRenderer::CreateSwapchain()
       vec2U e = GetPlatformWindowExtents();
       extent = { e.width, e.height };
     }
-    IceLogDebug("Swapchain using extents : (%u, %u)", extent.width, extent.height);
+    LOG_DEBUG("Swapchain using extents : (%u, %u)", extent.width, extent.height);
 
     // Creation =====
     VkSwapchainCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
@@ -724,7 +724,7 @@ b8 IvkRenderer::CreateSwapchain()
     // Get the number of images actually created
     vkGetSwapchainImagesKHR(context.device, context.swapchain, &imageCount, nullptr);
 
-    IceLogInfo("Created %u images for the swapchain", imageCount);
+    ICE_LOG_INFO("Created %u images for the swapchain", imageCount);
 
     context.swapchainImages.resize(imageCount);
     context.swapchainImageViews.resize(imageCount);
@@ -755,11 +755,11 @@ b8 IvkRenderer::CreateSyncObjects()
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   // Create each frame's sync objects =====
-  context.imageAvailableSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-  context.renderCompleteSemaphores.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
-  context.flightSlotAvailableFences.resize(RE_MAX_FLIGHT_IMAGE_COUNT);
+  context.imageAvailableSemaphores.resize(ICE_MAX_FLIGHT_IMAGE_COUNT);
+  context.renderCompleteSemaphores.resize(ICE_MAX_FLIGHT_IMAGE_COUNT);
+  context.flightSlotAvailableFences.resize(ICE_MAX_FLIGHT_IMAGE_COUNT);
 
-  for (u32 i = 0; i < RE_MAX_FLIGHT_IMAGE_COUNT; i++)
+  for (u32 i = 0; i < ICE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
     IVK_ASSERT(vkCreateFence(context.device,
                              &fenceInfo,
