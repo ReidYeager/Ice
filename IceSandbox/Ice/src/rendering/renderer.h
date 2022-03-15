@@ -4,9 +4,22 @@
 
 #include "defines.h"
 
-#include "rendering/render_context.h"
+#include <vector>
+
+#define ALIGN_FOR_SHADER __declspec(align(16)) // Shaders are 16-byte aligned
 
 namespace Ice {
+
+  // ==========
+  // Renderer
+  // ==========
+
+  enum RenderingApi
+  {
+    Renderer_Vulkan,
+    Renderer_OpenGL,
+    Renderer_DirectX
+  };
 
   struct RendererSettings
   {
@@ -18,6 +31,7 @@ namespace Ice {
   {
   public:
     virtual b8 Init(Ice::RendererSettings _settings) = 0;
+    virtual b8 RenderFrame() = 0;
     virtual b8 Shutdown() = 0;
 
   };

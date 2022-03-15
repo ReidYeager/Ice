@@ -93,6 +93,8 @@ b8 IceApplicationUpdate()
   {
     ICE_ATTEMPT_BOOL(GameUpdateFunc());
 
+    ICE_ATTEMPT_BOOL(renderer->RenderFrame());
+
     Input.Update();
     UpdateTime();
   }

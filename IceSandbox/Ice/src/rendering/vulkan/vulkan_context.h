@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/render_context.h"
+#include "rendering/renderer.h"
 
 #include <vulkan/vulkan.h>
 
@@ -13,9 +13,32 @@
 
 namespace Ice {
 
-  //=========================
+  // =========================
+  // Images
+  // =========================
+
+  struct IvkImage
+  {
+    vec2U extents;
+    VkImage image = VK_NULL_HANDLE;
+    VkImageView view = VK_NULL_HANDLE;
+    VkSampler sampler = VK_NULL_HANDLE;
+
+    VkFormat format;
+    VkImageLayout layout;
+
+    VkDeviceMemory memory;
+  };
+
+  // =========================
   // Context
-  //=========================
+  // =========================
+
+  struct Renderpass
+  {
+    VkRenderPass renderpass;
+    std::vector<VkFramebuffer> framebuffers;
+  };
 
   struct Gpu
   {
@@ -52,6 +75,7 @@ namespace Ice {
     VkCommandPool graphicsCommandPool;
     VkCommandPool transientCommandPool;
 
+    // Swapchain =====
     VkPresentModeKHR presentMode;
     VkSwapchainKHR swapchain;
     std::vector<VkImage> swapchainImages;
@@ -59,12 +83,21 @@ namespace Ice {
     VkFormat swapchainFormat;
     VkExtent2D swapchainExtent;
 
+    // Depth =====
+    std::vector<IvkImage> depthImages;
+
+    // Synchronization =====
     std::vector<VkFence> flightSlotAvailableFences;
     std::vector<VkSemaphore> renderCompleteSemaphores;
     std::vector<VkSemaphore> imageAvailableSemaphores;
     u32 currentFlightIndex = 0;
     #define ICE_MAX_FLIGHT_IMAGE_COUNT 3
 
+    // Renderpasses =====
+    Ice::Renderpass forward;
+    Ice::Renderpass deferred;
+
+    // Commands =====
     std::vector<VkCommandBuffer> commandBuffers;
   };
 

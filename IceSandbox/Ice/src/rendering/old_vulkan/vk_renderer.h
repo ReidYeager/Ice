@@ -15,7 +15,7 @@
 
 #include <vector>
 
-// TODO : ~!!~ Better rendering backend asset management (0/4)
+// todo Better rendering backend asset management (0/4)
 // Organize the code itself -- Separate functionality domains while maintaining convenience
 // Work on making data access during Render() as efficient as possible -- Namely keep it cache friendly
 // [ ] Buffers
@@ -23,7 +23,7 @@
 // [ ] Shaders
 // [ ] Materials
 
-// TODO : Restructure the scene graph (0/4)
+// todo Restructure the scene graph (0/4)
 // [ ] Establish a proper hierarchy in /core/
 // [ ] Create a structure in the renderer optimized for rendering
 // [ ] Link the core hierarchy to the rendering structure via core

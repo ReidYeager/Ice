@@ -24,31 +24,149 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT_BOOL(CreateSyncObjects());
   ICE_ATTEMPT_BOOL(CreateCommandBuffers());
 
+  ICE_ATTEMPT_BOOL(CreateDepthImages());
+  //ICE_ATTEMPT_BOOL(CreateGlobalDescriptors());
+  ICE_ATTEMPT_BOOL(CreateForwardComponents());
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::RenderFrame()
+{
+  static u32 flightSlotIndex = 0;
+  static u32 swapchainImageIndex = 0;
+  VkResult result;
+
+  // Wait for oldest in-flight slot to return =====
+  IVK_ASSERT(vkWaitForFences(context.device,
+                             1,
+                             &context.flightSlotAvailableFences[flightSlotIndex],
+                             VK_TRUE,
+                             3000000000), // 3 second timeout
+             "Flight slot wait fence failed");
+
+  result = vkAcquireNextImageKHR(context.device,
+                                 context.swapchain,
+                                 UINT64_MAX,
+                                 context.imageAvailableSemaphores[flightSlotIndex],
+                                 VK_NULL_HANDLE,
+                                 &swapchainImageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    //Resize();
+    //return true;
+    IceLogFatal("Need to resize");
+    return false;
+  }
+  else if (result != VK_SUCCESS)
+  {
+    return false;
+  }
+
+  // Submit a command buffer =====
+  RecordCommandBuffer(swapchainImageIndex);
+
+  VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+  VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[flightSlotIndex];
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &context.commandBuffers[swapchainImageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
+
+  IVK_ASSERT(vkResetFences(context.device,
+                           1,
+                           &context.flightSlotAvailableFences[flightSlotIndex]),
+             "Failed to reset flight slot available fence %u", flightSlotIndex);
+  IVK_ASSERT(vkQueueSubmit(context.graphicsQueue,
+                           1,
+                           &submitInfo,
+                           context.flightSlotAvailableFences[flightSlotIndex]),
+             "Failed to submit draw command");
+
+  // Present =====
+  VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &context.swapchain;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
+  presentInfo.pImageIndices = &swapchainImageIndex;
+
+  result = vkQueuePresentKHR(context.presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    //Resize();
+    IceLogFatal("Need to resize");
+    return false;
+  }
+  else if (result != VK_SUCCESS)
+  {
+    IceLogFatal("Failed to present the swapchain");
+    return false;
+  }
+
+  flightSlotIndex = (flightSlotIndex + 1) % ICE_MAX_FLIGHT_IMAGE_COUNT;
+
   return true;
 }
 
 b8 Ice::RendererVulkan::Shutdown()
 {
+  vkDeviceWaitIdle(context.device);
+
+  // Renderpasses =====
+  for (const auto& f : context.forward.framebuffers)
+  {
+    vkDestroyFramebuffer(context.device, f, context.alloc);
+  }
+  context.forward.framebuffers.clear();
+  vkDestroyRenderPass(context.device, context.forward.renderpass, context.alloc);
+
+  // Depth =====
+  for (auto& d : context.depthImages)
+  {
+    DestroyImage(&d);
+  }
+  context.depthImages.clear();
+
+  // Commands =====
   vkFreeCommandBuffers(context.device,
                        context.graphicsCommandPool,
                        context.commandBuffers.size(),
                        context.commandBuffers.data());
+  context.commandBuffers.clear();
 
+  // Synchronization =====
   for (u32 i = 0; i < ICE_MAX_FLIGHT_IMAGE_COUNT; i++)
   {
     vkDestroyFence(context.device, context.flightSlotAvailableFences[i], context.alloc);
     vkDestroySemaphore(context.device, context.renderCompleteSemaphores[i], context.alloc);
     vkDestroySemaphore(context.device, context.imageAvailableSemaphores[i], context.alloc);
   }
+  context.flightSlotAvailableFences.clear();
+  context.renderCompleteSemaphores.clear();
+  context.imageAvailableSemaphores.clear();
 
+  // Swapchain =====
   for (auto& v : context.swapchainImageViews)
   {
     vkDestroyImageView(context.device, v, context.alloc);
   }
+  context.swapchainImageViews.clear();
+  context.swapchainImages.clear();
   vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
+
+  // Pools =====
   vkDestroyCommandPool(context.device, context.graphicsCommandPool, context.alloc);
   vkDestroyCommandPool(context.device, context.transientCommandPool, context.alloc);
   vkDestroyDescriptorPool(context.device, context.descriptorPool, context.alloc);
+
+  // Device =====
   vkDestroyDevice(context.device, context.alloc);
   vkDestroySurfaceKHR(context.instance, context.surface, context.alloc);
   vkDestroyInstance(context.instance, context.alloc);
@@ -371,13 +489,15 @@ b8 Ice::RendererVulkan::CreateSwapchain()
 
   // Create swapchain =====
   {
+    // Select best info =====
+
     u32 maxImageCount = context.gpu.surfaceCapabilities.maxImageCount;
     if (maxImageCount > 0 && imageCount > maxImageCount)
     {
       imageCount = maxImageCount;
     }
 
-    // Format =====
+    // Format
     VkSurfaceFormatKHR format = context.gpu.surfaceFormats[0]; // Default
     for (const auto& f : context.gpu.surfaceFormats)
     {
@@ -390,7 +510,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     }
     context.surfaceFormat = format;
 
-    // Present mode =====
+    // Present mode
     VkPresentModeKHR present = VK_PRESENT_MODE_FIFO_KHR; // Guaranteed
     for (const auto& mode : context.gpu.presentModes)
     {
@@ -405,7 +525,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu.device, context.surface, &context.gpu.surfaceCapabilities);
 
-    // Image dimensions =====
+    // Image dimensions
     VkExtent2D extent;
     if (context.gpu.surfaceCapabilities.currentExtent.width != -1u)
     {
@@ -416,9 +536,10 @@ b8 Ice::RendererVulkan::CreateSwapchain()
       vec2U e = GetWindowExtents();
       extent = { e.width, e.height };
     }
-    IceLogInfo("Swapchain using extents : (%u, %u)", extent.width, extent.height);
+    IceLogInfo("Swapchain using: extents (%u, %u) -- format %d", extent.width, extent.height, format);
 
     // Creation =====
+
     VkSwapchainCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
     createInfo.flags = 0;
     createInfo.imageArrayLayers = 1;
@@ -442,9 +563,6 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     }
     else
     {
-      // NOTE-: Using this, despite having different queues for graphics and presentation, seems to
-      // not only work, but improve frame times a bit (~100us for 1280x720 on gtx 1060).
-      // I'm leaving in the above because I'm worried that it might later break if removed
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 

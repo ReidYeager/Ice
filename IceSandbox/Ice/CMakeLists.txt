@@ -19,8 +19,6 @@ add_library (Ice STATIC
   "src/math/matrix.h"
   "src/math/linear.h"
 
-  "src/rendering/render_context.h"
-
 #  "src/rendering/vulkan/vk_renderer.h"
 #  "src/rendering/vulkan/vk_renderer.cpp"
 #  "src/rendering/vulkan/vk_context.h"
@@ -54,11 +52,22 @@ add_library (Ice STATIC
   "src/libraries/imgui/imstb_truetype.h"
 
   "src/tools/lexer.h"
+  
   "src/core/application.h"
   "src/core/application.cpp"
+  
   "src/platform/platform.h"
   "src/platform/platform_win32.cpp"
-   "src/rendering/vulkan/vulkan.h" "src/rendering/vulkan/vulkan.cpp" "src/rendering/vulkan/vulkan_context.h" "src/rendering/vulkan/vulkan_platform.cpp" "src/rendering/vulkan/vulkan_image.cpp" "src/rendering/vulkan/vulkan_command.cpp")
+  
+  "src/rendering/renderer.h"
+
+  "src/rendering/vulkan/vulkan.h"
+  "src/rendering/vulkan/vulkan.cpp"
+  "src/rendering/vulkan/vulkan_context.h"
+  "src/rendering/vulkan/vulkan_platform.cpp"
+  "src/rendering/vulkan/vulkan_image.cpp"
+  "src/rendering/vulkan/vulkan_command.cpp"
+ "src/rendering/vulkan/vulkan_renderpass.cpp")
 
 add_compile_definitions(ICE_DLL_EXPORT)
 
