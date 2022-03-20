@@ -19,7 +19,7 @@ namespace Ice {
 
     static const Entity invalidEntity = 0;
 
-    Ice::Entity CreateEntity()
+    static Ice::Entity CreateEntity()
     {
       static Ice::Entity nextID = 0;
       return ++nextID;

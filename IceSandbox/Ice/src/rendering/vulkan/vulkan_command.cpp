@@ -95,7 +95,9 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex)
     //                        0,
     //                        nullptr);
 
-    //vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
+
+    vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
 
     vkCmdEndRenderPass(cmdBuffer);
   }

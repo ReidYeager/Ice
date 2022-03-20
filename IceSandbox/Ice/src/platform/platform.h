@@ -6,6 +6,8 @@
 
 #include "math/vector.h"
 
+#include <vector>
+
 #ifdef ICE_PLATFORM_WINDOWS
 #include <windows.h>
 #undef CreateWindow // Remove unnecessary windows definitions
@@ -29,6 +31,11 @@ namespace Ice {
   // Console
   //=========================
   void PrintToConsole(const char* _message, u32 _color);
+
+  //=========================
+  // Filesystem
+  //=========================
+  std::vector<char> LoadFile(const char* _directory);
 
   //=========================
   // Window

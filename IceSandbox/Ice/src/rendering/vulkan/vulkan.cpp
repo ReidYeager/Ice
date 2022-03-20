@@ -7,6 +7,21 @@
 
 #include <vector>
 
+b8 Ice::RendererVulkan::TMP_InitializeRequiredData()
+{
+  // Material =====
+  ICE_ATTEMPT_BOOL(CreatePipelineLayout());
+  ICE_ATTEMPT_BOOL(CreatePipeline());
+
+  return true;
+}
+
+void Ice::RendererVulkan::TMP_ShutdownRequiredData()
+{
+  vkDestroyPipeline(context.device, context.pipeline, context.alloc);
+  vkDestroyPipelineLayout(context.device, context.pipelineLayout, context.alloc);
+}
+
 b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
 {
   IceLogDebug("Vulkan init");
@@ -27,6 +42,8 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT_BOOL(CreateDepthImages());
   //ICE_ATTEMPT_BOOL(CreateGlobalDescriptors());
   ICE_ATTEMPT_BOOL(CreateForwardComponents());
+
+  ICE_ATTEMPT_BOOL(TMP_InitializeRequiredData());
 
   return true;
 }
@@ -118,6 +135,8 @@ b8 Ice::RendererVulkan::RenderFrame()
 b8 Ice::RendererVulkan::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
+
+  TMP_ShutdownRequiredData();
 
   // Renderpasses =====
   for (const auto& f : context.forward.framebuffers)

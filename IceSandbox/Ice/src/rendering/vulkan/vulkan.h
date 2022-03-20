@@ -23,6 +23,8 @@ namespace Ice
     //=========================
     // Vulkan Initialization
     //=========================
+    b8 TMP_InitializeRequiredData();
+    void TMP_ShutdownRequiredData();
 
     // Ensures that all desired layer and extension functionality is present in the created instance
     b8 CreateInstance();
@@ -96,6 +98,9 @@ namespace Ice
     //=========================
 
     IceHandle GetShader(const char* _directory);
+    b8 CreateShaderModule(VkShaderModule* _module, const char* _directory);
+    b8 CreatePipelineLayout();
+    b8 CreatePipeline();
 
   public:
     b8 Init(Ice::RendererSettings _settings);

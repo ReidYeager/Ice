@@ -6,6 +6,10 @@
 
 #include "core/input.h"
 
+#include <vector>
+#include <fstream>
+#include <string>
+
 #include <stdlib.h>
 #include <windows.h>
 #include <windowsx.h>
@@ -51,6 +55,29 @@ void Ice::PrintToConsole(const char* _message, u32 _color)
   LPDWORD written = 0;
   WriteConsoleA(console, _message, (DWORD)length, written, 0);
   SetConsoleTextAttribute(console, 0xf);
+}
+
+//=========================
+// Filesystem
+//=========================
+
+std::vector<char> Ice::LoadFile(const char* _directory)
+{
+  std::ifstream inFile;
+  inFile.open(_directory, std::ios::ate | std::ios::binary);
+  if (!inFile)
+  {
+    IceLogWarning("Failed to load file : %s", _directory);
+    return {};
+  }
+
+  size_t fileSize = inFile.tellg();
+  inFile.seekg(0);
+  std::vector<char> rawData(fileSize);
+  inFile.read(rawData.data(), fileSize);
+
+  inFile.close();
+  return rawData;
 }
 
 //=========================
@@ -262,7 +289,7 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
     i32 x = LOWORD(lparam);
     i32 y = HIWORD(lparam);
     Ice::platform.GetWindow()->settings.position = { x, y };
-  }
+  } break;
   default:
     return DefWindowProcA(hwnd, message, wparam, lparam);
   }

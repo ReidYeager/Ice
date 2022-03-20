@@ -33,6 +33,9 @@ typedef struct vec2
     }
   }
 
+  bool operator==(vec2& other) const { return x == other.x && y == other.y; }
+  bool operator==(const vec2& other) const { return x == other.x && y == other.y; }
+
 } vec2;
 
 typedef struct vec3
@@ -68,6 +71,9 @@ typedef struct vec3
       return z;
     }
   }
+
+  bool operator==(vec3& other) const { return x == other.x && y == other.y && z == other.z; }
+  bool operator==(const vec3& other) const { return x == other.x && y == other.y && z == other.z; }
 
 } vec3;
 
@@ -109,6 +115,12 @@ typedef struct vec4
       return w;
     }
   }
+
+  bool operator==(vec4& other) const
+    { return x == other.x && y == other.y && z == other.z && w == other.w; }
+  bool operator==(const vec4& other) const
+    { return x == other.x && y == other.y && z == other.z && w == other.w; }
+
 } vec4;
 
 //=========================

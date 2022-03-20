@@ -10,5 +10,11 @@
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.h
 	Line    31 :--: // TODO : Allow source to change material pipeline settings
 	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
+\IceSandbox\Ice\src\rendering\vulkan\vulkan_context.h
+	Line   162 :--: // TODO : Delete ASAP -- Delete when materials are properly implemented
+\IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
+	Line    40 :--: // TODO : Rewrite with materials
+	Line    60 :--: // TODO : Rewrite with materials
+	Line   198 :--: // TODO : Rewrite with materials
 \IceSandbox\Sandbox\src\source.cpp
 	Line     5 :--: // TODO : ~!!~ Materials
