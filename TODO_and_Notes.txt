@@ -1,27 +1,5 @@
-\IceSandbox\Ice\src\libraries\imgui\imgui.cpp
-	Line   197 :--: // TODO: Set optional io.ConfigFlags values, e.g. 'io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard' to enable keyboard controls.
-	Line   198 :--: // TODO: Fill optional fields of the io structure later.
-	Line   199 :--: // TODO: Load TTF/OTF fonts if you don't want to use the default font.
-	Line   232 :--: // TODO: Set optional io.ConfigFlags values, e.g. 'io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard' to enable keyboard controls.
-	Line   233 :--: // TODO: Fill optional fields of the io structure later.
-	Line   234 :--: // TODO: Load TTF/OTF fonts if you don't want to use the default font.
-	Line   292 :--: // TODO: Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-	Line   293 :--: // TODO: Setup viewport covering draw_data->DisplayPos to draw_data->DisplayPos + draw_data->DisplaySize
-	Line   294 :--: // TODO: Setup orthographic projection matrix cover draw_data->DisplayPos to draw_data->DisplayPos + draw_data->DisplaySize
-	Line   295 :--: // TODO: Setup shader: vertex { float2 pos, float2 uv, u32 color }, fragment shader sample color from 1 texture, multiply by vertex color.
-	Line  2241 :--: // the API mid-way through development and support two ways to using the clipper, needs some rework (see TODO)
-\IceSandbox\Ice\src\libraries\imgui\imgui.h
-	Line  1036 :--: //ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 14,  // FIXME: TODO: Disable automatic scroll on TreePop() if node got just open and contents is not visible
-	Line  2317 :--: // NOTE: IMGUI DOESN'T CLEAR THE STRUCTURE AND DOESN'T CALL A CONSTRUCTOR SO ANY CUSTOM FIELD WILL BE UNINITIALIZED. IF YOU ADD EXTRA FIELDS (SUCH AS A 'Z' COORDINATES) YOU WILL NEED TO CLEAR THEM DURING RENDER OR TO IGNORE THEM.
-\IceSandbox\Ice\src\libraries\imgui\imgui_demo.cpp
-	Line  6480 :--: // TODO: display items starting from the bottom
-\IceSandbox\Ice\src\libraries\imgui\imgui_draw.cpp
-	Line   718 :--: // TODO: Thickness anti-aliased lines cap are missing their AA fringe.
-\IceSandbox\Ice\src\libraries\imgui\imstb_truetype.h
-	Line   238 :--: // NOTES
-	Line  2476 :--: // TODO: Support more formats.
-	Line  2522 :--: // TODO: Support more formats.
-	Line  2547 :--: // TODO: Implement other stuff.
+\IceSandbox\Ice\src\core\application.cpp
+	Line   157 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
 	Line   136 :--: // TODO : Remove this branch
 	Line   202 :--: // TODO : Remove this branch
@@ -29,30 +7,8 @@
 	Line   148 :--: // NOTE : Should learn more about stage/access masks
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.cpp
 	Line   181 :--: // TODO : Move out of IvkRenderer
-	Line   707 :--: // NOTE-: Using this, despite having different queues for graphics and presentation, seems to
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.h
 	Line    31 :--: // TODO : Allow source to change material pipeline settings
 	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
-\IceSandbox\libraries\include\glm\detail\compute_common.hpp
-	Line    22 :--: // TODO, perf comp with: *(((int *) &x) + 1) &= 0x7fffffff;
-\IceSandbox\libraries\include\glm\gtx\matrix_decompose.inl
-	Line    51 :--: /// TODO: Fixme!
-\IceSandbox\libraries\include\glm\simd\common.h
-	Line   136 :--: /* trunc TODO
-\IceSandbox\libraries\include\stb\stb_image.h
-	Line    18 :--: QUICK NOTES:
-\IceSandbox\libraries\include\tinyobjloader\tiny_obj_loader.h
-	Line    66 :--: // TODO(syoyo): Better C++11 detection for older compiler
-	Line   402 :--: // NOTE(syoyo): array index is based on the appearance order.
-	Line   724 :--: // TODO(syoyo): bspline, surface, ...
-	Line   850 :--: // NOTE: THESE MUST BE DECLARED HERE SINCE WE ARE NOT ALLOWED
-	Line   911 :--: // NOTE: Don't use powf here, it will absolutely murder precision.
-	Line  1227 :--: // TODO(syoyo): Check if arg is int type.
-	Line  1254 :--: // TODO(syoyo): Support parsing texture option flag after the filename.
-	Line  1363 :--: // TODO(syoyo): refactor function.
-	Line  1868 :--: // NOTE: Interpretation of Tr is application(exporter) dependent. For
-	Line  2306 :--: // TODO(syoyo): Add syntax check
-	Line  2317 :--: // TODO(syoyo): # of elements check
-	Line  2800 :--: // TODO(syoyo): Support parsing vertex color extension.
 \IceSandbox\Sandbox\src\source.cpp
 	Line     5 :--: // TODO : ~!!~ Materials

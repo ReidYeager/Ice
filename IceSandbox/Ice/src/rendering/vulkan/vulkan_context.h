@@ -13,9 +13,9 @@
 
 namespace Ice {
 
-  // =========================
-  // Images
-  // =========================
+  //=========================
+  // Image
+  //=========================
 
   struct IvkImage
   {
@@ -30,9 +30,18 @@ namespace Ice {
     VkDeviceMemory memory;
   };
 
-  // =========================
+  //=========================
+  // Material
+  //=========================
+
+  struct IvkShader
+  {
+    Ice::Shader settings;
+  };
+
+  //=========================
   // Context
-  // =========================
+  //=========================
 
   struct Renderpass
   {
@@ -103,9 +112,9 @@ namespace Ice {
 
 }
 
-// =======================
-// Vulkan assert
-// =======================
+//=======================
+// Assert
+//=======================
 
 inline const char* VulkanResultToString(VkResult _result)
 {

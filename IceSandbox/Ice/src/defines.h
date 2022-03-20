@@ -56,8 +56,8 @@ typedef unsigned int       b32;
 typedef u32 IceFlag;
 typedef u64 IceFlagExtended;
 
-typedef u32 IceHandle;
-#define ICE_NULL_HANDLE (IceHandle)-1
+typedef void* IceHandle;
+#define ICE_NULL_HANDLE nullptr
 
 //=========================
 // Resource directories

@@ -67,7 +67,9 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_image.cpp"
   "src/rendering/vulkan/vulkan_command.cpp"
- "src/rendering/vulkan/vulkan_renderpass.cpp")
+  "src/rendering/vulkan/vulkan_renderpass.cpp"
+  "src/rendering/vulkan/vulkan_material.cpp"
+ "src/core/ecs.h")
 
 add_compile_definitions(ICE_DLL_EXPORT)
 

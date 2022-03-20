@@ -5,6 +5,7 @@
 #include "core/application.h"
 
 #include "core/input.h"
+#include "core/ecs.h"
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 
@@ -79,6 +80,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   }
 
   // Game =====
+  _settings.clientInitFunction();
   GameUpdateFunc = _settings.clientUpdateFunction;
   GameShutdownFunc = _settings.clientShutdownFunction;
 
@@ -141,4 +143,23 @@ u32 Ice::Run(ApplicationSettings _settings)
 void Ice::CloseWindow()
 {
   platform.CloseWindow();
+}
+
+//=========================
+// Rendering
+//=========================
+
+std::vector<Ice::Material> materials;
+//Ice::ECS::ComponentManager<Ice::Material> materials;
+
+Ice::Material Ice::CreateMaterial(Ice::MaterialSettings _settings)
+{
+  // Don't search for existing materials to allow one material setup with multiple buffer values
+  // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+
+  Ice::Material newMaterial = renderer->CreateMaterial(_settings);
+
+  materials.push_back(newMaterial);
+
+  return newMaterial;
 }

@@ -41,7 +41,17 @@ namespace Ice {
 
   u32 Run(ApplicationSettings);
 
+  //=========================
+  // Platform
+  //=========================
+
   void CloseWindow();
+
+  //=========================
+  // Rendering
+  //=========================
+
+  Ice::Material CreateMaterial(Ice::MaterialSettings _settings);
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

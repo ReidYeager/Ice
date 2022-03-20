@@ -20,9 +20,9 @@ namespace Ice
     Ice::VulkanContext context;
 
   private:
-    // =========================
+    //=========================
     // Vulkan Initialization
-    // =========================
+    //=========================
 
     // Ensures that all desired layer and extension functionality is present in the created instance
     b8 CreateInstance();
@@ -48,9 +48,9 @@ namespace Ice
     // Creates a command buffer for each frame
     b8 CreateCommandBuffers();
 
-    // =========================
+    //=========================
     // Platform
-    // =========================
+    //=========================
 
     // Retrieves all of the extensions the platform requires to render and present with Vulkan
     void GetRequiredPlatformExtensions(std::vector<const char*>& _extensions);
@@ -59,25 +59,25 @@ namespace Ice
     // Gets the extents of the current window
     vec2U GetWindowExtents();
 
-    // =========================
+    //=========================
     // Renderpasses
-    // =========================
+    //=========================
 
     b8 CreateDepthImages();
     b8 CreateForwardComponents();
     b8 CreateDeferredComponents();
 
-    // =========================
+    //=========================
     // Commands
-    // =========================
+    //=========================
 
     VkCommandBuffer BeginSingleTimeCommand(VkCommandPool _pool);
     b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
     b8 RecordCommandBuffer(u32 _commandIndex);
 
-    // =========================
+    //=========================
     // Image
-    // =========================
+    //=========================
 
     b8 CreateImage(Ice::IvkImage* _image,
                    VkExtent2D _extents,
@@ -91,10 +91,18 @@ namespace Ice
 
     b8 DestroyImage(Ice::IvkImage* _image);
 
+    //=========================
+    // Material
+    //=========================
+
+    IceHandle GetShader(const char* _directory);
+
   public:
     b8 Init(Ice::RendererSettings _settings);
     b8 RenderFrame();
     b8 Shutdown();
+
+    Ice::Material CreateMaterial(Ice::MaterialSettings _settings);
   };
 
 }

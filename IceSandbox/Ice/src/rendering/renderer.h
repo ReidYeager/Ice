@@ -5,14 +5,45 @@
 #include "defines.h"
 
 #include <vector>
+#include <string>
 
 #define ALIGN_FOR_SHADER __declspec(align(16)) // Shaders are 16-byte aligned
 
 namespace Ice {
 
-  // ==========
+  //=========================
+  // Material
+  //=========================
+
+  enum ShaderTypes
+  {
+    Shader_Vertex,
+    Shader_Fragment,
+    Shader_Compute,
+    // ...
+  };
+
+  struct Shader
+  {
+    const char* fileDirectory;
+    ShaderTypes type;
+  };
+
+  struct MaterialSettings
+  {
+    std::vector<Ice::Shader> shaders;
+    u32 subpassIndex = 0;
+  };
+
+  struct Material
+  {
+    IceHandle backendHandle;
+    std::vector<Ice::Shader> shaders;
+  };
+
+  //=========================
   // Renderer
-  // ==========
+  //=========================
 
   enum RenderingApi
   {
@@ -34,6 +65,7 @@ namespace Ice {
     virtual b8 RenderFrame() = 0;
     virtual b8 Shutdown() = 0;
 
+    virtual Ice::Material CreateMaterial(MaterialSettings _settings) = 0;
   };
 
 }

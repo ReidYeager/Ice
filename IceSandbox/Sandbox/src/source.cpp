@@ -4,12 +4,16 @@
 b8 Init()
 {
   // TODO : ~!!~ Materials
-  //Ice::MaterialSettings lightMatSettings;
-  //lightMatSettings.vertFile = "_light_blank";
-  //lightMatSettings.fragFile = "_light_blank";
+  Ice::MaterialSettings lightMatSettings;
+  Ice::Shader shaderInfo;
+  shaderInfo.fileDirectory = "_light_blank";
+  shaderInfo.type = Ice::Shader_Vertex;
+  lightMatSettings.shaders.push_back(shaderInfo);
+  shaderInfo.type = Ice::Shader_Fragment;
+  lightMatSettings.shaders.push_back(shaderInfo);
   //lightMatSettings.subpass = 1;
 
-  //Ice::Material lightMat = Ice::CreateMaterial(lightMatSettings);
+  Ice::Material lightMat = Ice::CreateMaterial(lightMatSettings);
   //Ice::SetLightingMaterial(lightMat);
 
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };

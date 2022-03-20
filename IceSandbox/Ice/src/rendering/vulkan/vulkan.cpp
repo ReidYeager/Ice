@@ -273,9 +273,9 @@ b8 Ice::RendererVulkan::ChoosePhysicalDevice()
   context.gpu.transientQueueIndex = GetIndexForQueue(VK_QUEUE_TRANSFER_BIT);
   context.gpu.presentQueueIndex   = GetPresentQueue();
 
-  if (context.gpu.graphicsQueueIndex  == ICE_NULL_HANDLE ||
-      context.gpu.presentQueueIndex   == ICE_NULL_HANDLE ||
-      context.gpu.transientQueueIndex == ICE_NULL_HANDLE)
+  if (context.gpu.graphicsQueueIndex  == -1U ||
+      context.gpu.presentQueueIndex   == -1U ||
+      context.gpu.transientQueueIndex == -1U)
   {
     IceLogFatal("Some of the queue indices are invalid (G : %u, P : %u, T : %u)",
                 context.gpu.graphicsQueueIndex,
