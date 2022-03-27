@@ -37,7 +37,10 @@ namespace Ice {
 
   struct Material
   {
-    IceHandle backendHandle;
+    // Used to hold arbitrary API information (pointer, int, etc.)
+    // Vulkan uses struct pointer handles, OpenGL uses u32 handles
+    void* apiData[4];
+
     std::vector<Ice::Shader> shaders;
   };
 

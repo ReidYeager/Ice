@@ -10,8 +10,8 @@
 b8 Ice::RendererVulkan::TMP_InitializeRequiredData()
 {
   // Material =====
-  ICE_ATTEMPT_BOOL(CreatePipelineLayout());
-  ICE_ATTEMPT_BOOL(CreatePipeline());
+  ICE_ATTEMPT_BOOL(CreatePipelineLayout({}, &context.pipelineLayout));
+  ICE_ATTEMPT_BOOL(CreatePipeline({}, &context.pipeline));
 
   return true;
 }

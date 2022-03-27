@@ -99,8 +99,8 @@ namespace Ice
 
     IceHandle GetShader(const char* _directory);
     b8 CreateShaderModule(VkShaderModule* _module, const char* _directory);
-    b8 CreatePipelineLayout();
-    b8 CreatePipeline();
+    b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, VkPipelineLayout* _layout);
+    b8 CreatePipeline(const Ice::MaterialSettings& _settings, VkPipeline* _pipeline);
 
   public:
     b8 Init(Ice::RendererSettings _settings);

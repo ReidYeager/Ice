@@ -11,9 +11,10 @@
 
 #include <chrono>
 
-b8(*GameUpdateFunc)();
+b8(*GameUpdateFunc)(f32 _delta);
 b8(*GameShutdownFunc)();
 Ice::Renderer* renderer;
+b8 isRunning;
 
 //=========================
 // Time
@@ -91,9 +92,9 @@ b8 IceApplicationUpdate()
 {
   InitTime();
 
-  while (Ice::platform.Update())
+  while (isRunning && Ice::platform.Update())
   {
-    ICE_ATTEMPT_BOOL(GameUpdateFunc());
+    ICE_ATTEMPT_BOOL(GameUpdateFunc(Ice::time.deltaTime));
 
     ICE_ATTEMPT_BOOL(renderer->RenderFrame());
 
@@ -125,11 +126,15 @@ u32 Ice::Run(ApplicationSettings _settings)
     return -1;
   }
 
+  isRunning = true;
+
   if (!IceApplicationUpdate())
   {
     IceLogFatal("Ice application update failed");
     return -2;
   }
+
+  isRunning = false;
 
   if (!IceApplicationShutdown())
   {
@@ -138,6 +143,11 @@ u32 Ice::Run(ApplicationSettings _settings)
   }
 
   return 0;
+}
+
+void Ice::Shutdown()
+{
+  isRunning = false;
 }
 
 void Ice::CloseWindow()

@@ -63,7 +63,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex)
   clearValues[1].color = { 0.0f, 0.0f, 0.0f }; // Normal
   clearValues[2].color = { 0.5f, 0.5f, 0.5f }; // Albedo
   clearValues[3].color = { 0.0f, 0.0f, 0.0f }; // Maps
-  clearValues[4].color = { 0.3f, 1.0f, 0.3f }; // Swapchain
+  clearValues[4].color = { 0.0f, 0.0f, 0.0f }; // Swapchain
   clearValues[5].depthStencil = { 1, 0 }; // Depth
 
   // ==========

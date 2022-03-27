@@ -31,15 +31,36 @@ b8 Ice::RendererVulkan::CreateShaderModule(VkShaderModule* _module, const char* 
   return true;
 }
 
+#include "tools/lexer.h"
+
 Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings)
 {
-  
+  Ice::Material newMaterial {};
 
-  return {};
+  Ice::Lexer l("THis is something new");
+  IceLogInfo("%s", l.NextToken().string.c_str());
+  IceLogInfo("%s", l.NextToken().string.c_str());
+  IceLogInfo("%s", l.NextToken().string.c_str());
+  IceLogInfo("%s", l.NextToken().string.c_str());
+  IceLogInfo("%s", l.NextToken().string.c_str());
+
+  // Get shaders
+  // Get shaders' descriptors
+  // Assign default descriptor values (new buffer, default textures)
+
+  CreatePipelineLayout(_settings, &(VkPipelineLayout)newMaterial.apiData[0]);
+  CreatePipeline(_settings, &(VkPipeline)newMaterial.apiData[1]);
+
+  // TMP =====
+  vkDestroyPipelineLayout(context.device, (VkPipelineLayout)newMaterial.apiData[0], context.alloc);
+  vkDestroyPipeline(context.device, (VkPipeline)newMaterial.apiData[1], context.alloc);
+
+  return newMaterial;
 }
 
 // TODO : Rewrite with materials
-b8 Ice::RendererVulkan::CreatePipelineLayout()
+b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _settings,
+                                             VkPipelineLayout* _layout)
 {
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
@@ -52,14 +73,15 @@ b8 Ice::RendererVulkan::CreatePipelineLayout()
   IVK_ASSERT(vkCreatePipelineLayout(context.device,
                                     &createInfo,
                                     context.alloc,
-                                    &context.pipelineLayout),
+                                    _layout),
              "Failed to create pipeline layout");
 
   return true;
 }
 
 // TODO : Rewrite with materials
-b8 Ice::RendererVulkan::CreatePipeline()
+b8 Ice::RendererVulkan::CreatePipeline(const Ice::MaterialSettings& _settings,
+                                       VkPipeline* _pipeline)
 {
   // Shader Stages State =====
   // Insert shader modules
@@ -206,7 +228,7 @@ b8 Ice::RendererVulkan::CreatePipeline()
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       &context.pipeline),
+                                       _pipeline),
              "Failed to create the pipeline");
 
   vkDestroyShaderModule(context.device, vertModule, context.alloc);

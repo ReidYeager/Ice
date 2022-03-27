@@ -35,11 +35,14 @@ namespace Ice {
     Ice::RendererSettings renderer;
     Ice::WindowSettings window;
     b8(*clientInitFunction)();
-    b8(*clientUpdateFunction)();
+    b8(*clientUpdateFunction)(f32 _delta);
     b8(*clientShutdownFunction)();
   };
 
   u32 Run(ApplicationSettings);
+
+  // End the application loop peacefully
+  void Shutdown();
 
   //=========================
   // Platform

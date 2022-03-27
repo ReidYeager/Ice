@@ -1,5 +1,5 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   157 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line   167 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
 	Line   136 :--: // TODO : Remove this branch
 	Line   202 :--: // TODO : Remove this branch
@@ -13,8 +13,8 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_context.h
 	Line   162 :--: // TODO : Delete ASAP -- Delete when materials are properly implemented
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    40 :--: // TODO : Rewrite with materials
 	Line    60 :--: // TODO : Rewrite with materials
-	Line   198 :--: // TODO : Rewrite with materials
+	Line    81 :--: // TODO : Rewrite with materials
+	Line   220 :--: // TODO : Rewrite with materials
 \IceSandbox\Sandbox\src\source.cpp
-	Line     5 :--: // TODO : ~!!~ Materials
+	Line    11 :--: // TODO : ~!!~ Materials
