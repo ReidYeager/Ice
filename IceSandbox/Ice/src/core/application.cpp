@@ -11,10 +11,16 @@
 
 #include <chrono>
 
-b8(*GameUpdateFunc)(f32 _delta);
-b8(*GameShutdownFunc)();
+Ice::ApplicationSettings settings;
 Ice::Renderer* renderer;
 b8 isRunning;
+
+// Rendering =====
+u32 shaderCount = 0;
+Ice::Shader* shaders;
+u32 materialCount = 0;
+Ice::Material* materials;
+//Ice::ECS::ComponentManager<Ice::Material> materials;
 
 //=========================
 // Time
@@ -55,6 +61,8 @@ void UpdateTime()
 
 b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 {
+  settings = _settings;
+
   // Platform =====
   if (!Ice::platform.CreateNewWindow(_settings.window))
   {
@@ -80,10 +88,11 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     return false;
   }
 
+  shaders = (Ice::Shader*)Ice::MemoryAllocZero(sizeof(Ice::Shader) * _settings.maxShaderCount);
+  materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
+
   // Game =====
   _settings.clientInitFunction();
-  GameUpdateFunc = _settings.clientUpdateFunction;
-  GameShutdownFunc = _settings.clientShutdownFunction;
 
   return true;
 }
@@ -94,7 +103,7 @@ b8 IceApplicationUpdate()
 
   while (isRunning && Ice::platform.Update())
   {
-    ICE_ATTEMPT_BOOL(GameUpdateFunc(Ice::time.deltaTime));
+    ICE_ATTEMPT_BOOL(settings.clientUpdateFunction(Ice::time.deltaTime));
 
     ICE_ATTEMPT_BOOL(renderer->RenderFrame());
 
@@ -107,7 +116,19 @@ b8 IceApplicationUpdate()
 
 b8 IceApplicationShutdown()
 {
-  ICE_ATTEMPT_BOOL(GameShutdownFunc());
+  ICE_ATTEMPT_BOOL(settings.clientShutdownFunction());
+
+  for (u32 i = 0; i < materialCount; i++)
+  {
+    renderer->DestroyMaterial(materials[i]);
+  }
+  Ice::MemoryFree(materials);
+
+  for (u32 i = 0; i < shaderCount; i++)
+  {
+    renderer->DestroyShader(shaders[i]);
+  }
+  Ice::MemoryFree(shaders);
 
   renderer->Shutdown();
 
@@ -159,17 +180,56 @@ void Ice::CloseWindow()
 // Rendering
 //=========================
 
-std::vector<Ice::Material> materials;
-//Ice::ECS::ComponentManager<Ice::Material> materials;
-
-Ice::Material Ice::CreateMaterial(Ice::MaterialSettings _settings)
+Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
   // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 
+  if (materialCount == settings.maxMaterialCount)
+  {
+    IceLogError("Maximum material count reached");
+    return materials[0];
+  }
+
+  // Get shaders' info =====
+  b8 shaderFound = false;
+  for (u32 i = 0; i < _settings.shaders.size(); i++)
+  {
+    shaderFound = false;
+    Ice::Shader& newShader = _settings.shaders[i];
+
+    // Check for existing shader
+    for (u32 j = 0; j < shaderCount; j++)
+    {
+      Ice::Shader& oldShader = shaders[j];
+      if (newShader.fileDirectory.compare(oldShader.fileDirectory) == 0 &&
+        newShader.type == oldShader.type)
+      {
+        shaderFound = true;
+        newShader = oldShader;
+        break;
+      }
+    }
+
+    // Create new shader
+    if (!shaderFound)
+    {
+      if (shaderCount == settings.maxShaderCount)
+      {
+        IceLogError("Maximum shader count reached");
+        return materials[0];
+      }
+
+      newShader = renderer->CreateShader(newShader);
+      shaders[shaderCount] = newShader;
+      shaderCount++;
+    }
+  }
+
+  // Create material =====
   Ice::Material newMaterial = renderer->CreateMaterial(_settings);
+  materials[materialCount] = newMaterial;
+  materialCount++;
 
-  materials.push_back(newMaterial);
-
-  return newMaterial;
+  return materials[materialCount - 1];
 }

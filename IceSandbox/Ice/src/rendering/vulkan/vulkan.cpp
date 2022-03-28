@@ -598,8 +598,6 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     // Get the number of images actually created
     vkGetSwapchainImagesKHR(context.device, context.swapchain, &imageCount, nullptr);
 
-    IceLogInfo("Created %u images for the swapchain", imageCount);
-
     context.swapchainImages.resize(imageCount);
     context.swapchainImageViews.resize(imageCount);
 

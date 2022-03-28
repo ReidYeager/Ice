@@ -97,7 +97,6 @@ namespace Ice
     // Material
     //=========================
 
-    IceHandle GetShader(const char* _directory);
     b8 CreateShaderModule(VkShaderModule* _module, const char* _directory);
     b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, VkPipelineLayout* _layout);
     b8 CreatePipeline(const Ice::MaterialSettings& _settings, VkPipeline* _pipeline);
@@ -107,7 +106,10 @@ namespace Ice
     b8 RenderFrame();
     b8 Shutdown();
 
+    Ice::Shader CreateShader(const Ice::Shader _shader);
+    void DestroyShader(Ice::Shader& _shader);
     Ice::Material CreateMaterial(Ice::MaterialSettings _settings);
+    void DestroyMaterial(Ice::Material& _material);
   };
 
 }

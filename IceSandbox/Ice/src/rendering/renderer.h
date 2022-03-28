@@ -17,6 +17,7 @@ namespace Ice {
 
   enum ShaderTypes
   {
+    Shader_Unknown,
     Shader_Vertex,
     Shader_Fragment,
     Shader_Compute,
@@ -25,8 +26,9 @@ namespace Ice {
 
   struct Shader
   {
-    const char* fileDirectory;
     ShaderTypes type;
+    std::string fileDirectory;
+    void* apiData[1];
   };
 
   struct MaterialSettings
@@ -50,6 +52,7 @@ namespace Ice {
 
   enum RenderingApi
   {
+    Renderer_Unknown,
     Renderer_Vulkan,
     Renderer_OpenGL,
     Renderer_DirectX
@@ -68,7 +71,10 @@ namespace Ice {
     virtual b8 RenderFrame() = 0;
     virtual b8 Shutdown() = 0;
 
+    virtual Ice::Shader CreateShader(const Ice::Shader _shader) = 0;
+    virtual void DestroyShader(Ice::Shader& _shader) = 0;
     virtual Ice::Material CreateMaterial(MaterialSettings _settings) = 0;
+    virtual void DestroyMaterial(Ice::Material& _material) = 0;
   };
 
 }

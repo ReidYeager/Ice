@@ -32,11 +32,15 @@ namespace Ice {
 
   struct ApplicationSettings
   {
-    Ice::RendererSettings renderer;
-    Ice::WindowSettings window;
     b8(*clientInitFunction)();
     b8(*clientUpdateFunction)(f32 _delta);
     b8(*clientShutdownFunction)();
+
+    Ice::RendererSettings renderer;
+    Ice::WindowSettings window;
+
+    u32 maxShaderCount = 200;
+    u32 maxMaterialCount = 100;
   };
 
   u32 Run(ApplicationSettings);
@@ -54,7 +58,7 @@ namespace Ice {
   // Rendering
   //=========================
 
-  Ice::Material CreateMaterial(Ice::MaterialSettings _settings);
+  Ice::Material& CreateMaterial(Ice::MaterialSettings _settings);
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

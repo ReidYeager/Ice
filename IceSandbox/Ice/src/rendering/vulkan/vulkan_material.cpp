@@ -7,9 +7,28 @@
 #include <string>
 #include <vector>
 
-IceHandle Ice::RendererVulkan::GetShader(const char* _directory)
+Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
 {
-  return ICE_NULL_HANDLE;
+  Ice::Shader newShader = {_shader.type};
+
+  newShader.fileDirectory = ICE_RESOURCE_SHADER_DIR;
+  newShader.fileDirectory.append(_shader.fileDirectory.c_str());
+  switch (_shader.type)
+  {
+  case Shader_Vertex: newShader.fileDirectory.append(".vert"); break;
+  case Shader_Fragment: newShader.fileDirectory.append(".frag"); break;
+  case Shader_Compute: newShader.fileDirectory.append(".comp"); break;
+  default: IceLogError("Shader type unknown"); return {};
+  }
+
+  CreateShaderModule(&(VkShaderModule)newShader.apiData[0], newShader.fileDirectory.c_str());
+
+  return newShader;
+}
+
+void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
+{
+  vkDestroyShaderModule(context.device, (VkShaderModule)_shader.apiData[0], context.alloc);
 }
 
 b8 Ice::RendererVulkan::CreateShaderModule(VkShaderModule* _module, const char* _shader)
@@ -31,31 +50,23 @@ b8 Ice::RendererVulkan::CreateShaderModule(VkShaderModule* _module, const char* 
   return true;
 }
 
-#include "tools/lexer.h"
-
 Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings)
 {
   Ice::Material newMaterial {};
 
-  Ice::Lexer l("THis is something new");
-  IceLogInfo("%s", l.NextToken().string.c_str());
-  IceLogInfo("%s", l.NextToken().string.c_str());
-  IceLogInfo("%s", l.NextToken().string.c_str());
-  IceLogInfo("%s", l.NextToken().string.c_str());
-  IceLogInfo("%s", l.NextToken().string.c_str());
-
-  // Get shaders
   // Get shaders' descriptors
   // Assign default descriptor values (new buffer, default textures)
 
   CreatePipelineLayout(_settings, &(VkPipelineLayout)newMaterial.apiData[0]);
   CreatePipeline(_settings, &(VkPipeline)newMaterial.apiData[1]);
 
-  // TMP =====
-  vkDestroyPipelineLayout(context.device, (VkPipelineLayout)newMaterial.apiData[0], context.alloc);
-  vkDestroyPipeline(context.device, (VkPipeline)newMaterial.apiData[1], context.alloc);
-
   return newMaterial;
+}
+
+void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
+{
+  vkDestroyPipelineLayout(context.device, (VkPipelineLayout)_material.apiData[0], context.alloc);
+  vkDestroyPipeline(context.device, (VkPipeline)_material.apiData[1], context.alloc);
 }
 
 // TODO : Rewrite with materials

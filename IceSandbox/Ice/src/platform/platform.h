@@ -26,6 +26,12 @@ namespace Ice {
   void MemoryFree(void* _data);
 
   inline void MemoryZero(void* _data, u64 _size) { MemorySet(_data, _size, 0); }
+  inline void* MemoryAllocZero(u64 _size)
+  {
+    void* m = MemoryAllocate(_size);
+    MemoryZero(m, _size);
+    return m;
+  }
 
   //=========================
   // Console
