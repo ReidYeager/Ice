@@ -50,7 +50,7 @@ b8 Ice::RendererVulkan::EndSingleTimeCommand(VkCommandBuffer& _command,
   return true;
 }
 
-b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex)
+b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInformation* _data)
 {
   VkCommandBuffer& cmdBuffer = context.commandBuffers[_commandIndex];
 
@@ -95,9 +95,14 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex)
     //                        0,
     //                        nullptr);
 
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
-
-    vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+    // Materials =====
+    for (u32 i = 0; i < _data->materialCount; i++)
+    {
+      vkCmdBindPipeline(cmdBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        (VkPipeline)_data->materials[i].apiData[1]);
+      vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+    }
 
     vkCmdEndRenderPass(cmdBuffer);
   }

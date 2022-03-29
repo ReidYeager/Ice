@@ -150,10 +150,6 @@ namespace Ice {
 
     // Commands =====
     std::vector<VkCommandBuffer> commandBuffers;
-
-    // TODO : Delete ASAP -- Delete when materials are properly implemented
-    VkPipelineLayout pipelineLayout;
-    VkPipeline pipeline;
   };
 
 }

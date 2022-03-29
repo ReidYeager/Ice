@@ -9,21 +9,24 @@ u32 totalDeltaCount = 0;
 
 b8 Init()
 {
-  // TODO : ~!!~ Materials
-  Ice::MaterialSettings lightMatSettings;
+  Ice::MaterialSettings materialSettings;
   Ice::Shader shaderInfo;
   shaderInfo.fileDirectory = "_light_blank";
   shaderInfo.type = Ice::Shader_Vertex;
-  lightMatSettings.shaders.push_back(shaderInfo);
+  materialSettings.shaders.push_back(shaderInfo);
   shaderInfo.type = Ice::Shader_Fragment;
-  lightMatSettings.shaders.push_back(shaderInfo);
+  materialSettings.shaders.push_back(shaderInfo);
   //lightMatSettings.subpass = 1;
 
-  Ice::Material& lightMat = Ice::CreateMaterial(lightMatSettings);
+  Ice::Material& lightMat = Ice::CreateMaterial(materialSettings);
   //Ice::SetLightingMaterial(lightMat);
 
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
   //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
+
+  materialSettings.shaders[0].fileDirectory = "_light_half";
+  materialSettings.shaders[1].fileDirectory = "_light_half";
+  Ice::CreateMaterial(materialSettings);
 
   return true;
 }

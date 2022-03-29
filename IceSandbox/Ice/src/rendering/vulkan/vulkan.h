@@ -75,7 +75,7 @@ namespace Ice
 
     VkCommandBuffer BeginSingleTimeCommand(VkCommandPool _pool);
     b8 EndSingleTimeCommand(VkCommandBuffer& _command, VkCommandPool _pool, VkQueue _queue);
-    b8 RecordCommandBuffer(u32 _commandIndex);
+    b8 RecordCommandBuffer(u32 _commandIndex, Ice::FrameInformation* _data);
 
     //=========================
     // Image
@@ -99,11 +99,11 @@ namespace Ice
 
     b8 CreateShaderModule(VkShaderModule* _module, const char* _directory);
     b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, VkPipelineLayout* _layout);
-    b8 CreatePipeline(const Ice::MaterialSettings& _settings, VkPipeline* _pipeline);
+    b8 CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material);
 
   public:
     b8 Init(Ice::RendererSettings _settings);
-    b8 RenderFrame();
+    b8 RenderFrame(Ice::FrameInformation* _data);
     b8 Shutdown();
 
     Ice::Shader CreateShader(const Ice::Shader _shader);

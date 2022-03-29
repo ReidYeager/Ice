@@ -41,14 +41,20 @@ namespace Ice {
   {
     // Used to hold arbitrary API information (pointer, int, etc.)
     // Vulkan uses struct pointer handles, OpenGL uses u32 handles
-    void* apiData[4];
-
-    std::vector<Ice::Shader> shaders;
+    void* apiData[2];
   };
 
   //=========================
   // Renderer
   //=========================
+
+  // The contents of this struct are currently in flux.
+  // A permanent solution will be settled on eventually.
+  struct FrameInformation
+  {
+    Ice::Material* materials;
+    u32 materialCount;
+  };
 
   enum RenderingApi
   {
@@ -68,7 +74,7 @@ namespace Ice {
   {
   public:
     virtual b8 Init(Ice::RendererSettings _settings) = 0;
-    virtual b8 RenderFrame() = 0;
+    virtual b8 RenderFrame(FrameInformation* _data) = 0;
     virtual b8 Shutdown() = 0;
 
     virtual Ice::Shader CreateShader(const Ice::Shader _shader) = 0;

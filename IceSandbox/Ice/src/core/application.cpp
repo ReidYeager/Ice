@@ -101,11 +101,15 @@ b8 IceApplicationUpdate()
 {
   InitTime();
 
+  Ice::FrameInformation frameInfo;
+  frameInfo.materialCount = materialCount;
+  frameInfo.materials = materials;
+
   while (isRunning && Ice::platform.Update())
   {
     ICE_ATTEMPT_BOOL(settings.clientUpdateFunction(Ice::time.deltaTime));
 
-    ICE_ATTEMPT_BOOL(renderer->RenderFrame());
+    ICE_ATTEMPT_BOOL(renderer->RenderFrame(&frameInfo));
 
     Input.Update();
     UpdateTime();
@@ -203,7 +207,7 @@ Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
     {
       Ice::Shader& oldShader = shaders[j];
       if (newShader.fileDirectory.compare(oldShader.fileDirectory) == 0 &&
-        newShader.type == oldShader.type)
+          newShader.type == oldShader.type)
       {
         shaderFound = true;
         newShader = oldShader;

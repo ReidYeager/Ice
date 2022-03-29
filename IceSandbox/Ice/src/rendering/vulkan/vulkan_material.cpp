@@ -28,6 +28,7 @@ Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
 
 void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
 {
+  vkDeviceWaitIdle(context.device);
   vkDestroyShaderModule(context.device, (VkShaderModule)_shader.apiData[0], context.alloc);
 }
 
@@ -54,22 +55,23 @@ Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _setting
 {
   Ice::Material newMaterial {};
 
-  // Get shaders' descriptors
+  // TODO : ~!!~ Get shaders' descriptors
   // Assign default descriptor values (new buffer, default textures)
 
   CreatePipelineLayout(_settings, &(VkPipelineLayout)newMaterial.apiData[0]);
-  CreatePipeline(_settings, &(VkPipeline)newMaterial.apiData[1]);
+  CreatePipeline(_settings, &newMaterial);
 
   return newMaterial;
 }
 
 void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 {
+  vkDeviceWaitIdle(context.device);
+
   vkDestroyPipelineLayout(context.device, (VkPipelineLayout)_material.apiData[0], context.alloc);
   vkDestroyPipeline(context.device, (VkPipeline)_material.apiData[1], context.alloc);
 }
 
-// TODO : Rewrite with materials
 b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _settings,
                                              VkPipelineLayout* _layout)
 {
@@ -90,34 +92,27 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _setti
   return true;
 }
 
-// TODO : Rewrite with materials
-b8 Ice::RendererVulkan::CreatePipeline(const Ice::MaterialSettings& _settings,
-                                       VkPipeline* _pipeline)
+b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material)
 {
   // Shader Stages State =====
-  // Insert shader modules
+  VkPipelineShaderStageCreateInfo shaderStage {};
+  shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  shaderStage.pName = "main";
 
-  std::string vertDirectory = ICE_RESOURCE_SHADER_DIR;
-  vertDirectory.append("_light_blank.vert");
-  VkShaderModule vertModule;
-  CreateShaderModule(&vertModule, vertDirectory.c_str());
-  VkPipelineShaderStageCreateInfo vertShaderStage {};
-  vertShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vertShaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vertShaderStage.module = vertModule;
-  vertShaderStage.pName = "main";
+  std::vector<VkPipelineShaderStageCreateInfo> stages(_settings.shaders.size());
+  for (u32 i = 0; i < _settings.shaders.size(); i++)
+  {
+    shaderStage.module = (VkShaderModule)_settings.shaders[i].apiData[0];
+    switch (_settings.shaders[i].type)
+    {
+    case Shader_Vertex: shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
+    case Shader_Fragment: shaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
+    default: return false;
+    }
 
-  std::string fragDirectory = ICE_RESOURCE_SHADER_DIR;
-  fragDirectory.append("blank_forward.frag");
-  VkShaderModule fragModule;
-  CreateShaderModule(&fragModule, fragDirectory.c_str());
-  VkPipelineShaderStageCreateInfo fragShaderStage{};
-  fragShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  fragShaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStage.module = fragModule;
-  fragShaderStage.pName = "main";
-
-  VkPipelineShaderStageCreateInfo stages[2] = { vertShaderStage, fragShaderStage };
+    stages[i] = shaderStage;
+  }
 
   // Vertex Input State =====
   // Defines how vertex buffers are to be traversed
@@ -226,24 +221,20 @@ b8 Ice::RendererVulkan::CreatePipeline(const Ice::MaterialSettings& _settings,
   createInfo.pDepthStencilState  = &depthStateInfo;
   createInfo.pColorBlendState    = &blendStateInfo;
   createInfo.pDynamicState       = &dynamicStateInfo;
-  createInfo.stageCount = 2;
-  createInfo.pStages    = stages;
+  createInfo.stageCount = stages.size();
+  createInfo.pStages    = stages.data();
 
-  // TODO : Rewrite with materials
-  createInfo.layout     = context.pipelineLayout;
+  createInfo.layout     = (VkPipelineLayout)_material->apiData[0];
   createInfo.renderPass = context.forward.renderpass;
-  createInfo.subpass = 0;
+  createInfo.subpass = _settings.subpassIndex;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       _pipeline),
+                                       &(VkPipeline)_material->apiData[1]),
              "Failed to create the pipeline");
-
-  vkDestroyShaderModule(context.device, vertModule, context.alloc);
-  vkDestroyShaderModule(context.device, fragModule, context.alloc);
 
   return true;
 }
