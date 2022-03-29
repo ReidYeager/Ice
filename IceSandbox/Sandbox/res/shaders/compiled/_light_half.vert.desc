@@ -1,0 +1,6 @@
+bindings {
+    Sampler2D
+}
+buffer {
+    Custom_10
+}

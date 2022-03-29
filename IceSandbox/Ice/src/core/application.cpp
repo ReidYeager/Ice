@@ -11,7 +11,7 @@
 
 #include <chrono>
 
-Ice::ApplicationSettings settings;
+Ice::ApplicationSettings appSettings;
 Ice::Renderer* renderer;
 b8 isRunning;
 
@@ -61,7 +61,7 @@ void UpdateTime()
 
 b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 {
-  settings = _settings;
+  appSettings = _settings;
 
   // Platform =====
   if (!Ice::platform.CreateNewWindow(_settings.window))
@@ -107,7 +107,7 @@ b8 IceApplicationUpdate()
 
   while (isRunning && Ice::platform.Update())
   {
-    ICE_ATTEMPT_BOOL(settings.clientUpdateFunction(Ice::time.deltaTime));
+    ICE_ATTEMPT_BOOL(appSettings.clientUpdateFunction(Ice::time.deltaTime));
 
     ICE_ATTEMPT_BOOL(renderer->RenderFrame(&frameInfo));
 
@@ -120,7 +120,7 @@ b8 IceApplicationUpdate()
 
 b8 IceApplicationShutdown()
 {
-  ICE_ATTEMPT_BOOL(settings.clientShutdownFunction());
+  ICE_ATTEMPT_BOOL(appSettings.clientShutdownFunction());
 
   for (u32 i = 0; i < materialCount; i++)
   {
@@ -184,14 +184,15 @@ void Ice::CloseWindow()
 // Rendering
 //=========================
 
+// TODO : Material & Shader creation needs some restructuring for proper error handling
 Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
   // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 
-  if (materialCount == settings.maxMaterialCount)
+  if (materialCount == appSettings.maxMaterialCount)
   {
-    IceLogError("Maximum material count reached");
+    IceLogError("Maximum material count (%u) reached", appSettings.maxMaterialCount);
     return materials[0];
   }
 
@@ -218,9 +219,9 @@ Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
     // Create new shader
     if (!shaderFound)
     {
-      if (shaderCount == settings.maxShaderCount)
+      if (shaderCount == appSettings.maxShaderCount)
       {
-        IceLogError("Maximum shader count reached");
+        IceLogError("Maximum shader count (%u) reached", appSettings.maxShaderCount);
         return materials[0];
       }
 

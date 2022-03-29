@@ -3,6 +3,7 @@
 
 #include "rendering/vulkan/vulkan.h"
 #include "platform/platform.h"
+#include "tools/lexer.h"
 
 #include <string>
 #include <vector>
@@ -21,7 +22,8 @@ Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
   default: IceLogError("Shader type unknown"); return {};
   }
 
-  CreateShaderModule(&(VkShaderModule)newShader.apiData[0], newShader.fileDirectory.c_str());
+  CreateShaderModule(&newShader);
+  CreateShaderDescriptors(&newShader);
 
   return newShader;
 }
@@ -32,9 +34,9 @@ void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
   vkDestroyShaderModule(context.device, (VkShaderModule)_shader.apiData[0], context.alloc);
 }
 
-b8 Ice::RendererVulkan::CreateShaderModule(VkShaderModule* _module, const char* _shader)
+b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
 {
-  std::string directory = _shader;
+  std::string directory = _shader->fileDirectory.c_str();
   directory.append(".spv");
 
   std::vector<char> source = Ice::LoadFile(directory.c_str());
@@ -45,8 +47,85 @@ b8 Ice::RendererVulkan::CreateShaderModule(VkShaderModule* _module, const char* 
   createInfo.codeSize = source.size();
   createInfo.pCode = reinterpret_cast<u32*>(source.data());
 
-  IVK_ASSERT(vkCreateShaderModule(context.device, &createInfo, context.alloc, _module),
+  IVK_ASSERT(vkCreateShaderModule(context.device,
+                                  &createInfo,
+                                  context.alloc,
+                                  &(VkShaderModule)_shader->apiData[0]),
              "failed to create shader module for %s", directory.c_str());
+
+  return true;
+}
+
+b8 TokenIsValidFor(const Ice::LexerToken& _token, const char** _stringArray, u32 _count)
+{
+  u32 index;
+  for (index = 0; index < _count; index++)
+  {
+    if (_token.string.compare(_stringArray[index]) == 0)
+      break;
+  }
+
+  return index != _count;
+}
+
+b8 Ice::RendererVulkan::CreateShaderDescriptors(Ice::Shader* _shader)
+{
+  std::string directory = _shader->fileDirectory.c_str();
+  directory.append(".desc");
+
+  std::vector<char> descriptorSource = Ice::LoadFile(directory.c_str());
+  if (descriptorSource.size() == 0)
+    return true; // Empty or non-existent file (No descriptors)
+
+  Ice::Lexer lexer(descriptorSource);
+  Ice::LexerToken currentToken;
+
+  while (!lexer.CompletedStream())
+  {
+    // Get buffer information =====
+    if (lexer.ExpectToken("buffer") && lexer.ExpectToken("{"))
+    {
+      while (!lexer.ExpectToken("}"))
+      {
+        currentToken = lexer.NextToken();
+
+        // Check if the token is a valid buffer component
+        if (!TokenIsValidFor(currentToken,
+                             Ice::DescriptorBufferComponentStrings,
+                             (u32)Ice::Descriptor_Buffer_Count))
+        {
+          IceLogWarning("Ivalid buffer component '%s' in descriptor file '%s'",
+                        currentToken.string.c_str(),
+                        directory.c_str());
+          continue;
+        }
+
+        // Include the buffer component
+      }
+    }
+
+    // Get descriptor information =====
+    if (lexer.ExpectToken("bindings") && lexer.ExpectToken("{"))
+    {
+      while (!lexer.ExpectToken("}"))
+      {
+        currentToken = lexer.NextToken();
+
+        // Check if the token is a valid descriptor
+        if (!TokenIsValidFor(currentToken,
+                             Ice::DescriptorTypeStrings,
+                             (u32)Ice::Descriptor_Count))
+        {
+          IceLogWarning("Ivalid descriptor '%s' in descriptor file '%s'",
+            currentToken.string.c_str(),
+            directory.c_str());
+          continue;
+        }
+
+        // Include the descriptor
+      }
+    }
+  }
 
   return true;
 }

@@ -13,7 +13,6 @@
 
 namespace Ice
 {
-
   class RendererVulkan : public Ice::Renderer
   {
   private:
@@ -23,8 +22,6 @@ namespace Ice
     //=========================
     // Vulkan Initialization
     //=========================
-    b8 TMP_InitializeRequiredData();
-    void TMP_ShutdownRequiredData();
 
     // Ensures that all desired layer and extension functionality is present in the created instance
     b8 CreateInstance();
@@ -97,7 +94,8 @@ namespace Ice
     // Material
     //=========================
 
-    b8 CreateShaderModule(VkShaderModule* _module, const char* _directory);
+    b8 CreateShaderModule(Ice::Shader* _shader);
+    b8 CreateShaderDescriptors(Ice::Shader* _shader);
     b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, VkPipelineLayout* _layout);
     b8 CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material);
 
