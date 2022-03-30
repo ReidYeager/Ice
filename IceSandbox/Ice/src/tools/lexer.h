@@ -52,7 +52,7 @@ namespace Ice {
   {
   private:
     const char* charStream;
-    const const char* streamEnd; // Used to avoid requiring \0 at the end of a stream
+    const char* const streamEnd; // Used to avoid requiring \0 at the end of a stream
 
   public:
     Lexer(const char* _stream, u64 _size) : charStream(_stream), streamEnd(_stream + _size - 1)
@@ -63,7 +63,8 @@ namespace Ice {
     {}
 
     Ice::LexerToken NextToken();
-    b8 ExpectToken(const char* _expected);
+    b8 ExpectString(const char* _expected, Ice::LexerToken* _outToken = nullptr);
+    b8 ExpectType(Ice::TokenTypes _expected, Ice::LexerToken* _outToken = nullptr);
     b8 CompletedStream();
 
     u32 GetUIntFromToken(const Ice::LexerToken* _token);

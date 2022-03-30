@@ -119,12 +119,36 @@ Ice::LexerToken Ice::Lexer::NextToken()
   }
 }
 
-b8 Ice::Lexer::ExpectToken(const char* _expected)
+b8 Ice::Lexer::ExpectString(const char* _expected, Ice::LexerToken* _outToken /*= nullptr*/)
 {
   const char* prevCharHead = charStream;
 
-  if (NextToken().string.compare(_expected) == 0)
+  Ice::LexerToken next = NextToken();
+
+  if (next.string.compare(_expected) == 0)
   {
+    if (_outToken != nullptr)
+      *_outToken = next;
+
+    return true;
+  }
+
+  // Undo token read
+  charStream = prevCharHead;
+  return false;
+}
+
+b8 Ice::Lexer::ExpectType(Ice::TokenTypes _expected, Ice::LexerToken* _outToken /*= nullptr*/)
+{
+  const char* prevCharHead = charStream;
+
+  Ice::LexerToken next = NextToken();
+
+  if (next.type == _expected)
+  {
+    if (_outToken != nullptr)
+      *_outToken = next;
+
     return true;
   }
 

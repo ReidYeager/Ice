@@ -100,7 +100,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
     {
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        (VkPipeline)_data->materials[i].apiData[1]);
+                        _data->materials[i].ivkPipeline);
       vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
     }
 

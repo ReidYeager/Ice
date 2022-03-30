@@ -82,40 +82,6 @@ namespace Ice {
   };
 
   //=========================
-  // Material
-  //=========================
-
-  enum DescriptorTypes
-  {
-    Descriptor_Buffer,
-    Descriptor_Sampler2D,
-
-    Descriptor_Count
-  };
-
-  static const char* DescriptorTypeStrings[Descriptor_Count] = {
-    "Buffer",
-    "Sampler2D"
-  };
-
-  enum DescriptorBufferComponents
-  {
-    Descriptor_Buffer_Custom_0,
-    Descriptor_Buffer_Custom_1,
-    Descriptor_Buffer_Custom_2,
-    Descriptor_Buffer_Custom_3,
-
-    Descriptor_Buffer_Count
-  };
-
-  static const char* DescriptorBufferComponentStrings[Descriptor_Buffer_Count] = {
-    "Custom_0",
-    "Custom_1",
-    "Custom_2",
-    "Custom_3"
-  };
-
-  //=========================
   // Context
   //=========================
 

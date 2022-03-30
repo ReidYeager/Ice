@@ -1,6 +1,6 @@
 bindings {
-    Sampler2D
+    buffer 0
 }
 buffer {
-    Custom_10
+    Custom_1
 }

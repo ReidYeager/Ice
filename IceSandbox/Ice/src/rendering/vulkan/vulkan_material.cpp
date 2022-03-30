@@ -23,7 +23,7 @@ Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
   }
 
   CreateShaderModule(&newShader);
-  CreateShaderDescriptors(&newShader);
+  LoadShaderDescriptors(&newShader);
 
   return newShader;
 }
@@ -31,7 +31,7 @@ Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
 void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
 {
   vkDeviceWaitIdle(context.device);
-  vkDestroyShaderModule(context.device, (VkShaderModule)_shader.apiData[0], context.alloc);
+  vkDestroyShaderModule(context.device, _shader.ivkShaderModule, context.alloc);
 }
 
 b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
@@ -50,13 +50,13 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   IVK_ASSERT(vkCreateShaderModule(context.device,
                                   &createInfo,
                                   context.alloc,
-                                  &(VkShaderModule)_shader->apiData[0]),
+                                  &_shader->ivkShaderModule),
              "failed to create shader module for %s", directory.c_str());
 
   return true;
 }
 
-b8 TokenIsValidFor(const Ice::LexerToken& _token, const char** _stringArray, u32 _count)
+u32 TokenIsValidFor(const Ice::LexerToken& _token, const char* const* _stringArray, u32 _count)
 {
   u32 index;
   for (index = 0; index < _count; index++)
@@ -65,69 +65,91 @@ b8 TokenIsValidFor(const Ice::LexerToken& _token, const char** _stringArray, u32
       break;
   }
 
-  return index != _count;
+  return index;
 }
 
-b8 Ice::RendererVulkan::CreateShaderDescriptors(Ice::Shader* _shader)
+void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 {
+  // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
+  //  Should eventually look into abstracting this.
+
   std::string directory = _shader->fileDirectory.c_str();
   directory.append(".desc");
 
   std::vector<char> descriptorSource = Ice::LoadFile(directory.c_str());
   if (descriptorSource.size() == 0)
-    return true; // Empty or non-existent file (No descriptors)
+    return; // Empty or non-existent file (No descriptors)
 
   Ice::Lexer lexer(descriptorSource);
-  Ice::LexerToken currentToken;
+  Ice::LexerToken token;
+
+  Ice::ShaderInputElement newInput {};
 
   while (!lexer.CompletedStream())
   {
     // Get buffer information =====
-    if (lexer.ExpectToken("buffer") && lexer.ExpectToken("{"))
+    if (lexer.ExpectString("buffer") && lexer.ExpectString("{"))
     {
-      while (!lexer.ExpectToken("}"))
+      while (!lexer.ExpectString("}"))
       {
-        currentToken = lexer.NextToken();
+        token = lexer.NextToken();
 
         // Check if the token is a valid buffer component
-        if (!TokenIsValidFor(currentToken,
-                             Ice::DescriptorBufferComponentStrings,
-                             (u32)Ice::Descriptor_Buffer_Count))
+        u32 typeIndex = TokenIsValidFor(token,
+                                        Ice::ShaderBufferComponentStrings,
+                                        (u32)Ice::Shader_Buffer_Count);
+        if (typeIndex == (u32)Ice::Shader_Buffer_Count)
         {
           IceLogWarning("Ivalid buffer component '%s' in descriptor file '%s'",
-                        currentToken.string.c_str(),
+                        token.string.c_str(),
                         directory.c_str());
           continue;
         }
 
         // Include the buffer component
+        _shader->bufferSize += 16; // Each buffer component represents 16 bytes
       }
     }
 
     // Get descriptor information =====
-    if (lexer.ExpectToken("bindings") && lexer.ExpectToken("{"))
+    if (lexer.ExpectString("bindings") && lexer.ExpectString("{"))
     {
-      while (!lexer.ExpectToken("}"))
+      while (!lexer.ExpectString("}"))
       {
-        currentToken = lexer.NextToken();
+        token = lexer.NextToken();
 
         // Check if the token is a valid descriptor
-        if (!TokenIsValidFor(currentToken,
-                             Ice::DescriptorTypeStrings,
-                             (u32)Ice::Descriptor_Count))
+        u32 typeIndex = TokenIsValidFor(token,
+                                        Ice::ShaderInputTypeStrings,
+                                        (u32)Ice::Shader_Input_Count);
+        if (typeIndex == (u32)Ice::Shader_Input_Count)
         {
           IceLogWarning("Ivalid descriptor '%s' in descriptor file '%s'",
-            currentToken.string.c_str(),
-            directory.c_str());
+                        token.string.c_str(),
+                        directory.c_str());
           continue;
         }
 
+        if (!lexer.ExpectType(Ice::Token_Int, &token))
+        {
+          IceLogError("Binding line %u is missing an index. Using line as index.\n> In '%s'",
+                      _shader->input.size(),
+                      _shader->fileDirectory.c_str());
+
+          newInput.inputIndex = _shader->input.size();
+        }
+        else
+        {
+          newInput.inputIndex = lexer.GetUIntFromToken(&token);
+        }
+
         // Include the descriptor
+        newInput.type = (ShaderInputTypes)typeIndex;
+        _shader->input.push_back(newInput);
       }
     }
   }
 
-  return true;
 }
 
 Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings)
@@ -137,7 +159,7 @@ Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _setting
   // TODO : ~!!~ Get shaders' descriptors
   // Assign default descriptor values (new buffer, default textures)
 
-  CreatePipelineLayout(_settings, &(VkPipelineLayout)newMaterial.apiData[0]);
+  CreatePipelineLayout(_settings, &newMaterial.ivkPipelineLayout);
   CreatePipeline(_settings, &newMaterial);
 
   return newMaterial;
@@ -147,8 +169,8 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 {
   vkDeviceWaitIdle(context.device);
 
-  vkDestroyPipelineLayout(context.device, (VkPipelineLayout)_material.apiData[0], context.alloc);
-  vkDestroyPipeline(context.device, (VkPipeline)_material.apiData[1], context.alloc);
+  vkDestroyPipelineLayout(context.device, _material.ivkPipelineLayout, context.alloc);
+  vkDestroyPipeline(context.device, _material.ivkPipeline, context.alloc);
 }
 
 b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _settings,
@@ -182,7 +204,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
   std::vector<VkPipelineShaderStageCreateInfo> stages(_settings.shaders.size());
   for (u32 i = 0; i < _settings.shaders.size(); i++)
   {
-    shaderStage.module = (VkShaderModule)_settings.shaders[i].apiData[0];
+    shaderStage.module = _settings.shaders[i].ivkShaderModule;
     switch (_settings.shaders[i].type)
     {
     case Shader_Vertex: shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
@@ -303,7 +325,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
   createInfo.stageCount = stages.size();
   createInfo.pStages    = stages.data();
 
-  createInfo.layout     = (VkPipelineLayout)_material->apiData[0];
+  createInfo.layout     = _material->ivkPipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
   createInfo.subpass = _settings.subpassIndex;
 
@@ -312,7 +334,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       &(VkPipeline)_material->apiData[1]),
+                                       &_material->ivkPipeline),
              "Failed to create the pipeline");
 
   return true;

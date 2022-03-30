@@ -95,7 +95,9 @@ namespace Ice
     //=========================
 
     b8 CreateShaderModule(Ice::Shader* _shader);
-    b8 CreateShaderDescriptors(Ice::Shader* _shader);
+    // Attempts to read the shader's descriptor file
+    // Shader descriptors are optional so this can not fail
+    void LoadShaderDescriptors(Ice::Shader* _shader);
     b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, VkPipelineLayout* _layout);
     b8 CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material);
 

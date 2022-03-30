@@ -2,5 +2,12 @@ buffer {
     Custom_0
 }
 bindings {
-    Sampler2D
+    buffer 0
+    image2d 1
+    buffer 0
+    image2d 1
+    image2d 1
+    image2d
+    buffer 0
+    image2d 1
 }
