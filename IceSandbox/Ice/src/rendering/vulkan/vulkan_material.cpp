@@ -150,10 +150,10 @@ Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _setting
 {
   Ice::Material newMaterial {};
 
-  // TODO : ~!!~ Create descriptor set
-  // Assign default descriptor values (new buffer, default textures)
+  CreateDescriptorLayoutAndSet(_settings, &newMaterial);
+  // TODO : Assign default descriptor values (new buffer, default textures)
 
-  CreatePipelineLayout(_settings, &newMaterial.ivkPipelineLayout);
+  CreatePipelineLayout(_settings, &newMaterial);
   CreatePipeline(_settings, &newMaterial);
 
   return newMaterial;
@@ -163,12 +163,108 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 {
   vkDeviceWaitIdle(context.device);
 
+  vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.ivkDescriptorSet);
+  vkDestroyDescriptorSetLayout(context.device, _material.ivkDescriptorSetLayout, context.alloc);
+
   vkDestroyPipelineLayout(context.device, _material.ivkPipelineLayout, context.alloc);
   vkDestroyPipeline(context.device, _material.ivkPipeline, context.alloc);
 }
 
+b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
+                                      std::vector<VkDescriptorSetLayoutBinding>& _bindings)
+{
+  // TODO : Need to account for descriptor binding gaps
+
+  u32 count = 0;
+  std::vector<Ice::ShaderInputElement> orderedInputElements; // Used for faster place-checking
+
+  // Collect descriptors =====
+  for (const Ice::Shader& s : _shaders)
+  {
+    count += s.input.size();
+  }
+  _bindings.resize(count); // Worst-case size.
+  orderedInputElements.resize(count);
+
+  u32 actualCount = 0;
+  VkDescriptorSetLayoutBinding newBinding {};
+  for (const Ice::Shader& shader : _shaders)
+  {
+    for (const auto& descriptor : shader.input)
+    {
+      if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
+      {
+        continue;
+      }
+      else if (orderedInputElements[descriptor.inputIndex].type != Ice::Shader_Input_Count)
+      {
+        IceLogError("Shader descriptor conflict at index %u", descriptor.inputIndex);
+        _bindings.clear();
+        return false;
+      }
+
+      newBinding.descriptorCount = 1;
+      newBinding.pImmutableSamplers = nullptr;
+      newBinding.binding = descriptor.inputIndex;
+      newBinding.stageFlags = VK_SHADER_STAGE_ALL;
+      switch (descriptor.type)
+      {
+      case Ice::Shader_Input_Buffer:
+      {
+        newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      } break;
+      case Ice::Shader_Input_Image2D:
+      {
+        newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      } break;
+      default: continue;
+      }
+
+      _bindings[descriptor.inputIndex] = newBinding;
+      orderedInputElements[descriptor.inputIndex] = descriptor;
+      actualCount++;
+    }
+  }
+
+  _bindings.resize(actualCount);
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(const Ice::MaterialSettings& _settings,
+                                                     Ice::Material* _material)
+{
+  std::vector<VkDescriptorSetLayoutBinding> bindings;
+  ICE_ATTEMPT_BOOL(AssembleMaterialDescriptorBindings(_settings.shaders, bindings));
+
+  // Create layout =====
+  VkDescriptorSetLayoutCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  createInfo.flags = 0;
+  createInfo.pNext = nullptr;
+  createInfo.bindingCount = bindings.size();
+  createInfo.pBindings = bindings.data();
+
+  IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
+             &createInfo,
+             context.alloc,
+             &_material->ivkDescriptorSetLayout),
+             "Failed to create descriptor set layout");
+
+  // Create set =====
+  VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+  allocInfo.descriptorPool = context.descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &_material->ivkDescriptorSetLayout;
+
+  IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &_material->ivkDescriptorSet),
+             "Failed to allocate the descriptor set");
+
+  return true;
+}
+
 b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _settings,
-                                             VkPipelineLayout* _layout)
+                                             Ice::Material* _material)
 {
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
@@ -181,7 +277,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _setti
   IVK_ASSERT(vkCreatePipelineLayout(context.device,
                                     &createInfo,
                                     context.alloc,
-                                    _layout),
+                                    &_material->ivkPipelineLayout),
              "Failed to create pipeline layout");
 
   return true;

@@ -17,21 +17,50 @@ namespace Ice {
   // Material
   //=========================
 
-  enum ShaderInputTypes;
-  enum ShaderBufferComponents;
+  enum ShaderInputTypes
+  {
+    Shader_Input_Buffer,
+    Shader_Input_Image2D,
+
+    Shader_Input_Count,
+  };
+
+  const char* const ShaderInputTypeStrings[Shader_Input_Count] = {
+    "buffer",
+    "image2d"
+  };
+
+  enum ShaderBufferComponents
+  {
+    Shader_Buffer_Custom_0,
+    Shader_Buffer_Custom_1,
+    Shader_Buffer_Custom_2,
+    Shader_Buffer_Custom_3,
+
+    Shader_Buffer_Count
+  };
+
+  const char* const ShaderBufferComponentStrings[Shader_Buffer_Count] = {
+    "custom_0",
+    "custom_1",
+    "custom_2",
+    "custom_3"
+  };
+
+  // Material proper =====
 
   struct ShaderInputElement
   {
-    ShaderInputTypes type;
+    ShaderInputTypes type = Ice::Shader_Input_Count;
     u32 inputIndex; // Opengl matID, Vulkan binding index, ...
   };
 
   enum ShaderTypes
   {
-    Shader_Unknown,
-    Shader_Vertex,
-    Shader_Fragment,
-    Shader_Compute,
+    Shader_Unknown = 0,
+    Shader_Vertex = 1,
+    Shader_Fragment = 2,
+    Shader_Compute = 4,
     // ...
   };
 
@@ -67,6 +96,16 @@ namespace Ice {
       void* apiData1;
       VkPipeline ivkPipeline;
     };
+
+    union {
+      void* apiData2;
+      VkDescriptorSetLayout ivkDescriptorSetLayout;
+    };
+
+    union {
+      void* apiData3;
+      VkDescriptorSet ivkDescriptorSet;
+    };
   };
 
   //=========================
@@ -93,40 +132,6 @@ namespace Ice {
   {
     //Ice::Renderer* existingRenderer = nullptr; // Used to setup resources for a new window
     Ice::RenderingApi api;
-  };
-
-  //=========================
-  // Shader input
-  //=========================
-
-  enum ShaderInputTypes
-  {
-    Shader_Input_Buffer,
-    Shader_Input_Image2D,
-
-    Shader_Input_Count,
-  };
-
-  const char* const ShaderInputTypeStrings[Shader_Input_Count] = {
-    "buffer",
-    "image2d"
-  };
-
-  enum ShaderBufferComponents
-  {
-    Shader_Buffer_Custom_0,
-    Shader_Buffer_Custom_1,
-    Shader_Buffer_Custom_2,
-    Shader_Buffer_Custom_3,
-
-    Shader_Buffer_Count
-  };
-
-  const char* const ShaderBufferComponentStrings[Shader_Buffer_Count] = {
-    "custom_0",
-    "custom_1",
-    "custom_2",
-    "custom_3"
   };
 
 }
