@@ -15,4 +15,4 @@
 	Line    17 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line    72 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
-	Line   158 :--: // TODO : ~!!~ Get shaders' descriptors
+	Line   152 :--: // TODO : ~!!~ Create descriptor set

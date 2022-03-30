@@ -62,7 +62,7 @@ u32 TokenIsValidFor(const Ice::LexerToken& _token, const char* const* _stringArr
   for (index = 0; index < _count; index++)
   {
     if (_token.string.compare(_stringArray[index]) == 0)
-      break;
+      return index;
   }
 
   return index;
@@ -100,7 +100,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
                                         (u32)Ice::Shader_Buffer_Count);
         if (typeIndex == (u32)Ice::Shader_Buffer_Count)
         {
-          IceLogWarning("Ivalid buffer component '%s' in descriptor file '%s'",
+          IceLogWarning("Ivalid buffer component '%s'\n> '%s'",
                         token.string.c_str(),
                         directory.c_str());
           continue;
@@ -124,27 +124,21 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
                                         (u32)Ice::Shader_Input_Count);
         if (typeIndex == (u32)Ice::Shader_Input_Count)
         {
-          IceLogWarning("Ivalid descriptor '%s' in descriptor file '%s'",
-                        token.string.c_str(),
-                        directory.c_str());
+          IceLogWarning("Ivalid descriptor '%s'\n> '%s'", token.string.c_str(), directory.c_str());
           continue;
         }
 
         if (!lexer.ExpectType(Ice::Token_Int, &token))
         {
-          IceLogError("Binding line %u is missing an index. Using line as index.\n> In '%s'",
-                      _shader->input.size(),
+          IceLogError("Binding '%s' is missing an index. Ignoring this binding.\n> '%s'",
+                      token.string.c_str(),
                       _shader->fileDirectory.c_str());
-
-          newInput.inputIndex = _shader->input.size();
-        }
-        else
-        {
-          newInput.inputIndex = lexer.GetUIntFromToken(&token);
+          continue;
         }
 
         // Include the descriptor
         newInput.type = (ShaderInputTypes)typeIndex;
+        newInput.inputIndex = lexer.GetUIntFromToken(&token);
         _shader->input.push_back(newInput);
       }
     }
@@ -156,7 +150,7 @@ Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _setting
 {
   Ice::Material newMaterial {};
 
-  // TODO : ~!!~ Get shaders' descriptors
+  // TODO : ~!!~ Create descriptor set
   // Assign default descriptor values (new buffer, default textures)
 
   CreatePipelineLayout(_settings, &newMaterial.ivkPipelineLayout);
