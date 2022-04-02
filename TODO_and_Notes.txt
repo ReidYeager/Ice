@@ -15,5 +15,5 @@
 	Line    17 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line    72 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
-	Line   153 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   175 :--: // TODO : Need to account for descriptor binding gaps
+	Line   151 :--: // TODO : Assign default descriptor values (new buffer, default textures)
+	Line   173 :--: // TODO : Need to account for descriptor binding gaps

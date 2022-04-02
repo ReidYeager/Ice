@@ -58,7 +58,7 @@ namespace Ice {
   // Rendering
   //=========================
 
-  Ice::Material& CreateMaterial(Ice::MaterialSettings _settings);
+  b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

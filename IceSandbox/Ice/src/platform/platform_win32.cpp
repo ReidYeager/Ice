@@ -44,10 +44,17 @@ void Ice::MemoryFree(void* _data)
 
 void Ice::PrintToConsole(const char* _message, u32 _color)
 {
-  //                               Info,  Debug, Warning,  Error,  Fatal
-  //                              White,   Cyan,  Yellow,    Red,  White-on-Red
-  const char* colorStrings[] = { "1;37", "1;36",  "1;33", "1;31", "1;41" };
-  printf("\033[%sm%s\033[0m", colorStrings[_color], _message);
+  //               Info , Debug, Warning, Error , Fatal
+  //               White, Cyan , Yellow , Red   , White-on-Red
+  u32 colors[] = { 0xf  , 0xb  , 0xe    , 0x4   , 0xcf };
+
+  HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(console, colors[_color]);
+  OutputDebugStringA(_message);
+  u64 length = strlen(_message);
+  LPDWORD written = 0;
+  WriteConsoleA(console, _message, (DWORD)length, written, 0);
+  SetConsoleTextAttribute(console, 0xf);
 }
 
 //=========================
@@ -60,7 +67,7 @@ std::vector<char> Ice::LoadFile(const char* _directory)
   inFile.open(_directory, std::ios::ate | std::ios::binary);
   if (!inFile)
   {
-    IceLogWarning("Failed to load file : %s", _directory);
+    IceLogWarning("Failed to load file\n> '%s'", _directory);
     return {};
   }
 

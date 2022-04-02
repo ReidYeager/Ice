@@ -14,6 +14,44 @@
 namespace Ice {
 
   //=========================
+  // Buffer
+  //=========================
+
+  enum GpuMemoryUsage
+  {
+    Gpu_Memory_Shader_Read = 0x01,
+    Gpu_Memory_Vertex = 0x02,
+    Gpu_Memory_Index = 0x04
+  };
+
+  struct Buffer
+  {
+    u64 size;
+
+    union {
+      void* apiData0;
+      VkBuffer ivkBuffer;
+    };
+
+    union {
+      void* apiData1;
+      VkDeviceMemory ivkMemory;
+    };
+  };
+
+  struct BufferSegment
+  {
+    u64 offset; // Offset of this segment's start within the original buffer
+    u64 size;   // Size of this segment
+
+    // The segment's parent buffer
+    union {
+      void* apiData0;
+      VkBuffer ivkBuffer;
+    };
+  };
+
+  //=========================
   // Material
   //=========================
 

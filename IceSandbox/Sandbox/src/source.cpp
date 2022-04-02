@@ -18,7 +18,8 @@ b8 Init()
   materialSettings.shaders.push_back(shaderInfo);
   //lightMatSettings.subpass = 1;
 
-  Ice::Material& lightMat = Ice::CreateMaterial(materialSettings);
+  Ice::Material* lightMat;
+  Ice::CreateMaterial(materialSettings, &lightMat);
   //Ice::SetLightingMaterial(lightMat);
 
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };

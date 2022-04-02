@@ -8,13 +8,13 @@
 #include <string>
 #include <vector>
 
-Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
+b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
 {
-  Ice::Shader newShader = {_shader.type};
+  Ice::Shader& newShader = *_shader;
 
-  newShader.fileDirectory = ICE_RESOURCE_SHADER_DIR;
-  newShader.fileDirectory.append(_shader.fileDirectory.c_str());
-  switch (_shader.type)
+  newShader.fileDirectory = std::string(ICE_RESOURCE_SHADER_DIR).append(newShader.fileDirectory);
+  //newShader.fileDirectory.append(newShader.fileDirectory.c_str());
+  switch (newShader.type)
   {
   case Shader_Vertex: newShader.fileDirectory.append(".vert"); break;
   case Shader_Fragment: newShader.fileDirectory.append(".frag"); break;
@@ -22,10 +22,10 @@ Ice::Shader Ice::RendererVulkan::CreateShader(const Ice::Shader _shader)
   default: IceLogError("Shader type unknown"); return {};
   }
 
-  CreateShaderModule(&newShader);
+  ICE_ATTEMPT_BOOL(CreateShaderModule(&newShader));
   LoadShaderDescriptors(&newShader);
 
-  return newShader;
+  return true;
 }
 
 void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
@@ -146,17 +146,15 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
 }
 
-Ice::Material Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings)
+b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material, Ice::MaterialSettings _settings)
 {
-  Ice::Material newMaterial {};
-
-  CreateDescriptorLayoutAndSet(_settings, &newMaterial);
+  ICE_ATTEMPT_BOOL(CreateDescriptorLayoutAndSet(_settings, _material));
   // TODO : Assign default descriptor values (new buffer, default textures)
 
-  CreatePipelineLayout(_settings, &newMaterial);
-  CreatePipeline(_settings, &newMaterial);
+  ICE_ATTEMPT_BOOL(CreatePipelineLayout(_settings, _material));
+  ICE_ATTEMPT_BOOL(CreatePipeline(_settings, _material));
 
-  return newMaterial;
+  return true;
 }
 
 void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)

@@ -185,7 +185,7 @@ void Ice::CloseWindow()
 //=========================
 
 // TODO : Material & Shader creation needs some restructuring for proper error handling
-Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
+b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material /*= nullptr*/)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
   // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
@@ -193,7 +193,7 @@ Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
   if (materialCount == appSettings.maxMaterialCount)
   {
     IceLogError("Maximum material count (%u) reached", appSettings.maxMaterialCount);
-    return materials[0];
+    return false;
   }
 
   // Get shaders' info =====
@@ -222,19 +222,34 @@ Ice::Material& Ice::CreateMaterial(Ice::MaterialSettings _settings)
       if (shaderCount == appSettings.maxShaderCount)
       {
         IceLogError("Maximum shader count (%u) reached", appSettings.maxShaderCount);
-        return materials[0];
+        return false;
       }
 
-      newShader = renderer->CreateShader(newShader);
+      if (!renderer->CreateShader(&newShader))
+      {
+        IceLogError("Failed to create a shader\n> '%s'", newShader.fileDirectory.c_str());
+        return false;
+      }
+
       shaders[shaderCount] = newShader;
       shaderCount++;
     }
   }
 
   // Create material =====
-  Ice::Material newMaterial = renderer->CreateMaterial(_settings);
+  Ice::Material newMaterial;
+  if (!renderer->CreateMaterial(&newMaterial, _settings))
+  {
+    IceLogError("Failed to create material");
+    return false;
+  }
   materials[materialCount] = newMaterial;
   materialCount++;
 
-  return materials[materialCount - 1];
+  if (_material != nullptr)
+  {
+    *_material = &materials[materialCount - 1];
+  }
+
+  return true;
 }

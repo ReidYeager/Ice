@@ -446,7 +446,7 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
   // Creation =====
   VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  createInfo.maxSets = 100; // (max possible) 0: Global, 1: per-shader, 2: per-material, 3: per-object
+  createInfo.maxSets = 100; // 1 for global, ~3 for renderpasses, X for materials, Y for objects
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 
@@ -569,7 +569,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     IVK_ASSERT(vkCreateSwapchainKHR(context.device, &createInfo, context.alloc, &context.swapchain),
                "Failed to create swapchain");
 
-    // Swapchain context =====
+    // Swapchain context
     context.swapchainFormat = format.format;
     context.swapchainExtent = extent;
   }

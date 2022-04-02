@@ -58,6 +58,7 @@ typedef u64 IceFlagExtended;
 
 typedef void* IceHandle;
 #define ICE_NULL_HANDLE nullptr
+#define ICE_NULL_UINT -1U
 
 //=========================
 // Resource directories

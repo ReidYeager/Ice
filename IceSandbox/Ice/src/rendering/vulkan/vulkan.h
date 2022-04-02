@@ -108,10 +108,13 @@ namespace Ice
     b8 RenderFrame(Ice::FrameInformation* _data);
     b8 Shutdown();
 
-    Ice::Shader CreateShader(const Ice::Shader _shader);
+    b8 CreateShader(Ice::Shader* _shader);
     void DestroyShader(Ice::Shader& _shader);
-    Ice::Material CreateMaterial(Ice::MaterialSettings _settings);
+    b8 CreateMaterial(Ice::Material* _material, Ice::MaterialSettings _settings);
     void DestroyMaterial(Ice::Material& _material);
+
+    b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::GpuMemoryUsage _usage);
+    void DestroyBufferMemory(Ice::Buffer* _buffer);
   };
 
 }

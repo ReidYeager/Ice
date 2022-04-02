@@ -81,7 +81,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
              "Failed to begin command buffer %u", _commandIndex);
 
-  VkDeviceSize zero = 0;
+  // Descriptor sets : 0 = Global, 1 = per-renderpass, 2 = per-material, 3 = per-object
 
   // Forward pass =====
   {
