@@ -110,8 +110,7 @@ b8 IceApplicationUpdate()
   InitTime();
 
   Ice::FrameInformation frameInfo;
-  frameInfo.materialCount = materialCount;
-  frameInfo.materials = materials;
+  frameInfo.components = &renderComponents;
 
   while (isRunning && Ice::platform.Update())
   {
@@ -391,7 +390,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
     }
 
     meshes[meshCount] = newMesh;
-    _mesh = &meshes[meshCount];
+    *_mesh = meshes[meshCount];
     meshCount++;
   }
 

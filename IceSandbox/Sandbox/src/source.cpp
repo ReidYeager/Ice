@@ -11,7 +11,7 @@ b8 Init()
 {
   Ice::MaterialSettings materialSettings;
   Ice::Shader shaderInfo;
-  shaderInfo.fileDirectory = "_light_blank";
+  shaderInfo.fileDirectory = "blank";
   shaderInfo.type = Ice::Shader_Vertex;
   materialSettings.shaders.push_back(shaderInfo);
   shaderInfo.type = Ice::Shader_Fragment;
@@ -25,12 +25,8 @@ b8 Init()
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
   //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
 
-  materialSettings.shaders[0].fileDirectory = "_light_half";
-  materialSettings.shaders[1].fileDirectory = "_light_half";
-  Ice::CreateMaterial(materialSettings);
-
   Ice::Entity tmpObject = Ice::CreateEntity();
-  CreateObject(tmpObject, "Cube.obj", lightMat);
+  CreateObject(tmpObject, "Cyborg_Weapon.obj", lightMat);
 
   return true;
 }

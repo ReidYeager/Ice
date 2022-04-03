@@ -4,6 +4,8 @@
 
 #include "defines.h"
 
+#include "core/ecs.h"
+
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -156,45 +158,6 @@ namespace Ice {
     vec3 position;
     vec2 uv;
     vec3 normal;
-
-    // Required for hash mapping
-    // Compares the attributes of other against itself
-    bool operator==(const Ice::Vertex& other) const
-    {
-      return position == other.position && normal == other.normal && uv == other.uv;
-    }
-
-    static VkVertexInputBindingDescription GetBindingDescription()
-    {
-      VkVertexInputBindingDescription desc = {};
-      desc.stride = sizeof(Ice::Vertex);
-      desc.binding = 0;
-      desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-      return desc;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions()
-    {
-      std::vector<VkVertexInputAttributeDescription> attribs(3);
-      // Position
-      attribs[0].binding = 0;
-      attribs[0].location = 0;
-      attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[0].offset = offsetof(Ice::Vertex, position);
-      // UV
-      attribs[2].binding = 0;
-      attribs[2].location = 1;
-      attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
-      attribs[2].offset = offsetof(Ice::Vertex, uv);
-      // normal
-      attribs[1].binding = 0;
-      attribs[1].location = 2;
-      attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[1].offset = offsetof(Ice::Vertex, normal);
-
-      return attribs;
-    }
   };
 
   struct Mesh
@@ -226,8 +189,7 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
-    Ice::Material* materials;
-    u32 materialCount;
+    Ice::ECS::ComponentManager<Ice::RenderComponent>* components;
   };
 
   enum RenderingApi

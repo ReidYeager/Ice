@@ -20,8 +20,6 @@ layout(location = 0) out vec2 outUV;
 
 void main() {
     // Render screen-filling quad
-    // gl_Position = vec4(verts[gl_VertexIndex].position, 1.0);
-    gl_Position = vec4(verts[gl_VertexIndex].position.xy * 0.5, 0.2, 1.0);
-
+    gl_Position = vec4(verts[gl_VertexIndex].position, 1.0);
     outUV = verts[gl_VertexIndex].uv;
 }

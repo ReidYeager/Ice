@@ -379,6 +379,7 @@ b8 Ice::RendererVulkan::CreateLogicalDevice()
 {
   // Use to enable features for use in rendering
   VkPhysicalDeviceFeatures enabledFeatures{};
+  enabledFeatures.fillModeNonSolid = VK_TRUE;
 
   // Queues =====
   // Graphics, Presentation, Transfer

@@ -95,13 +95,17 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
     //                        0,
     //                        nullptr);
 
-    // Materials =====
-    for (u32 i = 0; i < _data->materialCount; i++)
+    Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
+
+    for (u32 i = 0; i < rc.GetCount(); i++)
     {
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        _data->materials[i].ivkPipeline);
-      vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+                        rc[i].material.ivkPipeline);
+      vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &rc[i].mesh.vertexBuffer.ivkBuffer, &rc[i].mesh .vertexBuffer.offset);
+      vkCmdBindIndexBuffer(cmdBuffer, rc[i].mesh.indexBuffer.ivkBuffer, rc[i].mesh.indexBuffer.offset, VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(cmdBuffer, rc[i].mesh.indexCount, 1, 0, 0, 0);
+      //vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
     }
 
     vkCmdEndRenderPass(cmdBuffer);

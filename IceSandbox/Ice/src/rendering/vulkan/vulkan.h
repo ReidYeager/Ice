@@ -103,6 +103,12 @@ namespace Ice
     b8 CreatePipelineLayout(const Ice::MaterialSettings& _settings, Ice::Material* _material);
     b8 CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material);
 
+    //=========================
+    // Buffer
+    //=========================
+
+    b8 FlushBufferQueue();
+
   public:
     b8 Init(Ice::RendererSettings _settings);
     b8 RenderFrame(Ice::FrameInformation* _data);
@@ -115,9 +121,15 @@ namespace Ice
 
     b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::BufferMemoryUsageFlags _usage);
     void DestroyBufferMemory(Ice::Buffer* _buffer);
+    // Pushes data to the GPU immediately
     b8 PushDataToBuffer(void* _data,
                         const Ice::Buffer* _buffer,
                         const Ice::BufferSegment* _segmentInfo = nullptr);
+    // Adds data to a set to be pushed to the GPU just before rendering
+    // Assumes _data will remain valid through the frame
+    b8 QueueDataToBuffer(void* _data,
+                         const Ice::Buffer* _buffer,
+                         const Ice::BufferSegment* _segmentInfo = nullptr);
   };
 
 }

@@ -82,6 +82,7 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
 
 void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
 {
+  vkDeviceWaitIdle(context.device);
   vkDestroyBuffer(context.device, _buffer->ivkBuffer, context.alloc);
   vkFreeMemory(context.device, _buffer->ivkMemory, context.alloc);
 }
@@ -108,3 +109,22 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
 
   return true;
 }
+
+b8 Ice::RendererVulkan::QueueDataToBuffer(void* _data,
+                                          const Ice::Buffer* _buffer,
+                                          const Ice::BufferSegment* _segmentInfo /*= nullptr*/)
+{
+  if (_segmentInfo != nullptr && _segmentInfo->ivkBuffer != _buffer->ivkBuffer)
+  {
+    IceLogError("Buffer does not match segment's buffer. Aborting data push.");
+    return false;
+  }
+
+  // TODO : Implement buffer data queue
+}
+
+b8 FlushBufferQueue()
+{
+  return true;
+}
+

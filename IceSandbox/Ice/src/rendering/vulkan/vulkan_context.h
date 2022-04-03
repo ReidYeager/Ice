@@ -37,21 +37,12 @@ namespace Ice {
 
   struct IvkVertex
   {
-    vec3 position;
-    vec2 uv;
-    vec3 normal;
-
-    // Required for hash mapping
-    // Compares the attributes of other against itself
-    bool operator== (const IvkVertex& other) const
-    {
-      return position == other.position && normal == other.normal && uv == other.uv;
-    }
+    Ice::Vertex vertex;
 
     static VkVertexInputBindingDescription GetBindingDescription()
     {
       VkVertexInputBindingDescription desc = {};
-      desc.stride = sizeof(IvkVertex);
+      desc.stride = sizeof(Ice::Vertex);
       desc.binding = 0;
       desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
@@ -65,17 +56,17 @@ namespace Ice {
       attribs[0].binding = 0;
       attribs[0].location = 0;
       attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[0].offset = offsetof(IvkVertex, position);
+      attribs[0].offset = offsetof(Ice::Vertex, position);
       // UV
       attribs[2].binding = 0;
       attribs[2].location = 1;
       attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
-      attribs[2].offset = offsetof(IvkVertex, uv);
+      attribs[2].offset = offsetof(Ice::Vertex, uv);
       // normal
       attribs[1].binding = 0;
       attribs[1].location = 2;
       attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[1].offset = offsetof(IvkVertex, normal);
+      attribs[1].offset = offsetof(Ice::Vertex, normal);
 
       return attribs;
     }

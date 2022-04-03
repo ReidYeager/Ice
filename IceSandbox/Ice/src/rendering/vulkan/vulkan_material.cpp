@@ -298,12 +298,12 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  //vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttribDesc.size();
-  //vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
-  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  //vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
+  //vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttribDesc.size();
+  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
+  //vertexInputStateInfo.vertexBindingDescriptionCount = 0;
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
 
   // Input Assembly State =====
   // Defines how meshes are to be rendered
@@ -337,9 +337,11 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
   // Defines how the pipeline will rasterize the image
   VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  //rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;
