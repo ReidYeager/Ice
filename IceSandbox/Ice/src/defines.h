@@ -68,22 +68,6 @@ typedef void* IceHandle;
 #define ICE_RESOURCE_SHADER_DIR "../../../Sandbox/res/shaders/compiled/"
 #define ICE_RESOURCE_MODEL_DIR "../../../Sandbox/res/models/"
 
-#define ICE_ATTEMPT_BOOL(x) \
-if (!x)                     \
-  return false;
-
-#define ICE_ATTEMPT_HANDLE(x) \
-if (x == ICE_NULL_HANDLE)     \
-  return ICE_NULL_HANDLE;
-
-#define ICE_ATTEMPT_BOOL_HANDLE(x) \
-if (!x)                            \
-  return ICE_NULL_HANDLE;
-
-#define ICE_ATTEMPT_HANDLE_BOOL(x) \
-if (x == ICE_NULL_HANDLE)          \
-  return false;
-
 //=========================
 // Asserts
 //=========================
@@ -113,6 +97,18 @@ if (x == ICE_NULL_HANDLE)          \
     IceLogFatal(msg, __VA_ARGS__);                                             \
     __debugbreak();                                                            \
   }                                                                            \
+}
+
+#define ICE_ATTEMPT(expression) \
+if (!expression)                \
+  return false;
+
+#define ICE_ATTEMPT_MSG(expression, severity, message, ...) \
+if (!expression)                                            \
+{                                                           \
+  Ice::ConsoleLogMessage(severity, message, __VA_ARGS__);   \
+  Ice::ConsoleLogMessage(severity, "\n");                   \
+  return false;                                             \
 }
 
 #else

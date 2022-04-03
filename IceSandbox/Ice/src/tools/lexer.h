@@ -69,6 +69,8 @@ namespace Ice {
 
     u32 GetUIntFromToken(const Ice::LexerToken* _token);
 
+    u32 GetTokenSetIndex(const Ice::LexerToken& _token, const char* const* _stringArray, u32 _count);
+
   private:
     Ice::LexerToken GetSingleCharToken(Ice::TokenTypes _type);
     Ice::LexerToken GetStringToken();

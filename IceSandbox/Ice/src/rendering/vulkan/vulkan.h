@@ -113,8 +113,11 @@ namespace Ice
     b8 CreateMaterial(Ice::Material* _material, Ice::MaterialSettings _settings);
     void DestroyMaterial(Ice::Material& _material);
 
-    b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::GpuMemoryUsage _usage);
+    b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::BufferMemoryUsageFlags _usage);
     void DestroyBufferMemory(Ice::Buffer* _buffer);
+    b8 PushDataToBuffer(void* _data,
+                        const Ice::Buffer* _buffer,
+                        const Ice::BufferSegment* _segmentInfo = nullptr);
   };
 
 }

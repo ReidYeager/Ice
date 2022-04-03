@@ -6,6 +6,7 @@
 
 #include "platform/platform.h"
 #include "rendering/renderer.h"
+#include "core/ecs.h"
 
 namespace Ice {
 
@@ -39,8 +40,9 @@ namespace Ice {
     Ice::RendererSettings renderer;
     Ice::WindowSettings window;
 
-    u32 maxShaderCount = 200;
-    u32 maxMaterialCount = 100;
+    u32 maxShaderCount = 200;   // Number of unique shaders
+    u32 maxMaterialCount = 100; // Number of unique materials
+    u32 maxMeshCount = 200;     // Number of unique meshes
   };
 
   u32 Run(ApplicationSettings);
@@ -59,6 +61,7 @@ namespace Ice {
   //=========================
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
+  b8 CreateObject(Ice::Entity _entity, const char* _meshDir, Ice::Material* _material);
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

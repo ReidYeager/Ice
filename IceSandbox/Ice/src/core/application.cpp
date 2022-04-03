@@ -9,6 +9,11 @@
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tinyobjloader/tiny_obj_loader.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 #include <chrono>
 
 Ice::ApplicationSettings appSettings;
@@ -20,7 +25,9 @@ u32 shaderCount = 0;
 Ice::Shader* shaders;
 u32 materialCount = 0;
 Ice::Material* materials;
-//Ice::ECS::ComponentManager<Ice::Material> materials;
+u32 meshCount = 0;
+Ice::Mesh* meshes;
+Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
 
 //=========================
 // Time
@@ -90,6 +97,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
   shaders = (Ice::Shader*)Ice::MemoryAllocZero(sizeof(Ice::Shader) * _settings.maxShaderCount);
   materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
+  meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
 
   // Game =====
   _settings.clientInitFunction();
@@ -107,9 +115,9 @@ b8 IceApplicationUpdate()
 
   while (isRunning && Ice::platform.Update())
   {
-    ICE_ATTEMPT_BOOL(appSettings.clientUpdateFunction(Ice::time.deltaTime));
+    ICE_ATTEMPT(appSettings.clientUpdateFunction(Ice::time.deltaTime));
 
-    ICE_ATTEMPT_BOOL(renderer->RenderFrame(&frameInfo));
+    ICE_ATTEMPT(renderer->RenderFrame(&frameInfo));
 
     Input.Update();
     UpdateTime();
@@ -120,7 +128,13 @@ b8 IceApplicationUpdate()
 
 b8 IceApplicationShutdown()
 {
-  ICE_ATTEMPT_BOOL(appSettings.clientShutdownFunction());
+  ICE_ATTEMPT(appSettings.clientShutdownFunction());
+
+  for (u32 i = 0; i < meshCount; i++)
+  {
+    renderer->DestroyBufferMemory(&meshes[i].buffer);
+  }
+  Ice::MemoryFree(meshes);
 
   for (u32 i = 0; i < materialCount; i++)
   {
@@ -184,7 +198,29 @@ void Ice::CloseWindow()
 // Rendering
 //=========================
 
-// TODO : Material & Shader creation needs some restructuring for proper error handling
+struct HashedVertex
+{
+  glm::vec3 position;
+  glm::vec2 uv;
+  glm::vec3 normal;
+
+  bool operator==(const HashedVertex& other) const
+  {
+    return position == other.position && normal == other.normal && uv == other.uv;
+  }
+};
+
+// Used to map vertices into an unordered array during mesh building
+namespace std {
+  template<> struct hash<HashedVertex> {
+    size_t operator()(HashedVertex const& vertex) const {
+      return ((hash<glm::vec3>()(vertex.position) ^
+              (hash<glm::vec2>()(vertex.uv) << 1)) >> 1) ^
+              (hash<glm::vec3>()(vertex.normal) << 1);
+    }
+  };
+}
+
 b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material /*= nullptr*/)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
@@ -250,6 +286,123 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   {
     *_material = &materials[materialCount - 1];
   }
+
+  return true;
+}
+
+b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
+{
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+
+  // Load mesh =====
+  {
+    std::string loadWarnings, loadErrors;
+
+    std::string dir(ICE_RESOURCE_MODEL_DIR);
+    dir.append(_directory);
+
+    ICE_ATTEMPT_MSG(tinyobj::LoadObj(&attrib,
+                                      &shapes,
+                                      &materials,
+                                      &loadWarnings,
+                                      &loadErrors,
+                                      dir.c_str()),
+                    Ice::Log_Error,
+                    "Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
+                    _directory,
+                    loadWarnings.c_str(),
+                    loadErrors.c_str());
+  }
+
+  std::vector<Ice::Vertex> vertices;
+  std::vector<u32> indices;
+
+  // Assemble mesh =====
+  std::unordered_map<HashedVertex, u32> vertMap = {};
+  {
+    HashedVertex vert {};
+    for (const auto& shape : shapes)
+    {
+      for (const auto& index : shape.mesh.indices)
+      {
+        vert.position = {
+          attrib.vertices[3 * index.vertex_index + 0],
+          attrib.vertices[3 * index.vertex_index + 1],
+          attrib.vertices[3 * index.vertex_index + 2]
+        };
+
+        vert.uv = {
+          attrib.texcoords[2 * index.texcoord_index + 0],
+          1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+        };
+
+        vert.normal = {
+          attrib.normals[3 * index.normal_index + 0],
+          attrib.normals[3 * index.normal_index + 1],
+          attrib.normals[3 * index.normal_index + 2]
+        };
+
+        if (vertMap.count(vert) == 0)
+        {
+          vertMap[vert] = (u32)vertices.size();
+
+          Ice::Vertex properVert {};
+          properVert.position = { vert.position.x, vert.position.y, vert.position.z };
+          properVert.uv = { vert.uv.x, vert.uv.y };
+          properVert.normal = { vert.normal.x, vert.normal.y, vert.normal.z };
+
+          vertices.push_back(properVert);
+        }
+        indices.push_back(vertMap[vert]);
+      }
+    }
+  }
+
+  // Create mesh =====
+  {
+    Ice::Mesh newMesh;
+
+    newMesh.indexCount = indices.size();
+    ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
+                                             (sizeof(Ice::Vertex) * vertices.size() +
+                                               (sizeof(u32) * indices.size())),
+                                             Ice::Buffer_Memory_Vertex | Ice::Buffer_Memory_Index));
+
+    newMesh.vertexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
+    newMesh.vertexBuffer.offset = 0;
+    newMesh.vertexBuffer.size = sizeof(Ice::Vertex) * vertices.size();
+    if (!renderer->PushDataToBuffer(vertices.data(), &newMesh.buffer, &newMesh.vertexBuffer))
+    {
+      IceLogError("Failed to push vertex data to its buffer");
+      renderer->DestroyBufferMemory(&newMesh.buffer);
+      return false;
+    }
+
+    newMesh.indexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
+    newMesh.indexBuffer.offset = newMesh.vertexBuffer.size;
+    newMesh.indexBuffer.size = sizeof(u32) * indices.size();
+    if (!renderer->PushDataToBuffer(indices.data(), &newMesh.buffer, &newMesh.indexBuffer))
+    {
+      IceLogError("Failed to push index data to its buffer");
+      renderer->DestroyBufferMemory(&newMesh.buffer);
+      return false;
+    }
+
+    meshes[meshCount] = newMesh;
+    _mesh = &meshes[meshCount];
+    meshCount++;
+  }
+
+  return true;
+}
+
+b8 Ice::CreateObject(Ice::Entity _entity, const char* _meshDir, Ice::Material* _material)
+{
+  Ice::RenderComponent& rc = renderComponents.Create(_entity);
+  rc.material = *_material;
+  CreateMesh(_meshDir, &rc.mesh);
 
   return true;
 }

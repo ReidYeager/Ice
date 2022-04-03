@@ -41,20 +41,20 @@ namespace Ice {
 
 
 #ifdef ICE_DEBUG
-#define IceLogInfo(message, ...)                            \
-{                                                           \
+#define IceLogInfo(message, ...)                               \
+{                                                              \
   Ice::ConsoleLogMessage(Ice::Log_Info, message, __VA_ARGS__); \
   Ice::ConsoleLogMessage(Ice::Log_Info, "\n"); \
 }
 
-#define IceLogDebug(message, ...)                            \
-{                                                            \
+#define IceLogDebug(message, ...)                               \
+{                                                               \
   Ice::ConsoleLogMessage(Ice::Log_Debug, message, __VA_ARGS__); \
   Ice::ConsoleLogMessage(Ice::Log_Debug, "\n");                 \
 }
 
-#define IceLogWarning(message, ...)                            \
-{                                                              \
+#define IceLogWarning(message, ...)                               \
+{                                                                 \
   Ice::ConsoleLogMessage(Ice::Log_Warning, message, __VA_ARGS__); \
   Ice::ConsoleLogMessage(Ice::Log_Warning, "\n");                 \
 }
@@ -64,14 +64,14 @@ namespace Ice {
 #define IceLogWarning(message, ...)
 #endif // ICE_DEBUG
 
-#define IceLogError(message, ...)                            \
-{                                                            \
+#define IceLogError(message, ...)                               \
+{                                                               \
   Ice::ConsoleLogMessage(Ice::Log_Error, message, __VA_ARGS__); \
   Ice::ConsoleLogMessage(Ice::Log_Error, "\n");                 \
 }
 
-#define IceLogFatal(message, ...)                            \
-{                                                            \
+#define IceLogFatal(message, ...)                               \
+{                                                               \
   Ice::ConsoleLogMessage(Ice::Log_Fatal, message, __VA_ARGS__); \
   Ice::ConsoleLogMessage(Ice::Log_Fatal, "\n");                 \
 }

@@ -22,7 +22,7 @@ b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
   default: IceLogError("Shader type unknown"); return {};
   }
 
-  ICE_ATTEMPT_BOOL(CreateShaderModule(&newShader));
+  ICE_ATTEMPT(CreateShaderModule(&newShader));
   LoadShaderDescriptors(&newShader);
 
   return true;
@@ -56,18 +56,6 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   return true;
 }
 
-u32 TokenIsValidFor(const Ice::LexerToken& _token, const char* const* _stringArray, u32 _count)
-{
-  u32 index;
-  for (index = 0; index < _count; index++)
-  {
-    if (_token.string.compare(_stringArray[index]) == 0)
-      return index;
-  }
-
-  return index;
-}
-
 void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 {
   // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
@@ -95,9 +83,9 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         token = lexer.NextToken();
 
         // Check if the token is a valid buffer component
-        u32 typeIndex = TokenIsValidFor(token,
-                                        Ice::ShaderBufferComponentStrings,
-                                        (u32)Ice::Shader_Buffer_Count);
+        u32 typeIndex = lexer.GetTokenSetIndex(token,
+                                               Ice::ShaderBufferComponentStrings,
+                                               (u32)Ice::Shader_Buffer_Count);
         if (typeIndex == (u32)Ice::Shader_Buffer_Count)
         {
           IceLogWarning("Ivalid buffer component '%s'\n> '%s'",
@@ -119,9 +107,9 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         token = lexer.NextToken();
 
         // Check if the token is a valid descriptor
-        u32 typeIndex = TokenIsValidFor(token,
-                                        Ice::ShaderInputTypeStrings,
-                                        (u32)Ice::Shader_Input_Count);
+        u32 typeIndex = lexer.GetTokenSetIndex(token,
+                                               Ice::ShaderInputTypeStrings,
+                                               (u32)Ice::Shader_Input_Count);
         if (typeIndex == (u32)Ice::Shader_Input_Count)
         {
           IceLogWarning("Ivalid descriptor '%s'\n> '%s'", token.string.c_str(), directory.c_str());
@@ -148,11 +136,11 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
 b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material, Ice::MaterialSettings _settings)
 {
-  ICE_ATTEMPT_BOOL(CreateDescriptorLayoutAndSet(_settings, _material));
+  ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_settings, _material));
   // TODO : Assign default descriptor values (new buffer, default textures)
 
-  ICE_ATTEMPT_BOOL(CreatePipelineLayout(_settings, _material));
-  ICE_ATTEMPT_BOOL(CreatePipeline(_settings, _material));
+  ICE_ATTEMPT(CreatePipelineLayout(_settings, _material));
+  ICE_ATTEMPT(CreatePipeline(_settings, _material));
 
   return true;
 }
@@ -233,7 +221,7 @@ b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(const Ice::MaterialSettings
                                                      Ice::Material* _material)
 {
   std::vector<VkDescriptorSetLayoutBinding> bindings;
-  ICE_ATTEMPT_BOOL(AssembleMaterialDescriptorBindings(_settings.shaders, bindings));
+  ICE_ATTEMPT(AssembleMaterialDescriptorBindings(_settings.shaders, bindings));
 
   // Create layout =====
   VkDescriptorSetLayoutCreateInfo createInfo{};

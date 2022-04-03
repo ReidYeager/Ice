@@ -1,6 +1,5 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   186 :--: // TODO : Material & Shader creation needs some restructuring for proper error handling
-	Line   190 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line   226 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
 	Line   136 :--: // TODO : Remove this branch
 	Line   202 :--: // TODO : Remove this branch
@@ -14,6 +13,6 @@
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    17 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    72 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
-	Line   151 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   173 :--: // TODO : Need to account for descriptor binding gaps
+	Line    60 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
+	Line   139 :--: // TODO : Assign default descriptor values (new buffer, default textures)
+	Line   161 :--: // TODO : Need to account for descriptor binding gaps

@@ -11,22 +11,22 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
 {
   IceLogDebug("Vulkan init");
 
-  ICE_ATTEMPT_BOOL(CreateInstance());
-  ICE_ATTEMPT_BOOL(CreateSurface());
-  ICE_ATTEMPT_BOOL(ChoosePhysicalDevice());
-  ICE_ATTEMPT_BOOL(CreateLogicalDevice());
+  ICE_ATTEMPT(CreateInstance());
+  ICE_ATTEMPT(CreateSurface());
+  ICE_ATTEMPT(ChoosePhysicalDevice());
+  ICE_ATTEMPT(CreateLogicalDevice());
 
-  ICE_ATTEMPT_BOOL(CreateDescriptorPool());
-  ICE_ATTEMPT_BOOL(CreateCommandPool());
-  ICE_ATTEMPT_BOOL(CreateCommandPool(true));
+  ICE_ATTEMPT(CreateDescriptorPool());
+  ICE_ATTEMPT(CreateCommandPool());
+  ICE_ATTEMPT(CreateCommandPool(true));
 
-  ICE_ATTEMPT_BOOL(CreateSwapchain());
-  ICE_ATTEMPT_BOOL(CreateSyncObjects());
-  ICE_ATTEMPT_BOOL(CreateCommandBuffers());
+  ICE_ATTEMPT(CreateSwapchain());
+  ICE_ATTEMPT(CreateSyncObjects());
+  ICE_ATTEMPT(CreateCommandBuffers());
 
-  ICE_ATTEMPT_BOOL(CreateDepthImages());
-  //ICE_ATTEMPT_BOOL(CreateGlobalDescriptors());
-  ICE_ATTEMPT_BOOL(CreateForwardComponents());
+  ICE_ATTEMPT(CreateDepthImages());
+  //ICE_ATTEMPT(CreateGlobalDescriptors());
+  ICE_ATTEMPT(CreateForwardComponents());
 
   return true;
 }
@@ -589,7 +589,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
 
     for (u32 i = 0; i < imageCount; i++)
     {
-      ICE_ATTEMPT_BOOL(CreateImageView(&context.swapchainImageViews[i],
+      ICE_ATTEMPT(CreateImageView(&context.swapchainImageViews[i],
                                   context.swapchainImages[i],
                                   context.swapchainFormat,
                                   VK_IMAGE_ASPECT_COLOR_BIT));

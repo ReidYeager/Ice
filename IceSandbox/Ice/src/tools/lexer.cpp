@@ -179,6 +179,20 @@ u32 Ice::Lexer::GetUIntFromToken(const Ice::LexerToken* _token)
   return value;
 }
 
+u32 Ice::Lexer::GetTokenSetIndex(const Ice::LexerToken& _token,
+                                 const char* const* _stringArray,
+                                 u32 _count)
+{
+  u32 index;
+  for (index = 0; index < _count; index++)
+  {
+    if (_token.string.compare(_stringArray[index]) == 0)
+      return index;
+  }
+
+  return index;
+}
+
 Ice::LexerToken Ice::Lexer::GetSingleCharToken(Ice::TokenTypes _type)
 {
   return { _type, std::string(std::string_view(charStream++, 1)) };

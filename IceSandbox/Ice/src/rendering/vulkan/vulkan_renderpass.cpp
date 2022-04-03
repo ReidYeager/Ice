@@ -154,12 +154,12 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
 
   for (u32 i = 0; i < count; i++)
   {
-    ICE_ATTEMPT_BOOL(CreateFrameBuffer(context,
-                                       &context.forward.framebuffers[i],
-                                       context.forward.renderpass,
-                                       context.swapchainExtent,
-                                       {context.swapchainImageViews[i],
-                                       context.depthImages[i].view }));
+    ICE_ATTEMPT(CreateFrameBuffer(context,
+                                  &context.forward.framebuffers[i],
+                                  context.forward.renderpass,
+                                  context.swapchainExtent,
+                                  {context.swapchainImageViews[i],
+                                  context.depthImages[i].view }));
   }
 
   return true;

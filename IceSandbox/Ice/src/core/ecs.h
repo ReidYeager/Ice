@@ -11,19 +11,19 @@ namespace Ice {
 
   typedef u64 Entity;
 
+  //=========================
+  // Entity
+  //=========================
+
+  static const Entity invalidEntity = 0;
+
+  static Ice::Entity CreateEntity()
+  {
+    static Ice::Entity nextID = 0;
+    return ++nextID;
+  }
+
   namespace ECS {
-
-    //=========================
-    // Entity
-    //=========================
-
-    static const Entity invalidEntity = 0;
-
-    static Ice::Entity CreateEntity()
-    {
-      static Ice::Entity nextID = 0;
-      return ++nextID;
-    }
 
     //=========================
     // Component
@@ -48,7 +48,7 @@ namespace Ice {
 
       Type& Create(Ice::Entity _entity)
       {
-        ICE_ASSERT(_entity != Ice::ECS::invalidEntity);
+        ICE_ASSERT(_entity != Ice::invalidEntity);
         ICE_ASSERT(lookup.find(_entity) == lookup.end());
         ICE_ASSERT(entities.size() == components.size());
         ICE_ASSERT(lookup.size() == components.size());

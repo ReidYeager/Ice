@@ -24,8 +24,13 @@ namespace Ice {
     virtual b8 CreateMaterial(Ice::Material* _material, MaterialSettings _settings) = 0;
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
 
-    virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::GpuMemoryUsage _usage) = 0;
+    virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
+                                  u64 _size,
+                                  Ice::BufferMemoryUsageFlags _usage) = 0;
     virtual void DestroyBufferMemory(Ice::Buffer* _buffer) = 0;
+    virtual b8 PushDataToBuffer(void* _data,
+                                const Ice::Buffer* _buffer,
+                                const Ice::BufferSegment* _segmentInfo) = 0;
   };
 
 }

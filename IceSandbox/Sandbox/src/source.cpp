@@ -29,6 +29,9 @@ b8 Init()
   materialSettings.shaders[1].fileDirectory = "_light_half";
   Ice::CreateMaterial(materialSettings);
 
+  Ice::Entity tmpObject = Ice::CreateEntity();
+  CreateObject(tmpObject, "Cube.obj", lightMat);
+
   return true;
 }
 
