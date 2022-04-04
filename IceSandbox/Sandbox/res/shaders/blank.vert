@@ -34,22 +34,10 @@ layout(location = 1) out vec2 outUV;
 // Code =====
 
 void main() {
-    mat4 vp;
-    vp *= 0;
-    vp[3][3] = 1.0;
+    // vec4 modelPosition = model.transform * vec4(inPosition, 1.0);
+    gl_Position = global.viewProj * vec4(inPosition, 1.0);
 
-    vp[0][0] = 1.0;
-    vp[1][1] = 1.0;
-    vp[2][2] = 1.0;
-
-    gl_Position = vp * vec4(inPosition, 1.0);
-
+    // outNormal = normalize(mat3(model.transform) * inNormal);
     outNormal = inNormal;
     outUV = inUV;
-
-    // vec4 modelPosition = model.transform * vec4(inPosition, 1.0);
-
-    // gl_Position = global.viewProj * modelPosition;
-    // outNormal = normalize(mat3(model.transform) * inNormal);
-    // outUV = inUV;
 }

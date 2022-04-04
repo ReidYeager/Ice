@@ -140,7 +140,9 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
 
   // TODO : Assign default descriptor values (new buffer, default textures)
 
-  ICE_ATTEMPT(CreatePipelineLayout(_material));
+  ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
+                                     _material->ivkDescriptorSetLayout },
+                                   &_material->ivkPipelineLayout));
   ICE_ATTEMPT(CreatePipeline(_material));
 
   return true;
@@ -197,7 +199,7 @@ b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
       newBinding.descriptorCount = 1;
       newBinding.pImmutableSamplers = nullptr;
       newBinding.binding = descriptor.inputIndex;
-      newBinding.stageFlags = VK_SHADER_STAGE_ALL;
+      newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
       switch (descriptor.type)
       {
       case Ice::Shader_Input_Buffer:
@@ -237,8 +239,10 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
   bindings.push_back(newBinding);
 
   ICE_ATTEMPT(CreateDescriptorLayoutAndSet(&bindings,
-                                           &context.glogalDescriptorLayout,
+                                           &context.globalDescriptorLayout,
                                            &context.globalDescriptorSet));
+
+  ICE_ATTEMPT(CreatePipelineLayout({context.globalDescriptorLayout}, &context.globalPipelineLayout));
 
   ICE_ATTEMPT(CreateBufferMemory(&context.globalDescriptorBuffer,
                                  64,
@@ -351,20 +355,21 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
 }
 
-b8 Ice::RendererVulkan::CreatePipelineLayout(Ice::Material* _material)
+b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
+                                             VkPipelineLayout* _pipelineLayout)
 {
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pNext = nullptr;
   createInfo.pushConstantRangeCount = 0;
   createInfo.pPushConstantRanges = nullptr;
-  createInfo.setLayoutCount = 0;
-  createInfo.pSetLayouts = nullptr;
+  createInfo.setLayoutCount = _setLayouts.size();
+  createInfo.pSetLayouts = _setLayouts.data();
 
   IVK_ASSERT(vkCreatePipelineLayout(context.device,
                                     &createInfo,
                                     context.alloc,
-                                    &_material->ivkPipelineLayout),
+                                    _pipelineLayout),
              "Failed to create pipeline layout");
 
   return true;
@@ -442,7 +447,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;

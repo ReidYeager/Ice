@@ -11,23 +11,6 @@
 namespace Ice {
 
   //=========================
-  // Time
-  //=========================
-  extern struct IceTime
-  {
-    // Real-time in seconds since the application started
-    union
-    {
-      f32 totalTime;
-      f32 realTime;
-    };
-
-    f32 deltaTime; // Time in seconds taken by the previous tick
-
-    u32 frameCount; // Number of frames rendered before this tick
-  } time;
-
-  //=========================
   // Application
   //=========================
 

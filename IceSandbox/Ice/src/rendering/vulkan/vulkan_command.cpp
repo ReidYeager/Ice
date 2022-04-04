@@ -86,14 +86,14 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
   // Forward pass =====
   {
     vkCmdBeginRenderPass(cmdBuffer, &forwardBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    //vkCmdBindDescriptorSets(cmdBuffer,
-    //                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-    //                        context.globalPipelinelayout,
-    //                        0,
-    //                        1,
-    //                        &context.globalDescritorSet,
-    //                        0,
-    //                        nullptr);
+    vkCmdBindDescriptorSets(cmdBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            context.globalPipelineLayout,
+                            0,
+                            1,
+                            &context.globalDescriptorSet,
+                            0,
+                            nullptr);
 
     Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
 
@@ -102,6 +102,16 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                         rc[i].material.ivkPipeline);
+
+      //vkCmdBindDescriptorSets(cmdBuffer,
+      //                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+      //                        rc[i].material.ivkPipelineLayout,
+      //                        0,
+      //                        1,
+      //                        &rc[i].material.ivkDescriptorSet,
+      //                        0,
+      //                        nullptr);
+
       vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &rc[i].mesh.vertexBuffer.ivkBuffer, &rc[i].mesh .vertexBuffer.offset);
       vkCmdBindIndexBuffer(cmdBuffer, rc[i].mesh.indexBuffer.ivkBuffer, rc[i].mesh.indexBuffer.offset, VK_INDEX_TYPE_UINT32);
       vkCmdDrawIndexed(cmdBuffer, rc[i].mesh.indexCount, 1, 0, 0, 0);

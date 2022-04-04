@@ -1,5 +1,5 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   233 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line   234 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
 	Line   136 :--: // TODO : Remove this branch
 	Line   202 :--: // TODO : Remove this branch
@@ -12,9 +12,11 @@
 	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    17 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
+\IceSandbox\Ice\src\rendering\vulkan\vulkan.cpp
+	Line    42 :--: // TODO : Move this somewhere else
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_buffer.cpp
 	Line   122 :--: // TODO : Implement buffer data queue
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line    61 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
 	Line   140 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   162 :--: // TODO : Need to account for descriptor binding gaps
+	Line   164 :--: // TODO : Need to account for descriptor binding gaps

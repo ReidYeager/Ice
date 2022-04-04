@@ -39,6 +39,25 @@ typedef unsigned char      b8;
 typedef unsigned int       b32;
 
 //=========================
+// Time
+//=========================
+namespace Ice {
+  extern struct IceTime
+  {
+    // Real-time in seconds since the application started
+    union
+    {
+      f32 totalTime;
+      f32 realTime;
+    };
+
+    f32 deltaTime; // Time in seconds taken by the previous tick
+
+    u32 frameCount; // Number of frames rendered before this tick
+  } time;
+}
+
+//=========================
 // Platform detection
 //=========================
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)

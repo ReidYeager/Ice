@@ -156,6 +156,7 @@ b8 IceApplicationShutdown()
   Ice::MemoryFree(shaders);
 
   renderer->Shutdown();
+  delete(renderer);
 
   Input.Shutdown();
   Ice::CloseWindow();

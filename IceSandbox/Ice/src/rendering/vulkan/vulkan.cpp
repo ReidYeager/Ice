@@ -5,6 +5,9 @@
 #include "rendering/vulkan/vulkan.h"
 #include "rendering/vulkan/vulkan_context.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+
 #include <vector>
 
 b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
@@ -36,6 +39,23 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
   VkResult result;
+
+  // TODO : Move this somewhere else
+  //  Should automatically update marked data when changed
+  {
+    static const glm::mat4 projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.01f, 10.0f);
+    static glm::mat4 view;
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0, -2.5f));
+    //view = glm::rotate(view, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // pitch
+    view = glm::rotate(view, glm::radians(Ice::time.realTime * 90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // yaw
+
+    static glm::mat4 viewProj;
+    viewProj = projection * view;
+    viewProj[1][1] *= -1;
+
+    // Update global buffer (camera matrix)
+    ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer));
+  }
 
   // Wait for oldest in-flight slot to return =====
   IVK_ASSERT(vkWaitForFences(context.device,
@@ -119,7 +139,8 @@ b8 Ice::RendererVulkan::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
 
-  vkDestroyDescriptorSetLayout(context.device, context.glogalDescriptorLayout, context.alloc);
+  vkDestroyPipelineLayout(context.device, context.globalPipelineLayout, context.alloc);
+  vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorLayout, context.alloc);
   DestroyBufferMemory(&context.globalDescriptorBuffer);
 
   // Renderpasses =====

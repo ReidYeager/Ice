@@ -137,7 +137,8 @@ namespace Ice {
 
     // Renderpasses =====
     VkDescriptorSet globalDescriptorSet;
-    VkDescriptorSetLayout glogalDescriptorLayout;
+    VkDescriptorSetLayout globalDescriptorLayout;
+    VkPipelineLayout globalPipelineLayout;
     Ice::Buffer globalDescriptorBuffer;
 
     Ice::Renderpass forward;

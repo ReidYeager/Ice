@@ -106,7 +106,8 @@ namespace Ice
     // Collects the descriptors for all shaders to create the material's layout/set
     b8 CreateDescriptorLayoutAndSet(Ice::Material* _material);
     void UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<Ice::ShaderInputElement> _bindings);
-    b8 CreatePipelineLayout(Ice::Material* _material);
+    b8 CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
+                            VkPipelineLayout* _pipelineLayout);
     b8 CreatePipeline(Ice::Material* _material);
 
     //=========================
