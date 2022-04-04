@@ -116,11 +116,12 @@ b8 Ice::RendererVulkan::QueueDataToBuffer(void* _data,
 {
   if (_segmentInfo != nullptr && _segmentInfo->ivkBuffer != _buffer->ivkBuffer)
   {
-    IceLogError("Buffer does not match segment's buffer. Aborting data push.");
+    IceLogError("Buffer does not match segment's buffer. Aborting data push queue.");
     return false;
   }
 
   // TODO : Implement buffer data queue
+  return true;
 }
 
 b8 FlushBufferQueue()

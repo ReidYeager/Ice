@@ -25,6 +25,7 @@ u32 shaderCount = 0;
 Ice::Shader* shaders;
 u32 materialCount = 0;
 Ice::Material* materials;
+Ice::MaterialSettings* materialSettings;
 u32 meshCount = 0;
 Ice::Mesh* meshes;
 Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
@@ -68,6 +69,7 @@ void UpdateTime()
 
 b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 {
+  InitTime();
   appSettings = _settings;
 
   // Platform =====
@@ -97,19 +99,23 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
   shaders = (Ice::Shader*)Ice::MemoryAllocZero(sizeof(Ice::Shader) * _settings.maxShaderCount);
   materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
+  materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
 
   // Game =====
   _settings.clientInitFunction();
+
+  UpdateTime();
+  IceLogInfo("} Startup %2.3f s", Ice::time.totalTime);
 
   return true;
 }
 
 b8 IceApplicationUpdate()
 {
-  InitTime();
+  UpdateTime();
 
-  Ice::FrameInformation frameInfo;
+  Ice::FrameInformation frameInfo {};
   frameInfo.components = &renderComponents;
 
   while (isRunning && Ice::platform.Update())
@@ -138,8 +144,10 @@ b8 IceApplicationShutdown()
   for (u32 i = 0; i < materialCount; i++)
   {
     renderer->DestroyMaterial(materials[i]);
+    materialSettings[i].input.clear();
   }
   Ice::MemoryFree(materials);
+  Ice::MemoryFree(materialSettings);
 
   for (u32 i = 0; i < shaderCount; i++)
   {
@@ -271,9 +279,13 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
     }
   }
 
+  materialSettings[materialCount] = _settings;
+
   // Create material =====
   Ice::Material newMaterial;
-  if (!renderer->CreateMaterial(&newMaterial, _settings))
+  newMaterial.settings = &materialSettings[materialCount];
+
+  if (!renderer->CreateMaterial(&newMaterial))
   {
     IceLogError("Failed to create material");
     return false;
@@ -285,6 +297,8 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   {
     *_material = &materials[materialCount - 1];
   }
+
+  // Bind default descriptors (create buffer, assign textures)
 
   return true;
 }
@@ -361,7 +375,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
 
   // Create mesh =====
   {
-    Ice::Mesh newMesh;
+    Ice::Mesh newMesh {};
 
     newMesh.indexCount = indices.size();
     ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
@@ -397,11 +411,15 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
   return true;
 }
 
-b8 Ice::CreateObject(Ice::Entity _entity, const char* _meshDir, Ice::Material* _material)
+Ice::Entity Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
 {
-  Ice::RenderComponent& rc = renderComponents.Create(_entity);
+  Ice::Entity entity = Ice::CreateEntity();
+
+  Ice::RenderComponent& rc = renderComponents.Create(entity);
   rc.material = *_material;
   CreateMesh(_meshDir, &rc.mesh);
 
-  return true;
+  // Bind default per-object descriptors (Create buffer, assign textures)
+
+  return entity;
 }

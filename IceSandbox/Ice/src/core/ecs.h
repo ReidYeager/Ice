@@ -48,10 +48,15 @@ namespace Ice {
 
       Type& Create(Ice::Entity _entity)
       {
-        ICE_ASSERT(_entity != Ice::invalidEntity);
-        ICE_ASSERT(lookup.find(_entity) == lookup.end());
+        ICE_ASSERT_MSG(_entity != Ice::invalidEntity, "Invalid entity");
         ICE_ASSERT(entities.size() == components.size());
         ICE_ASSERT(lookup.size() == components.size());
+
+        if (lookup.find(_entity) != lookup.end())
+        {
+          IceLogWarning("Entity %u already has a component of this type", _entity);
+          return components[lookup[_entity]];
+        }
 
         lookup[_entity] = components.size();
         components.push_back(Type());

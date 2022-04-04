@@ -1,6 +1,9 @@
 buffer {
-    custom_0
-    custom_1
-    custom_2
-    custom_3
+    Custom_0
+    Custom_1
+    Custom_2
+    Custom_3
+}
+bindings {
+    Buffer 0
 }

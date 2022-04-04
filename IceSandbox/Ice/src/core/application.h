@@ -61,7 +61,7 @@ namespace Ice {
   //=========================
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
-  b8 CreateObject(Ice::Entity _entity, const char* _meshDir, Ice::Material* _material);
+  Ice::Entity CreateObject(const char* _meshDir, Ice::Material* _material);
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

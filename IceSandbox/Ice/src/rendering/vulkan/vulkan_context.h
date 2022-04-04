@@ -136,6 +136,10 @@ namespace Ice {
     #define ICE_MAX_FLIGHT_IMAGE_COUNT 3
 
     // Renderpasses =====
+    VkDescriptorSet globalDescriptorSet;
+    VkDescriptorSetLayout glogalDescriptorLayout;
+    Ice::Buffer globalDescriptorBuffer;
+
     Ice::Renderpass forward;
     Ice::Renderpass deferred;
 

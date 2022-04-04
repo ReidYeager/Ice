@@ -12,6 +12,7 @@ b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
 {
   Ice::Shader& newShader = *_shader;
 
+  newShader.bufferComponents = 0;
   newShader.fileDirectory = std::string(ICE_RESOURCE_SHADER_DIR).append(newShader.fileDirectory);
   //newShader.fileDirectory.append(newShader.fileDirectory.c_str());
   switch (newShader.type)
@@ -94,8 +95,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
           continue;
         }
 
-        // Include the buffer component
-        _shader->bufferSize += 16; // Each buffer component represents 16 bytes
+        _shader->bufferComponents |= (1 << typeIndex);
       }
     }
 
@@ -134,13 +134,14 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
 }
 
-b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material, Ice::MaterialSettings _settings)
+b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
 {
-  ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_settings, _material));
+  ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_material));
+
   // TODO : Assign default descriptor values (new buffer, default textures)
 
-  ICE_ATTEMPT(CreatePipelineLayout(_settings, _material));
-  ICE_ATTEMPT(CreatePipeline(_settings, _material));
+  ICE_ATTEMPT(CreatePipelineLayout(_material));
+  ICE_ATTEMPT(CreatePipeline(_material));
 
   return true;
 }
@@ -156,7 +157,7 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
   vkDestroyPipeline(context.device, _material.ivkPipeline, context.alloc);
 }
 
-b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
+b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
                                       std::vector<VkDescriptorSetLayoutBinding>& _bindings)
 {
   // TODO : Need to account for descriptor binding gaps
@@ -164,8 +165,10 @@ b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
   u32 count = 0;
   std::vector<Ice::ShaderInputElement> orderedInputElements; // Used for faster place-checking
 
+  std::vector<Ice::Shader>& shaders = _material->settings->shaders;
+
   // Collect descriptors =====
-  for (const Ice::Shader& s : _shaders)
+  for (const Ice::Shader& s : shaders)
   {
     count += s.input.size();
   }
@@ -174,8 +177,10 @@ b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
 
   u32 actualCount = 0;
   VkDescriptorSetLayoutBinding newBinding {};
-  for (const Ice::Shader& shader : _shaders)
+  for (const Ice::Shader& shader : shaders)
   {
+    _material->settings->bufferComponents |= shader.bufferComponents;
+
     for (const auto& descriptor : shader.input)
     {
       if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
@@ -199,7 +204,7 @@ b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       } break;
-      case Ice::Shader_Input_Image2D:
+      case Ice::Shader_Input_Image:
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       } break;
@@ -212,45 +217,141 @@ b8 AssembleMaterialDescriptorBindings(const std::vector<Ice::Shader>& _shaders,
     }
   }
 
+  _material->settings->input = orderedInputElements;
   _bindings.resize(actualCount);
 
   return true;
 }
 
-b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(const Ice::MaterialSettings& _settings,
-                                                     Ice::Material* _material)
+b8 Ice::RendererVulkan::CreateGlobalDescriptors()
 {
   std::vector<VkDescriptorSetLayoutBinding> bindings;
-  ICE_ATTEMPT(AssembleMaterialDescriptorBindings(_settings.shaders, bindings));
 
+  VkDescriptorSetLayoutBinding newBinding;
+  newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+  newBinding.pImmutableSamplers = nullptr;
+  newBinding.descriptorCount = 1;
+
+  newBinding.binding = 0;
+  newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  bindings.push_back(newBinding);
+
+  ICE_ATTEMPT(CreateDescriptorLayoutAndSet(&bindings,
+                                           &context.glogalDescriptorLayout,
+                                           &context.globalDescriptorSet));
+
+  ICE_ATTEMPT(CreateBufferMemory(&context.globalDescriptorBuffer,
+                                 64,
+                                 Ice::Buffer_Memory_Shader_Read));
+
+  Ice::BufferSegment buffer {};
+  buffer.offset = 0;
+  buffer.size = 64;
+  buffer.ivkBuffer = context.globalDescriptorBuffer.ivkBuffer;
+  Ice::ShaderInputElement iceBind {};
+  iceBind.assignedData = &buffer;
+  iceBind.type = Shader_Input_Buffer;
+  iceBind.inputIndex = 0;
+  UpdateDescriptorSet(context.globalDescriptorSet, {iceBind});
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(Ice::Material* _material)
+{
+  std::vector<VkDescriptorSetLayoutBinding> bindings;
+  ICE_ATTEMPT(AssembleMaterialDescriptorBindings(_material, bindings));
+
+  return CreateDescriptorLayoutAndSet(&bindings,
+                                      &_material->ivkDescriptorSetLayout,
+                                      &_material->ivkDescriptorSet);
+}
+
+b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* _bindings,
+                                                     VkDescriptorSetLayout* _layout,
+                                                     VkDescriptorSet* _set)
+{
   // Create layout =====
   VkDescriptorSetLayoutCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   createInfo.flags = 0;
   createInfo.pNext = nullptr;
-  createInfo.bindingCount = bindings.size();
-  createInfo.pBindings = bindings.data();
+  createInfo.bindingCount = _bindings->size();
+  createInfo.pBindings = _bindings->data();
 
   IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
              &createInfo,
              context.alloc,
-             &_material->ivkDescriptorSetLayout),
+             _layout),
              "Failed to create descriptor set layout");
 
   // Create set =====
   VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
   allocInfo.descriptorPool = context.descriptorPool;
   allocInfo.descriptorSetCount = 1;
-  allocInfo.pSetLayouts = &_material->ivkDescriptorSetLayout;
+  allocInfo.pSetLayouts = _layout;
 
-  IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, &_material->ivkDescriptorSet),
+  IVK_ASSERT(vkAllocateDescriptorSets(context.device, &allocInfo, _set),
              "Failed to allocate the descriptor set");
 
   return true;
 }
 
-b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _settings,
-                                             Ice::Material* _material)
+void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
+                                              std::vector<Ice::ShaderInputElement> _bindings)
+{
+  std::vector<VkDescriptorImageInfo> images;
+  images.reserve(_bindings.size());
+  std::vector<VkDescriptorBufferInfo> buffers;
+  buffers.reserve(_bindings.size());
+  std::vector<VkWriteDescriptorSet> writes;
+
+  VkDescriptorImageInfo newImage {};
+  VkDescriptorBufferInfo newBuffer {};
+
+  VkWriteDescriptorSet newWrite { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  newWrite.dstSet = _set;
+  newWrite.dstArrayElement = 0;
+  newWrite.descriptorCount = 1;
+  newWrite.pTexelBufferView = nullptr;
+
+  for (const auto& b : _bindings)
+  {
+    newWrite.dstBinding = b.inputIndex;
+
+    switch (b.type)
+    {
+    case Shader_Input_Buffer:
+    {
+      newBuffer.buffer = ((Ice::BufferSegment*)b.assignedData)->ivkBuffer;
+      newBuffer.offset = ((Ice::BufferSegment*)b.assignedData)->offset;
+      newBuffer.range = ((Ice::BufferSegment*)b.assignedData)->size;
+
+      buffers.push_back(newBuffer);
+      newWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      newWrite.pBufferInfo = &buffers[buffers.size() - 1];
+      newWrite.pImageInfo = nullptr;
+    } break;
+    case Shader_Input_Image:
+    {
+      newImage.imageLayout = ((Ice::IvkImage*)b.assignedData)->layout;
+      newImage.imageView = ((Ice::IvkImage*)b.assignedData)->view;
+      newImage.sampler = ((Ice::IvkImage*)b.assignedData)->sampler;
+
+      images.push_back(newImage);
+      newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      newWrite.pBufferInfo = nullptr;
+      newWrite.pImageInfo = &images[images.size() - 1];
+    } break;
+    }
+
+    writes.push_back(newWrite);
+  }
+
+  vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
+}
+
+b8 Ice::RendererVulkan::CreatePipelineLayout(Ice::Material* _material)
 {
   VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
@@ -269,7 +370,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const Ice::MaterialSettings& _setti
   return true;
 }
 
-b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material)
+b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 {
   // Shader Stages State =====
   VkPipelineShaderStageCreateInfo shaderStage {};
@@ -277,11 +378,11 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
   shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
   shaderStage.pName = "main";
 
-  std::vector<VkPipelineShaderStageCreateInfo> stages(_settings.shaders.size());
-  for (u32 i = 0; i < _settings.shaders.size(); i++)
+  std::vector<VkPipelineShaderStageCreateInfo> stages(_material->settings->shaders.size());
+  for (u32 i = 0; i < _material->settings->shaders.size(); i++)
   {
-    shaderStage.module = _settings.shaders[i].ivkShaderModule;
-    switch (_settings.shaders[i].type)
+    shaderStage.module = _material->settings->shaders[i].ivkShaderModule;
+    switch (_material->settings->shaders[i].type)
     {
     case Shader_Vertex: shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
     case Shader_Fragment: shaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
@@ -314,7 +415,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
 
   // Viewport State =====
   // Defines the screen settings used during rasterization
-  VkViewport viewport;
+  VkViewport viewport {};
   viewport.x = 0;
   viewport.y = 0;
   viewport.width  = (float)context.swapchainExtent.width;
@@ -405,7 +506,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
 
   createInfo.layout     = _material->ivkPipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
-  createInfo.subpass = _settings.subpassIndex;
+  createInfo.subpass = _material->settings->subpassIndex;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,

@@ -25,7 +25,7 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT(CreateCommandBuffers());
 
   ICE_ATTEMPT(CreateDepthImages());
-  //ICE_ATTEMPT(CreateGlobalDescriptors());
+  ICE_ATTEMPT(CreateGlobalDescriptors());
   ICE_ATTEMPT(CreateForwardComponents());
 
   return true;
@@ -118,6 +118,9 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
 b8 Ice::RendererVulkan::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
+
+  vkDestroyDescriptorSetLayout(context.device, context.glogalDescriptorLayout, context.alloc);
+  DestroyBufferMemory(&context.globalDescriptorBuffer);
 
   // Renderpasses =====
   for (const auto& f : context.forward.framebuffers)
@@ -436,7 +439,7 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
 {
   // Size definitions =====
   const u32 poolSizeCount = 2;
-  VkDescriptorPoolSize sizes[poolSizeCount];
+  VkDescriptorPoolSize sizes[poolSizeCount] = {};
 
   sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   sizes[0].descriptorCount = 100;

@@ -25,8 +25,8 @@ b8 Init()
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
   //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
 
-  Ice::Entity tmpObject = Ice::CreateEntity();
-  CreateObject(tmpObject, "Cyborg_Weapon.obj", lightMat);
+  Ice::Entity entityA = CreateObject("Cyborg_Weapon.obj", lightMat);
+  Ice::Entity entityB = CreateObject("Sphere.obj", lightMat);
 
   return true;
 }
@@ -68,7 +68,7 @@ b8 Shutdown()
 {
   #ifdef ICE_DEBUG
   f32 avg = totalDeltaSum / totalDeltaCount;
-  IceLogInfo("} Average frame time: %4.3f ms -- %4.0f fps", avg * 1000, 1 / avg);
+  IceLogInfo("} Average frame time: %4.3f ms -- %4.0f fps", avg * 1000.0f, 1.0f / avg);
   #endif // ICE_DEBUG
   return true;
 }

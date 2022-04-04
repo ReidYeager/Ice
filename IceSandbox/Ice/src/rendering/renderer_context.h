@@ -58,35 +58,44 @@ namespace Ice {
   // Material
   //=========================
 
+  #define si(name) Shader_Input_##name
   enum ShaderInputTypes
   {
-    Shader_Input_Buffer,
-    Shader_Input_Image2D,
+    si(Buffer),
+    si(Image),
 
     Shader_Input_Count,
   };
+  #undef si
 
+  #define si(name) #name
   const char* const ShaderInputTypeStrings[Shader_Input_Count] = {
-    "buffer",
-    "image2d"
+    si(Buffer),
+    si(Image)
   };
+  #undef si
 
-  enum ShaderBufferComponents
+  #define buf(name, index) Shader_Buffer_##name = (1 << index)
+  enum ShaderBufferComponentBits : u64
   {
-    Shader_Buffer_Custom_0,
-    Shader_Buffer_Custom_1,
-    Shader_Buffer_Custom_2,
-    Shader_Buffer_Custom_3,
+    buf(Custom_0, 0),
+    buf(Custom_1, 1),
+    buf(Custom_2, 2),
+    buf(Custom_3, 3),
 
-    Shader_Buffer_Count
+    Shader_Buffer_Count = 4
   };
+  typedef IceFlagExtended ShaderBufferComponentFlags;
+  #undef buf
 
+  #define buf(name, index) #name
   const char* const ShaderBufferComponentStrings[Shader_Buffer_Count] = {
-    "custom_0",
-    "custom_1",
-    "custom_2",
-    "custom_3"
+    buf(Custom_0, 0),
+    buf(Custom_1, 1),
+    buf(Custom_2, 2),
+    buf(Custom_3, 3)
   };
+  #undef buf
 
   // Material proper =====
 
@@ -94,6 +103,7 @@ namespace Ice {
   {
     ShaderInputTypes type = Ice::Shader_Input_Count;
     u32 inputIndex; // Opengl matID, Vulkan binding index, ...
+    void* assignedData; // 
   };
 
   enum ShaderTypes
@@ -110,7 +120,7 @@ namespace Ice {
     ShaderTypes type;
     std::string fileDirectory;
     std::vector<ShaderInputElement> input;
-    u32 bufferSize;
+    ShaderBufferComponentFlags bufferComponents;
 
     // I'm not 100% sure how I feel about this. It makes the code more readable,
     //  but it feels dirty letting API info creep beyond its usage files.
@@ -124,10 +134,15 @@ namespace Ice {
   {
     std::vector<Ice::Shader> shaders;
     u32 subpassIndex = 0;
+
+    std::vector<ShaderInputElement> input;
+    Ice::ShaderBufferComponentFlags bufferComponents;
   };
 
   struct Material
   {
+    Ice::MaterialSettings* settings;
+
     union {
       void* apiData0;
       VkPipelineLayout ivkPipelineLayout;

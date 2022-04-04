@@ -21,7 +21,7 @@ namespace Ice {
 
     virtual b8 CreateShader(Ice::Shader* _shader) = 0;
     virtual void DestroyShader(Ice::Shader& _shader) = 0;
-    virtual b8 CreateMaterial(Ice::Material* _material, MaterialSettings _settings) = 0;
+    virtual b8 CreateMaterial(Ice::Material* _material) = 0;
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
 
     virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer,

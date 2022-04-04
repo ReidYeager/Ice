@@ -68,7 +68,8 @@ namespace Ice {
     b8 CompletedStream();
 
     u32 GetUIntFromToken(const Ice::LexerToken* _token);
-
+    // Compares the token string with the array of strings
+    // Returns [0, _count) as the index of the matching string, _count if no match was found
     u32 GetTokenSetIndex(const Ice::LexerToken& _token, const char* const* _stringArray, u32 _count);
 
   private:

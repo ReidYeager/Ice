@@ -100,11 +100,11 @@ typedef void* IceHandle;
 }
 
 #define ICE_ATTEMPT(expression) \
-if (!expression)                \
+if (!(expression))              \
   return false;
 
 #define ICE_ATTEMPT_MSG(expression, severity, message, ...) \
-if (!expression)                                            \
+if (!(expression))                                          \
 {                                                           \
   Ice::ConsoleLogMessage(severity, message, __VA_ARGS__);   \
   Ice::ConsoleLogMessage(severity, "\n");                   \

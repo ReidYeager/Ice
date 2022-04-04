@@ -44,7 +44,7 @@ void main() {
 
     gl_Position = vp * vec4(inPosition, 1.0);
 
-    outNormal = outNormal;
+    outNormal = inNormal;
     outUV = inUV;
 
     // vec4 modelPosition = model.transform * vec4(inPosition, 1.0);
