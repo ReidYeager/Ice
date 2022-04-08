@@ -100,12 +100,15 @@ namespace Ice
     // Attempts to read the shader's descriptor file
     // Shader descriptors are optional so this can not fail
     void LoadShaderDescriptors(Ice::Shader* _shader);
+    b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
+                                          std::vector<VkDescriptorSetLayoutBinding>& _bindings);
     b8 CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* bindings,
                                     VkDescriptorSetLayout* _layout,
                                     VkDescriptorSet* _set);
     // Collects the descriptors for all shaders to create the material's layout/set
     b8 CreateDescriptorLayoutAndSet(Ice::Material* _material);
-    void UpdateDescriptorSet(VkDescriptorSet& _set, std::vector<Ice::ShaderInputElement> _bindings);
+    void UpdateDescriptorSet(VkDescriptorSet& _set,
+                             const std::vector<Ice::ShaderInputElement>& _bindings);
     b8 CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
                             VkPipelineLayout* _pipelineLayout);
     b8 CreatePipeline(Ice::Material* _material);
@@ -131,12 +134,12 @@ namespace Ice
     // Pushes data to the GPU immediately
     b8 PushDataToBuffer(void* _data,
                         const Ice::Buffer* _buffer,
-                        const Ice::BufferSegment* _segmentInfo = nullptr);
+                        const Ice::BufferSegment _segmentInfo);
     // Adds data to a set to be pushed to the GPU just before rendering
     // Assumes _data will remain valid through the frame
     b8 QueueDataToBuffer(void* _data,
                          const Ice::Buffer* _buffer,
-                         const Ice::BufferSegment* _segmentInfo = nullptr);
+                         const Ice::BufferSegment _segmentInfo);
   };
 
 }

@@ -54,7 +54,7 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
     viewProj[1][1] *= -1;
 
     // Update global buffer (camera matrix)
-    ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer));
+    ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer, {64}));
   }
 
   // Wait for oldest in-flight slot to return =====

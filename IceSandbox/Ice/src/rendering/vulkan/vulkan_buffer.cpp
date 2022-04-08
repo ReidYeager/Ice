@@ -26,6 +26,12 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
                                            u64 _size,
                                            Ice::BufferMemoryUsageFlags _usage)
 {
+  if (_size == 0)
+  {
+    IceLogError("Can not create buffer with size 0");
+    return false;
+  }
+
   // Pad size =====
   u64 alignment = 0;
   if (_usage & Ice::Buffer_Memory_Shader_Read)
@@ -82,6 +88,9 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
 
 void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
 {
+  if (_buffer == nullptr || _buffer->ivkBuffer == nullptr || _buffer->size == 0)
+    return;
+
   vkDeviceWaitIdle(context.device);
   vkDestroyBuffer(context.device, _buffer->ivkBuffer, context.alloc);
   vkFreeMemory(context.device, _buffer->ivkMemory, context.alloc);
@@ -89,9 +98,9 @@ void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
 
 b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
                                          const Ice::Buffer* _buffer,
-                                         const Ice::BufferSegment* _segmentInfo /*= nullptr*/)
+                                         const Ice::BufferSegment _segmentInfo)
 {
-  if (_segmentInfo != nullptr && _segmentInfo->ivkBuffer != _buffer->ivkBuffer)
+  if (_segmentInfo.ivkBuffer != VK_NULL_HANDLE && _segmentInfo.ivkBuffer != _buffer->ivkBuffer)
   {
     IceLogError("Buffer does not match segment's buffer. Aborting data push.");
     return false;
@@ -99,8 +108,8 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
 
   void* mappedGpuMemory;
 
-  u64 offset = _segmentInfo == nullptr ? 0 : _segmentInfo->offset;
-  u64 size = _segmentInfo == nullptr ? _buffer->size : _segmentInfo->size;
+  u64 offset = _segmentInfo.offset;
+  u64 size = _segmentInfo.size == 0 ? _buffer->size : _segmentInfo.size;
 
   IVK_ASSERT(vkMapMemory(context.device, _buffer->ivkMemory, offset, size, 0, &mappedGpuMemory),
              "Failed to map buffer memory\n> Offset %llu, Size %llu", offset, size);
@@ -112,9 +121,9 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
 
 b8 Ice::RendererVulkan::QueueDataToBuffer(void* _data,
                                           const Ice::Buffer* _buffer,
-                                          const Ice::BufferSegment* _segmentInfo /*= nullptr*/)
+                                          const Ice::BufferSegment _segmentInfo)
 {
-  if (_segmentInfo != nullptr && _segmentInfo->ivkBuffer != _buffer->ivkBuffer)
+  if (_segmentInfo.ivkBuffer != VK_NULL_HANDLE && _segmentInfo.ivkBuffer != _buffer->ivkBuffer)
   {
     IceLogError("Buffer does not match segment's buffer. Aborting data push queue.");
     return false;

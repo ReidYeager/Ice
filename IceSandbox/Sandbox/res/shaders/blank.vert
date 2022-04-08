@@ -16,6 +16,10 @@ layout(set = 0, binding = 0) uniform GlobalUniform {
     // DirectionalLight dLight;
 } global;
 
+// layout(set = 1, binding = 0) uniform MaterialUniform {
+//     float test;
+// } material;
+
 // layout(set = 2, binding = 0) uniform ModelUniform {
 //     mat4 transform;
 // } model;

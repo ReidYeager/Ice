@@ -11,10 +11,9 @@
 b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
 {
   Ice::Shader& newShader = *_shader;
+  newShader.buffer.size = 0;
 
-  newShader.bufferComponents = 0;
   newShader.fileDirectory = std::string(ICE_RESOURCE_SHADER_DIR).append(newShader.fileDirectory);
-  //newShader.fileDirectory.append(newShader.fileDirectory.c_str());
   switch (newShader.type)
   {
   case Shader_Vertex: newShader.fileDirectory.append(".vert"); break;
@@ -59,7 +58,7 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
 
 void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 {
-  // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
+  // Descriptor loading could be useful across APIs, and most of the code will not change
   //  Should eventually look into abstracting this.
 
   std::string directory = _shader->fileDirectory.c_str();
@@ -74,31 +73,10 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
   Ice::ShaderInputElement newInput {};
 
+  _shader->buffer.size = 0;
+
   while (!lexer.CompletedStream())
   {
-    // Get buffer information =====
-    if (lexer.ExpectString("buffer") && lexer.ExpectString("{"))
-    {
-      while (!lexer.ExpectString("}"))
-      {
-        token = lexer.NextToken();
-
-        // Check if the token is a valid buffer component
-        u32 typeIndex = lexer.GetTokenSetIndex(token,
-                                               Ice::ShaderBufferComponentStrings,
-                                               (u32)Ice::Shader_Buffer_Count);
-        if (typeIndex == (u32)Ice::Shader_Buffer_Count)
-        {
-          IceLogWarning("Ivalid buffer component '%s'\n> '%s'",
-                        token.string.c_str(),
-                        directory.c_str());
-          continue;
-        }
-
-        _shader->bufferComponents |= (1 << typeIndex);
-      }
-    }
-
     // Get descriptor information =====
     if (lexer.ExpectString("bindings") && lexer.ExpectString("{"))
     {
@@ -115,7 +93,9 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
           IceLogWarning("Ivalid descriptor '%s'\n> '%s'", token.string.c_str(), directory.c_str());
           continue;
         }
+        newInput.type = (ShaderInputTypes)typeIndex;
 
+        // Get input index
         if (!lexer.ExpectType(Ice::Token_Int, &token))
         {
           IceLogError("Binding '%s' is missing an index. Ignoring this binding.\n> '%s'",
@@ -123,12 +103,45 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
                       _shader->fileDirectory.c_str());
           continue;
         }
-
-        // Include the descriptor
-        newInput.type = (ShaderInputTypes)typeIndex;
         newInput.inputIndex = lexer.GetUIntFromToken(&token);
+
+        // Get optional input
+        switch (newInput.type)
+        {
+        case Ice::Shader_Input_Buffer:
+        {
+          if (lexer.ExpectType(Ice::Token_Int, &token))
+          {
+            newInput.bufferSegment.offset = _shader->buffer.size;
+            newInput.bufferSegment.size = lexer.GetUIntFromToken(&token);
+            if (newInput.bufferSegment.size == 0)
+            {
+              IceLogError("Shader defines buffer descriptor of size 0\n> '%s'", directory.c_str());
+            }
+            _shader->buffer.size += newInput.bufferSegment.size;
+          }
+          else
+          {
+            IceLogError("Shader not defining buffer descriptor size\n> '%s'", directory.c_str());
+          }
+        } break;
+        default: break;
+        }
+
         _shader->input.push_back(newInput);
       }
+    }
+    // Get buffer information =====
+    //else if (lexer.ExpectString("buffer") && lexer.ExpectString("{"))
+    //{
+    //  if (lexer.ExpectType(Token_Int, &token))
+    //  {
+    //    _shader->buffer.size = lexer.GetUIntFromToken(&token);
+    //  }
+    //}
+    else
+    {
+      lexer.NextToken(); // Skip invalid token.
     }
   }
 
@@ -139,6 +152,8 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
   ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_material));
 
   // TODO : Assign default descriptor values (new buffer, default textures)
+
+  UpdateDescriptorSet(_material->ivkDescriptorSet, _material->settings->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
                                      _material->ivkDescriptorSetLayout },
@@ -152,6 +167,12 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 {
   vkDeviceWaitIdle(context.device);
 
+  for (auto& s : _material.settings->shaders)
+  {
+    DestroyBufferMemory(&s.buffer);
+  }
+  _material.settings->shaders.clear();
+
   vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.ivkDescriptorSet);
   vkDestroyDescriptorSetLayout(context.device, _material.ivkDescriptorSetLayout, context.alloc);
 
@@ -159,30 +180,35 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
   vkDestroyPipeline(context.device, _material.ivkPipeline, context.alloc);
 }
 
-b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
-                                      std::vector<VkDescriptorSetLayoutBinding>& _bindings)
+b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _material,
+                                                           std::vector<VkDescriptorSetLayoutBinding>& _bindings)
 {
   // TODO : Need to account for descriptor binding gaps
 
   u32 count = 0;
   std::vector<Ice::ShaderInputElement> orderedInputElements; // Used for faster place-checking
+  Ice::MaterialSettings* matSettings = _material->settings;
 
-  std::vector<Ice::Shader>& shaders = _material->settings->shaders;
+  std::vector<Ice::Shader>& shaders = matSettings->shaders;
 
-  // Collect descriptors =====
-  for (const Ice::Shader& s : shaders)
+  // Count descriptors =====
+  for (Ice::Shader& s : shaders)
   {
     count += s.input.size();
+
+    if (s.buffer.size > 0)
+    {
+      ICE_ATTEMPT(CreateBufferMemory(&s.buffer, s.buffer.size, Ice::Buffer_Memory_Shader_Read));
+    }
   }
   _bindings.resize(count); // Worst-case size.
   orderedInputElements.resize(count);
 
+  // Combine shader inputs =====
   u32 actualCount = 0;
   VkDescriptorSetLayoutBinding newBinding {};
   for (const Ice::Shader& shader : shaders)
   {
-    _material->settings->bufferComponents |= shader.bufferComponents;
-
     for (const auto& descriptor : shader.input)
     {
       if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
@@ -191,10 +217,12 @@ b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
       }
       else if (orderedInputElements[descriptor.inputIndex].type != Ice::Shader_Input_Count)
       {
-        IceLogError("Shader descriptor conflict at index %u", descriptor.inputIndex);
+        IceLogFatal("Shader descriptor conflict at index %u", descriptor.inputIndex);
         _bindings.clear();
         return false;
       }
+
+      orderedInputElements[descriptor.inputIndex] = descriptor;
 
       newBinding.descriptorCount = 1;
       newBinding.pImmutableSamplers = nullptr;
@@ -205,6 +233,7 @@ b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
       case Ice::Shader_Input_Buffer:
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        orderedInputElements[descriptor.inputIndex].bufferSegment.ivkBuffer = shader.buffer.ivkBuffer;
       } break;
       case Ice::Shader_Input_Image:
       {
@@ -214,12 +243,11 @@ b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
       }
 
       _bindings[descriptor.inputIndex] = newBinding;
-      orderedInputElements[descriptor.inputIndex] = descriptor;
       actualCount++;
     }
   }
 
-  _material->settings->input = orderedInputElements;
+  matSettings->input = orderedInputElements;
   _bindings.resize(actualCount);
 
   return true;
@@ -248,15 +276,13 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
                                  64,
                                  Ice::Buffer_Memory_Shader_Read));
 
-  Ice::BufferSegment buffer {};
-  buffer.offset = 0;
-  buffer.size = 64;
-  buffer.ivkBuffer = context.globalDescriptorBuffer.ivkBuffer;
-  Ice::ShaderInputElement iceBind {};
-  iceBind.assignedData = &buffer;
-  iceBind.type = Shader_Input_Buffer;
-  iceBind.inputIndex = 0;
-  UpdateDescriptorSet(context.globalDescriptorSet, {iceBind});
+  std::vector<Ice::ShaderInputElement> iceBind(1);
+  iceBind[0].bufferSegment.ivkBuffer = context.globalDescriptorBuffer.ivkBuffer;
+  iceBind[0].bufferSegment.offset = 0;
+  iceBind[0].bufferSegment.size = 64;
+  iceBind[0].type = Shader_Input_Buffer;
+  iceBind[0].inputIndex = 0;
+  UpdateDescriptorSet(context.globalDescriptorSet, iceBind);
 
   return true;
 }
@@ -302,12 +328,12 @@ b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSet
 }
 
 void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
-                                              std::vector<Ice::ShaderInputElement> _bindings)
+                                              const std::vector<Ice::ShaderInputElement>& _inputs)
 {
   std::vector<VkDescriptorImageInfo> images;
-  images.reserve(_bindings.size());
+  images.reserve(_inputs.size());
   std::vector<VkDescriptorBufferInfo> buffers;
-  buffers.reserve(_bindings.size());
+  buffers.reserve(_inputs.size());
   std::vector<VkWriteDescriptorSet> writes;
 
   VkDescriptorImageInfo newImage {};
@@ -319,17 +345,17 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   newWrite.descriptorCount = 1;
   newWrite.pTexelBufferView = nullptr;
 
-  for (const auto& b : _bindings)
+  for (const auto& descriptor : _inputs)
   {
-    newWrite.dstBinding = b.inputIndex;
+    newWrite.dstBinding = descriptor.inputIndex;
 
-    switch (b.type)
+    switch (descriptor.type)
     {
     case Shader_Input_Buffer:
     {
-      newBuffer.buffer = ((Ice::BufferSegment*)b.assignedData)->ivkBuffer;
-      newBuffer.offset = ((Ice::BufferSegment*)b.assignedData)->offset;
-      newBuffer.range = ((Ice::BufferSegment*)b.assignedData)->size;
+      newBuffer.buffer = descriptor.bufferSegment.ivkBuffer;
+      newBuffer.offset = descriptor.bufferSegment.offset;
+      newBuffer.range = descriptor.bufferSegment.size;
 
       buffers.push_back(newBuffer);
       newWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -338,9 +364,9 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     } break;
     case Shader_Input_Image:
     {
-      newImage.imageLayout = ((Ice::IvkImage*)b.assignedData)->layout;
-      newImage.imageView = ((Ice::IvkImage*)b.assignedData)->view;
-      newImage.sampler = ((Ice::IvkImage*)b.assignedData)->sampler;
+      newImage.imageLayout = ((Ice::IvkImage*)descriptor.apiData0)->layout;
+      newImage.imageView = ((Ice::IvkImage*)descriptor.apiData0)->view;
+      newImage.sampler = ((Ice::IvkImage*)descriptor.apiData0)->sampler;
 
       images.push_back(newImage);
       newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

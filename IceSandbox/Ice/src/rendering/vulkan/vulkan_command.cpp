@@ -103,14 +103,14 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
                         rc[i].material.ivkPipeline);
 
-      //vkCmdBindDescriptorSets(cmdBuffer,
-      //                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-      //                        rc[i].material.ivkPipelineLayout,
-      //                        0,
-      //                        1,
-      //                        &rc[i].material.ivkDescriptorSet,
-      //                        0,
-      //                        nullptr);
+      vkCmdBindDescriptorSets(cmdBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              rc[i].material.ivkPipelineLayout,
+                              1,
+                              1,
+                              &rc[i].material.ivkDescriptorSet,
+                              0,
+                              nullptr);
 
       vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &rc[i].mesh.vertexBuffer.ivkBuffer, &rc[i].mesh .vertexBuffer.offset);
       vkCmdBindIndexBuffer(cmdBuffer, rc[i].mesh.indexBuffer.ivkBuffer, rc[i].mesh.indexBuffer.offset, VK_INDEX_TYPE_UINT32);

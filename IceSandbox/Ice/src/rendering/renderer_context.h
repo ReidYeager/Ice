@@ -29,7 +29,7 @@ namespace Ice {
 
   struct Buffer
   {
-    u64 size;
+    u64 size = 0;
 
     union {
       void* apiData0;
@@ -44,8 +44,8 @@ namespace Ice {
 
   struct BufferSegment
   {
-    u64 offset; // Offset of this segment's start within the original buffer
     u64 size;   // Size of this segment
+    u64 offset; // Offset of this segment's start within the original buffer
 
     // The segment's parent buffer
     union {
@@ -75,35 +75,18 @@ namespace Ice {
   };
   #undef si
 
-  #define buf(name, index) Shader_Buffer_##name = (1 << index)
-  enum ShaderBufferComponentBits : u64
-  {
-    buf(Custom_0, 0),
-    buf(Custom_1, 1),
-    buf(Custom_2, 2),
-    buf(Custom_3, 3),
-
-    Shader_Buffer_Count = 4
-  };
-  typedef IceFlagExtended ShaderBufferComponentFlags;
-  #undef buf
-
-  #define buf(name, index) #name
-  const char* const ShaderBufferComponentStrings[Shader_Buffer_Count] = {
-    buf(Custom_0, 0),
-    buf(Custom_1, 1),
-    buf(Custom_2, 2),
-    buf(Custom_3, 3)
-  };
-  #undef buf
-
   // Material proper =====
 
   struct ShaderInputElement
   {
     ShaderInputTypes type = Ice::Shader_Input_Count;
     u32 inputIndex; // Opengl matID, Vulkan binding index, ...
-    void* assignedData; // 
+
+    union {
+      void* apiData0;
+      Ice::BufferSegment bufferSegment;
+      // Image
+    };
   };
 
   enum ShaderTypes
@@ -120,10 +103,8 @@ namespace Ice {
     ShaderTypes type;
     std::string fileDirectory;
     std::vector<ShaderInputElement> input;
-    ShaderBufferComponentFlags bufferComponents;
+    Ice::Buffer buffer;
 
-    // I'm not 100% sure how I feel about this. It makes the code more readable,
-    //  but it feels dirty letting API info creep beyond its usage files.
     union {
       void* apiData0;
       VkShaderModule ivkShaderModule;
@@ -136,7 +117,6 @@ namespace Ice {
     u32 subpassIndex = 0;
 
     std::vector<ShaderInputElement> input;
-    Ice::ShaderBufferComponentFlags bufferComponents;
   };
 
   struct Material

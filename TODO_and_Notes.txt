@@ -15,8 +15,7 @@
 \IceSandbox\Ice\src\rendering\vulkan\vulkan.cpp
 	Line    42 :--: // TODO : Move this somewhere else
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_buffer.cpp
-	Line   122 :--: // TODO : Implement buffer data queue
+	Line   131 :--: // TODO : Implement buffer data queue
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line    61 :--: // NOTE : Descriptor loading could be useful across APIs, and most of the code will not change
-	Line   140 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   164 :--: // TODO : Need to account for descriptor binding gaps
+	Line   153 :--: // TODO : Assign default descriptor values (new buffer, default textures)
+	Line   185 :--: // TODO : Need to account for descriptor binding gaps

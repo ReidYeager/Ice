@@ -387,7 +387,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
     newMesh.vertexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
     newMesh.vertexBuffer.offset = 0;
     newMesh.vertexBuffer.size = sizeof(Ice::Vertex) * vertices.size();
-    if (!renderer->PushDataToBuffer(vertices.data(), &newMesh.buffer, &newMesh.vertexBuffer))
+    if (!renderer->PushDataToBuffer(vertices.data(), &newMesh.buffer, newMesh.vertexBuffer))
     {
       IceLogError("Failed to push vertex data to its buffer");
       renderer->DestroyBufferMemory(&newMesh.buffer);
@@ -397,7 +397,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
     newMesh.indexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
     newMesh.indexBuffer.offset = newMesh.vertexBuffer.size;
     newMesh.indexBuffer.size = sizeof(u32) * indices.size();
-    if (!renderer->PushDataToBuffer(indices.data(), &newMesh.buffer, &newMesh.indexBuffer))
+    if (!renderer->PushDataToBuffer(indices.data(), &newMesh.buffer, newMesh.indexBuffer))
     {
       IceLogError("Failed to push index data to its buffer");
       renderer->DestroyBufferMemory(&newMesh.buffer);

@@ -30,7 +30,7 @@ namespace Ice {
     virtual void DestroyBufferMemory(Ice::Buffer* _buffer) = 0;
     virtual b8 PushDataToBuffer(void* _data,
                                 const Ice::Buffer* _buffer,
-                                const Ice::BufferSegment* _segmentInfo) = 0;
+                                const Ice::BufferSegment _segmentInfo) = 0;
   };
 
 }
