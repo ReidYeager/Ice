@@ -6,20 +6,36 @@
 
 #include "core/ecs.h"
 #include "math/vector.h"
+#include "rendering/renderer_context.h"
 
 namespace Ice {
 
   struct Transform
   {
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
+    vec3 position = { 0.0f, 0.0f, 0.0f };
+    // TODO : Convert Euler rotation to quaternion
+    vec3 rotation = { 0.0f, 0.0f, 0.0f }; // Euler angles
+    vec3 scale = { 1.0f, 1.0f, 1.0f };
   };
 
-  struct Entity
+  struct TransformComponent
   {
-    const Ice::ECS::Entity id;
     Ice::Transform transform;
+    Ice::Buffer buffer;
+  };
+
+  class Object
+  {
+  public:
+    Ice::Transform* transform;
+
+  private:
+    Ice::ECS::Entity id;
+
+  public:
+    Object(Ice::ECS::Entity _id) : id(_id) {}
+    const Ice::ECS::Entity GetId() { return id; }
+
   };
 
 }

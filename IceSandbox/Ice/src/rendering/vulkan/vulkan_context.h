@@ -141,6 +141,8 @@ namespace Ice {
     VkPipelineLayout globalPipelineLayout;
     Ice::Buffer globalDescriptorBuffer;
 
+    VkDescriptorSetLayout objectDescriptorLayout;
+
     Ice::Renderpass forward;
     Ice::Renderpass deferred;
 

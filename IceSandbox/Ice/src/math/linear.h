@@ -7,24 +7,26 @@
 #include "math/vector.h"
 #include "math/matrix.h"
 
-float Dot(vec2 _l, vec2 _r)
-{
-  return (_l.x * _r.x) + (_l.y * _r.y);
-}
+namespace Ice {
+  f32 Dot(vec2 _l, vec2 _r)
+  {
+    return (_l.x * _r.x) + (_l.y * _r.y);
+  }
 
-float Dot(vec3 _l, vec3 _r)
-{
-  return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z);
-}
+  f32 Dot(vec3 _l, vec3 _r)
+  {
+    return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z);
+  }
 
-float Dot(vec4 _l, vec4 _r)
-{
-  return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z) + (_l.w * _r.w);
-}
+  f32 Dot(vec4 _l, vec4 _r)
+  {
+    return (_l.x * _r.x) + (_l.y * _r.y) + (_l.z * _r.z) + (_l.w * _r.w);
+  }
 
-vec3 Cross(vec3 a, vec3 b)
-{
-  return { (a.y * b.z) - (a.z * b.y), (a.z * b.x) - (a.x * b.z), (a.x * b.y) - (a.y * b.x) };
+  vec3 Cross(vec3 a, vec3 b)
+  {
+    return { (a.y * b.z) - (a.z * b.y), (a.z * b.x) - (a.x * b.z), (a.x * b.y) - (a.y * b.x) };
+  }
 }
 
 #endif // !define ICE_MATH_VECTOR_H_

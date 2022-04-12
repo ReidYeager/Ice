@@ -105,6 +105,9 @@ namespace Ice
     b8 CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* bindings,
                                     VkDescriptorSetLayout* _layout,
                                     VkDescriptorSet* _set);
+    b8 CreateDescriptorLayout(std::vector<VkDescriptorSetLayoutBinding>* _bindings,
+                              VkDescriptorSetLayout* _layout);
+    b8 CreateDescriptorSet(VkDescriptorSetLayout* _layout, VkDescriptorSet* _set);
     // Collects the descriptors for all shaders to create the material's layout/set
     b8 CreateDescriptorLayoutAndSet(Ice::Material* _material);
     void UpdateDescriptorSet(VkDescriptorSet& _set,
@@ -140,6 +143,8 @@ namespace Ice
     b8 QueueDataToBuffer(void* _data,
                          const Ice::Buffer* _buffer,
                          const Ice::BufferSegment _segmentInfo);
+
+    b8 InitializeRenderComponent(Ice::RenderComponent* _component, Ice::Buffer* _TransformBuffer);
   };
 
 }

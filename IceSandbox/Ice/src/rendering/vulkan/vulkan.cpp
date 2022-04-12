@@ -55,11 +55,12 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   //  Should automatically update marked data when changed
   {
     // Moves the objects to the camera X along their Y axis
-    Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
-    float bob = glm::sin(Ice::time.realTime);
-    float weave = glm::cos(Ice::time.realTime);
-    PushDataToBuffer(&bob, &rc[0].material.settings->shaders[0].buffer, { 4 });
-    PushDataToBuffer(&weave, &rc[0].material.settings->shaders[0].buffer, { 4, 4 });
+
+    //Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
+    //float bob = glm::sin(Ice::time.realTime);
+    //float weave = glm::cos(Ice::time.realTime);
+    //PushDataToBuffer(&bob, &rc[0].material.settings->shaders[0].buffer, { 4 });
+    //PushDataToBuffer(&weave, &rc[0].material.settings->shaders[0].buffer, { 4, 4 });
   }
 
   // Wait for oldest in-flight slot to return =====
@@ -143,6 +144,8 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
 b8 Ice::RendererVulkan::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
+
+  vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorLayout, context.alloc);
 
   vkDestroyPipelineLayout(context.device, context.globalPipelineLayout, context.alloc);
   vkDestroyDescriptorSetLayout(context.device, context.globalDescriptorLayout, context.alloc);
@@ -682,3 +685,20 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 
   return true;
 }
+
+b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
+                                                  Ice::Buffer* _transformBuffer)
+{
+  ICE_ATTEMPT(CreateBufferMemory(_transformBuffer, 64, Ice::Buffer_Memory_Shader_Read));
+  ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->ivkDescriptorSet));
+
+  Ice::ShaderInputElement bufferInput;
+  bufferInput.inputIndex = 0;
+  bufferInput.type = Ice::Shader_Input_Buffer;
+  bufferInput.bufferSegment = {64, 0, _transformBuffer->ivkBuffer};
+  std::vector<Ice::ShaderInputElement> inputs = {bufferInput};
+  UpdateDescriptorSet(_component->ivkDescriptorSet, inputs);
+
+  return true;
+}
+

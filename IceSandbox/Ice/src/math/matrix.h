@@ -2,7 +2,6 @@
 #ifndef ICE_MATH_MATRIX_H_
 #define ICE_MATH_MATRIX_H_
 
-#include "asserts.h"
 #include "defines.h"
 
 #include "math/vector.h"
@@ -64,6 +63,19 @@ typedef union mat4
       return w;
     }
   }
+
+  mat4 Transpose() const
+  {
+    return { x[0], y[0], z[0], w[0],
+             x[1], y[1], z[1], w[1],
+             x[2], y[2], z[2], w[2],
+             x[3], y[3], z[3], w[3] };
+  }
 } mat4;
+
+const mat4 mat4Identity = { 1.0f, 0.0f, 0.0f, 0.0f,
+                            0.0f, 1.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 1.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f};
 
 #endif // !define ICE_MATH_MATRIX_H_

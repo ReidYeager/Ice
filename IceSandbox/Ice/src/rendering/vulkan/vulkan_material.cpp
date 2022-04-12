@@ -156,7 +156,8 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
   UpdateDescriptorSet(_material->ivkDescriptorSet, _material->settings->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
-                                     _material->ivkDescriptorSetLayout },
+                                     _material->ivkDescriptorSetLayout,
+                                     context.objectDescriptorLayout },
                                    &_material->ivkPipelineLayout));
   ICE_ATTEMPT(CreatePipeline(_material));
 
@@ -257,6 +258,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
 
 b8 Ice::RendererVulkan::CreateGlobalDescriptors()
 {
+  // Global descriptors =====
   std::vector<VkDescriptorSetLayoutBinding> bindings;
 
   VkDescriptorSetLayoutBinding newBinding;
@@ -286,6 +288,15 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
   iceBind[0].inputIndex = 0;
   UpdateDescriptorSet(context.globalDescriptorSet, iceBind);
 
+  // Object descriptors =====
+  bindings.clear();
+
+  newBinding.binding = 0;
+  newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  bindings.push_back(newBinding);
+
+  ICE_ATTEMPT(CreateDescriptorLayout(&bindings, &context.objectDescriptorLayout));
+
   return true;
 }
 
@@ -303,7 +314,15 @@ b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSet
                                                      VkDescriptorSetLayout* _layout,
                                                      VkDescriptorSet* _set)
 {
-  // Create layout =====
+  ICE_ATTEMPT(CreateDescriptorLayout(_bindings, _layout));
+  ICE_ATTEMPT(CreateDescriptorSet(_layout, _set));
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::CreateDescriptorLayout(std::vector<VkDescriptorSetLayoutBinding>* _bindings,
+                                               VkDescriptorSetLayout* _layout)
+{
   VkDescriptorSetLayoutCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   createInfo.flags = 0;
@@ -317,7 +336,11 @@ b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSet
              _layout),
              "Failed to create descriptor set layout");
 
-  // Create set =====
+  return true;
+}
+
+b8 Ice::RendererVulkan::CreateDescriptorSet(VkDescriptorSetLayout* _layout, VkDescriptorSet* _set)
+{
   VkDescriptorSetAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
   allocInfo.descriptorPool = context.descriptorPool;
   allocInfo.descriptorSetCount = 1;
@@ -350,6 +373,14 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   for (const auto& descriptor : _inputs)
   {
     newWrite.dstBinding = descriptor.inputIndex;
+
+    std::string typeName = "";
+    switch (descriptor.type)
+    {
+    case Shader_Input_Buffer: typeName = "Buffer"; break;
+    case Shader_Input_Image: typeName = "Image"; break;
+    }
+    IceLogDebug("%s", typeName.c_str());
 
     switch (descriptor.type)
     {

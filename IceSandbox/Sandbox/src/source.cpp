@@ -5,6 +5,8 @@
 f32 totalDeltaSum = 0.0;
 u32 totalDeltaCount = 0;
 
+Ice::Object* obj;
+
 b8 Init()
 {
   Ice::MaterialSettings materialSettings;
@@ -23,11 +25,8 @@ b8 Init()
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
   //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
 
-  Ice::Entity entityA = CreateObject("Cyborg_Weapon.obj", lightMat);
-  Ice::Entity entityB = CreateObject("Sphere.obj", lightMat);
-
-  entityA.transform.position.y = 0.3f;
-  entityB.transform.position.z = 1.0f;
+  obj = &CreateObject("Cyborg_Weapon.obj", lightMat);
+  Ice::Object& entityB = CreateObject("Sphere.obj", lightMat);
 
   return true;
 }
@@ -42,6 +41,8 @@ b8 Update(f32 _delta)
   {
     IceLogInfo("Should re-load shaders & re-create material pipelines");
   }
+
+  obj->transform->position.x = sin(Ice::time.totalTime) * 2.0f;
 
 
   #ifdef ICE_DEBUG

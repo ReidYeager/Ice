@@ -31,6 +31,9 @@ namespace Ice {
     virtual b8 PushDataToBuffer(void* _data,
                                 const Ice::Buffer* _buffer,
                                 const Ice::BufferSegment _segmentInfo) = 0;
+
+    virtual b8 InitializeRenderComponent(Ice::RenderComponent* _component,
+                                         Ice::Buffer* _TransformBuffer) = 0;
   };
 
 }

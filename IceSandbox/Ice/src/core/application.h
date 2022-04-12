@@ -27,6 +27,7 @@ namespace Ice {
     u32 maxShaderCount = 200;   // Number of unique shaders
     u32 maxMaterialCount = 100; // Number of unique materials
     u32 maxMeshCount = 200;     // Number of unique meshes
+    u32 maxObjectCount = 200;   // Number of unique objects
   };
 
   u32 Run(ApplicationSettings);
@@ -45,7 +46,7 @@ namespace Ice {
   //=========================
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
-  Ice::Entity CreateObject(const char* _meshDir, Ice::Material* _material);
+  Ice::Object& CreateObject(const char* _meshDir, Ice::Material* _material);
 
   void UpdateTransforms();
 

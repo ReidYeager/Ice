@@ -9,6 +9,7 @@
 #include "core/scene.h"
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
+#include "math/linear.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -29,7 +30,10 @@ Ice::Material* materials;
 Ice::MaterialSettings* materialSettings;
 u32 meshCount = 0;
 Ice::Mesh* meshes;
+u32 objectCount = 0;
+Ice::Object* objects;
 Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
+Ice::ECS::ComponentManager<Ice::TransformComponent> transforms;
 
 //=========================
 // Time
@@ -102,6 +106,10 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
   materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
+  objects = (Ice::Object*)Ice::MemoryAllocZero(sizeof(Ice::Object) * _settings.maxObjectCount);
+
+  renderComponents = Ice::ECS::ComponentManager<Ice::RenderComponent>(_settings.maxObjectCount);
+  transforms = Ice::ECS::ComponentManager<Ice::TransformComponent>(_settings.maxObjectCount);
 
   // Game =====
   _settings.clientInitFunction();
@@ -139,6 +147,14 @@ b8 IceApplicationShutdown()
   ICE_ATTEMPT(appSettings.clientShutdownFunction());
 
   renderComponents.Shutdown();
+
+  for (u32 i = 0; i < transforms.GetCount(); i++)
+  {
+    renderer->DestroyBufferMemory(&transforms[i].buffer);
+  }
+  transforms.Shutdown();
+
+  Ice::MemoryFree(objects);
 
   for (u32 i = 0; i < meshCount; i++)
   {
@@ -417,27 +433,39 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
   return true;
 }
 
-Ice::Entity Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
+Ice::Object& Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
 {
-  Ice::Entity entity { Ice::ECS::CreateEntity() };
+  Ice::Object entity(Ice::ECS::CreateEntity());
 
-  Ice::RenderComponent& rc = renderComponents.Create(entity.id);
-  rc.material = *_material;
+  Ice::TransformComponent& tc = transforms.Create(entity.GetId());
+  Ice::RenderComponent& rc = renderComponents.Create(entity.GetId());
+
+  renderer->InitializeRenderComponent(&rc, &tc.buffer);
+  renderer->PushDataToBuffer((void*)&mat4Identity, &tc.buffer, {64});
+
   CreateMesh(_meshDir, &rc.mesh);
+  rc.material = *_material;
 
-  // Bind default per-object descriptors (Create buffer, assign textures)
+  entity.transform = &tc.transform;
 
-  return entity;
+  objects[objectCount] = entity;
+  objectCount++;
+  return objects[objectCount - 1];
 }
 
 void Ice::UpdateTransforms()
 {
-  //u32 count = renderComponents.GetCount();
-  //for (u32 i = 0; i < count; i++)
-  //{
-  //  // Create transform matrix
+  mat4 matrix = mat4Identity;
 
-  //  // Update descriptor set
-  //  
-  //}
+  for (u32 i = 0; i < transforms.GetCount(); i++)
+  {
+    vec3& pos = transforms[i].transform.position;
+
+    matrix[0][3] = pos.x;
+    matrix[1][3] = pos.y;
+    matrix[2][3] = pos.z;
+
+    // Shaders read matrices as column-major
+    renderer->PushDataToBuffer((void*)&(matrix.Transpose()), &transforms[i].buffer, {64});
+  }
 }
