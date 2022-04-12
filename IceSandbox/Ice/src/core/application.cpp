@@ -6,6 +6,7 @@
 
 #include "core/input.h"
 #include "core/ecs.h"
+#include "core/scene.h"
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 
@@ -122,6 +123,8 @@ b8 IceApplicationUpdate()
   {
     ICE_ATTEMPT(appSettings.clientUpdateFunction(Ice::time.deltaTime));
 
+    Ice::UpdateTransforms();
+
     ICE_ATTEMPT(renderer->RenderFrame(&frameInfo));
 
     Input.Update();
@@ -134,6 +137,8 @@ b8 IceApplicationUpdate()
 b8 IceApplicationShutdown()
 {
   ICE_ATTEMPT(appSettings.clientShutdownFunction());
+
+  renderComponents.Shutdown();
 
   for (u32 i = 0; i < meshCount; i++)
   {
@@ -414,13 +419,25 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
 
 Ice::Entity Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
 {
-  Ice::Entity entity = Ice::CreateEntity();
+  Ice::Entity entity { Ice::ECS::CreateEntity() };
 
-  Ice::RenderComponent& rc = renderComponents.Create(entity);
+  Ice::RenderComponent& rc = renderComponents.Create(entity.id);
   rc.material = *_material;
   CreateMesh(_meshDir, &rc.mesh);
 
   // Bind default per-object descriptors (Create buffer, assign textures)
 
   return entity;
+}
+
+void Ice::UpdateTransforms()
+{
+  //u32 count = renderComponents.GetCount();
+  //for (u32 i = 0; i < count; i++)
+  //{
+  //  // Create transform matrix
+
+  //  // Update descriptor set
+  //  
+  //}
 }

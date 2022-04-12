@@ -1,3 +1,4 @@
 bindings {
     Buffer 0 4
+    Buffer 1 4
 }

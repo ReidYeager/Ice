@@ -1,11 +1,9 @@
 
 #include <ice.h>
 
-#ifdef ICE_DEBUG
 // Used to print the average frame time for this session
 f32 totalDeltaSum = 0.0;
 u32 totalDeltaCount = 0;
-#endif // ICE_DEBUG
 
 b8 Init()
 {
@@ -28,6 +26,9 @@ b8 Init()
   Ice::Entity entityA = CreateObject("Cyborg_Weapon.obj", lightMat);
   Ice::Entity entityB = CreateObject("Sphere.obj", lightMat);
 
+  entityA.transform.position.y = 0.3f;
+  entityB.transform.position.z = 1.0f;
+
   return true;
 }
 
@@ -36,6 +37,10 @@ b8 Update(f32 _delta)
   if (Input.OnKeyPressed(Ice_Key_Escape))
   {
     Ice::Shutdown();
+  }
+  if (Input.OnKeyPressed(Ice_Key_P))
+  {
+    IceLogInfo("Should re-load shaders & re-create material pipelines");
   }
 
 
@@ -60,16 +65,22 @@ b8 Update(f32 _delta)
     deltasSum = 0;
     deltasCount = 0;
   }
+  #else
+  totalDeltaSum += _delta;
+  totalDeltaCount++;
   #endif // ICE_DEBUG
   return true;
 }
 
 b8 Shutdown()
 {
-  #ifdef ICE_DEBUG
   f32 avg = totalDeltaSum / totalDeltaCount;
-  IceLogInfo("} Average frame time: %4.3f ms -- %4.0f fps", avg * 1000.0f, 1.0f / avg);
-  #endif // ICE_DEBUG
+  // Force print
+  Ice::ConsoleLogMessage(Ice::Log_Info,
+                         "} Runtime: %4.2f -- Average delta: %4.3f ms -- %4.0f fps\n",
+                         Ice::time.totalTime,
+                         avg * 1000.0f,
+                         1.0f / avg);
   return true;
 }
 

@@ -290,7 +290,7 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
     i32 y = HIWORD(lparam);
     Ice::platform.GetWindow()->settings.position = { x, y };
   } break;
-  default:
-    return DefWindowProcA(hwnd, message, wparam, lparam);
   }
+
+  return DefWindowProcA(hwnd, message, wparam, lparam);
 }

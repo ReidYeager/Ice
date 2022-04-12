@@ -9,12 +9,11 @@ IceInput Input;
 void IceInput::Initialize()
 {
   Ice::MemoryZero(&m_states, sizeof(InputStates));
-  IceLogDebug("Initialized Input system");
 }
 
 void IceInput::Shutdown()
 {
-  IceLogDebug("Shutdown Input system");
+  
 }
 
 void IceInput::Update()

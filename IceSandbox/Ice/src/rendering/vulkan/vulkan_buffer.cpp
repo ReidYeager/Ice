@@ -42,7 +42,8 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
   {
     alignment = context.gpu.properties.limits.minStorageBufferOffsetAlignment - 1;
   }
-  _outBuffer->size = (_size + alignment) & ~alignment;
+  _outBuffer->size = _size;
+  _outBuffer->paddedSize = (_size + alignment) & ~alignment;
 
   // Buffer =====
   VkBufferCreateInfo createInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };

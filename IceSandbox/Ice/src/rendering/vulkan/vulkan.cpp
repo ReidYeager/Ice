@@ -12,8 +12,6 @@
 
 b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
 {
-  IceLogDebug("Vulkan init");
-
   ICE_ATTEMPT(CreateInstance());
   ICE_ATTEMPT(CreateSurface());
   ICE_ATTEMPT(ChoosePhysicalDevice());
@@ -31,6 +29,19 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT(CreateGlobalDescriptors());
   ICE_ATTEMPT(CreateForwardComponents());
 
+  static const glm::mat4 projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.01f, 10.0f);
+  static glm::mat4 view;
+  view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0, -2.5f));
+  //view = glm::rotate(view, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // pitch
+  view = glm::rotate(view, glm::radians(Ice::time.realTime * 90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // yaw
+
+  static glm::mat4 viewProj;
+  viewProj = projection * view;
+  viewProj[1][1] *= -1;
+
+  // Update global buffer (camera matrix)
+  ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer, {64}));
+
   return true;
 }
 
@@ -43,18 +54,12 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   // TODO : Move this somewhere else
   //  Should automatically update marked data when changed
   {
-    static const glm::mat4 projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.01f, 10.0f);
-    static glm::mat4 view;
-    view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0, -2.5f));
-    //view = glm::rotate(view, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // pitch
-    view = glm::rotate(view, glm::radians(Ice::time.realTime * 90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // yaw
-
-    static glm::mat4 viewProj;
-    viewProj = projection * view;
-    viewProj[1][1] *= -1;
-
-    // Update global buffer (camera matrix)
-    ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer, {64}));
+    // Moves the objects to the camera X along their Y axis
+    Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
+    float bob = glm::sin(Ice::time.realTime);
+    float weave = glm::cos(Ice::time.realTime);
+    PushDataToBuffer(&bob, &rc[0].material.settings->shaders[0].buffer, { 4 });
+    PushDataToBuffer(&weave, &rc[0].material.settings->shaders[0].buffer, { 4, 4 });
   }
 
   // Wait for oldest in-flight slot to return =====
@@ -195,7 +200,6 @@ b8 Ice::RendererVulkan::Shutdown()
   vkDestroySurfaceKHR(context.instance, context.surface, context.alloc);
   vkDestroyInstance(context.instance, context.alloc);
 
-  IceLogDebug("Vulkan shutdown");
   return true;
 }
 

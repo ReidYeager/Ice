@@ -112,7 +112,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         {
           if (lexer.ExpectType(Ice::Token_Int, &token))
           {
-            newInput.bufferSegment.offset = _shader->buffer.size;
+            newInput.bufferSegment.offset = _shader->buffer.paddedSize;
             newInput.bufferSegment.size = lexer.GetUIntFromToken(&token);
             if (newInput.bufferSegment.size == 0)
             {
@@ -172,6 +172,8 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
     DestroyBufferMemory(&s.buffer);
   }
   _material.settings->shaders.clear();
+
+  _material.settings->input.clear();
 
   vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.ivkDescriptorSet);
   vkDestroyDescriptorSetLayout(context.device, _material.ivkDescriptorSetLayout, context.alloc);

@@ -8,22 +8,20 @@
 #include <unordered_map>
 
 namespace Ice {
-
-  typedef u64 Entity;
-
-  //=========================
-  // Entity
-  //=========================
-
-  static const Entity invalidEntity = 0;
-
-  static Ice::Entity CreateEntity()
-  {
-    static Ice::Entity nextID = 0;
-    return ++nextID;
-  }
-
   namespace ECS {
+
+    //=========================
+    // Entity
+    //=========================
+
+    typedef u64 Entity;
+    static const Entity invalidEntity = 0;
+
+    static Ice::ECS::Entity CreateEntity()
+    {
+      static Ice::ECS::Entity nextID = 0;
+      return ++nextID;
+    }
 
     //=========================
     // Component
@@ -34,9 +32,9 @@ namespace Ice {
     {
     private:
       std::vector<Type> components;
-      std::vector<Ice::Entity> entities;
+      std::vector<Ice::ECS::Entity> entities;
       using indexType = u32;
-      std::unordered_map<Ice::Entity, indexType> lookup;
+      std::unordered_map<Ice::ECS::Entity, indexType> lookup;
 
     public:
       ComponentManager(indexType _startSize = 1)
@@ -46,9 +44,18 @@ namespace Ice {
         lookup.reserve(_startSize);
       }
 
-      Type& Create(Ice::Entity _entity)
+      b8 Shutdown()
       {
-        ICE_ASSERT_MSG(_entity != Ice::invalidEntity, "Invalid entity");
+        components.clear();
+        entities.clear();
+        lookup.clear();
+
+        return true;
+      }
+
+      Type& Create(Ice::ECS::Entity _entity)
+      {
+        ICE_ASSERT_MSG(_entity != Ice::ECS::invalidEntity, "Invalid entity");
         ICE_ASSERT(entities.size() == components.size());
         ICE_ASSERT(lookup.size() == components.size());
 
@@ -65,7 +72,7 @@ namespace Ice {
         return components.back();
       }
 
-      void Remove(Ice::Entity _entity)
+      void Remove(Ice::ECS::Entity _entity)
       {
         auto tuple = lookup.find(_entity);
 
@@ -73,7 +80,7 @@ namespace Ice {
           return;
 
         const indexType index = tuple->second;
-        const Ice::Entity entity = entities[index];
+        const Ice::ECS::Entity entity = entities[index];
 
         if (index < components.size() - 1)
         {
@@ -88,7 +95,7 @@ namespace Ice {
         lookup.erase(entity);
       }
 
-      Type* GetComponent(Ice::Entity _entity)
+      Type* GetComponent(Ice::ECS::Entity _entity)
       {
         auto tuple = lookup.find(_entity);
 
@@ -108,7 +115,7 @@ namespace Ice {
           return;
 
         Type movedComponent = std::move(components[_fromIndex]);
-        Ice::Entity movedEntity = entities[_fromIndex];
+        Ice::ECS::Entity movedEntity = entities[_fromIndex];
 
         const int direction = _fromIndex < _toIndex ? 1 : -1;
         indexType nextIndex;
@@ -125,7 +132,7 @@ namespace Ice {
         lookup[movedEntity] = _toIndex;
       }
 
-      bool Contains(Ice::Entity _entity) const
+      bool Contains(Ice::ECS::Entity _entity) const
       {
         return lookup.find(_entity) != lookup.end();
       }
@@ -140,7 +147,7 @@ namespace Ice {
         return components.size();
       }
 
-      Ice::Entity GetEntity(indexType _index) const
+      Ice::ECS::Entity GetEntity(indexType _index) const
       {
         return entities[_index];
       }

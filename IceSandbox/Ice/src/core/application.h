@@ -7,6 +7,7 @@
 #include "platform/platform.h"
 #include "rendering/renderer.h"
 #include "core/ecs.h"
+#include "core/scene.h"
 
 namespace Ice {
 
@@ -45,6 +46,8 @@ namespace Ice {
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   Ice::Entity CreateObject(const char* _meshDir, Ice::Material* _material);
+
+  void UpdateTransforms();
 
 }
 #endif // !ICE_CORE_APPLICATION_H_

@@ -16,9 +16,13 @@ layout(set = 0, binding = 0) uniform GlobalUniform {
     // DirectionalLight dLight;
 } global;
 
-// layout(set = 1, binding = 0) uniform MaterialUniform {
-//     float test;
-// } material;
+layout(set = 1, binding = 0) uniform MaterialUniform {
+    float test;
+} material;
+
+layout(set = 1, binding = 0) uniform MaterialUniformY {
+    float test;
+} materialY;
 
 // layout(set = 2, binding = 0) uniform ModelUniform {
 //     mat4 transform;
@@ -39,7 +43,7 @@ layout(location = 1) out vec2 outUV;
 
 void main() {
     // vec4 modelPosition = model.transform * vec4(inPosition, 1.0);
-    gl_Position = global.viewProj * vec4(inPosition, 1.0);
+    gl_Position = global.viewProj * vec4(inPosition.x + materialY.test, inPosition.y + material.test, inPosition.z, 1.0);
 
     // outNormal = normalize(mat3(model.transform) * inNormal);
     outNormal = inNormal;

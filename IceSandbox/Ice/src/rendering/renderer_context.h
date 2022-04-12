@@ -29,7 +29,8 @@ namespace Ice {
 
   struct Buffer
   {
-    u64 size = 0;
+    u64 size = 0;       // Defined size of the buffer
+    u64 paddedSize = 0; // Aligned the input size with the device minimum
 
     union {
       void* apiData0;
@@ -176,7 +177,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkDescriptorSet ivkDescriptorSet; // Per-object shader material input data
+      VkDescriptorSet ivkDescriptorSet; // Per-object input data
     };
   };
 
