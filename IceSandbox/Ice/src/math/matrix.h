@@ -64,6 +64,34 @@ typedef union mat4
     }
   }
 
+  constexpr mat4 const& operator=(f32* in)
+  {
+    for (u32 i = 0; i < 4; i++)
+    {
+      for (u32 j = 0; j < 4; j++)
+      {
+        switch (i)
+        {
+        default:
+        case 0:
+          x[j] = *(in + (i * 4) + j);
+          break;
+        case 1:
+          y[j] = *(in + (i * 4) + j);
+          break;
+        case 2:
+          z[j] = *(in + (i * 4) + j);
+          break;
+        case 3:
+          w[j] = *(in + (i * 4) + j);
+          break;
+        }
+      }
+    }
+
+    return *this;
+  }
+
   mat4 Transpose() const
   {
     return { x[0], y[0], z[0], w[0],

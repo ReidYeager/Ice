@@ -14,6 +14,8 @@ namespace Ice {
   class Renderer
   {
   public:
+    virtual ~Renderer() {}
+
     virtual b8 Init(Ice::RendererSettings _settings) = 0;
     // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
     virtual b8 RenderFrame(FrameInformation* _data) = 0;
@@ -34,6 +36,7 @@ namespace Ice {
 
     virtual b8 InitializeRenderComponent(Ice::RenderComponent* _component,
                                          Ice::Buffer* _TransformBuffer) = 0;
+    virtual b8 InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings) = 0;
   };
 
 }

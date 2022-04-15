@@ -145,6 +145,7 @@ namespace Ice
                          const Ice::BufferSegment _segmentInfo);
 
     b8 InitializeRenderComponent(Ice::RenderComponent* _component, Ice::Buffer* _TransformBuffer);
+    b8 InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings);
   };
 
 }

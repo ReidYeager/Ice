@@ -5,7 +5,9 @@
 f32 totalDeltaSum = 0.0;
 u32 totalDeltaCount = 0;
 
-Ice::Object* obj;
+Ice::Object* gun;
+Ice::Object* sphere;
+Ice::Object* camera;
 
 b8 Init()
 {
@@ -25,8 +27,24 @@ b8 Init()
   //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
   //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
 
-  obj = &CreateObject("Cyborg_Weapon.obj", lightMat);
-  Ice::Object& entityB = CreateObject("Sphere.obj", lightMat);
+  gun = &Ice::CreateObject();
+  Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", lightMat);
+
+  sphere = &Ice::CreateObject();
+  Ice::AttatchRenderComponent(sphere, "Sphere.obj", lightMat);
+
+  sphere->transform->position.y = -1.0f;
+
+  Ice::Camera camSettings;
+  camSettings.isProjection = true;
+  camSettings.horizontal = 45.0f;
+  camSettings.ratio = 800.0f / 600.0f;
+  camSettings.nearClip = 0.01f;
+  camSettings.farClip = 10.0f;
+
+  camera = &Ice::CreateObject();
+  Ice::AttatchCameraComponent(camera, camSettings);
+  camera->transform->position.z = 2.5f;
 
   return true;
 }
@@ -42,8 +60,24 @@ b8 Update(f32 _delta)
     IceLogInfo("Should re-load shaders & re-create material pipelines");
   }
 
-  obj->transform->position.x = sin(Ice::time.totalTime) * 2.0f;
+  //static float buildup = 0.0f;
+  //buildup += 0.001f * _delta;
+  gun->transform->position.x = cos(Ice::time.totalTime);
+  //gun->transform->position.y = sin(Ice::time.totalTime * 60.69) * buildup;
 
+  camera->transform->position.x = cos(Ice::time.totalTime) * 2.5f;
+  camera->transform->position.z = sin(Ice::time.totalTime) * 2.5f;
+  camera->transform->rotation.y = (-Ice::time.totalTime * 57.2958279088f) + 90.0f;
+
+  camera->transform->scale.y = 0.5f;
+  //camera->transform->scale.z = 0.5f;
+  camera->transform->scale.x = 0.5f;
+
+  //gun->transform->rotation.x = 90.0f * Ice::time.totalTime;
+  gun->transform->rotation.y = 90.0f * -Ice::time.totalTime;
+  //gun->transform->rotation.z = 90.0f * Ice::time.totalTime;
+
+  //gun->transform->scale.y = sin(Ice::time.totalTime) * 3;
 
   #ifdef ICE_DEBUG
   // Log the average delta time & framerate =====
@@ -88,7 +122,7 @@ b8 Shutdown()
 int main()
 {
   Ice::ApplicationSettings settings;
-  settings.window.position = { 50, 50 };
+  settings.window.position = { 300, 150 };
   settings.window.extents = { 800, 600 };
   settings.window.title = "Test application";
   settings.renderer.api = Ice::Renderer_Vulkan;

@@ -33,6 +33,54 @@ typedef struct vec2
     }
   }
 
+  template<typename U>
+  constexpr vec2& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2& operator+=(vec2 other)
+  {
+    x += other.x;
+    y += other.y;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2& operator-=(vec2 other)
+  {
+    x -= other.x;
+    y -= other.y;
+    return *this;
+  }
+
   bool operator==(vec2& other) const { return x == other.x && y == other.y; }
   bool operator==(const vec2& other) const { return x == other.x && y == other.y; }
 
@@ -70,6 +118,60 @@ typedef struct vec3
     case 2:
       return z;
     }
+  }
+
+  template<typename U>
+  constexpr vec3& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3& operator+=(vec3 other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3& operator-=(vec3 other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    return *this;
   }
 
   bool operator==(vec3& other) const { return x == other.x && y == other.y && z == other.z; }
@@ -114,6 +216,66 @@ typedef struct vec4
     case 3:
       return w;
     }
+  }
+
+  template<typename U>
+  constexpr vec4& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    w *= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    w /= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    w += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    w -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4& operator+=(vec4 other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    w += other.w;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4& operator-=(vec4 other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    w -= other.w;
+    return *this;
   }
 
   bool operator==(vec4& other) const

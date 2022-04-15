@@ -24,21 +24,6 @@ namespace Ice {
     Ice::Buffer buffer;
   };
 
-  class Object
-  {
-  public:
-    Ice::Transform* transform;
-
-  private:
-    Ice::ECS::Entity id;
-
-  public:
-    Object(Ice::ECS::Entity _id) : id(_id) {}
-    const Ice::ECS::Entity GetId() { return id; }
-
-  };
-
 }
-
 
 #endif // !define ICE_CORE_SCENE_H_

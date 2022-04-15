@@ -156,6 +156,7 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
   UpdateDescriptorSet(_material->ivkDescriptorSet, _material->settings->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
+                                     context.cameraDescriptorLayout,
                                      _material->ivkDescriptorSetLayout,
                                      context.objectDescriptorLayout },
                                    &_material->ivkPipelineLayout));
@@ -258,7 +259,6 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
 
 b8 Ice::RendererVulkan::CreateGlobalDescriptors()
 {
-  // Global descriptors =====
   std::vector<VkDescriptorSetLayoutBinding> bindings;
 
   VkDescriptorSetLayoutBinding newBinding;
@@ -266,27 +266,42 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
   newBinding.pImmutableSamplers = nullptr;
   newBinding.descriptorCount = 1;
 
-  newBinding.binding = 0;
-  newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  bindings.push_back(newBinding);
+  // Global pipeline layout =====
+  {
+    // Global descriptors =====
+    newBinding.binding = 0;
+    newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings.push_back(newBinding);
 
-  ICE_ATTEMPT(CreateDescriptorLayoutAndSet(&bindings,
-                                           &context.globalDescriptorLayout,
-                                           &context.globalDescriptorSet));
+    ICE_ATTEMPT(CreateDescriptorLayoutAndSet(&bindings,
+                                             &context.globalDescriptorLayout,
+                                             &context.globalDescriptorSet));
 
-  ICE_ATTEMPT(CreatePipelineLayout({context.globalDescriptorLayout}, &context.globalPipelineLayout));
+    ICE_ATTEMPT(CreateBufferMemory(&context.globalDescriptorBuffer,
+                                   64,
+                                   Ice::Buffer_Memory_Shader_Read));
 
-  ICE_ATTEMPT(CreateBufferMemory(&context.globalDescriptorBuffer,
-                                 64,
-                                 Ice::Buffer_Memory_Shader_Read));
+    std::vector<Ice::ShaderInputElement> iceBind(1);
+    iceBind[0].bufferSegment.ivkBuffer = context.globalDescriptorBuffer.ivkBuffer;
+    iceBind[0].bufferSegment.offset = 0;
+    iceBind[0].bufferSegment.size = 64;
+    iceBind[0].type = Shader_Input_Buffer;
+    iceBind[0].inputIndex = 0;
+    UpdateDescriptorSet(context.globalDescriptorSet, iceBind);
 
-  std::vector<Ice::ShaderInputElement> iceBind(1);
-  iceBind[0].bufferSegment.ivkBuffer = context.globalDescriptorBuffer.ivkBuffer;
-  iceBind[0].bufferSegment.offset = 0;
-  iceBind[0].bufferSegment.size = 64;
-  iceBind[0].type = Shader_Input_Buffer;
-  iceBind[0].inputIndex = 0;
-  UpdateDescriptorSet(context.globalDescriptorSet, iceBind);
+    // Camera descriptors =====
+    bindings.clear();
+
+    newBinding.binding = 0;
+    newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings.push_back(newBinding);
+
+    ICE_ATTEMPT(CreateDescriptorLayout(&bindings, &context.cameraDescriptorLayout));
+
+    // Pipeline =====
+    ICE_ATTEMPT(CreatePipelineLayout({context.globalDescriptorLayout, context.cameraDescriptorLayout},
+                                     &context.globalPipelineLayout));
+  }
 
   // Object descriptors =====
   bindings.clear();
@@ -374,14 +389,6 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   {
     newWrite.dstBinding = descriptor.inputIndex;
 
-    std::string typeName = "";
-    switch (descriptor.type)
-    {
-    case Shader_Input_Buffer: typeName = "Buffer"; break;
-    case Shader_Input_Image: typeName = "Image"; break;
-    }
-    IceLogDebug("%s", typeName.c_str());
-
     switch (descriptor.type)
     {
     case Shader_Input_Buffer:
@@ -406,6 +413,7 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
       newWrite.pBufferInfo = nullptr;
       newWrite.pImageInfo = &images[images.size() - 1];
     } break;
+    default: continue;
     }
 
     writes.push_back(newWrite);
@@ -502,10 +510,10 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   // Defines how the pipeline will rasterize the image
   VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  //rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-  rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+  rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  //rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;

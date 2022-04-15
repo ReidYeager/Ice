@@ -11,18 +11,20 @@ struct DirectionalLight
 
 // Descriptor inputs =====
 
-layout(set = 0, binding = 0) uniform GlobalUniform {
+// layout(set = 0, binding = 0) uniform GlobalUniform {
+// } global;
+
+layout(set = 1, binding = 0) uniform CameraUniform {
     mat4 viewProj;
     // DirectionalLight dLight;
-} global;
+} camera;
 
-layout(set = 2, binding = 0) uniform ModelUniform {
+// layout(set = 2, binding = 0) uniform MaterialUniform {
+// } material;
+
+layout(set = 3, binding = 0) uniform ModelUniform {
     mat4 transform;
 } model;
-
-// layout(set = 2, binding = 0) uniform ModelUniform {
-//     mat4 transform;
-// } model;
 
 // Vertex input =====
 
@@ -38,10 +40,8 @@ layout(location = 1) out vec2 outUV;
 // Code =====
 
 void main() {
-    // vec4 modelPosition = model.transform * vec4(inPosition, 1.0);
-    gl_Position = global.viewProj * model.transform * vec4(inPosition, 1.0);
+    gl_Position = camera.viewProj * model.transform * vec4(inPosition, 1.0);
 
-    // outNormal = normalize(mat3(model.transform) * inNormal);
-    outNormal = inNormal;
+    outNormal = normalize(mat3(model.transform) * inNormal);
     outUV = inUV;
 }

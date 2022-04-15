@@ -15,6 +15,7 @@
 #include <tinyobjloader/tiny_obj_loader.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <chrono>
 
@@ -32,8 +33,10 @@ u32 meshCount = 0;
 Ice::Mesh* meshes;
 u32 objectCount = 0;
 Ice::Object* objects;
+
 Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
-Ice::ECS::ComponentManager<Ice::TransformComponent> transforms;
+Ice::ECS::ComponentManager<Ice::TransformComponent> transformComponents;
+Ice::ECS::ComponentManager<Ice::CameraComponent> cameraComponents;
 
 //=========================
 // Time
@@ -108,8 +111,9 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
   objects = (Ice::Object*)Ice::MemoryAllocZero(sizeof(Ice::Object) * _settings.maxObjectCount);
 
-  renderComponents = Ice::ECS::ComponentManager<Ice::RenderComponent>(_settings.maxObjectCount);
-  transforms = Ice::ECS::ComponentManager<Ice::TransformComponent>(_settings.maxObjectCount);
+  renderComponents.Initialize(_settings.maxObjectCount);
+  transformComponents.Initialize(_settings.maxObjectCount);
+  cameraComponents.Initialize(_settings.maxObjectCount);
 
   // Game =====
   _settings.clientInitFunction();
@@ -126,6 +130,7 @@ b8 IceApplicationUpdate()
 
   Ice::FrameInformation frameInfo {};
   frameInfo.components = &renderComponents;
+  frameInfo.cameras = &cameraComponents;
 
   while (isRunning && Ice::platform.Update())
   {
@@ -148,11 +153,17 @@ b8 IceApplicationShutdown()
 
   renderComponents.Shutdown();
 
-  for (u32 i = 0; i < transforms.GetCount(); i++)
+  for (u32 i = 0; i < cameraComponents.GetCount(); i++)
   {
-    renderer->DestroyBufferMemory(&transforms[i].buffer);
+    renderer->DestroyBufferMemory(&cameraComponents[i].buffer);
   }
-  transforms.Shutdown();
+  cameraComponents.Shutdown();
+
+  for (u32 i = 0; i < transformComponents.GetCount(); i++)
+  {
+    renderer->DestroyBufferMemory(&transformComponents[i].buffer);
+  }
+  transformComponents.Shutdown();
 
   Ice::MemoryFree(objects);
 
@@ -433,39 +444,91 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
   return true;
 }
 
-Ice::Object& Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
+Ice::Object& Ice::CreateObject()
 {
   Ice::Object entity(Ice::ECS::CreateEntity());
 
-  Ice::TransformComponent& tc = transforms.Create(entity.GetId());
-  Ice::RenderComponent& rc = renderComponents.Create(entity.GetId());
+  Ice::TransformComponent* tc = transformComponents.Create(entity.GetId());
 
-  renderer->InitializeRenderComponent(&rc, &tc.buffer);
-  renderer->PushDataToBuffer((void*)&mat4Identity, &tc.buffer, {64});
+  renderer->CreateBufferMemory(&tc->buffer, 64, Ice::Buffer_Memory_Shader_Read);
+  renderer->PushDataToBuffer((void*)&mat4Identity, &tc->buffer, {64});
 
-  CreateMesh(_meshDir, &rc.mesh);
-  rc.material = *_material;
-
-  entity.transform = &tc.transform;
+  entity.transform = &tc->transform;
 
   objects[objectCount] = entity;
   objectCount++;
+
   return objects[objectCount - 1];
+}
+
+void Ice::AttatchRenderComponent(Ice::Object* _object,
+                                 const char* _meshDir,
+                                 Ice::Material* _material)
+{
+  Ice::RenderComponent* rc = renderComponents.Create(_object->GetId());
+  Ice::Buffer* tbuffer = &transformComponents.GetComponent(_object->GetId())->buffer;
+
+  renderer->InitializeRenderComponent(rc, tbuffer);
+  CreateMesh(_meshDir, &rc->mesh);
+  rc->material = *_material;
+}
+
+void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::Camera _settings)
+{
+  Ice::CameraComponent* cam = cameraComponents.Create(_object->GetId());
+  renderer->CreateBufferMemory(&cam->buffer, 64, Ice::Buffer_Memory_Shader_Read);
+  renderer->InitializeCamera(cam, _settings);
+
+  IceLogDebug("Camera created");
 }
 
 void Ice::UpdateTransforms()
 {
   mat4 matrix = mat4Identity;
+  mat4 transposed;
 
-  for (u32 i = 0; i < transforms.GetCount(); i++)
+  for (u32 i = 0; i < transformComponents.GetCount(); i++)
   {
-    vec3& pos = transforms[i].transform.position;
+    vec3 pos = transformComponents[i].transform.position;
+    vec3 rot = transformComponents[i].transform.rotation;
+    vec3 scale = transformComponents[i].transform.scale;
 
-    matrix[0][3] = pos.x;
-    matrix[1][3] = pos.y;
-    matrix[2][3] = pos.z;
+    // TODO : ? Move camera transforms into Camera/CameraComponent ?
+    //  Would avoid this conditional, but may make scene hierarchies more difficult
+    Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
+    if (cam == nullptr)
+    {
+      // Update transform =====
+      glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z));
+      transform = glm::rotate(transform, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+      transform = glm::rotate(transform, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+      transform = glm::rotate(transform, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+      transform = glm::scale(transform, glm::vec3(scale.x, scale.y, scale.z));
 
-    // Shaders read matrices as column-major
-    renderer->PushDataToBuffer((void*)&(matrix.Transpose()), &transforms[i].buffer, {64});
+      renderer->PushDataToBuffer((void*)&transform, &transformComponents[i].buffer, { 64 });
+    }
+    else
+    {
+      // Update camera transform =====
+      pos *= -1;
+      rot *= -1;
+
+      // Cameras need to work opposite normal transforms.
+      // Other transforms rotate around it, scale and translate inversely to it, etc.
+      glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / scale.x, 1.0f / scale.y, 1.0f / scale.z));
+      transform = glm::rotate(transform, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+      transform = glm::rotate(transform, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+      transform = glm::rotate(transform, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+      transform = glm::translate(transform, glm::vec3(pos.x, pos.y, pos.z));
+
+      // Fastest way to convert to a column-major glm matrix (f32[16]); avoids copying data
+      mat4 cm = cam->projectionMatrix.Transpose();
+      glm::mat4* projection = (glm::mat4*)&cm;
+
+      glm::mat4 projView = *projection * transform;
+
+      renderer->PushDataToBuffer((void*)&projView, &cam->buffer, {64});
+    }
   }
+
 }

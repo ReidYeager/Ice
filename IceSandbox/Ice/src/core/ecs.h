@@ -31,45 +31,62 @@ namespace Ice {
     class ComponentManager
     {
     private:
-      std::vector<Type> components;
-      std::vector<Ice::ECS::Entity> entities;
-      using indexType = u32;
+      u32 maxCount;
+      u32 currentCount = 0;
+      Type* components;
+      Ice::ECS::Entity* entities;
+
+      using indexType = u16;
       std::unordered_map<Ice::ECS::Entity, indexType> lookup;
 
     public:
-      ComponentManager(indexType _startSize = 1)
+      ComponentManager()
       {
-        components.reserve(_startSize);
-        entities.reserve(_startSize);
-        lookup.reserve(_startSize);
+        maxCount = 0;
+      }
+
+      ComponentManager(indexType _count)
+      {
+        maxCount = _count;
+        components = (Type*)Ice::MemoryAllocate(sizeof(Type) * maxCount);
+        entities = (Ice::ECS::Entity*)Ice::MemoryAllocate(sizeof(Ice::ECS::Entity) * maxCount);
+        lookup.reserve(maxCount);
+      }
+
+      void Initialize(indexType _count)
+      {
+        maxCount = _count;
+        components = (Type*)Ice::MemoryAllocZero(sizeof(Type) * maxCount);
+        entities = (Ice::ECS::Entity*)Ice::MemoryAllocZero(sizeof(Ice::ECS::Entity) * maxCount);
+        lookup.reserve(maxCount);
       }
 
       b8 Shutdown()
       {
-        components.clear();
-        entities.clear();
+        Ice::MemoryFree(components);
+        Ice::MemoryFree(entities);
         lookup.clear();
 
         return true;
       }
 
-      Type& Create(Ice::ECS::Entity _entity)
+      Type* Create(Ice::ECS::Entity _entity)
       {
         ICE_ASSERT_MSG(_entity != Ice::ECS::invalidEntity, "Invalid entity");
-        ICE_ASSERT(entities.size() == components.size());
-        ICE_ASSERT(lookup.size() == components.size());
+        ICE_ASSERT(lookup.size() == currentCount);
 
         if (lookup.find(_entity) != lookup.end())
         {
           IceLogWarning("Entity %u already has a component of this type", _entity);
-          return components[lookup[_entity]];
+          return &components[lookup[_entity]];
         }
 
-        lookup[_entity] = components.size();
-        components.push_back(Type());
-        entities.push_back(_entity);
+        lookup[_entity] = currentCount;
+        components[currentCount] = Type();
+        entities[currentCount] = _entity;
+        currentCount++;
 
-        return components.back();
+        return &components[currentCount - 1];
       }
 
       void Remove(Ice::ECS::Entity _entity)
@@ -82,29 +99,16 @@ namespace Ice {
         const indexType index = tuple->second;
         const Ice::ECS::Entity entity = entities[index];
 
-        if (index < components.size() - 1)
+        if (index < currentCount - 1)
         {
           //MoveItem(index, components.size() - 1);
-          components[index] = std::move(components.back());
-          entities[index] = entities.back();
+          components[index] = std::move(components[currentCount - 1]);
+          entities[index] = entities[currentCount - 1];
           lookup[entities[index]] = index;
         }
 
-        components.pop_back();
-        entities.pop_back();
+        currentCount--;
         lookup.erase(entity);
-      }
-
-      Type* GetComponent(Ice::ECS::Entity _entity)
-      {
-        auto tuple = lookup.find(_entity);
-
-        if (tuple != lookup.end())
-        {
-          return &components[tuple->second];
-        }
-
-        return nullptr;
       }
 
       void MoveItem(indexType _fromIndex, indexType _toIndex)
@@ -132,6 +136,21 @@ namespace Ice {
         lookup[movedEntity] = _toIndex;
       }
 
+      Type* GetComponent(Ice::ECS::Entity _entity)
+      {
+        if (!_entity)
+          return nullptr;
+
+        auto tuple = lookup.find(_entity);
+
+        if (tuple != lookup.end())
+        {
+          return &components[tuple->second];
+        }
+
+        return nullptr;
+      }
+
       bool Contains(Ice::ECS::Entity _entity) const
       {
         return lookup.find(_entity) != lookup.end();
@@ -144,12 +163,17 @@ namespace Ice {
 
       indexType GetCount() const
       {
-        return components.size();
+        return currentCount;
       }
 
       Ice::ECS::Entity GetEntity(indexType _index) const
       {
-        return entities[_index];
+        return entities[_index] * (currentCount > _index);
+      }
+
+      const Ice::ECS::Entity* GetEntityArray()
+      {
+        return entities;
       }
 
     };

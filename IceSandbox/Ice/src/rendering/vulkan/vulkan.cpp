@@ -7,6 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
 
@@ -29,19 +30,6 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT(CreateGlobalDescriptors());
   ICE_ATTEMPT(CreateForwardComponents());
 
-  static const glm::mat4 projection = glm::perspective(45.0f, 800.0f / 600.0f, 0.01f, 10.0f);
-  static glm::mat4 view;
-  view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0, -2.5f));
-  //view = glm::rotate(view, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // pitch
-  view = glm::rotate(view, glm::radians(Ice::time.realTime * 90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // yaw
-
-  static glm::mat4 viewProj;
-  viewProj = projection * view;
-  viewProj[1][1] *= -1;
-
-  // Update global buffer (camera matrix)
-  ICE_ATTEMPT(PushDataToBuffer((void*)&viewProj, &context.globalDescriptorBuffer, {64}));
-
   return true;
 }
 
@@ -50,18 +38,6 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   static u32 flightSlotIndex = 0;
   static u32 swapchainImageIndex = 0;
   VkResult result;
-
-  // TODO : Move this somewhere else
-  //  Should automatically update marked data when changed
-  {
-    // Moves the objects to the camera X along their Y axis
-
-    //Ice::ECS::ComponentManager<Ice::RenderComponent>& rc = *(_data->components);
-    //float bob = glm::sin(Ice::time.realTime);
-    //float weave = glm::cos(Ice::time.realTime);
-    //PushDataToBuffer(&bob, &rc[0].material.settings->shaders[0].buffer, { 4 });
-    //PushDataToBuffer(&weave, &rc[0].material.settings->shaders[0].buffer, { 4, 4 });
-  }
 
   // Wait for oldest in-flight slot to return =====
   IVK_ASSERT(vkWaitForFences(context.device,
@@ -145,6 +121,7 @@ b8 Ice::RendererVulkan::Shutdown()
 {
   vkDeviceWaitIdle(context.device);
 
+  vkDestroyDescriptorSetLayout(context.device, context.cameraDescriptorLayout, context.alloc);
   vkDestroyDescriptorSetLayout(context.device, context.objectDescriptorLayout, context.alloc);
 
   vkDestroyPipelineLayout(context.device, context.globalPipelineLayout, context.alloc);
@@ -689,7 +666,6 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
                                                   Ice::Buffer* _transformBuffer)
 {
-  ICE_ATTEMPT(CreateBufferMemory(_transformBuffer, 64, Ice::Buffer_Memory_Shader_Read));
   ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->ivkDescriptorSet));
 
   Ice::ShaderInputElement bufferInput;
@@ -698,6 +674,44 @@ b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _compone
   bufferInput.bufferSegment = {64, 0, _transformBuffer->ivkBuffer};
   std::vector<Ice::ShaderInputElement> inputs = {bufferInput};
   UpdateDescriptorSet(_component->ivkDescriptorSet, inputs);
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings)
+{
+  // Calculate projection matrix =====
+  glm::mat4 glmMatrix;
+  if (_settings.isProjection)
+  {
+    glmMatrix = glm::perspective(glm::radians(_settings.horizontal),
+                                 _settings.ratio,
+                                 _settings.nearClip,
+                                 _settings.farClip);
+  }
+  else
+  {
+    glmMatrix = glm::ortho(0.0f,
+                           _settings.horizontal,
+                           0.0f,
+                           _settings.horizontal / _settings.ratio,
+                           _settings.nearClip,
+                           _settings.farClip);
+  }
+  glmMatrix[1][1] *= -1;
+
+  _camera->projectionMatrix = (f32*)glm::value_ptr(glmMatrix);
+  _camera->projectionMatrix = _camera->projectionMatrix.Transpose();
+
+  // Create descriptor set =====
+  ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->ivkDescriptorSet));
+
+  Ice::ShaderInputElement bufferInput;
+  bufferInput.inputIndex = 0;
+  bufferInput.type = Ice::Shader_Input_Buffer;
+  bufferInput.bufferSegment = { 64, 0, _camera->buffer.ivkBuffer };
+  std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
+  UpdateDescriptorSet(_camera->ivkDescriptorSet, inputs);
 
   return true;
 }

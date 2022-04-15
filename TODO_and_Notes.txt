@@ -1,5 +1,6 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   255 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line   266 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line   495 :--: // TODO : ? Move camera transforms into Camera/CameraComponent ?
 \IceSandbox\Ice\src\core\scene.h
 	Line    15 :--: // TODO : Convert Euler rotation to quaternion
 \IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
@@ -13,11 +14,9 @@
 	Line    31 :--: // TODO : Allow source to change material pipeline settings
 	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
 \IceSandbox\Ice\src\rendering\renderer.h
-	Line    17 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
-\IceSandbox\Ice\src\rendering\vulkan\vulkan.cpp
-	Line    53 :--: // TODO : Move this somewhere else
+	Line    19 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_buffer.cpp
 	Line   132 :--: // TODO : Implement buffer data queue
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line   153 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   188 :--: // TODO : Need to account for descriptor binding gaps
+	Line   189 :--: // TODO : Need to account for descriptor binding gaps

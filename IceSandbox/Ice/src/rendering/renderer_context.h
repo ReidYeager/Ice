@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #include "core/ecs.h"
+#include "math/matrix.h"
 
 #include <vulkan/vulkan.h>
 
@@ -170,6 +171,28 @@ namespace Ice {
   // Renderer
   //=========================
 
+  struct Camera
+  {
+    b8 isProjection = true;
+
+    f32 horizontal; // If projection: the horizontal FOV; else: the world-space width
+    f32 ratio; // The ratio of screen width:height
+
+    f32 nearClip = 0.1f;
+    f32 farClip = 100.0f;
+  };
+
+  struct CameraComponent
+  {
+    mat4 projectionMatrix;
+    Ice::Buffer buffer;
+
+    union {
+      void* apiData0;
+      VkDescriptorSet ivkDescriptorSet; // ProjectionViewMatrix buffer
+    };
+  };
+
   struct RenderComponent
   {
     Ice::Material material;
@@ -185,6 +208,7 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
+    Ice::ECS::ComponentManager<Ice::CameraComponent>* cameras;
     Ice::ECS::ComponentManager<Ice::RenderComponent>* components;
   };
 
