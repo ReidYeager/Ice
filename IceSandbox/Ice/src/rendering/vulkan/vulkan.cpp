@@ -691,6 +691,7 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera, Ice::Cam
   }
   else
   {
+    IceLogWarning("Orthographic camera funcionality not currently working");
     glmMatrix = glm::ortho(0.0f,
                            _settings.horizontal,
                            0.0f,

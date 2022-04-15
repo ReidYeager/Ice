@@ -138,11 +138,12 @@ namespace Ice
     b8 PushDataToBuffer(void* _data,
                         const Ice::Buffer* _buffer,
                         const Ice::BufferSegment _segmentInfo);
-    // Adds data to a set to be pushed to the GPU just before rendering
-    // Assumes _data will remain valid through the frame
-    b8 QueueDataToBuffer(void* _data,
-                         const Ice::Buffer* _buffer,
-                         const Ice::BufferSegment _segmentInfo);
+    //// Adds data to a set to be pushed to the GPU just before rendering
+    //// Assumes _data will remain valid through the frame
+    //// (Left here because I may want to add this, but will otherwise forget about it)
+    //b8 QueueDataToBuffer(void* _data,
+    //                     const Ice::Buffer* _buffer,
+    //                     const Ice::BufferSegment _segmentInfo);
 
     b8 InitializeRenderComponent(Ice::RenderComponent* _component, Ice::Buffer* _TransformBuffer);
     b8 InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings);

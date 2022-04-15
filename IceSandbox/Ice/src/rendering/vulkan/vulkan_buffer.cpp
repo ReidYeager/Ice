@@ -120,22 +120,3 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
   return true;
 }
 
-b8 Ice::RendererVulkan::QueueDataToBuffer(void* _data,
-                                          const Ice::Buffer* _buffer,
-                                          const Ice::BufferSegment _segmentInfo)
-{
-  if (_segmentInfo.ivkBuffer != VK_NULL_HANDLE && _segmentInfo.ivkBuffer != _buffer->ivkBuffer)
-  {
-    IceLogError("Buffer does not match segment's buffer. Aborting data push queue.");
-    return false;
-  }
-
-  // TODO : Implement buffer data queue
-  return true;
-}
-
-b8 FlushBufferQueue()
-{
-  return true;
-}
-

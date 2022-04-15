@@ -3,20 +3,10 @@
 	Line   495 :--: // TODO : ? Move camera transforms into Camera/CameraComponent ?
 \IceSandbox\Ice\src\core\scene.h
 	Line    15 :--: // TODO : Convert Euler rotation to quaternion
-\IceSandbox\Ice\src\rendering\old_vulkan\vk_command.cpp
-	Line   136 :--: // TODO : Remove this branch
-	Line   202 :--: // TODO : Remove this branch
-\IceSandbox\Ice\src\rendering\old_vulkan\vk_deferred.cpp
-	Line   148 :--: // NOTE : Should learn more about stage/access masks
-\IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.cpp
-	Line   181 :--: // TODO : Move out of IvkRenderer
-\IceSandbox\Ice\src\rendering\old_vulkan\vk_renderer.h
-	Line    31 :--: // TODO : Allow source to change material pipeline settings
-	Line    38 :--: // TODO : Remove/move all structs/variables defined here.
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    19 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
-\IceSandbox\Ice\src\rendering\vulkan\vulkan_buffer.cpp
-	Line   132 :--: // TODO : Implement buffer data queue
+\IceSandbox\Ice\src\rendering\renderer_context.h
+	Line   184 :--: // TODO : Add camera render target
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
 	Line   153 :--: // TODO : Assign default descriptor values (new buffer, default textures)
 	Line   189 :--: // TODO : Need to account for descriptor binding gaps
