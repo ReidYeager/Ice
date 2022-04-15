@@ -17,7 +17,7 @@ namespace Ice {
     virtual ~Renderer() {}
 
     virtual b8 Init(Ice::RendererSettings _settings) = 0;
-    // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
+    // NOTE : Given the frequency this is called, should use something more efficient than virtual.
     virtual b8 RenderFrame(FrameInformation* _data) = 0;
     virtual b8 Shutdown() = 0;
 
@@ -35,8 +35,10 @@ namespace Ice {
                                 const Ice::BufferSegment _segmentInfo) = 0;
 
     virtual b8 InitializeRenderComponent(Ice::RenderComponent* _component,
-                                         Ice::Buffer* _TransformBuffer) = 0;
-    virtual b8 InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings) = 0;
+                                         Ice::BufferSegment* _TransformBuffer) = 0;
+    virtual b8 InitializeCamera(Ice::CameraComponent* _camera,
+                                Ice::BufferSegment _segment,
+                                Ice::Camera _settings) = 0;
   };
 
 }

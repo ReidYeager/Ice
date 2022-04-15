@@ -36,6 +36,7 @@ Ice::Object* objects;
 
 Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
 Ice::ECS::ComponentManager<Ice::TransformComponent> transformComponents;
+Ice::Buffer transformsBuffer; // Stores the transforms matrix for every object
 Ice::ECS::ComponentManager<Ice::CameraComponent> cameraComponents;
 
 //=========================
@@ -113,6 +114,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
   renderComponents.Initialize(_settings.maxObjectCount);
   transformComponents.Initialize(_settings.maxObjectCount);
+  renderer->CreateBufferMemory(&transformsBuffer, 64 * _settings.maxObjectCount, Ice::Buffer_Memory_Shader_Read);
   cameraComponents.Initialize(_settings.maxObjectCount);
 
   // Game =====
@@ -153,16 +155,9 @@ b8 IceApplicationShutdown()
 
   renderComponents.Shutdown();
 
-  for (u32 i = 0; i < cameraComponents.GetCount(); i++)
-  {
-    renderer->DestroyBufferMemory(&cameraComponents[i].buffer);
-  }
   cameraComponents.Shutdown();
 
-  for (u32 i = 0; i < transformComponents.GetCount(); i++)
-  {
-    renderer->DestroyBufferMemory(&transformComponents[i].buffer);
-  }
+  renderer->DestroyBufferMemory(&transformsBuffer);
   transformComponents.Shutdown();
 
   Ice::MemoryFree(objects);
@@ -449,9 +444,13 @@ Ice::Object& Ice::CreateObject()
   Ice::Object entity(Ice::ECS::CreateEntity());
 
   Ice::TransformComponent* tc = transformComponents.Create(entity.GetId());
+  u32 index = transformComponents.GetIndex(entity.GetId());
 
-  renderer->CreateBufferMemory(&tc->buffer, 64, Ice::Buffer_Memory_Shader_Read);
-  renderer->PushDataToBuffer((void*)&mat4Identity, &tc->buffer, {64});
+  tc->bufferSegment.offset = index * 64;
+  tc->bufferSegment.size = 64;
+  tc->bufferSegment.apiData0 = transformsBuffer.apiData0;
+  //renderer->CreateBufferMemory(&tc->buffer, 64, Ice::Buffer_Memory_Shader_Read);
+  renderer->PushDataToBuffer((void*)&mat4Identity, &transformsBuffer, tc->bufferSegment);
 
   entity.transform = &tc->transform;
 
@@ -466,7 +465,7 @@ void Ice::AttatchRenderComponent(Ice::Object* _object,
                                  Ice::Material* _material)
 {
   Ice::RenderComponent* rc = renderComponents.Create(_object->GetId());
-  Ice::Buffer* tbuffer = &transformComponents.GetComponent(_object->GetId())->buffer;
+  Ice::BufferSegment* tbuffer = &transformComponents.GetComponent(_object->GetId())->bufferSegment;
 
   renderer->InitializeRenderComponent(rc, tbuffer);
   CreateMesh(_meshDir, &rc->mesh);
@@ -476,25 +475,21 @@ void Ice::AttatchRenderComponent(Ice::Object* _object,
 void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::Camera _settings)
 {
   Ice::CameraComponent* cam = cameraComponents.Create(_object->GetId());
-  renderer->CreateBufferMemory(&cam->buffer, 64, Ice::Buffer_Memory_Shader_Read);
-  renderer->InitializeCamera(cam, _settings);
+  renderer->InitializeCamera(cam,
+                             transformComponents.GetComponent(_object->GetId())->bufferSegment,
+                             _settings);
 
   IceLogDebug("Camera created");
 }
 
 void Ice::UpdateTransforms()
 {
-  mat4 matrix = mat4Identity;
-  mat4 transposed;
-
   for (u32 i = 0; i < transformComponents.GetCount(); i++)
   {
     vec3 pos = transformComponents[i].transform.position;
     vec3 rot = transformComponents[i].transform.rotation;
     vec3 scale = transformComponents[i].transform.scale;
 
-    // TODO : ? Move camera transforms into Camera/CameraComponent ?
-    //  Would avoid this conditional, but may make scene hierarchies more difficult
     Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
     if (cam == nullptr)
     {
@@ -505,17 +500,19 @@ void Ice::UpdateTransforms()
       transform = glm::rotate(transform, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
       transform = glm::scale(transform, glm::vec3(scale.x, scale.y, scale.z));
 
-      renderer->PushDataToBuffer((void*)&transform, &transformComponents[i].buffer, { 64 });
+      renderer->PushDataToBuffer((void*)&transform, &transformsBuffer,
+                                 transformComponents[i].bufferSegment);
     }
     else
     {
       // Update camera transform =====
       pos *= -1;
       rot *= -1;
+      scale = {1.0f / scale.x, 1.0f / scale.y, 1.0f / scale.z};
 
       // Cameras need to work opposite normal transforms.
       // Other transforms rotate around it, scale and translate inversely to it, etc.
-      glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / scale.x, 1.0f / scale.y, 1.0f / scale.z));
+      glm::mat4 transform = glm::scale(glm::mat4(1.0f), glm::vec3(scale.x, scale.y, scale.z));
       transform = glm::rotate(transform, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
       transform = glm::rotate(transform, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
       transform = glm::rotate(transform, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -527,7 +524,9 @@ void Ice::UpdateTransforms()
 
       glm::mat4 projView = *projection * transform;
 
-      renderer->PushDataToBuffer((void*)&projView, &cam->buffer, {64});
+      renderer->PushDataToBuffer((void*)&projView,
+                                 &transformsBuffer,
+                                 transformComponents[i].bufferSegment);
     }
   }
 

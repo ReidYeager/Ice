@@ -1,10 +1,9 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   266 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
-	Line   495 :--: // TODO : ? Move camera transforms into Camera/CameraComponent ?
+	Line   261 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\core\scene.h
 	Line    15 :--: // TODO : Convert Euler rotation to quaternion
 \IceSandbox\Ice\src\rendering\renderer.h
-	Line    19 :--: // NOTE : Given the frequency this is called, I should find a more efficient way to handle its polymorphism
+	Line    19 :--: // NOTE : Given the frequency this is called, should use something more efficient than virtual.
 \IceSandbox\Ice\src\rendering\renderer_context.h
 	Line   184 :--: // TODO : Add camera render target
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp

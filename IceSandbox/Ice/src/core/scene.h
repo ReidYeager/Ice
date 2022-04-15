@@ -21,7 +21,7 @@ namespace Ice {
   struct TransformComponent
   {
     Ice::Transform transform;
-    Ice::Buffer buffer;
+    Ice::BufferSegment bufferSegment;
   };
 
 }

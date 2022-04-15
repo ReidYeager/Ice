@@ -664,21 +664,23 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 }
 
 b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
-                                                  Ice::Buffer* _transformBuffer)
+                                                  Ice::BufferSegment* _transformBuffer)
 {
   ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->ivkDescriptorSet));
 
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
-  bufferInput.bufferSegment = {64, 0, _transformBuffer->ivkBuffer};
+  bufferInput.bufferSegment = *_transformBuffer;
   std::vector<Ice::ShaderInputElement> inputs = {bufferInput};
   UpdateDescriptorSet(_component->ivkDescriptorSet, inputs);
 
   return true;
 }
 
-b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera, Ice::Camera _settings)
+b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
+                                         Ice::BufferSegment _segment,
+                                         Ice::Camera _settings)
 {
   // Calculate projection matrix =====
   glm::mat4 glmMatrix;
@@ -710,7 +712,7 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera, Ice::Cam
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
-  bufferInput.bufferSegment = { 64, 0, _camera->buffer.ivkBuffer };
+  bufferInput.bufferSegment = _segment;
   std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
   UpdateDescriptorSet(_camera->ivkDescriptorSet, inputs);
 

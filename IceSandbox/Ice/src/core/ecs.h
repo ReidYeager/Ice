@@ -151,6 +151,11 @@ namespace Ice {
         return nullptr;
       }
 
+      indexType GetIndex(Ice::ECS::Entity _entity)
+      {
+        return lookup.find(_entity)->second;
+      }
+
       bool Contains(Ice::ECS::Entity _entity) const
       {
         return lookup.find(_entity) != lookup.end();

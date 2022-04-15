@@ -186,7 +186,6 @@ namespace Ice {
   struct CameraComponent
   {
     mat4 projectionMatrix;
-    Ice::Buffer buffer;
 
     union {
       void* apiData0;
