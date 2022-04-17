@@ -24,6 +24,24 @@ namespace Ice {
     Ice::BufferSegment bufferSegment;
   };
 
+  class Object
+  {
+  public:
+    Ice::Transform* transform;
+
+  protected:
+    Ice::ECS::Entity id;
+
+  public:
+    Object(Ice::ECS::Entity _id) : id(_id) {}
+    const Ice::ECS::Entity GetId() { return id; }
+  };
+
+  class Camera : public Object
+  {
+    
+  };
+
 }
 
 #endif // !define ICE_CORE_SCENE_H_

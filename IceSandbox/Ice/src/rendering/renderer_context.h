@@ -171,7 +171,7 @@ namespace Ice {
   // Renderer
   //=========================
 
-  struct Camera
+  struct CameraSettings
   {
     b8 isProjection = true;
 

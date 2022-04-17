@@ -472,7 +472,7 @@ void Ice::AttatchRenderComponent(Ice::Object* _object,
   rc->material = *_material;
 }
 
-void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::Camera _settings)
+void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings)
 {
   Ice::CameraComponent* cam = cameraComponents.Create(_object->GetId());
   renderer->InitializeCamera(cam,
@@ -486,28 +486,52 @@ void Ice::UpdateTransforms()
 {
   for (u32 i = 0; i < transformComponents.GetCount(); i++)
   {
-    vec3 pos = transformComponents[i].transform.position;
-    vec3 rot = transformComponents[i].transform.rotation;
-    vec3 scale = transformComponents[i].transform.scale;
-
     Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
     if (cam == nullptr)
     {
       // Update transform =====
-      glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z));
-      transform = glm::rotate(transform, glm::radians(rot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-      transform = glm::rotate(transform, glm::radians(rot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-      transform = glm::rotate(transform, glm::radians(rot.z), glm::vec3(0.0f, 0.0f, 1.0f));
-      transform = glm::scale(transform, glm::vec3(scale.x, scale.y, scale.z));
+      vec3 s = transformComponents[i].transform.scale;
+      vec3 p = transformComponents[i].transform.position;
+      vec3 r = transformComponents[i].transform.rotation * 0.008726646f; // (Degrees to Radians)/2
 
-      renderer->PushDataToBuffer((void*)&transform, &transformsBuffer,
+      // Rotate round each local-space axis
+      vec4 q1 = {0, sin(r.y), 0, cos(r.y)}; // Yaw
+      vec4 q2 = {sin(r.x), 0, 0, cos(r.x)}; // Pitch
+      vec4 q3 = {0, 0, sin(r.z), cos(r.z)}; // Roll
+
+      // Combine into a quaternion rotated by q1, then q2, then q3
+      vec4 q12 = {
+        q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y, // X
+        q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z, // Y
+        q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x, // Z
+        q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z  // W
+      };
+      vec4 q = {
+        q12.w * q3.x + q12.x * q3.w + q12.y * q3.z - q12.z * q3.y, // X
+        q12.w * q3.y + q12.y * q3.w + q12.z * q3.x - q12.x * q3.z, // Y
+        q12.w * q3.z + q12.z * q3.w + q12.x * q3.y - q12.y * q3.x, // Z
+        q12.w * q3.w - q12.x * q3.x - q12.y * q3.y - q12.z * q3.z  // W
+      };
+
+      mat4 combined = {
+        s.x*(2*(q.w*q.w+q.x*q.x)-1), 2*s.y*(q.x*q.y-q.w*q.z), 2*s.z*(q.w*q.y+q.x*q.z), p.x,
+        2*s.x*(q.w*q.z+q.x*q.y), s.y*(2*(q.w*q.w+q.y*q.y)-1), 2*s.z*(q.y*q.z-q.w*q.x), p.y,
+        2*s.x*(q.x*q.z-q.w*q.y), 2*s.y*(q.w*q.x+q.y*q.z), s.z*(2*(q.w*q.w+q.z*q.z)-1), p.z,
+        0, 0, 0, 1
+      };
+      combined = combined.Transpose();
+
+      renderer->PushDataToBuffer((void*)&combined,
+                                 &transformsBuffer,
                                  transformComponents[i].bufferSegment);
     }
     else
     {
+      // TODO : ~!!~ Update camera transform using quaternions
       // Update camera transform =====
-      pos *= -1;
-      rot *= -1;
+      vec3 pos = transformComponents[i].transform.position * -1;
+      vec3 rot = transformComponents[i].transform.rotation * -1;
+      vec3 scale = transformComponents[i].transform.scale;
       scale = {1.0f / scale.x, 1.0f / scale.y, 1.0f / scale.z};
 
       // Cameras need to work opposite normal transforms.

@@ -8,7 +8,6 @@
 #include "rendering/renderer.h"
 #include "core/ecs.h"
 #include "core/scene.h"
-#include "core/object.h"
 
 namespace Ice {
 
@@ -49,7 +48,7 @@ namespace Ice {
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   Ice::Object& CreateObject();
   void AttatchRenderComponent(Ice::Object* _object, const char* _meshDir, Ice::Material* _material);
-  void AttatchCameraComponent(Ice::Object* _object, Ice::Camera _settings);
+  void AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings);
 
   void UpdateTransforms();
 

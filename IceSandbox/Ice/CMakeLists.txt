@@ -74,7 +74,7 @@ add_library (Ice STATIC
  "src/rendering/renderer_context.h"
  "src/rendering/vulkan/vulkan_buffer.cpp"
  "src/core/scene.h"
- "src/core/object.h")
+ )
 
 add_compile_definitions(ICE_DLL_EXPORT)
 

@@ -679,8 +679,8 @@ b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _compone
 }
 
 b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
-                                         Ice::BufferSegment _segment,
-                                         Ice::Camera _settings)
+                                         Ice::BufferSegment _transformSegment,
+                                         Ice::CameraSettings _settings)
 {
   // Calculate projection matrix =====
   glm::mat4 glmMatrix;
@@ -712,7 +712,7 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
-  bufferInput.bufferSegment = _segment;
+  bufferInput.bufferSegment = _transformSegment;
   std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
   UpdateDescriptorSet(_camera->ivkDescriptorSet, inputs);
 

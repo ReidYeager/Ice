@@ -29,13 +29,14 @@ b8 Init()
 
   gun = &Ice::CreateObject();
   Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", lightMat);
+  gun->transform->rotation.y = 90.0f;
 
   sphere = &Ice::CreateObject();
   Ice::AttatchRenderComponent(sphere, "Sphere.obj", lightMat);
 
   sphere->transform->position.y = -1.0f;
 
-  Ice::Camera camSettings;
+  Ice::CameraSettings camSettings;
   camSettings.isProjection = true;
   camSettings.horizontal = 45.0f;
   camSettings.ratio = 800.0f / 600.0f;
@@ -44,7 +45,7 @@ b8 Init()
 
   camera = &Ice::CreateObject();
   Ice::AttatchCameraComponent(camera, camSettings);
-  camera->transform->position.z = 2.5f;
+  camera->transform->position.z = 3.0f;
 
   return true;
 }
@@ -60,24 +61,40 @@ b8 Update(f32 _delta)
     IceLogInfo("Should re-load shaders & re-create material pipelines");
   }
 
-  //static float buildup = 0.0f;
-  //buildup += 0.001f * _delta;
-  gun->transform->position.x = cos(Ice::time.totalTime);
-  //gun->transform->position.y = sin(Ice::time.totalTime * 60.69) * buildup;
+  const f32 degreesPerSecond = 90.0f;
+
+  //gun->transform->position.x = cos(Ice::time.totalTime);
+  gun->transform->rotation.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
+  gun->transform->rotation.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
+
+  gun->transform->rotation.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
+  gun->transform->rotation.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
+
+  gun->transform->rotation.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
+  gun->transform->rotation.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
+
+
+  gun->transform->position.x += _delta * Input.IsKeyDown(Ice_Key_D);
+  gun->transform->position.x -= _delta * Input.IsKeyDown(Ice_Key_A);
+
+  gun->transform->position.y += _delta * Input.IsKeyDown(Ice_Key_E);
+  gun->transform->position.y -= _delta * Input.IsKeyDown(Ice_Key_Q);
+
+  gun->transform->position.z += _delta * Input.IsKeyDown(Ice_Key_S);
+  gun->transform->position.z -= _delta * Input.IsKeyDown(Ice_Key_W);
+
+  gun->transform->scale.x += _delta * Input.IsKeyDown(Ice_Key_H);
+  gun->transform->scale.x -= _delta * Input.IsKeyDown(Ice_Key_F);
+
+  gun->transform->scale.y += _delta * Input.IsKeyDown(Ice_Key_T);
+  gun->transform->scale.y -= _delta * Input.IsKeyDown(Ice_Key_G);
+
+  gun->transform->scale.z += _delta * Input.IsKeyDown(Ice_Key_Y);
+  gun->transform->scale.z -= _delta * Input.IsKeyDown(Ice_Key_R);
 
   camera->transform->position.x = cos(Ice::time.totalTime) * 2.5f;
   camera->transform->position.z = sin(Ice::time.totalTime) * 2.5f;
   camera->transform->rotation.y = (-Ice::time.totalTime * 57.2958279088f) + 90.0f;
-
-  camera->transform->scale.y = 0.5f;
-  //camera->transform->scale.z = 0.5f;
-  camera->transform->scale.x = 0.5f;
-
-  //gun->transform->rotation.x = 90.0f * Ice::time.totalTime;
-  gun->transform->rotation.y = 90.0f * -Ice::time.totalTime;
-  //gun->transform->rotation.z = 90.0f * Ice::time.totalTime;
-
-  //gun->transform->scale.y = sin(Ice::time.totalTime) * 3;
 
   #ifdef ICE_DEBUG
   // Log the average delta time & framerate =====
