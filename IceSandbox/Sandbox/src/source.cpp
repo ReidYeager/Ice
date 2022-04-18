@@ -8,6 +8,8 @@ u32 totalDeltaCount = 0;
 Ice::Object* gun;
 Ice::Object* sphere;
 Ice::Object* camera;
+Ice::Transform* eTransform;
+b8 transformingCamera = false;
 
 b8 Init()
 {
@@ -47,6 +49,8 @@ b8 Init()
   Ice::AttatchCameraComponent(camera, camSettings);
   camera->transform->position.z = 3.0f;
 
+  eTransform = gun->transform;
+
   return true;
 }
 
@@ -61,40 +65,47 @@ b8 Update(f32 _delta)
     IceLogInfo("Should re-load shaders & re-create material pipelines");
   }
 
+  if (Input.OnKeyPressed(Ice_Key_C))
+  {
+    eTransform = transformingCamera ? gun->transform : camera->transform;
+    transformingCamera = !transformingCamera;
+    IceLogDebug("Now controlling the %s", transformingCamera? "camera" : "gun");
+  }
+
   const f32 degreesPerSecond = 90.0f;
 
   //gun->transform->position.x = cos(Ice::time.totalTime);
-  gun->transform->rotation.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
-  gun->transform->rotation.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
+  eTransform->rotation.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
+  eTransform->rotation.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
 
-  gun->transform->rotation.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
-  gun->transform->rotation.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
+  eTransform->rotation.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
+  eTransform->rotation.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
 
-  gun->transform->rotation.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
-  gun->transform->rotation.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
+  eTransform->rotation.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
+  eTransform->rotation.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
 
 
-  gun->transform->position.x += _delta * Input.IsKeyDown(Ice_Key_D);
-  gun->transform->position.x -= _delta * Input.IsKeyDown(Ice_Key_A);
+  eTransform->position.x += _delta * Input.IsKeyDown(Ice_Key_D);
+  eTransform->position.x -= _delta * Input.IsKeyDown(Ice_Key_A);
 
-  gun->transform->position.y += _delta * Input.IsKeyDown(Ice_Key_E);
-  gun->transform->position.y -= _delta * Input.IsKeyDown(Ice_Key_Q);
+  eTransform->position.y += _delta * Input.IsKeyDown(Ice_Key_E);
+  eTransform->position.y -= _delta * Input.IsKeyDown(Ice_Key_Q);
 
-  gun->transform->position.z += _delta * Input.IsKeyDown(Ice_Key_S);
-  gun->transform->position.z -= _delta * Input.IsKeyDown(Ice_Key_W);
+  eTransform->position.z += _delta * Input.IsKeyDown(Ice_Key_S);
+  eTransform->position.z -= _delta * Input.IsKeyDown(Ice_Key_W);
 
-  gun->transform->scale.x += _delta * Input.IsKeyDown(Ice_Key_H);
-  gun->transform->scale.x -= _delta * Input.IsKeyDown(Ice_Key_F);
+  eTransform->scale.x += _delta * Input.IsKeyDown(Ice_Key_H);
+  eTransform->scale.x -= _delta * Input.IsKeyDown(Ice_Key_F);
 
-  gun->transform->scale.y += _delta * Input.IsKeyDown(Ice_Key_T);
-  gun->transform->scale.y -= _delta * Input.IsKeyDown(Ice_Key_G);
+  eTransform->scale.y += _delta * Input.IsKeyDown(Ice_Key_T);
+  eTransform->scale.y -= _delta * Input.IsKeyDown(Ice_Key_G);
 
-  gun->transform->scale.z += _delta * Input.IsKeyDown(Ice_Key_Y);
-  gun->transform->scale.z -= _delta * Input.IsKeyDown(Ice_Key_R);
+  eTransform->scale.z += _delta * Input.IsKeyDown(Ice_Key_Y);
+  eTransform->scale.z -= _delta * Input.IsKeyDown(Ice_Key_R);
 
-  camera->transform->position.x = cos(Ice::time.totalTime) * 2.5f;
-  camera->transform->position.z = sin(Ice::time.totalTime) * 2.5f;
-  camera->transform->rotation.y = (-Ice::time.totalTime * 57.2958279088f) + 90.0f;
+  //camera->transform->position.x = cos(Ice::time.totalTime) * 2.5f;
+  //camera->transform->position.z = sin(Ice::time.totalTime) * 2.5f;
+  //camera->transform->rotation.y = (-Ice::time.totalTime * 57.2958279088f) + 90.0f;
 
   #ifdef ICE_DEBUG
   // Log the average delta time & framerate =====
