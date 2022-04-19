@@ -32,18 +32,8 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
     return false;
   }
 
-  // Pad size =====
-  u64 alignment = 0;
-  if (_usage & Ice::Buffer_Memory_Shader_Read)
-  {
-    alignment = context.gpu.properties.limits.minUniformBufferOffsetAlignment - 1;
-  }
-  else
-  {
-    alignment = context.gpu.properties.limits.minStorageBufferOffsetAlignment - 1;
-  }
   _outBuffer->size = _size;
-  _outBuffer->paddedSize = (_size + alignment) & ~alignment;
+  _outBuffer->paddedSize = PadBufferSize(_size, _usage);
 
   // Buffer =====
   VkBufferCreateInfo createInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -120,3 +110,28 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
   return true;
 }
 
+u64 Ice::RendererVulkan::PadBufferSize(u64 _size, Ice::BufferMemoryUsageFlags _usage)
+{
+  u64 alignment = 0;
+  if (_usage & Ice::Buffer_Memory_Shader_Read)
+  {
+    alignment = context.gpu.properties.limits.minUniformBufferOffsetAlignment - 1;
+  }
+  else
+  {
+    alignment = context.gpu.properties.limits.minStorageBufferOffsetAlignment - 1;
+  }
+  return (_size + alignment) & ~alignment;
+}
+
+Ice::BufferSegment Ice::RendererVulkan:: CreateBufferSegment(Ice::Buffer* _buffer,
+                                                             u64 _size,
+                                                             u64 _offset)
+{
+  Ice::BufferSegment newSegment {};
+  newSegment.ivkBuffer = _buffer->ivkBuffer;
+  newSegment.size = _size; // Excess data in padded-sized buffer assumed to be garbage
+  // Vulkan doesn't let you offset into arbitrary positions
+  newSegment.offset = PadBufferSize(_offset, _buffer->usage);
+  return newSegment;
+}

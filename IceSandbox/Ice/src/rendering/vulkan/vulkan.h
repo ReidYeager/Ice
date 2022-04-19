@@ -121,6 +121,7 @@ namespace Ice
     //=========================
 
     b8 FlushBufferQueue();
+    u64 PadBufferSize(u64 _inSize, Ice::BufferMemoryUsageFlags _usage);
 
   public:
     b8 Init(Ice::RendererSettings _settings);
@@ -150,6 +151,8 @@ namespace Ice
     b8 InitializeCamera(Ice::CameraComponent* _camera,
                         Ice::BufferSegment _transformSegment,
                         Ice::CameraSettings _settings);
+
+    Ice::BufferSegment CreateBufferSegment(Ice::Buffer* _buffer, u64 _size, u64 _offset);
   };
 
 }

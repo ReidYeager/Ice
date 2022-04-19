@@ -19,7 +19,7 @@ namespace Ice {
     Log_Fatal
   };
 
-  inline void ICE_API ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
+  inline void ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
   {
     // Limit 65,535 characters per message
     const u16 length = 0xFFFF;

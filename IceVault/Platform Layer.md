@@ -1,4 +1,0 @@
-# Subsystems
-## Windowing
-
-## Memory management

@@ -446,10 +446,11 @@ Ice::Object& Ice::CreateObject()
   Ice::TransformComponent* tc = transformComponents.Create(entity.GetId());
   u32 index = transformComponents.GetIndex(entity.GetId());
 
-  tc->bufferSegment.offset = index * 64;
-  tc->bufferSegment.size = 64;
-  tc->bufferSegment.apiData0 = transformsBuffer.apiData0;
-  //renderer->CreateBufferMemory(&tc->buffer, 64, Ice::Buffer_Memory_Shader_Read);
+  const u64 perObjectBufferSize = 64; // Should be defined somewhere else.
+
+  tc->bufferSegment = renderer->CreateBufferSegment(&transformsBuffer,
+                                                    perObjectBufferSize,
+                                                    index * perObjectBufferSize);
   renderer->PushDataToBuffer((void*)&mat4Identity, &transformsBuffer, tc->bufferSegment);
 
   entity.transform = &tc->transform;
@@ -486,85 +487,21 @@ void Ice::UpdateTransforms()
 {
   for (u32 i = 0; i < transformComponents.GetCount(); i++)
   {
-    vec3 s = transformComponents[i].transform.scale;
-    vec3 p = transformComponents[i].transform.position;
-    vec3 r = transformComponents[i].transform.rotation * 0.008726646f; // (Degrees to Radians)/2
-
     Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
     if (cam == nullptr)
     {
-      // Calculate quaternion =====
-      // Rotate round each local-space axis
-      vec4 q1 = {0, sin(r.y), 0, cos(r.y)}; // Yaw
-      vec4 q2 = {sin(r.x), 0, 0, cos(r.x)}; // Pitch
-      vec4 q3 = {0, 0, sin(r.z), cos(r.z)}; // Roll
+      mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
 
-      // Combine into a quaternion rotated by q1, then q2, then q3
-      vec4 q12 = {
-        q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y, // X
-        q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z, // Y
-        q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x, // Z
-        q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z  // W
-      };
-      vec4 q = {
-        q12.w * q3.x + q12.x * q3.w + q12.y * q3.z - q12.z * q3.y, // X
-        q12.w * q3.y + q12.y * q3.w + q12.z * q3.x - q12.x * q3.z, // Y
-        q12.w * q3.z + q12.z * q3.w + q12.x * q3.y - q12.y * q3.x, // Z
-        q12.w * q3.w - q12.x * q3.x - q12.y * q3.y - q12.z * q3.z  // W
-      };
-
-      // Combine scale, rotation, position =====
-      mat4 combined = {
-        s.x*(2*(q.w*q.w+q.x*q.x)-1), 2*s.y*(q.x*q.y-q.w*q.z)    , 2*s.z*(q.w*q.y+q.x*q.z)    , p.x,
-        2*s.x*(q.w*q.z+q.x*q.y)    , s.y*(2*(q.w*q.w+q.y*q.y)-1), 2*s.z*(q.y*q.z-q.w*q.x)    , p.y,
-        2*s.x*(q.x*q.z-q.w*q.y)    , 2*s.y*(q.w*q.x+q.y*q.z)    , s.z*(2*(q.w*q.w+q.z*q.z)-1), p.z,
-        0                          , 0                          , 0                          , 1
-      };
-      combined = combined.Transpose();
-
-      // Update buffer =====
-      renderer->PushDataToBuffer((void*)&combined,
+      renderer->PushDataToBuffer((void*)&out,
                                  &transformsBuffer,
                                  transformComponents[i].bufferSegment);
     }
     else
     {
-      s = { 1.0f / s.x, 1.0f / s.y, 1.0f / s.z };
-      p *= -1;
-      r *= -1;
+      mat4 out = Ice::CalculateCameraTransformMatrix(&transformComponents[i].transform).Transpose();
 
-      // Calculate quaternion =====
-      // Rotate round each local-space axis
-      vec4 q3 = {0, sin(r.y), 0, cos(r.y)}; // Yaw
-      vec4 q2 = {sin(r.x), 0, 0, cos(r.x)}; // Pitch
-      vec4 q1 = {0, 0, sin(r.z), cos(r.z)}; // Roll
-
-      // Combine into a quaternion rotated by q1, then q2, then q3
-      vec4 q12 = {
-        q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y, // X
-        q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z, // Y
-        q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x, // Z
-        q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z  // W
-      };
-      vec4 q = {
-        q12.w * q3.x + q12.x * q3.w + q12.y * q3.z - q12.z * q3.y, // X
-        q12.w * q3.y + q12.y * q3.w + q12.z * q3.x - q12.x * q3.z, // Y
-        q12.w * q3.z + q12.z * q3.w + q12.x * q3.y - q12.y * q3.x, // Z
-        q12.w * q3.w - q12.x * q3.x - q12.y * q3.y - q12.z * q3.z  // W
-      };
-
-      // Combine scale, rotation, position =====
-      mat4 combined = {
-        s.x*(2*(q.w*q.w+q.x*q.x)-1), 2*s.y*(q.x*q.y-q.w*q.z)    , 2*s.z*(q.w*q.y+q.x*q.z)    , s.x*p.x*(2*(q.w*q.w+q.x*q.x)-1)+2*s.x*p.y*(q.x*q.y-q.w*q.z)+2*s.x*p.z*(q.w*q.y+q.x*q.z),
-        2*s.x*(q.w*q.z+q.x*q.y)    , s.y*(2*(q.w*q.w+q.y*q.y)-1), 2*s.z*(q.y*q.z-q.w*q.x)    , 2*s.y*p.x*(q.w*q.z+q.x*q.y)+s.y*p.y*(2*(q.w*q.w+q.y*q.y)-1)+2*s.y*p.z*(q.y*q.z-q.w*q.x),
-        2*s.x*(q.x*q.z-q.w*q.y)    , 2*s.y*(q.w*q.x+q.y*q.z)    , s.z*(2*(q.w*q.w+q.z*q.z)-1), 2*s.z*p.x*(q.x*q.z-q.w*q.y)+2*s.z*p.y*(q.w*q.x+q.y*q.z)+s.z*p.z*(2*(q.w*q.w+q.z*q.z)-1),
-        0                          , 0                          , 0                          , 1
-      };
-      combined = combined.Transpose();
-
-      // Update buffer =====
       // Fastest way to convert to a column-major glm matrix (f32[16]); avoids copying data
-      glm::mat4* transform = (glm::mat4*)&combined;
+      glm::mat4* transform = (glm::mat4*)&out;
       mat4 cm = cam->projectionMatrix.Transpose();
       glm::mat4* projection = (glm::mat4*)&cm;
 

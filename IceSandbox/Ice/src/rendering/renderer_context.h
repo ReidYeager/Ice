@@ -32,6 +32,7 @@ namespace Ice {
   {
     u64 size = 0;       // Defined size of the buffer
     u64 paddedSize = 0; // Aligned the input size with the device minimum
+    BufferMemoryUsageFlags usage;
 
     union {
       void* apiData0;

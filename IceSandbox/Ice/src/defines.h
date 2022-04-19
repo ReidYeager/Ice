@@ -2,24 +2,19 @@
 #ifndef ICE_DEFINES_H_
 #define ICE_DEFINES_H_
 
-#pragma warning ( disable : 26812 )
-#pragma warning ( disable : 26495 )
-
-#ifdef ICE_DLL_EXPORT
-#define ICE_API
-#else
-#define ICE_API
-#endif // ICE_DLL_EXPORT
+// These annoy me.
+#pragma warning ( disable : 26812 ) // "Prefer enum-class" warning
+#pragma warning ( disable : 26495 ) // "Variable is uninitialized" warning
+#pragma warning ( disable : 4996 ) // "X is deprecated" warning
 
 #ifdef _DEBUG
 #define ICE_DEBUG
 #endif // _DEBUG
 
-
 //=========================
 // Primitives
 //=========================
-// 
+
 // Integers
 typedef signed char        i8;
 typedef short              i16;
@@ -44,15 +39,8 @@ typedef unsigned int       b32;
 namespace Ice {
   extern struct IceTime
   {
-    // Real-time in seconds since the application started
-    union
-    {
-      f32 totalTime;
-      f32 realTime;
-    };
-
-    f32 deltaTime; // Time in seconds taken by the previous tick
-
+    f32 totalTime;  // Real-time in seconds since the application started
+    f32 deltaTime;  // Time in seconds taken by the previous tick
     u32 frameCount; // Number of frames rendered before this tick
   } time;
 }
@@ -82,10 +70,12 @@ typedef void* IceHandle;
 //=========================
 // Resource directories
 //=========================
-// Define these directories in a separate file
-#define ICE_RESOURCE_TEXTURE_DIR "../../../Sandbox/res/textures/"
-#define ICE_RESOURCE_SHADER_DIR "../../../Sandbox/res/shaders/compiled/"
-#define ICE_RESOURCE_MODEL_DIR "../../../Sandbox/res/models/"
+#define PREPROCESSOR_STRING(x) #x
+#define EXPAND_STRING_DEF(x) PREPROCESSOR_STRING(x)
+
+#define ICE_RESOURCE_TEXTURE_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/textures/"
+#define ICE_RESOURCE_SHADER_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/shaders/compiled/"
+#define ICE_RESOURCE_MODEL_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/models/"
 
 //=========================
 // Asserts

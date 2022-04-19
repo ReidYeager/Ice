@@ -216,7 +216,6 @@ inline const char* VulkanResultToString(VkResult _result)
     sprintf(msg, errorMsg, __VA_ARGS__);                                               \
     ICE_ASSERT_MSG(result == VK_SUCCESS,                                               \
                    ">> %s\n>> Vulkan result : %s", msg, VulkanResultToString(result)); \
-    return false;                                                                      \
   }                                                                                    \
 }
 

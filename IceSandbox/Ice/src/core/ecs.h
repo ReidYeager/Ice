@@ -115,7 +115,7 @@ namespace Ice {
       {
         ICE_ASSERT(_fromIndex < GetCount());
         ICE_ASSERT(_toIndex < GetCount());
-        if (_from == _to)
+        if (_fromIndex == _toIndex)
           return;
 
         Type movedComponent = std::move(components[_fromIndex]);
