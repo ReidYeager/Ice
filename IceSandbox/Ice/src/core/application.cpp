@@ -450,7 +450,8 @@ Ice::Object& Ice::CreateObject()
 
   tc->bufferSegment = renderer->CreateBufferSegment(&transformsBuffer,
                                                     perObjectBufferSize,
-                                                    index * perObjectBufferSize);
+                                                    perObjectBufferSize);
+  tc->bufferSegment.offset *= index;
   renderer->PushDataToBuffer((void*)&mat4Identity, &transformsBuffer, tc->bufferSegment);
 
   entity.transform = &tc->transform;

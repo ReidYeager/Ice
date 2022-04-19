@@ -34,6 +34,7 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
 
   _outBuffer->size = _size;
   _outBuffer->paddedSize = PadBufferSize(_size, _usage);
+  _outBuffer->usage = _usage;
 
   // Buffer =====
   VkBufferCreateInfo createInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
