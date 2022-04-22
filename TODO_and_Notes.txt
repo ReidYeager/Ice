@@ -1,12 +1,10 @@
 \IceSandbox\Ice\src\core\application.cpp
 	Line   261 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
-\IceSandbox\Ice\src\core\scene.h
-	Line    15 :--: // TODO : Convert Euler rotation to quaternion
+	Line   341 :--: // TODO : ~!!~ Textures
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    19 :--: // NOTE : Given the frequency this is called, should use something more efficient than virtual.
 \IceSandbox\Ice\src\rendering\renderer_context.h
-	Line   186 :--: // TODO : Add camera render target
-	Line   199 :--: // TODO : Rework the renderComponent to not pointer-chase during rendering
+	Line   185 :--: // TODO : Add camera render target
+	Line   198 :--: // TODO : Rework the renderComponent to not chase pointers
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line   170 :--: // TODO : Assign default texture descriptor values
-	Line   208 :--: // TODO : Need to account for descriptor binding gaps
+	Line   167 :--: // TODO : Assign default texture descriptor values

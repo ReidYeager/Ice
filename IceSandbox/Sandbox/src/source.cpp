@@ -34,7 +34,7 @@ b8 Init()
   gun->transform->rotation.y = 90.0f;
 
   sphere = &Ice::CreateObject();
-  Ice::AttatchRenderComponent(sphere, "Sphere.obj", lightMat);
+  Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", lightMat);
 
   sphere->transform->position.y = -1.0f;
 
@@ -50,6 +50,8 @@ b8 Init()
   camera->transform->position.z = 3.0f;
 
   eTransform = gun->transform;
+
+  Ice::SetTexture(lightMat, 0, "TestAlbedo.png");
 
   return true;
 }
@@ -76,7 +78,11 @@ b8 Update(f32 _delta)
   static vec4 tmp;
   tmp.x = sin(Ice::time.totalTime);
   tmp.y = cos(Ice::time.totalTime);
+  static const Ice::BufferSegment barSegment = { sizeof(f32) * 4, 1, 0, 1 };
+  static vec4 bar;
+  bar.x = Ice::time.totalTime * 0.01f;
   Ice::SetMaterialData(lightMat, tmpSegment, (void*)&tmp);
+  Ice::SetMaterialData(lightMat, barSegment, (void*)&bar);
 
   const f32 degreesPerSecond = 90.0f;
 

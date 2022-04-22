@@ -32,6 +32,7 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
     IceLogError("Can not create buffer with size 0\n> Element size %llu, Count : %u",
                 _elementSize,
                 _elementCount);
+    ICE_BREAK;
     return false;
   }
 
@@ -121,7 +122,7 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _
                          bufferOffset,
                          bufferSize,
                          0,
-                         &((void*)mappedGpuMemory)),
+                         (void**)&mappedGpuMemory),
              "Failed to map buffer memory\n> Offset %llu, Size %llu", bufferOffset, bufferSize);
 
   // Copy copyElementSize bytes at a time into each element for count elements

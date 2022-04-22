@@ -11,7 +11,6 @@
 b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
 {
   Ice::Shader& newShader = *_shader;
-  newShader.bufferSize = 0;
 
   newShader.fileDirectory = std::string(ICE_RESOURCE_SHADER_DIR).append(newShader.fileDirectory);
   switch (newShader.type)
@@ -73,8 +72,6 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
   Ice::ShaderInputElement newInput {};
 
-  _shader->bufferSize = 0;
-
   while (!lexer.CompletedStream())
   {
     // Get descriptor information =====
@@ -112,13 +109,13 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         {
           if (lexer.ExpectType(Ice::Token_Int, &token))
           {
-            newInput.bufferSegment.offset = _shader->bufferSize;
             newInput.bufferSegment.elementSize = lexer.GetUIntFromToken(&token);
+            newInput.bufferSegment.count = 1;
+            newInput.bufferSegment.startIndex = newInput.inputIndex;
             if (newInput.bufferSegment.elementSize == 0)
             {
               IceLogError("Shader defines buffer descriptor of size 0\n> '%s'", directory.c_str());
             }
-            _shader->bufferSize += newInput.bufferSegment.elementSize;
           }
           else
           {
@@ -156,7 +153,7 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
     // Buffer =====
     CreateBufferMemory(&_material->buffer,
                        _material->buffer.elementSize,
-                       1,
+                       _material->buffer.count,
                        Ice::Buffer_Memory_Shader_Read);
 
     // Associate the buffer segments with the material's buffer
@@ -206,19 +203,14 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _material,
                                                            std::vector<VkDescriptorSetLayoutBinding>& _bindings)
 {
-  // TODO : Need to account for descriptor binding gaps
-
   u32 count = 0;
   std::vector<Ice::ShaderInputElement> orderedInputElements; // Used for faster place-checking
   Ice::MaterialSettings* matSettings = _material->settings;
 
-  std::vector<Ice::Shader>& shaders = matSettings->shaders;
-
   // Count descriptors =====
-  for (Ice::Shader& s : shaders)
+  for (Ice::Shader& s : matSettings->shaders)
   {
     count += s.input.size();
-    _material->buffer.elementSize += s.bufferSize;
   }
   _material->buffer.count = 1;
   _bindings.resize(count); // Worst-case size.
@@ -227,9 +219,9 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
   // Combine shader inputs =====
   u32 actualCount = 0;
   VkDescriptorSetLayoutBinding newBinding {};
-  for (const Ice::Shader& shader : shaders)
+  for (Ice::Shader& shader : matSettings->shaders)
   {
-    for (const auto& descriptor : shader.input)
+    for (auto& descriptor : shader.input)
     {
       if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
       {
@@ -242,8 +234,6 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
         return false;
       }
 
-      orderedInputElements[descriptor.inputIndex] = descriptor;
-
       newBinding.descriptorCount = 1;
       newBinding.pImmutableSamplers = nullptr;
       newBinding.binding = descriptor.inputIndex;
@@ -253,6 +243,14 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
       case Ice::Shader_Input_Buffer:
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+        // Create a new buffer element if this buffer binding index has not been encountered yet
+        if (descriptor.bufferSegment.startIndex >= _material->buffer.count)
+        {
+          descriptor.bufferSegment.startIndex = _material->buffer.count;
+          _material->buffer.count++;
+          _material->buffer.elementSize = max(descriptor.bufferSegment.elementSize, _material->buffer.elementSize);
+        }
       } break;
       case Ice::Shader_Input_Image:
       {
@@ -261,6 +259,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
       default: continue;
       }
 
+      orderedInputElements[descriptor.inputIndex] = descriptor;
       _bindings[descriptor.inputIndex] = newBinding;
       actualCount++;
     }

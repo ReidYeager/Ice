@@ -106,7 +106,6 @@ namespace Ice {
     ShaderTypes type;
     std::string fileDirectory;
     std::vector<ShaderInputElement> input;
-    u64 bufferSize = 0;
 
     union {
       void* apiData0;
@@ -197,7 +196,7 @@ namespace Ice {
 
   struct RenderComponent
   {
-    // TODO : Rework the renderComponent to not pointer-chase during rendering
+    // TODO : Rework the renderComponent to not chase pointers
     Ice::Material* material;
     Ice::Mesh* mesh;
 

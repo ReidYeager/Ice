@@ -13,7 +13,6 @@ namespace Ice {
   struct Transform
   {
     vec3 position = { 0.0f, 0.0f, 0.0f };
-    // TODO : Convert Euler rotation to quaternion
     vec3 rotation = { 0.0f, 0.0f, 0.0f }; // Euler angles
     vec3 scale = { 1.0f, 1.0f, 1.0f };
   };

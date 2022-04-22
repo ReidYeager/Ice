@@ -120,8 +120,14 @@ if (!(expression))                                          \
   return false;                                             \
 }
 
+#define ICE_BREAK __debugbreak()
+
 #else
 #define ICE_ASSERT(expression)
+#define ICE_ASSERT_MSG(expression, msg, ...)
+#define ICE_ATTEMPT(expression)
+#define ICE_ATTEMPT_MSG(expression, severity, message, ...)
+#define ICE_BREAK
 #endif // ENABLE_ICE_ASSERTS
 
 #endif // !DEFINES_H

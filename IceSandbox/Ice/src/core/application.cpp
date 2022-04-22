@@ -337,6 +337,11 @@ void Ice::SetMaterialData(Material* _material, BufferSegment _segment, void* _da
   renderer->PushDataToBuffer(_data, _segment);
 }
 
+void Ice::SetTexture(Material* _material, u32 inputIndex, const char* _image)
+{
+  // TODO : ~!!~ Textures
+}
+
 b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh)
 {
   tinyobj::attrib_t attrib;
