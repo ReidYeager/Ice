@@ -115,20 +115,20 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
     {
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        renderedObject[objectIndex].material.ivkPipeline);
+                        renderedObject[objectIndex].material->ivkPipeline);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              renderedObject[objectIndex].material.ivkPipelineLayout,
+                              renderedObject[objectIndex].material->ivkPipelineLayout,
                               2,
                               1,
-                              &renderedObject[objectIndex].material.ivkDescriptorSet,
+                              &renderedObject[objectIndex].material->ivkDescriptorSet,
                               0,
                               nullptr);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              renderedObject[objectIndex].material.ivkPipelineLayout,
+                              renderedObject[objectIndex].material->ivkPipelineLayout,
                               3,
                               1,
                               &renderedObject[objectIndex].ivkDescriptorSet,
@@ -138,13 +138,13 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
       vkCmdBindVertexBuffers(cmdBuffer,
                              0,
                              1,
-                             &renderedObject[objectIndex].mesh.vertexBuffer.ivkBuffer,
-                             &renderedObject[objectIndex].mesh.vertexBuffer.offset);
+                             &renderedObject[objectIndex].mesh->vertexBuffer.buffer->ivkBuffer,
+                             &renderedObject[objectIndex].mesh->vertexBuffer.offset);
       vkCmdBindIndexBuffer(cmdBuffer,
-                           renderedObject[objectIndex].mesh.indexBuffer.ivkBuffer,
-                           renderedObject[objectIndex].mesh.indexBuffer.offset,
+                           renderedObject[objectIndex].mesh->indexBuffer.buffer->ivkBuffer,
+                           renderedObject[objectIndex].mesh->indexBuffer.offset,
                            VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(cmdBuffer, renderedObject[objectIndex].mesh.indexCount, 1, 0, 0, 0);
+      vkCmdDrawIndexed(cmdBuffer, renderedObject[objectIndex].mesh->indexCount, 1, 0, 0, 0);
       //vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
     }
 

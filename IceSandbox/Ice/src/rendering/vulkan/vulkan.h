@@ -133,12 +133,13 @@ namespace Ice
     b8 CreateMaterial(Ice::Material* _material);
     void DestroyMaterial(Ice::Material& _material);
 
-    b8 CreateBufferMemory(Ice::Buffer* _outBuffer, u64 _size, Ice::BufferMemoryUsageFlags _usage);
+    b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
+                          u64 _elementSize,
+                          u32 _elementCount,
+                          Ice::BufferMemoryUsageFlags _usage);
     void DestroyBufferMemory(Ice::Buffer* _buffer);
     // Pushes data to the GPU immediately
-    b8 PushDataToBuffer(void* _data,
-                        const Ice::Buffer* _buffer,
-                        const Ice::BufferSegment _segmentInfo);
+    b8 PushDataToBuffer(void* _data, const Ice::BufferSegment _segmentInfo);
     //// Adds data to a set to be pushed to the GPU just before rendering
     //// Assumes _data will remain valid through the frame
     //// (Left here because I may want to add this, but will otherwise forget about it)
@@ -151,8 +152,6 @@ namespace Ice
     b8 InitializeCamera(Ice::CameraComponent* _camera,
                         Ice::BufferSegment _transformSegment,
                         Ice::CameraSettings _settings);
-
-    Ice::BufferSegment CreateBufferSegment(Ice::Buffer* _buffer, u64 _size, u64 _offset);
   };
 
 }

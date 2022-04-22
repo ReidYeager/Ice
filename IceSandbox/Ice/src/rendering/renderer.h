@@ -27,20 +27,17 @@ namespace Ice {
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
 
     virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
-                                  u64 _size,
+                                  u64 _elementSize,
+                                  u32 _elementCount,
                                   Ice::BufferMemoryUsageFlags _usage) = 0;
     virtual void DestroyBufferMemory(Ice::Buffer* _buffer) = 0;
-    virtual b8 PushDataToBuffer(void* _data,
-                                const Ice::Buffer* _buffer,
-                                const Ice::BufferSegment _segmentInfo) = 0;
+    virtual b8 PushDataToBuffer(void* _data, const Ice::BufferSegment _segmentInfo) = 0;
 
     virtual b8 InitializeRenderComponent(Ice::RenderComponent* _component,
                                          Ice::BufferSegment* _TransformBuffer) = 0;
     virtual b8 InitializeCamera(Ice::CameraComponent* _camera,
                                 Ice::BufferSegment _transformSegment,
                                 Ice::CameraSettings _settings) = 0;
-
-    virtual Ice::BufferSegment CreateBufferSegment(Ice::Buffer* _buffer, u64 _size, u64 _offset) = 0;
   };
 
 }

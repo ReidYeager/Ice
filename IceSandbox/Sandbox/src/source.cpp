@@ -10,6 +10,7 @@ Ice::Object* sphere;
 Ice::Object* camera;
 Ice::Transform* eTransform;
 b8 transformingCamera = false;
+Ice::Material* lightMat;
 
 b8 Init()
 {
@@ -22,7 +23,6 @@ b8 Init()
   materialSettings.shaders.push_back(shaderInfo);
   //lightMatSettings.subpass = 1;
 
-  Ice::Material* lightMat;
   Ice::CreateMaterial(materialSettings, &lightMat);
   //Ice::SetLightingMaterial(lightMat);
 
@@ -71,6 +71,12 @@ b8 Update(f32 _delta)
     transformingCamera = !transformingCamera;
     IceLogDebug("Now controlling the %s", transformingCamera? "camera" : "gun");
   }
+
+  static const Ice::BufferSegment tmpSegment = { sizeof(f32) * 4, 0, 0, 1 };
+  static vec4 tmp;
+  tmp.x = sin(Ice::time.totalTime);
+  tmp.y = cos(Ice::time.totalTime);
+  Ice::SetMaterialData(lightMat, tmpSegment, (void*)&tmp);
 
   const f32 degreesPerSecond = 90.0f;
 

@@ -114,7 +114,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
   renderComponents.Initialize(_settings.maxObjectCount);
   transformComponents.Initialize(_settings.maxObjectCount);
-  renderer->CreateBufferMemory(&transformsBuffer, 64 * _settings.maxObjectCount, Ice::Buffer_Memory_Shader_Read);
+  renderer->CreateBufferMemory(&transformsBuffer, 64, _settings.maxObjectCount, Ice::Buffer_Memory_Shader_Read);
   cameraComponents.Initialize(_settings.maxObjectCount);
 
   // Game =====
@@ -331,7 +331,13 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   return true;
 }
 
-b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
+void Ice::SetMaterialData(Material* _material, BufferSegment _segment, void* _data)
+{
+  _segment.buffer = &_material->buffer;
+  renderer->PushDataToBuffer(_data, _segment);
+}
+
+b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -403,36 +409,38 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
 
   // Create mesh =====
   {
-    Ice::Mesh newMesh {};
+    Ice::Mesh& newMesh = meshes[meshCount];
 
     newMesh.indexCount = indices.size();
     ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
                                              (sizeof(Ice::Vertex) * vertices.size() +
                                                (sizeof(u32) * indices.size())),
+                                             1,
                                              Ice::Buffer_Memory_Vertex | Ice::Buffer_Memory_Index));
 
-    newMesh.vertexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
+    newMesh.vertexBuffer.buffer = &newMesh.buffer;
     newMesh.vertexBuffer.offset = 0;
-    newMesh.vertexBuffer.size = sizeof(Ice::Vertex) * vertices.size();
-    if (!renderer->PushDataToBuffer(vertices.data(), &newMesh.buffer, newMesh.vertexBuffer))
+    newMesh.vertexBuffer.elementSize = sizeof(Ice::Vertex) * vertices.size();
+    newMesh.vertexBuffer.count = 1;
+    if (!renderer->PushDataToBuffer(vertices.data(), newMesh.vertexBuffer))
     {
       IceLogError("Failed to push vertex data to its buffer");
       renderer->DestroyBufferMemory(&newMesh.buffer);
       return false;
     }
 
-    newMesh.indexBuffer.ivkBuffer = newMesh.buffer.ivkBuffer;
-    newMesh.indexBuffer.offset = newMesh.vertexBuffer.size;
-    newMesh.indexBuffer.size = sizeof(u32) * indices.size();
-    if (!renderer->PushDataToBuffer(indices.data(), &newMesh.buffer, newMesh.indexBuffer))
+    newMesh.indexBuffer.buffer = &newMesh.buffer;
+    newMesh.indexBuffer.offset = newMesh.vertexBuffer.elementSize;
+    newMesh.indexBuffer.elementSize = sizeof(u32) * indices.size();
+    newMesh.indexBuffer.count = 1;
+    if (!renderer->PushDataToBuffer(indices.data(), newMesh.indexBuffer))
     {
       IceLogError("Failed to push index data to its buffer");
       renderer->DestroyBufferMemory(&newMesh.buffer);
       return false;
     }
 
-    meshes[meshCount] = newMesh;
-    *_mesh = meshes[meshCount];
+    *_mesh = &meshes[meshCount];
     meshCount++;
   }
 
@@ -446,13 +454,11 @@ Ice::Object& Ice::CreateObject()
   Ice::TransformComponent* tc = transformComponents.Create(entity.GetId());
   u32 index = transformComponents.GetIndex(entity.GetId());
 
-  const u64 perObjectBufferSize = 64; // Should be defined somewhere else.
-
-  tc->bufferSegment = renderer->CreateBufferSegment(&transformsBuffer,
-                                                    perObjectBufferSize,
-                                                    perObjectBufferSize);
-  tc->bufferSegment.offset *= index;
-  renderer->PushDataToBuffer((void*)&mat4Identity, &transformsBuffer, tc->bufferSegment);
+  tc->bufferSegment.buffer = &transformsBuffer;
+  tc->bufferSegment.elementSize = 64; // Should be defined somewhere else.
+  tc->bufferSegment.count = 1;
+  tc->bufferSegment.startIndex = index;
+  renderer->PushDataToBuffer((void*)&mat4Identity, tc->bufferSegment);
 
   entity.transform = &tc->transform;
 
@@ -471,7 +477,7 @@ void Ice::AttatchRenderComponent(Ice::Object* _object,
 
   renderer->InitializeRenderComponent(rc, tbuffer);
   CreateMesh(_meshDir, &rc->mesh);
-  rc->material = *_material;
+  rc->material = _material;
 }
 
 void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings)
@@ -493,9 +499,7 @@ void Ice::UpdateTransforms()
     {
       mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
 
-      renderer->PushDataToBuffer((void*)&out,
-                                 &transformsBuffer,
-                                 transformComponents[i].bufferSegment);
+      renderer->PushDataToBuffer((void*)&out, transformComponents[i].bufferSegment);
     }
     else
     {
@@ -508,9 +512,7 @@ void Ice::UpdateTransforms()
 
       glm::mat4 projView = *projection * *transform;
 
-      renderer->PushDataToBuffer((void*)&projView,
-                                 &transformsBuffer,
-                                 transformComponents[i].bufferSegment);
+      renderer->PushDataToBuffer((void*)&projView, transformComponents[i].bufferSegment);
     }
   }
 

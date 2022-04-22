@@ -23,23 +23,24 @@ u32 GetMemoryTypeIndex(Ice::VulkanContext* _context,
 }
 
 b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
-                                           u64 _size,
+                                           u64 _elementSize,
+                                           u32 _elementCount,
                                            Ice::BufferMemoryUsageFlags _usage)
 {
-  if (_size == 0)
+  if (_elementSize * _elementCount == 0)
   {
-    IceLogError("Can not create buffer with size 0");
+    IceLogError("Can not create buffer with size 0\n> Element size %llu, Count : %u",
+                _elementSize,
+                _elementCount);
     return false;
   }
 
-  _outBuffer->size = _size;
-  _outBuffer->paddedSize = PadBufferSize(_size, _usage);
-  _outBuffer->usage = _usage;
+  *_outBuffer = { _elementSize, PadBufferSize(_elementSize, _usage), _elementCount, _usage };
 
   // Buffer =====
   VkBufferCreateInfo createInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  createInfo.size = _outBuffer->size;
+  createInfo.size = _outBuffer->padElementSize * _outBuffer->count;
 
   if (_usage & Ice::Buffer_Memory_Shader_Read)
   {
@@ -55,7 +56,7 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
   }
 
   IVK_ASSERT(vkCreateBuffer(context.device, &createInfo, context.alloc, &_outBuffer->ivkBuffer),
-             "Failed to create buffer : size %llu", _outBuffer->size);
+             "Failed to create buffer : size %llu", _outBuffer->padElementSize * _outBuffer->count);
 
   // Memory =====
   VkMemoryRequirements bufferMemRequirements;
@@ -69,7 +70,8 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
                                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
   IVK_ASSERT(vkAllocateMemory(context.device, &allocInfo, context.alloc, &_outBuffer->ivkMemory),
-             "Failed to allocate buffer memory : size %llu", _outBuffer->size);
+             "Failed to allocate buffer memory : size %llu",
+             _outBuffer->padElementSize * _outBuffer->count);
 
   // Bind =====
   IVK_ASSERT(vkBindBufferMemory(context.device, _outBuffer->ivkBuffer, _outBuffer->ivkMemory, 0),
@@ -80,7 +82,9 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
 
 void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
 {
-  if (_buffer == nullptr || _buffer->ivkBuffer == nullptr || _buffer->size == 0)
+  if (_buffer == nullptr ||
+      _buffer->ivkBuffer == nullptr ||
+      _buffer->padElementSize * _buffer->count == 0)
     return;
 
   vkDeviceWaitIdle(context.device);
@@ -88,25 +92,47 @@ void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
   vkFreeMemory(context.device, _buffer->ivkMemory, context.alloc);
 }
 
-b8 Ice::RendererVulkan::PushDataToBuffer(void* _data,
-                                         const Ice::Buffer* _buffer,
-                                         const Ice::BufferSegment _segmentInfo)
+b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _segmentInfo)
 {
-  if (_segmentInfo.ivkBuffer != VK_NULL_HANDLE && _segmentInfo.ivkBuffer != _buffer->ivkBuffer)
+  if (_segmentInfo.buffer == nullptr)
   {
-    IceLogError("Buffer does not match segment's buffer. Aborting data push.");
+    IceLogError("No buffer given to data push segment. Aborting data push.");
     return false;
   }
 
-  void* mappedGpuMemory;
+  // Using char* to index one byte at a time
+  char* mappedGpuMemory;
+  char* cpuMemory = (char*)_data;
 
-  u64 offset = _segmentInfo.offset;
-  u64 size = _segmentInfo.size == 0 ? _buffer->size : _segmentInfo.size;
+  u64 stride = _segmentInfo.buffer->padElementSize;
 
-  IVK_ASSERT(vkMapMemory(context.device, _buffer->ivkMemory, offset, size, 0, &mappedGpuMemory),
-             "Failed to map buffer memory\n> Offset %llu, Size %llu", offset, size);
-  Ice::MemoryCopy(_data, mappedGpuMemory, size);
-  vkUnmapMemory(context.device, _buffer->ivkMemory);
+  u64 bufferOffset = _segmentInfo.startIndex * stride; // GPU byte index
+  u64 bufferSize = _segmentInfo.count * stride; // Total byte range being accessed
+
+  u64 copyElementSize = _segmentInfo.elementSize; // Bytes of each element to copy
+  u64 elementOffset = _segmentInfo.offset; // Offset into the element to start copy
+
+  // If zero, use buffer elements' full size
+  if (!copyElementSize)
+    copyElementSize = _segmentInfo.buffer->elementSize;
+
+  IVK_ASSERT(vkMapMemory(context.device,
+                         _segmentInfo.buffer->ivkMemory,
+                         bufferOffset,
+                         bufferSize,
+                         0,
+                         &((void*)mappedGpuMemory)),
+             "Failed to map buffer memory\n> Offset %llu, Size %llu", bufferOffset, bufferSize);
+
+  // Copy copyElementSize bytes at a time into each element for count elements
+  for (u32 i = 0; i < _segmentInfo.count; i++)
+  {
+    Ice::MemoryCopy((void*)(cpuMemory + (copyElementSize * i)), // i-th array element
+                    (void*)(mappedGpuMemory + (stride * i) + elementOffset), // i-th padded GPU element
+                    copyElementSize);
+  }
+
+  vkUnmapMemory(context.device, _segmentInfo.buffer->ivkMemory);
 
   return true;
 }
@@ -123,16 +149,4 @@ u64 Ice::RendererVulkan::PadBufferSize(u64 _size, Ice::BufferMemoryUsageFlags _u
     alignment = context.gpu.properties.limits.minStorageBufferOffsetAlignment - 1;
   }
   return (_size + alignment) & ~alignment;
-}
-
-Ice::BufferSegment Ice::RendererVulkan:: CreateBufferSegment(Ice::Buffer* _buffer,
-                                                             u64 _size,
-                                                             u64 _offset)
-{
-  Ice::BufferSegment newSegment {};
-  newSegment.ivkBuffer = _buffer->ivkBuffer;
-  newSegment.size = _size; // Excess data in padded-sized buffer assumed to be garbage
-  // Vulkan doesn't let you offset into arbitrary positions
-  newSegment.offset = PadBufferSize(_offset, _buffer->usage);
-  return newSegment;
 }

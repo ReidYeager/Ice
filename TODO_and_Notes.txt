@@ -5,7 +5,8 @@
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    19 :--: // NOTE : Given the frequency this is called, should use something more efficient than virtual.
 \IceSandbox\Ice\src\rendering\renderer_context.h
-	Line   185 :--: // TODO : Add camera render target
+	Line   186 :--: // TODO : Add camera render target
+	Line   199 :--: // TODO : Rework the renderComponent to not pointer-chase during rendering
 \IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line   153 :--: // TODO : Assign default descriptor values (new buffer, default textures)
-	Line   189 :--: // TODO : Need to account for descriptor binding gaps
+	Line   170 :--: // TODO : Assign default texture descriptor values
+	Line   208 :--: // TODO : Need to account for descriptor binding gaps

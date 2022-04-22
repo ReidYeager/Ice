@@ -46,10 +46,15 @@ namespace Ice {
   //=========================
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
+  void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
+
+  //=========================
+  // Objects
+  //=========================
+
   Ice::Object& CreateObject();
   void AttatchRenderComponent(Ice::Object* _object, const char* _meshDir, Ice::Material* _material);
   void AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings);
-
   void UpdateTransforms();
 
 }

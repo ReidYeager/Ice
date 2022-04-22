@@ -30,8 +30,9 @@ namespace Ice {
 
   struct Buffer
   {
-    u64 size = 0;       // Defined size of the buffer
-    u64 paddedSize = 0; // Aligned the input size with the device minimum
+    u64 elementSize = 0; // Bytes
+    u64 padElementSize = 0; // Bytes, a multiple of an alignment value (API dependent)
+    u32 count = 1; // Number of elements
     BufferMemoryUsageFlags usage;
 
     union {
@@ -47,14 +48,13 @@ namespace Ice {
 
   struct BufferSegment
   {
-    u64 size;   // Size of this segment
-    u64 offset; // Offset of this segment's start within the original buffer
+    u64 elementSize; // Number of bytes affected in each covered element
+    u32 startIndex; // Index of the first covered element
+    u64 offset; // Offset into the first covered element
+    u32 count; // Number of covered elements
 
     // The segment's parent buffer
-    union {
-      void* apiData0;
-      VkBuffer ivkBuffer;
-    };
+    Ice::Buffer* buffer;
   };
 
   //=========================
@@ -106,7 +106,7 @@ namespace Ice {
     ShaderTypes type;
     std::string fileDirectory;
     std::vector<ShaderInputElement> input;
-    Ice::Buffer buffer;
+    u64 bufferSize = 0;
 
     union {
       void* apiData0;
@@ -125,6 +125,7 @@ namespace Ice {
   struct Material
   {
     Ice::MaterialSettings* settings;
+    Ice::Buffer buffer;
 
     union {
       void* apiData0;
@@ -196,8 +197,9 @@ namespace Ice {
 
   struct RenderComponent
   {
-    Ice::Material material;
-    Ice::Mesh mesh;
+    // TODO : Rework the renderComponent to not pointer-chase during rendering
+    Ice::Material* material;
+    Ice::Mesh* mesh;
 
     union {
       void* apiData0;
