@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "rendering/renderer.h"
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/renderer_defines.h"
 
 #include <vulkan/vulkan.h>
 
@@ -13,6 +13,58 @@
 
 namespace Ice
 {
+  struct VulkanContext
+  {
+    VkAllocationCallbacks* alloc = nullptr;
+
+    VkInstance instance;
+    VkSurfaceKHR surface;
+    VkSurfaceFormatKHR surfaceFormat;
+    VkDevice device;
+    Gpu gpu;
+
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkQueue transientQueue;
+
+    VkDescriptorPool descriptorPool;
+    VkCommandPool graphicsCommandPool;
+    VkCommandPool transientCommandPool;
+
+    // Swapchain =====
+    VkPresentModeKHR presentMode;
+    VkSwapchainKHR swapchain;
+    std::vector<VkImage> swapchainImages;
+    std::vector<VkImageView> swapchainImageViews;
+    VkFormat swapchainFormat;
+    VkExtent2D swapchainExtent;
+
+    // Depth =====
+    std::vector<IvkImage> depthImages;
+
+    // Synchronization =====
+    std::vector<VkFence> flightSlotAvailableFences;
+    std::vector<VkSemaphore> renderCompleteSemaphores;
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    u32 currentFlightIndex = 0;
+    #define ICE_MAX_FLIGHT_IMAGE_COUNT 3
+
+    // Renderpasses =====
+    VkDescriptorSet globalDescriptorSet;
+    VkDescriptorSetLayout globalDescriptorLayout;
+    VkPipelineLayout globalPipelineLayout;
+    Ice::Buffer globalDescriptorBuffer;
+
+    VkDescriptorSetLayout cameraDescriptorLayout;
+    VkDescriptorSetLayout objectDescriptorLayout;
+
+    Ice::IvkRenderpass forward;
+    Ice::IvkRenderpass deferred;
+
+    // Commands =====
+    std::vector<VkCommandBuffer> commandBuffers;
+  };
+
   class RendererVulkan : public Ice::Renderer
   {
   private:
@@ -132,6 +184,8 @@ namespace Ice
     void DestroyShader(Ice::Shader& _shader);
     b8 CreateMaterial(Ice::Material* _material);
     void DestroyMaterial(Ice::Material& _material);
+
+    b8 CreateImage(Ice::Image* _image, void* _data);
 
     b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
                           u64 _elementSize,

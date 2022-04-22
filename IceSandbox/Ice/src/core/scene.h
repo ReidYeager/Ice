@@ -6,7 +6,7 @@
 
 #include "core/ecs.h"
 #include "math/vector.h"
-#include "rendering/renderer_context.h"
+#include "rendering/renderer_defines.h"
 
 namespace Ice {
 

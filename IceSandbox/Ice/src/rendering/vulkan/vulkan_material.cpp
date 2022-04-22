@@ -30,7 +30,7 @@ b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
 void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
 {
   vkDeviceWaitIdle(context.device);
-  vkDestroyShaderModule(context.device, _shader.ivkShaderModule, context.alloc);
+  vkDestroyShaderModule(context.device, _shader.vulkan.module, context.alloc);
 }
 
 b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
@@ -49,7 +49,7 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   IVK_ASSERT(vkCreateShaderModule(context.device,
                                   &createInfo,
                                   context.alloc,
-                                  &_shader->ivkShaderModule),
+                                  &_shader->vulkan.module),
              "failed to create shader module for %s", directory.c_str());
 
   return true;
@@ -168,13 +168,13 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
     // TODO : Assign default texture descriptor values
   }
 
-  UpdateDescriptorSet(_material->ivkDescriptorSet, _material->settings->input);
+  UpdateDescriptorSet(_material->vulkan.descriptorSet, _material->settings->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
                                      context.cameraDescriptorLayout,
-                                     _material->ivkDescriptorSetLayout,
+                                     _material->vulkan.descriptorSetLayout,
                                      context.objectDescriptorLayout },
-                                   &_material->ivkPipelineLayout));
+                                   &_material->vulkan.pipelineLayout));
   ICE_ATTEMPT(CreatePipeline(_material));
 
   return true;
@@ -193,11 +193,11 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 
   _material.settings->input.clear();
 
-  vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.ivkDescriptorSet);
-  vkDestroyDescriptorSetLayout(context.device, _material.ivkDescriptorSetLayout, context.alloc);
+  vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.vulkan.descriptorSet);
+  vkDestroyDescriptorSetLayout(context.device, _material.vulkan.descriptorSetLayout, context.alloc);
 
-  vkDestroyPipelineLayout(context.device, _material.ivkPipelineLayout, context.alloc);
-  vkDestroyPipeline(context.device, _material.ivkPipeline, context.alloc);
+  vkDestroyPipelineLayout(context.device, _material.vulkan.pipelineLayout, context.alloc);
+  vkDestroyPipeline(context.device, _material.vulkan.pipeline, context.alloc);
 }
 
 b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _material,
@@ -225,6 +225,14 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
     {
       if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
       {
+        if (descriptor.type == Ice::Shader_Input_Buffer)
+        {
+          // The largest buffer contains the same data as all smaller buffers
+          u64 max = max(orderedInputElements[descriptor.inputIndex].bufferSegment.elementSize,
+                        descriptor.bufferSegment.elementSize);
+          orderedInputElements[descriptor.inputIndex].bufferSegment.elementSize = max;
+        }
+
         continue;
       }
       else if (orderedInputElements[descriptor.inputIndex].type != Ice::Shader_Input_Count)
@@ -336,8 +344,8 @@ b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(Ice::Material* _material)
   ICE_ATTEMPT(AssembleMaterialDescriptorBindings(_material, bindings));
 
   return CreateDescriptorLayoutAndSet(&bindings,
-                                      &_material->ivkDescriptorSetLayout,
-                                      &_material->ivkDescriptorSet);
+                                      &_material->vulkan.descriptorSetLayout,
+                                      &_material->vulkan.descriptorSet);
 }
 
 b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* _bindings,
@@ -408,7 +416,7 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     {
     case Shader_Input_Buffer:
     {
-      newBuffer.buffer = descriptor.bufferSegment.buffer->ivkBuffer;
+      newBuffer.buffer = descriptor.bufferSegment.buffer->vulkan.buffer;
       newBuffer.offset = descriptor.bufferSegment.startIndex * descriptor.bufferSegment.buffer->padElementSize;
       newBuffer.range = descriptor.bufferSegment.elementSize;
 
@@ -435,6 +443,38 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   }
 
   vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
+}
+
+VkVertexInputBindingDescription GetVertexBindingDescription()
+{
+  VkVertexInputBindingDescription desc = {};
+  desc.stride = sizeof(Ice::Vertex);
+  desc.binding = 0;
+  desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  return desc;
+}
+
+std::vector<VkVertexInputAttributeDescription> GetVertexAttributeDescriptions()
+{
+  std::vector<VkVertexInputAttributeDescription> attribs(3);
+  // Position
+  attribs[0].binding = 0;
+  attribs[0].location = 0;
+  attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attribs[0].offset = offsetof(Ice::Vertex, position);
+  // UV
+  attribs[2].binding = 0;
+  attribs[2].location = 1;
+  attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
+  attribs[2].offset = offsetof(Ice::Vertex, uv);
+  // normal
+  attribs[1].binding = 0;
+  attribs[1].location = 2;
+  attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attribs[1].offset = offsetof(Ice::Vertex, normal);
+
+  return attribs;
 }
 
 b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
@@ -468,7 +508,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   std::vector<VkPipelineShaderStageCreateInfo> stages(_material->settings->shaders.size());
   for (u32 i = 0; i < _material->settings->shaders.size(); i++)
   {
-    shaderStage.module = _material->settings->shaders[i].ivkShaderModule;
+    shaderStage.module = _material->settings->shaders[i].vulkan.module;
     switch (_material->settings->shaders[i].type)
     {
     case Shader_Vertex: shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
@@ -481,8 +521,8 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 
   // Vertex Input State =====
   // Defines how vertex buffers are to be traversed
-  const auto vertexInputAttribDesc = Ice::IvkVertex::GetAttributeDescriptions();
-  const auto vertexInputBindingDesc = Ice::IvkVertex::GetBindingDescription();
+  const auto vertexInputAttribDesc = GetVertexAttributeDescriptions();
+  const auto vertexInputBindingDesc = GetVertexBindingDescription();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -591,7 +631,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   createInfo.stageCount = stages.size();
   createInfo.pStages    = stages.data();
 
-  createInfo.layout     = _material->ivkPipelineLayout;
+  createInfo.layout     = _material->vulkan.pipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
   createInfo.subpass = _material->settings->subpassIndex;
 
@@ -600,7 +640,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
                                        1,
                                        &createInfo,
                                        context.alloc,
-                                       &_material->ivkPipeline),
+                                       &_material->vulkan.pipeline),
              "Failed to create the pipeline");
 
   return true;

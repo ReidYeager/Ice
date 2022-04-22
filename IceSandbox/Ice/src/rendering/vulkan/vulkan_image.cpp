@@ -3,7 +3,7 @@
 #include "logger.h"
 
 #include "rendering/vulkan/vulkan.h"
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/vulkan/vulkan_defines.h"
 
 #include <vector>
 
@@ -21,6 +21,11 @@ u32 FindMemoryType(const VkPhysicalDeviceMemoryProperties& _properties,
 
   IceLogError("Failed to find a suitable memory type -- Mask : %u, Flags : %u", _mask, _flags);
   return -1;
+}
+
+b8 Ice::RendererVulkan::CreateImage(Ice::Image* _image, void* _data)
+{
+  return true;
 }
 
 b8 Ice::RendererVulkan::CreateImage(Ice::IvkImage* _image,

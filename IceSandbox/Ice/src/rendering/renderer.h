@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "rendering/renderer_context.h"
+#include "rendering/renderer_defines.h"
 
 #include <vector>
 #include <string>
@@ -25,6 +25,8 @@ namespace Ice {
     virtual void DestroyShader(Ice::Shader& _shader) = 0;
     virtual b8 CreateMaterial(Ice::Material* _material) = 0;
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
+
+    virtual b8 CreateImage(Ice::Image* _image, void* _data) = 0;
 
     virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
                                   u64 _elementSize,

@@ -56,12 +56,12 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
     createInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
   }
 
-  IVK_ASSERT(vkCreateBuffer(context.device, &createInfo, context.alloc, &_outBuffer->ivkBuffer),
+  IVK_ASSERT(vkCreateBuffer(context.device, &createInfo, context.alloc, &_outBuffer->vulkan.buffer),
              "Failed to create buffer : size %llu", _outBuffer->padElementSize * _outBuffer->count);
 
   // Memory =====
   VkMemoryRequirements bufferMemRequirements;
-  vkGetBufferMemoryRequirements(context.device, _outBuffer->ivkBuffer, &bufferMemRequirements);
+  vkGetBufferMemoryRequirements(context.device, _outBuffer->vulkan.buffer, &bufferMemRequirements);
 
   VkMemoryAllocateInfo allocInfo { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
   allocInfo.allocationSize = bufferMemRequirements.size;
@@ -70,12 +70,14 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
                                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-  IVK_ASSERT(vkAllocateMemory(context.device, &allocInfo, context.alloc, &_outBuffer->ivkMemory),
+  IVK_ASSERT(vkAllocateMemory(context.device, &allocInfo, context.alloc, &_outBuffer->vulkan.memory),
              "Failed to allocate buffer memory : size %llu",
              _outBuffer->padElementSize * _outBuffer->count);
 
   // Bind =====
-  IVK_ASSERT(vkBindBufferMemory(context.device, _outBuffer->ivkBuffer, _outBuffer->ivkMemory, 0),
+  IVK_ASSERT(vkBindBufferMemory(context.device,
+                                _outBuffer->vulkan.buffer,
+                                _outBuffer->vulkan.memory, 0),
              "Failed to bind buffer and memory");
 
   return true;
@@ -84,13 +86,13 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
 void Ice::RendererVulkan::DestroyBufferMemory(Ice::Buffer* _buffer)
 {
   if (_buffer == nullptr ||
-      _buffer->ivkBuffer == nullptr ||
+      _buffer->vulkan.buffer == nullptr ||
       _buffer->padElementSize * _buffer->count == 0)
     return;
 
   vkDeviceWaitIdle(context.device);
-  vkDestroyBuffer(context.device, _buffer->ivkBuffer, context.alloc);
-  vkFreeMemory(context.device, _buffer->ivkMemory, context.alloc);
+  vkDestroyBuffer(context.device, _buffer->vulkan.buffer, context.alloc);
+  vkFreeMemory(context.device, _buffer->vulkan.memory, context.alloc);
 }
 
 b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _segmentInfo)
@@ -118,7 +120,7 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _
     copyElementSize = _segmentInfo.buffer->elementSize;
 
   IVK_ASSERT(vkMapMemory(context.device,
-                         _segmentInfo.buffer->ivkMemory,
+                         _segmentInfo.buffer->vulkan.memory,
                          bufferOffset,
                          bufferSize,
                          0,
@@ -133,7 +135,7 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _
                     copyElementSize);
   }
 
-  vkUnmapMemory(context.device, _segmentInfo.buffer->ivkMemory);
+  vkUnmapMemory(context.device, _segmentInfo.buffer->vulkan.memory);
 
   return true;
 }

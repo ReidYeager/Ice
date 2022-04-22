@@ -5,7 +5,6 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "rendering/renderer.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>
@@ -32,51 +31,37 @@ namespace Ice {
   };
 
   //=========================
-  // Mesh
+  // Buffer
   //=========================
 
-  struct IvkVertex
+  struct IvkBuffer
   {
-    Ice::Vertex vertex;
+    VkBuffer buffer;
+    VkDeviceMemory memory;
+  };
 
-    static VkVertexInputBindingDescription GetBindingDescription()
-    {
-      VkVertexInputBindingDescription desc = {};
-      desc.stride = sizeof(Ice::Vertex);
-      desc.binding = 0;
-      desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+  //=========================
+  // Material
+  //=========================
 
-      return desc;
-    }
+  struct IvkShader
+  {
+    VkShaderModule module;
+  };
 
-    static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions()
-    {
-      std::vector<VkVertexInputAttributeDescription> attribs(3);
-      // Position
-      attribs[0].binding = 0;
-      attribs[0].location = 0;
-      attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[0].offset = offsetof(Ice::Vertex, position);
-      // UV
-      attribs[2].binding = 0;
-      attribs[2].location = 1;
-      attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
-      attribs[2].offset = offsetof(Ice::Vertex, uv);
-      // normal
-      attribs[1].binding = 0;
-      attribs[1].location = 2;
-      attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-      attribs[1].offset = offsetof(Ice::Vertex, normal);
-
-      return attribs;
-    }
+  struct IvkMaterial
+  {
+    VkPipelineLayout pipelineLayout;
+    VkPipeline pipeline;
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkDescriptorSet descriptorSet;
   };
 
   //=========================
   // Context
   //=========================
 
-  struct Renderpass
+  struct IvkRenderpass
   {
     VkRenderPass renderpass;
     std::vector<VkFramebuffer> framebuffers;
@@ -99,56 +84,9 @@ namespace Ice {
     u32 transientQueueIndex;
   };
 
-  struct VulkanContext
+  struct IvkObjectData
   {
-    VkAllocationCallbacks* alloc = nullptr;
-
-    VkInstance instance;
-    VkSurfaceKHR surface;
-    VkSurfaceFormatKHR surfaceFormat;
-    VkDevice device;
-    Gpu gpu;
-
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    VkQueue transientQueue;
-
-    VkDescriptorPool descriptorPool;
-    VkCommandPool graphicsCommandPool;
-    VkCommandPool transientCommandPool;
-
-    // Swapchain =====
-    VkPresentModeKHR presentMode;
-    VkSwapchainKHR swapchain;
-    std::vector<VkImage> swapchainImages;
-    std::vector<VkImageView> swapchainImageViews;
-    VkFormat swapchainFormat;
-    VkExtent2D swapchainExtent;
-
-    // Depth =====
-    std::vector<IvkImage> depthImages;
-
-    // Synchronization =====
-    std::vector<VkFence> flightSlotAvailableFences;
-    std::vector<VkSemaphore> renderCompleteSemaphores;
-    std::vector<VkSemaphore> imageAvailableSemaphores;
-    u32 currentFlightIndex = 0;
-    #define ICE_MAX_FLIGHT_IMAGE_COUNT 3
-
-    // Renderpasses =====
-    VkDescriptorSet globalDescriptorSet;
-    VkDescriptorSetLayout globalDescriptorLayout;
-    VkPipelineLayout globalPipelineLayout;
-    Ice::Buffer globalDescriptorBuffer;
-
-    VkDescriptorSetLayout cameraDescriptorLayout;
-    VkDescriptorSetLayout objectDescriptorLayout;
-
-    Ice::Renderpass forward;
-    Ice::Renderpass deferred;
-
-    // Commands =====
-    std::vector<VkCommandBuffer> commandBuffers;
+    VkDescriptorSet descriptorSet; // Per-object input data
   };
 
 }

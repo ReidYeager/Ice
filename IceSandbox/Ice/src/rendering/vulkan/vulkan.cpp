@@ -3,7 +3,7 @@
 #include "logger.h"
 
 #include "rendering/vulkan/vulkan.h"
-#include "rendering/vulkan/vulkan_context.h"
+#include "rendering/vulkan/vulkan_defines.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -666,14 +666,14 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
                                                   Ice::BufferSegment* _transformBuffer)
 {
-  ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->ivkDescriptorSet));
+  ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->vulkan.descriptorSet));
 
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
   bufferInput.bufferSegment = *_transformBuffer;
   std::vector<Ice::ShaderInputElement> inputs = {bufferInput};
-  UpdateDescriptorSet(_component->ivkDescriptorSet, inputs);
+  UpdateDescriptorSet(_component->vulkan.descriptorSet, inputs);
 
   return true;
 }
@@ -707,14 +707,14 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   _camera->projectionMatrix = _camera->projectionMatrix.Transpose();
 
   // Create descriptor set =====
-  ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->ivkDescriptorSet));
+  ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));
 
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
   bufferInput.bufferSegment = _transformSegment;
   std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
-  UpdateDescriptorSet(_camera->ivkDescriptorSet, inputs);
+  UpdateDescriptorSet(_camera->vulkan.descriptorSet, inputs);
 
   return true;
 }

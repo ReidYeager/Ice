@@ -7,6 +7,8 @@
 #include "core/ecs.h"
 #include "math/matrix.h"
 
+#include "rendering/vulkan/vulkan_defines.h"
+
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -37,12 +39,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkBuffer ivkBuffer;
-    };
-
-    union {
-      void* apiData1;
-      VkDeviceMemory ivkMemory;
+      Ice::IvkBuffer vulkan;
     };
   };
 
@@ -55,6 +52,15 @@ namespace Ice {
 
     // The segment's parent buffer
     Ice::Buffer* buffer;
+  };
+
+  //=========================
+  // Image
+  //=========================
+
+  struct Image
+  {
+    vec2U extents;
   };
 
   //=========================
@@ -94,10 +100,11 @@ namespace Ice {
 
   enum ShaderTypes
   {
-    Shader_Unknown = 0,
-    Shader_Vertex = 1,
-    Shader_Fragment = 2,
-    Shader_Compute = 4,
+    Shader_Unknown = 0x00,
+    Shader_Vertex = 0x01,
+    Shader_Fragment = 0x02,
+    Shader_Compute = 0x04,
+    Shader_Geometry = 0x08
     // ...
   };
 
@@ -109,7 +116,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkShaderModule ivkShaderModule;
+      Ice::IvkShader vulkan;
     };
   };
 
@@ -128,22 +135,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkPipelineLayout ivkPipelineLayout;
-    };
-
-    union {
-      void* apiData1;
-      VkPipeline ivkPipeline;
-    };
-
-    union {
-      void* apiData2;
-      VkDescriptorSetLayout ivkDescriptorSetLayout;
-    };
-
-    union {
-      void* apiData3;
-      VkDescriptorSet ivkDescriptorSet;
+      Ice::IvkMaterial vulkan;
     };
   };
 
@@ -160,8 +152,6 @@ namespace Ice {
 
   struct Mesh
   {
-    //std::vector<Ice::Vertex> vertices;
-    //std::vector<u32> indices;
     u32 indexCount;
     Ice::Buffer buffer;
     Ice::BufferSegment vertexBuffer;
@@ -190,7 +180,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkDescriptorSet ivkDescriptorSet; // ProjectionViewMatrix buffer
+      Ice::IvkObjectData vulkan;
     };
   };
 
@@ -202,7 +192,7 @@ namespace Ice {
 
     union {
       void* apiData0;
-      VkDescriptorSet ivkDescriptorSet; // Per-object input data
+      Ice::IvkObjectData vulkan;
     };
   };
 
@@ -210,8 +200,10 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
-    Ice::ECS::ComponentManager<Ice::CameraComponent>* cameras;
-    Ice::ECS::ComponentManager<Ice::RenderComponent>* components;
+    Ice::CameraComponent* cameras;
+    u32 cameraCount;
+    Ice::RenderComponent* components;
+    u32 componentCount;
   };
 
   enum RenderingApi

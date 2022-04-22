@@ -151,6 +151,14 @@ namespace Ice {
         return nullptr;
       }
 
+      Type* GetComponentArray(u32* _outCount = nullptr)
+      {
+        if (_outCount != nullptr)
+          *_outCount = currentCount;
+
+        return components;
+      }
+
       indexType GetIndex(Ice::ECS::Entity _entity)
       {
         return lookup.find(_entity)->second;

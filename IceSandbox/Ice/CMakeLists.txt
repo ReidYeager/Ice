@@ -30,17 +30,17 @@ add_library (Ice STATIC
   "src/platform/platform_win32.cpp"
 
   "src/rendering/renderer.h"
-  "src/rendering/renderer_context.h"
+  "src/rendering/renderer_defines.h"
 
   "src/rendering/vulkan/vulkan.h"
   "src/rendering/vulkan/vulkan.cpp"
   "src/rendering/vulkan/vulkan_buffer.cpp"
-  "src/rendering/vulkan/vulkan_context.h"
-  "src/rendering/vulkan/vulkan_platform.cpp"
-  "src/rendering/vulkan/vulkan_image.cpp"
   "src/rendering/vulkan/vulkan_command.cpp"
-  "src/rendering/vulkan/vulkan_renderpass.cpp"
+  "src/rendering/vulkan/vulkan_defines.h"
+  "src/rendering/vulkan/vulkan_image.cpp"
   "src/rendering/vulkan/vulkan_material.cpp"
+  "src/rendering/vulkan/vulkan_platform.cpp"
+  "src/rendering/vulkan/vulkan_renderpass.cpp"
 
   "src/libraries/imgui/imconfig.h"
   "src/libraries/imgui/imgui.h"
@@ -57,7 +57,6 @@ add_library (Ice STATIC
   "src/libraries/imgui/imstb_rectpack.h"
   "src/libraries/imgui/imstb_textedit.h"
   "src/libraries/imgui/imstb_truetype.h"
-
 )
 
 add_compile_definitions(ICE_DLL_EXPORT)

@@ -131,8 +131,8 @@ b8 IceApplicationUpdate()
   UpdateTime();
 
   Ice::FrameInformation frameInfo {};
-  frameInfo.components = &renderComponents;
-  frameInfo.cameras = &cameraComponents;
+  frameInfo.components = renderComponents.GetComponentArray(&frameInfo.componentCount);
+  frameInfo.cameras = cameraComponents.GetComponentArray(&frameInfo.cameraCount);
 
   while (isRunning && Ice::platform.Update())
   {
