@@ -532,7 +532,9 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     //present = VK_PRESENT_MODE_FIFO_KHR; // Un-comment for v-sync
     context.presentMode = present;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu.device, context.surface, &context.gpu.surfaceCapabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu.device,
+                                              context.surface,
+                                              &context.gpu.surfaceCapabilities);
 
     // Image dimensions
     VkExtent2D extent;
@@ -545,7 +547,10 @@ b8 Ice::RendererVulkan::CreateSwapchain()
       vec2U e = GetWindowExtents();
       extent = { e.width, e.height };
     }
-    IceLogInfo("Swapchain using: extents (%u, %u) -- format %d", extent.width, extent.height, format);
+    IceLogInfo("Swapchain using: extents (%u, %u) -- format %d",
+               extent.width,
+               extent.height,
+               format);
 
     // Creation =====
 
@@ -666,7 +671,8 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
                                                   Ice::BufferSegment* _transformBuffer)
 {
-  ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout, &_component->vulkan.descriptorSet));
+  ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout,
+                                  &_component->vulkan.descriptorSet));
 
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;

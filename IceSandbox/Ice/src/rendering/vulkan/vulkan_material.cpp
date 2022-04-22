@@ -257,7 +257,8 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
         {
           descriptor.bufferSegment.startIndex = _material->buffer.count;
           _material->buffer.count++;
-          _material->buffer.elementSize = max(descriptor.bufferSegment.elementSize, _material->buffer.elementSize);
+          _material->buffer.elementSize = max(descriptor.bufferSegment.elementSize,
+                                              _material->buffer.elementSize);
         }
       } break;
       case Ice::Shader_Input_Image:
@@ -322,7 +323,8 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
     ICE_ATTEMPT(CreateDescriptorLayout(&bindings, &context.cameraDescriptorLayout));
 
     // Pipeline =====
-    ICE_ATTEMPT(CreatePipelineLayout({context.globalDescriptorLayout, context.cameraDescriptorLayout},
+    ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
+                                       context.cameraDescriptorLayout },
                                      &context.globalPipelineLayout));
   }
 
@@ -417,7 +419,8 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     case Shader_Input_Buffer:
     {
       newBuffer.buffer = descriptor.bufferSegment.buffer->vulkan.buffer;
-      newBuffer.offset = descriptor.bufferSegment.startIndex * descriptor.bufferSegment.buffer->padElementSize;
+      newBuffer.offset = descriptor.bufferSegment.startIndex *
+                         descriptor.bufferSegment.buffer->padElementSize;
       newBuffer.range = descriptor.bufferSegment.elementSize;
 
       buffers.push_back(newBuffer);
@@ -443,6 +446,13 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   }
 
   vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
+}
+
+b8 Ice::RendererVulkan::SetMaterialInput(u32 _bindIndex, Ice::Image* _image)
+{
+  // TODO : ~!!~ Set material input textures
+
+  return true;
 }
 
 VkVertexInputBindingDescription GetVertexBindingDescription()

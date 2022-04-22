@@ -337,9 +337,20 @@ void Ice::SetMaterialData(Material* _material, BufferSegment _segment, void* _da
   renderer->PushDataToBuffer(_data, _segment);
 }
 
-void Ice::SetTexture(Material* _material, u32 inputIndex, const char* _image)
+void Ice::SetTexture(Material* _material, u32 inputIndex, const char* _directory)
 {
-  // TODO : ~!!~ Textures
+  Ice::Image newTexture;
+  newTexture.extents = { 0, 0 };
+
+  std::string dir(ICE_RESOURCE_TEXTURE_DIR);
+  dir.append(_directory);
+  void* imageData = Ice::LoadImageFile(dir.c_str(), &newTexture.extents);
+
+  renderer->CreateTexture(&newTexture, imageData);
+
+  renderer->SetMaterialInput(0, &newTexture);
+
+  Ice::DestroyImageFile(imageData);
 }
 
 b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh)

@@ -42,6 +42,8 @@ namespace Ice {
   // Filesystem
   //=========================
   std::vector<char> LoadFile(const char* _directory);
+  void* LoadImageFile(const char* _directory, vec2U* _extents);
+  void DestroyImageFile(void* _imageData);
 
   //=========================
   // Window

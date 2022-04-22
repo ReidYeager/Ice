@@ -55,6 +55,14 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
   {
     createInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
   }
+  if (_usage & Ice::Buffer_Memory_Transfer_Src)
+  {
+    createInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  }
+  if (_usage & Ice::Buffer_Memory_Transfer_Dst)
+  {
+    createInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+  }
 
   IVK_ASSERT(vkCreateBuffer(context.device, &createInfo, context.alloc, &_outBuffer->vulkan.buffer),
              "Failed to create buffer : size %llu", _outBuffer->padElementSize * _outBuffer->count);

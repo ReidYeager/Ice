@@ -23,8 +23,108 @@ u32 FindMemoryType(const VkPhysicalDeviceMemoryProperties& _properties,
   return -1;
 }
 
-b8 Ice::RendererVulkan::CreateImage(Ice::Image* _image, void* _data)
+void Ice::RendererVulkan::TransitionImageLayout(Ice::Image* _image,
+                                                b8 _toWritable,
+                                                VkPipelineStageFlagBits _shaderStage)
 {
+  VkCommandBuffer command = BeginSingleTimeCommand(context.graphicsCommandPool);
+
+  VkImageMemoryBarrier memBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+  memBarrier.oldLayout = _image->vulkan.layout;
+  memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  memBarrier.image = _image->vulkan.image;
+  memBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  memBarrier.subresourceRange.levelCount = 1;
+  memBarrier.subresourceRange.baseMipLevel = 0;
+  memBarrier.subresourceRange.layerCount = 1;
+  memBarrier.subresourceRange.baseArrayLayer = 0;
+
+  VkPipelineStageFlagBits srcStage, dstStage;
+
+  if (!_toWritable)
+  {
+    memBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    memBarrier.srcAccessMask = 0;
+    memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+  }
+  else
+  {
+    memBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dstStage = _shaderStage;
+  }
+
+  vkCmdPipelineBarrier(command, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &memBarrier);
+  EndSingleTimeCommand(command, context.graphicsCommandPool, context.graphicsQueue);
+
+  _image->vulkan.layout = memBarrier.newLayout;
+}
+
+void Ice::RendererVulkan::CopyBufferToImage(Ice::Buffer* _buffer, Ice::Image* _image)
+{
+  VkCommandBuffer command = BeginSingleTimeCommand(context.transientCommandPool);
+
+  VkBufferImageCopy copyRegion {};
+  copyRegion.bufferOffset = 0;
+  copyRegion.bufferRowLength = _image->extents.width;
+  copyRegion.bufferImageHeight = _image->extents.height;
+
+  copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copyRegion.imageSubresource.mipLevel = 0;
+  copyRegion.imageSubresource.layerCount = 1;
+  copyRegion.imageSubresource.baseArrayLayer = 0;
+
+  copyRegion.imageOffset = { 0, 0, 0 };
+  copyRegion.imageExtent = { _image->extents.width, _image->extents.height, 1 };
+
+  vkCmdCopyBufferToImage(command,
+                         _buffer->vulkan.buffer,
+                         _image->vulkan.image,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                         1,
+                         &copyRegion);
+
+  EndSingleTimeCommand(command, context.transientCommandPool, context.transientQueue);
+}
+
+b8 Ice::RendererVulkan::CreateTexture(Ice::Image* _image, void* _data)
+{
+  // Create image resources =====
+  ICE_ATTEMPT(CreateImage(&_image->vulkan,
+                          { _image->extents.x, _image->extents.y },
+                          VK_FORMAT_R8G8B8A8_UNORM,
+                          VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
+
+  ICE_ATTEMPT(CreateImageView(&_image->vulkan.view,
+                              _image->vulkan.image,
+                              _image->vulkan.format,
+                              VK_IMAGE_ASPECT_COLOR_BIT));
+
+  ICE_ATTEMPT(CreateImageSampler(_image));
+  _image->vulkan.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  // Fill the image =====
+  Ice::Buffer copyBuffer;
+  ICE_ATTEMPT(CreateBufferMemory(&copyBuffer,
+                                 _image->extents.x * _image->extents.y * 4, // Pixels * rgba
+                                 1,
+                                 Ice::Buffer_Memory_Transfer_Src));
+
+  TransitionImageLayout(_image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+  CopyBufferToImage(&copyBuffer, _image);
+  TransitionImageLayout(_image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+  _image->vulkan.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  DestroyBufferMemory(&copyBuffer);
+
   return true;
 }
 
@@ -52,7 +152,6 @@ b8 Ice::RendererVulkan::CreateImage(Ice::IvkImage* _image,
              "Failed to create an image");
 
   _image->format = _format;
-  _image->extents = { _extents.width, _extents.height };
 
   // Image memory =====
   VkMemoryRequirements memoryReq;
@@ -95,6 +194,13 @@ b8 Ice::RendererVulkan::CreateImageView(VkImageView* _view,
 
   IVK_ASSERT(vkCreateImageView(context.device, &createInfo, context.alloc, _view),
              "Failed to create an image view");
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::CreateImageSampler(Ice::Image* _image)
+{
+  
 
   return true;
 }

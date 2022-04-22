@@ -3,13 +3,14 @@
 #include "logger.h"
 
 #include "platform/platform.h"
-
 #include "core/input.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 #include <vector>
 #include <fstream>
 #include <string>
-
 #include <stdlib.h>
 #include <windows.h>
 #include <windowsx.h>
@@ -78,6 +79,25 @@ std::vector<char> Ice::LoadFile(const char* _directory)
 
   inFile.close();
   return rawData;
+}
+
+void* Ice::LoadImageFile(const char* _directory, vec2U* _extents)
+{
+  IceLogInfo("Attempting to load image\n> '%s'", _directory);
+
+  int channels;
+  stbi_uc* image = stbi_load(_directory,
+                             (int*)&_extents->width,
+                             (int*)&_extents->height,
+                             &channels,
+                             STBI_rgb_alpha);
+  assert (image != nullptr);
+  return image;
+}
+
+void Ice::DestroyImageFile(void* _imageData)
+{
+  stbi_image_free(_imageData);
 }
 
 //=========================

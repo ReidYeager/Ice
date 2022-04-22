@@ -19,10 +19,9 @@ namespace Ice {
 
   struct IvkImage
   {
-    vec2U extents;
-    VkImage image = VK_NULL_HANDLE;
-    VkImageView view = VK_NULL_HANDLE;
-    VkSampler sampler = VK_NULL_HANDLE;
+    VkImage image;
+    VkImageView view;
+    VkSampler sampler;
 
     VkFormat format;
     VkImageLayout layout;

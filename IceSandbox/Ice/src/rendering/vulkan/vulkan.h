@@ -140,6 +140,13 @@ namespace Ice
                        VkFormat _format,
                        VkImageAspectFlags _aspectMask);
 
+    b8 CreateImageSampler(Ice::Image* _image);
+
+    void TransitionImageLayout(Ice::Image* _image,
+                               b8 _toWritable,
+                               VkPipelineStageFlagBits _shaderStage);
+    void CopyBufferToImage(Ice::Buffer* _buffer, Ice::Image* _image);
+
     b8 DestroyImage(Ice::IvkImage* _image);
 
     //=========================
@@ -184,8 +191,9 @@ namespace Ice
     void DestroyShader(Ice::Shader& _shader);
     b8 CreateMaterial(Ice::Material* _material);
     void DestroyMaterial(Ice::Material& _material);
+    b8 SetMaterialInput(u32 _bindIndex, Ice::Image* _image);
 
-    b8 CreateImage(Ice::Image* _image, void* _data);
+    b8 CreateTexture(Ice::Image* _image, void* _data);
 
     b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
                           u64 _elementSize,

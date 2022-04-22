@@ -26,7 +26,10 @@ namespace Ice {
     virtual b8 CreateMaterial(Ice::Material* _material) = 0;
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
 
-    virtual b8 CreateImage(Ice::Image* _image, void* _data) = 0;
+    virtual b8 SetMaterialInput(u32 _bindIndex, Ice::Image* _image) = 0;
+    //virtual b8 SetMaterialInput(u32 _bindIndex, Ice::Buffer* _buffer);
+
+    virtual b8 CreateTexture(Ice::Image* _image, void* _data) = 0;
 
     virtual b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
                                   u64 _elementSize,

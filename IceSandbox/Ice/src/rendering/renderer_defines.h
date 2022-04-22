@@ -26,7 +26,9 @@ namespace Ice {
   {
     Buffer_Memory_Shader_Read = 0x01,
     Buffer_Memory_Vertex = 0x02,
-    Buffer_Memory_Index = 0x04
+    Buffer_Memory_Index = 0x04,
+    Buffer_Memory_Transfer_Src = 0x08,
+    Buffer_Memory_Transfer_Dst = 0x10
   };
   typedef IceFlag BufferMemoryUsageFlags;
 
@@ -61,6 +63,12 @@ namespace Ice {
   struct Image
   {
     vec2U extents;
+
+    union
+    {
+      void* apiData0;
+      Ice::IvkImage vulkan;
+    };
   };
 
   //=========================
