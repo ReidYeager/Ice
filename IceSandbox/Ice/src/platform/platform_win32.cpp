@@ -83,8 +83,6 @@ std::vector<char> Ice::LoadFile(const char* _directory)
 
 void* Ice::LoadImageFile(const char* _directory, vec2U* _extents)
 {
-  IceLogInfo("Attempting to load image\n> '%s'", _directory);
-
   int channels;
   stbi_uc* image = stbi_load(_directory,
                              (int*)&_extents->width,

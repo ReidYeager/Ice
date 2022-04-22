@@ -4,6 +4,7 @@
 
 #include "rendering/vulkan/vulkan.h"
 #include "rendering/vulkan/vulkan_defines.h"
+#include "core/application.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -29,6 +30,8 @@ b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
   ICE_ATTEMPT(CreateDepthImages());
   ICE_ATTEMPT(CreateGlobalDescriptors());
   ICE_ATTEMPT(CreateForwardComponents());
+
+  Ice::LoadTexture(&defaultTexture, "TestAlbedo.png");
 
   return true;
 }
@@ -169,6 +172,8 @@ b8 Ice::RendererVulkan::Shutdown()
   context.swapchainImageViews.clear();
   context.swapchainImages.clear();
   vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
+
+  DestroyImage(&defaultTexture);
 
   // Pools =====
   vkDestroyCommandPool(context.device, context.graphicsCommandPool, context.alloc);

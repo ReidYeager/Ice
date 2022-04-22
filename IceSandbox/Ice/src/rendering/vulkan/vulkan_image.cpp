@@ -117,6 +117,12 @@ b8 Ice::RendererVulkan::CreateTexture(Ice::Image* _image, void* _data)
                                  1,
                                  Ice::Buffer_Memory_Transfer_Src));
 
+  Ice::BufferSegment segment {};
+  segment.elementSize = _image->extents.x * _image->extents.y * 4;
+  segment.count = 1;
+  segment.buffer = &copyBuffer;
+  PushDataToBuffer(_data, segment);
+
   TransitionImageLayout(_image, false, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
   CopyBufferToImage(&copyBuffer, _image);
   TransitionImageLayout(_image, true, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
@@ -126,6 +132,14 @@ b8 Ice::RendererVulkan::CreateTexture(Ice::Image* _image, void* _data)
   DestroyBufferMemory(&copyBuffer);
 
   return true;
+}
+
+void Ice::RendererVulkan::DestroyImage(Ice::Image* _image)
+{
+  vkDestroySampler(context.device, _image->vulkan.sampler, context.alloc);
+  vkDestroyImageView(context.device, _image->vulkan.view, context.alloc);
+  vkFreeMemory(context.device, _image->vulkan.memory, context.alloc);
+  vkDestroyImage(context.device, _image->vulkan.image, context.alloc);
 }
 
 b8 Ice::RendererVulkan::CreateImage(Ice::IvkImage* _image,
@@ -200,7 +214,25 @@ b8 Ice::RendererVulkan::CreateImageView(VkImageView* _view,
 
 b8 Ice::RendererVulkan::CreateImageSampler(Ice::Image* _image)
 {
-  
+  VkSamplerCreateInfo createInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+  createInfo.magFilter = VK_FILTER_LINEAR;
+  createInfo.minFilter = VK_FILTER_LINEAR;
+  createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  createInfo.addressModeV = createInfo.addressModeU;
+  createInfo.addressModeW = createInfo.addressModeU;
+
+  createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+  createInfo.unnormalizedCoordinates = VK_FALSE;
+  createInfo.compareEnable = VK_FALSE;
+  createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  createInfo.mipLodBias = 0.0f;
+  createInfo.minLod = 0.0f;
+  createInfo.maxLod = 1.0f;
+  createInfo.maxAnisotropy = 1.0f;
+
+  IVK_ASSERT(vkCreateSampler(context.device, &createInfo, context.alloc, &_image->vulkan.sampler),
+             "Failed to create an image sampler");
 
   return true;
 }

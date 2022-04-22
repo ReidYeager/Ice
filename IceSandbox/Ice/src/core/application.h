@@ -28,6 +28,7 @@ namespace Ice {
     u32 maxMaterialCount = 100; // Number of unique materials
     u32 maxMeshCount = 200;     // Number of unique meshes
     u32 maxObjectCount = 200;   // Number of unique objects
+    u32 maxTextureCount = 100;  // Number of unique textures
   };
 
   u32 Run(ApplicationSettings);
@@ -48,7 +49,8 @@ namespace Ice {
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
 
-  void SetTexture(Ice::Material* _material, u32 inputIndex, const char* _image);
+  b8 LoadTexture(Ice::Image* _texture, const char* _directory);
+  void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
   //void SetTexture(Ice::Material* _material, u32 inputIndex, Ice::Image* _image);
 
   //=========================

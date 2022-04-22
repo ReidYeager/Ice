@@ -102,7 +102,7 @@ namespace Ice {
     union {
       void* apiData0;
       Ice::BufferSegment bufferSegment;
-      // Image
+      Ice::Image* image;
     };
   };
 

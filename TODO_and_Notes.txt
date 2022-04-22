@@ -1,10 +1,8 @@
 \IceSandbox\Ice\src\core\application.cpp
-	Line   261 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+	Line    80 :--: // TODO : Hard-code default texture information into engine so it doesn't have to load anything
+	Line   273 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 \IceSandbox\Ice\src\rendering\renderer.h
 	Line    19 :--: // NOTE : Given the frequency this is called, should use something more efficient than virtual.
 \IceSandbox\Ice\src\rendering\renderer_defines.h
 	Line   183 :--: // TODO : Add camera render target
 	Line   196 :--: // TODO : Rework the renderComponent to not chase pointers
-\IceSandbox\Ice\src\rendering\vulkan\vulkan_material.cpp
-	Line   167 :--: // TODO : Assign default texture descriptor values
-	Line   452 :--: // TODO : ~!!~ Set material input textures

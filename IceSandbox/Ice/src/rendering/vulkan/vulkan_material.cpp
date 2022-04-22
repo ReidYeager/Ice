@@ -164,8 +164,6 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
         d.bufferSegment.buffer = &_material->buffer;
       }
     }
-
-    // TODO : Assign default texture descriptor values
   }
 
   UpdateDescriptorSet(_material->vulkan.descriptorSet, _material->settings->input);
@@ -264,6 +262,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
       case Ice::Shader_Input_Image:
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor.image = &defaultTexture;
       } break;
       default: continue;
       }
@@ -430,9 +429,9 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     } break;
     case Shader_Input_Image:
     {
-      newImage.imageLayout = ((Ice::IvkImage*)descriptor.apiData0)->layout;
-      newImage.imageView = ((Ice::IvkImage*)descriptor.apiData0)->view;
-      newImage.sampler = ((Ice::IvkImage*)descriptor.apiData0)->sampler;
+      newImage.imageLayout =  descriptor.image->vulkan.layout;
+      newImage.imageView = descriptor.image->vulkan.view;
+      newImage.sampler = descriptor.image->vulkan.sampler;
 
       images.push_back(newImage);
       newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -448,10 +447,17 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
   vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
 }
 
-b8 Ice::RendererVulkan::SetMaterialInput(u32 _bindIndex, Ice::Image* _image)
+b8 Ice::RendererVulkan::SetMaterialInput(Ice::Material* _material,
+                                         u32 _bindIndex,
+                                         Ice::Image* _image)
 {
-  // TODO : ~!!~ Set material input textures
+  Ice::ShaderInputElement imageInput;
+  imageInput.inputIndex = _bindIndex;
+  imageInput.type = Ice::Shader_Input_Image;
+  imageInput.image = _image;
+  std::vector<Ice::ShaderInputElement> inputs = { imageInput };
 
+  UpdateDescriptorSet(_material->vulkan.descriptorSet, inputs);
   return true;
 }
 

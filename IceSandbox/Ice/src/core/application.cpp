@@ -33,6 +33,8 @@ u32 meshCount = 0;
 Ice::Mesh* meshes;
 u32 objectCount = 0;
 Ice::Object* objects;
+Ice::Image* textures;
+u32 textureCount = 0;
 
 Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
 Ice::ECS::ComponentManager<Ice::TransformComponent> transformComponents;
@@ -76,6 +78,9 @@ void UpdateTime()
 // Application
 //=========================
 
+// TODO : Hard-code default texture information into engine so it doesn't have to load anything
+Ice::Image defaultTexture;
+
 b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 {
   InitTime();
@@ -111,6 +116,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
   objects = (Ice::Object*)Ice::MemoryAllocZero(sizeof(Ice::Object) * _settings.maxObjectCount);
+  textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
   renderComponents.Initialize(_settings.maxObjectCount);
   transformComponents.Initialize(_settings.maxObjectCount);
@@ -161,6 +167,12 @@ b8 IceApplicationShutdown()
   transformComponents.Shutdown();
 
   Ice::MemoryFree(objects);
+
+  for (u32 i = 0; i < textureCount; i++)
+  {
+    renderer->DestroyImage(&textures[i]);
+  }
+  Ice::MemoryFree(textures);
 
   for (u32 i = 0; i < meshCount; i++)
   {
@@ -331,26 +343,36 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   return true;
 }
 
-void Ice::SetMaterialData(Material* _material, BufferSegment _segment, void* _data)
+void Ice::SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data)
 {
   _segment.buffer = &_material->buffer;
   renderer->PushDataToBuffer(_data, _segment);
 }
 
-void Ice::SetTexture(Material* _material, u32 inputIndex, const char* _directory)
+b8 Ice::LoadTexture(Ice::Image* _texture, const char* _directory)
 {
-  Ice::Image newTexture;
-  newTexture.extents = { 0, 0 };
+  _texture->extents = { 0, 0 };
 
   std::string dir(ICE_RESOURCE_TEXTURE_DIR);
   dir.append(_directory);
-  void* imageData = Ice::LoadImageFile(dir.c_str(), &newTexture.extents);
 
-  renderer->CreateTexture(&newTexture, imageData);
+  void* imageData = Ice::LoadImageFile(dir.c_str(), &_texture->extents);
+  ICE_ASSERT(imageData != nullptr);
 
-  renderer->SetMaterialInput(0, &newTexture);
+  ICE_ATTEMPT(renderer->CreateTexture(_texture, imageData));
 
   Ice::DestroyImageFile(imageData);
+  return true;
+}
+
+void Ice::SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _directory)
+{
+  Ice::Image& newTexture = textures[textureCount];
+  LoadTexture(&newTexture, _directory);
+
+  renderer->SetMaterialInput(_material, _inputIndex, &newTexture);
+
+  textureCount++;
 }
 
 b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh)

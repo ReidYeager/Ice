@@ -69,6 +69,7 @@ namespace Ice
   {
   private:
     Ice::VulkanContext context;
+    Ice::Image defaultTexture;
 
   private:
     //=========================
@@ -191,9 +192,10 @@ namespace Ice
     void DestroyShader(Ice::Shader& _shader);
     b8 CreateMaterial(Ice::Material* _material);
     void DestroyMaterial(Ice::Material& _material);
-    b8 SetMaterialInput(u32 _bindIndex, Ice::Image* _image);
+    b8 SetMaterialInput(Ice::Material* _material, u32 _bindIndex, Ice::Image* _image);
 
     b8 CreateTexture(Ice::Image* _image, void* _data);
+    void DestroyImage(Ice::Image* _image);
 
     b8 CreateBufferMemory(Ice::Buffer* _outBuffer,
                           u64 _elementSize,

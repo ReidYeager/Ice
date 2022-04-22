@@ -10,7 +10,9 @@ Ice::Object* sphere;
 Ice::Object* camera;
 Ice::Transform* eTransform;
 b8 transformingCamera = false;
-Ice::Material* lightMat;
+
+Ice::Material* materialA;
+Ice::Material* materialB;
 
 b8 Init()
 {
@@ -23,18 +25,16 @@ b8 Init()
   materialSettings.shaders.push_back(shaderInfo);
   //lightMatSettings.subpass = 1;
 
-  Ice::CreateMaterial(materialSettings, &lightMat);
   //Ice::SetLightingMaterial(lightMat);
-
-  //Ice::MaterialSettings blankMatSettings { "blank_deferred", "blank_deferred" };
-  //Ice::Material blank = Ice::CreateMaterial(blankMatSettings);
+  Ice::CreateMaterial(materialSettings, &materialA);
+  Ice::CreateMaterial(materialSettings, &materialB);
 
   gun = &Ice::CreateObject();
-  Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", lightMat);
+  Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", materialA);
   gun->transform->rotation.y = 90.0f;
 
   sphere = &Ice::CreateObject();
-  Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", lightMat);
+  Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", materialB);
 
   sphere->transform->position.y = -1.0f;
 
@@ -51,7 +51,7 @@ b8 Init()
 
   eTransform = gun->transform;
 
-  Ice::SetTexture(lightMat, 0, "TestAlbedo.png");
+  Ice::SetTexture(materialA, 2, "AltImage.png");
 
   return true;
 }
@@ -81,8 +81,8 @@ b8 Update(f32 _delta)
   static const Ice::BufferSegment barSegment = { sizeof(f32) * 4, 1, 0, 1 };
   static vec4 bar;
   bar.x = Ice::time.totalTime * 0.01f;
-  Ice::SetMaterialData(lightMat, tmpSegment, (void*)&tmp);
-  Ice::SetMaterialData(lightMat, barSegment, (void*)&bar);
+  Ice::SetMaterialData(materialA, tmpSegment, (void*)&tmp);
+  Ice::SetMaterialData(materialA, barSegment, (void*)&bar);
 
   const f32 degreesPerSecond = 90.0f;
 
