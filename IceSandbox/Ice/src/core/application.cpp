@@ -10,6 +10,7 @@
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 #include "math/linear.h"
+#include "math/transform.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -535,13 +536,14 @@ void Ice::UpdateTransforms()
     Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
     if (cam == nullptr)
     {
-      mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
-
+      //mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
+      mat4 out = transformComponents[i].transform.GetMatrix(false).Transpose();
       renderer->PushDataToBuffer((void*)&out, transformComponents[i].bufferSegment);
     }
     else
     {
       mat4 out = Ice::CalculateCameraTransformMatrix(&transformComponents[i].transform).Transpose();
+      //mat4 out = transformComponents[i].transform.GetMatrix(false).Transpose();
 
       // Fastest way to convert to a column-major glm matrix (f32[16]); avoids copying data
       glm::mat4* transform = (glm::mat4*)&out;

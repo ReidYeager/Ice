@@ -11,11 +11,6 @@ add_library (Ice STATIC
   "src/defines.h"
   "src/logger.h"
 
-  "src/core/input.cpp"
-  "src/core/input.h"
-  "src/core/ecs.h"
-  "src/core/scene.h"
-
   "src/math/vector.h"
   "src/math/matrix.h"
   "src/math/linear.h"
@@ -25,6 +20,11 @@ add_library (Ice STATIC
 
   "src/core/application.h"
   "src/core/application.cpp"
+  "src/core/input.cpp"
+  "src/core/input.h"
+  "src/core/ecs.h"
+  "src/core/scene.h"
+  "src/math/transform.h"
 
   "src/platform/platform.h"
   "src/platform/platform_win32.cpp"

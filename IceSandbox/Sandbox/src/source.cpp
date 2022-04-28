@@ -31,12 +31,12 @@ b8 Init()
 
   gun = &Ice::CreateObject();
   Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", materialA);
-  gun->transform->rotation.y = 90.0f;
+  gun->transform->SetRotation({0.0f, 90.0f, 0.0f});
 
   sphere = &Ice::CreateObject();
   Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", materialB);
 
-  sphere->transform->position.y = -1.0f;
+  sphere->transform->SetPosition({0.0f, -1.0f, 0.0f});
 
   Ice::CameraSettings camSettings;
   camSettings.isProjection = true;
@@ -47,11 +47,11 @@ b8 Init()
 
   camera = &Ice::CreateObject();
   Ice::AttatchCameraComponent(camera, camSettings);
-  camera->transform->position.z = 3.0f;
+  camera->transform->SetPosition({0.0f, 0.0f, 3.0f});
 
   eTransform = gun->transform;
 
-  Ice::SetTexture(materialA, 2, "AltImage.png");
+  Ice::SetTexture(materialA, 0, "CyborgWeapon/Weapon_ao.png");
 
   return true;
 }
@@ -74,46 +74,56 @@ b8 Update(f32 _delta)
     IceLogDebug("Now controlling the %s", transformingCamera? "camera" : "gun");
   }
 
-  static const Ice::BufferSegment tmpSegment = { sizeof(f32) * 4, 0, 0, 1 };
-  static vec4 tmp;
-  tmp.x = sin(Ice::time.totalTime);
-  tmp.y = cos(Ice::time.totalTime);
-  static const Ice::BufferSegment barSegment = { sizeof(f32) * 4, 1, 0, 1 };
-  static vec4 bar;
-  bar.x = Ice::time.totalTime * 0.01f;
-  Ice::SetMaterialData(materialA, tmpSegment, (void*)&tmp);
-  Ice::SetMaterialData(materialA, barSegment, (void*)&bar);
-
   const f32 degreesPerSecond = 90.0f;
+  vec3 transformVec;
+  static vec3 transformRot = {0.0f, 0.0f, 0.0f};
+  transformVec = {0.0f, 0.0f, 0.0f};
 
-  //gun->transform->position.x = cos(Ice::time.totalTime);
-  eTransform->rotation.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
-  eTransform->rotation.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
+  transformVec.x += _delta * Input.IsKeyDown(Ice_Key_D);
+  transformVec.x -= _delta * Input.IsKeyDown(Ice_Key_A);
 
-  eTransform->rotation.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
-  eTransform->rotation.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
+  transformVec.y += _delta * Input.IsKeyDown(Ice_Key_E);
+  transformVec.y -= _delta * Input.IsKeyDown(Ice_Key_Q);
 
-  eTransform->rotation.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
-  eTransform->rotation.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
+  transformVec.z += _delta * Input.IsKeyDown(Ice_Key_S);
+  transformVec.z -= _delta * Input.IsKeyDown(Ice_Key_W);
 
+  eTransform->Translate(transformVec);
 
-  eTransform->position.x += _delta * Input.IsKeyDown(Ice_Key_D);
-  eTransform->position.x -= _delta * Input.IsKeyDown(Ice_Key_A);
+  transformVec = { 0.0f, 0.0f, 0.0f };
+  transformVec.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
+  transformVec.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
 
-  eTransform->position.y += _delta * Input.IsKeyDown(Ice_Key_E);
-  eTransform->position.y -= _delta * Input.IsKeyDown(Ice_Key_Q);
+  transformVec.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
+  transformVec.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
 
-  eTransform->position.z += _delta * Input.IsKeyDown(Ice_Key_S);
-  eTransform->position.z -= _delta * Input.IsKeyDown(Ice_Key_W);
+  transformVec.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
+  transformVec.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
 
-  eTransform->scale.x += _delta * Input.IsKeyDown(Ice_Key_H);
-  eTransform->scale.x -= _delta * Input.IsKeyDown(Ice_Key_F);
+  eTransform->Rotate(transformVec);
 
-  eTransform->scale.y += _delta * Input.IsKeyDown(Ice_Key_T);
-  eTransform->scale.y -= _delta * Input.IsKeyDown(Ice_Key_G);
+  //transformRot.x += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_I);
+  //transformRot.x -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_K);
 
-  eTransform->scale.z += _delta * Input.IsKeyDown(Ice_Key_Y);
-  eTransform->scale.z -= _delta * Input.IsKeyDown(Ice_Key_R);
+  //transformRot.y += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_J);
+  //transformRot.y -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_L);
+
+  //transformRot.z += degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_U);
+  //transformRot.z -= degreesPerSecond * _delta * Input.IsKeyDown(Ice_Key_O);
+
+  //eTransform->SetRotation(transformRot);
+
+  transformVec = { 0.0f, 0.0f, 0.0f };
+  transformVec.x += _delta * Input.IsKeyDown(Ice_Key_H);
+  transformVec.x -= _delta * Input.IsKeyDown(Ice_Key_F);
+
+  transformVec.y += _delta * Input.IsKeyDown(Ice_Key_T);
+  transformVec.y -= _delta * Input.IsKeyDown(Ice_Key_G);
+
+  transformVec.z += _delta * Input.IsKeyDown(Ice_Key_Y);
+  transformVec.z -= _delta * Input.IsKeyDown(Ice_Key_R);
+
+  eTransform->Scale(transformVec);
 
   //camera->transform->position.x = cos(Ice::time.totalTime) * 2.5f;
   //camera->transform->position.z = sin(Ice::time.totalTime) * 2.5f;

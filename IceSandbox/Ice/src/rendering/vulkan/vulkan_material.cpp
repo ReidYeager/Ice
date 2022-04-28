@@ -151,17 +151,20 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
   // Define input resources =====
   {
     // Buffer =====
-    CreateBufferMemory(&_material->buffer,
-                       _material->buffer.elementSize,
-                       _material->buffer.count,
-                       Ice::Buffer_Memory_Shader_Read);
-
-    // Associate the buffer segments with the material's buffer
-    for (auto& d : _material->settings->input)
+    if (_material->buffer.elementSize * _material->buffer.count)
     {
-      if (d.type == Shader_Input_Buffer)
+      CreateBufferMemory(&_material->buffer,
+                          _material->buffer.elementSize,
+                          _material->buffer.count,
+                          Ice::Buffer_Memory_Shader_Read);
+
+      // Associate the buffer segments with the material's buffer
+      for (auto& d : _material->settings->input)
       {
-        d.bufferSegment.buffer = &_material->buffer;
+        if (d.type == Shader_Input_Buffer)
+        {
+          d.bufferSegment.buffer = &_material->buffer;
+        }
       }
     }
   }

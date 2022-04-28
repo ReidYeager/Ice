@@ -30,6 +30,14 @@ typedef union mat4
     vec4 row3;
   };
 
+  constexpr mat4 Transpose() const
+  {
+    return { x.x, y.x, z.x, w.x,
+             x.y, y.y, z.y, w.y,
+             x.z, y.z, z.z, w.z,
+             x.w, y.w, z.w, w.w };
+  }
+
   constexpr vec4& operator[](int i)
   {
     ICE_ASSERT(i < 4);
@@ -92,12 +100,26 @@ typedef union mat4
     return *this;
   }
 
-  mat4 Transpose() const
+  constexpr vec4 operator*(vec4 vector)
   {
-    return { x[0], y[0], z[0], w[0],
-             x[1], y[1], z[1], w[1],
-             x[2], y[2], z[2], w[2],
-             x[3], y[3], z[3], w[3] };
+    return {
+      x * vector,
+      y * vector,
+      z * vector,
+      w * vector
+    };
+  }
+
+  constexpr mat4 operator*(mat4 mat)
+  {
+    mat = mat.Transpose();
+
+    return {
+      x * mat.x, x * mat.y, x * mat.z, x * mat.w,
+      y * mat.x, y * mat.y, y * mat.z, y * mat.w,
+      z * mat.x, z * mat.y, z * mat.z, z * mat.w,
+      w * mat.x, w * mat.y, w * mat.z, w * mat.w
+    };
   }
 } mat4;
 

@@ -9,7 +9,7 @@ typedef struct vec2
   union { f32 x, r, width; };
   union { f32 y, g, height; };
 
-  f32& operator[](int i)
+  constexpr f32& operator[](int i)
   {
     switch (i)
     {
@@ -21,7 +21,7 @@ typedef struct vec2
     }
   }
 
-  f32 const& operator[](int i) const
+  constexpr f32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -128,7 +128,7 @@ typedef struct vec3
   union { f32 y, g; };
   union { f32 z, b; };
 
-  f32& operator[](int i)
+  constexpr f32& operator[](int i)
   {
     switch (i)
     {
@@ -142,7 +142,7 @@ typedef struct vec3
     }
   }
 
-  f32 const& operator[](int i) const
+  constexpr f32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -192,7 +192,6 @@ typedef struct vec3
     return *this;
   }
 
-  template<typename U>
   constexpr vec3& operator+=(vec3 other)
   {
     x += other.x;
@@ -201,7 +200,6 @@ typedef struct vec3
     return *this;
   }
 
-  template<typename U>
   constexpr vec3& operator-=(vec3 other)
   {
     x -= other.x;
@@ -234,13 +232,11 @@ typedef struct vec3
     return {x - scalar, y - scalar, z - scalar};
   }
 
-  template<typename U>
   constexpr vec3 operator+(vec3 other)
   {
     return {x + other.x, y + other.y, z + other.z};
   }
 
-  template<typename U>
   constexpr vec3 operator-(vec3 other)
   {
     return {x - other.x, y - other.y, z - other.z};
@@ -251,6 +247,10 @@ typedef struct vec3
 
 } vec3;
 
+struct vec4;
+
+typedef vec4 quaternion;
+
 typedef struct vec4
 {
   union { f32 x, r; };
@@ -258,7 +258,7 @@ typedef struct vec4
   union { f32 z, b; };
   union { f32 w, a; };
 
-  f32& operator[](int i)
+  constexpr f32& operator[](int i)
   {
     switch (i)
     {
@@ -274,7 +274,7 @@ typedef struct vec4
     }
   }
 
-  f32 const& operator[](int i) const
+  constexpr f32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -330,7 +330,6 @@ typedef struct vec4
     return *this;
   }
 
-  template<typename U>
   constexpr vec4& operator+=(vec4 other)
   {
     x += other.x;
@@ -340,7 +339,6 @@ typedef struct vec4
     return *this;
   }
 
-  template<typename U>
   constexpr vec4& operator-=(vec4 other)
   {
     x -= other.x;
@@ -354,6 +352,11 @@ typedef struct vec4
   constexpr vec4 operator*(U scalar)
   {
     return { x * scalar, y * scalar, z * scalar, w * scalar };
+  }
+
+  constexpr f32 operator*(vec4 scalar)
+  {
+    return { x * scalar.x + y * scalar.y + z * scalar.z + w * scalar.w };
   }
 
   template<typename U>
@@ -386,9 +389,9 @@ typedef struct vec4
     return { x - other.x, y - other.y, z - other.z, w - other.w };
   }
 
-  bool operator==(vec4& other) const
+  constexpr bool operator==(vec4& other) const
     { return x == other.x && y == other.y && z == other.z && w == other.w; }
-  bool operator==(const vec4& other) const
+  constexpr bool operator==(const vec4& other) const
     { return x == other.x && y == other.y && z == other.z && w == other.w; }
 
 } vec4;
@@ -402,7 +405,7 @@ typedef struct vec2I
   union { i32 x, r, width; };
   union { i32 y, g, height; };
 
-  i32& operator[](int i)
+  constexpr i32& operator[](int i)
   {
     switch (i)
     {
@@ -414,7 +417,7 @@ typedef struct vec2I
     }
   }
 
-  i32 const& operator[](int i) const
+  constexpr i32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -434,7 +437,7 @@ typedef struct vec3I
   union { i32 y, g; };
   union { i32 z, b; };
 
-  i32& operator[](int i)
+  constexpr i32& operator[](int i)
   {
     switch (i)
     {
@@ -448,7 +451,7 @@ typedef struct vec3I
     }
   }
 
-  i32 const& operator[](int i) const
+  constexpr i32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -471,7 +474,7 @@ typedef struct vec4I
   union { i32 z, b; };
   union { i32 w, a; };
 
-  i32& operator[](int i)
+  constexpr i32& operator[](int i)
   {
     switch (i)
     {
@@ -487,7 +490,7 @@ typedef struct vec4I
     }
   }
 
-  i32 const& operator[](int i) const
+  constexpr i32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -513,7 +516,7 @@ typedef struct vec2U
   union { u32 x, r, width; };
   union { u32 y, g, height; };
 
-  u32& operator[](int i)
+  constexpr u32& operator[](int i)
   {
     switch (i)
     {
@@ -525,7 +528,7 @@ typedef struct vec2U
     }
   }
 
-  u32 const& operator[](int i) const
+  constexpr u32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -545,7 +548,7 @@ typedef struct vec3U
   union { u32 y, g; };
   union { u32 z, b; };
 
-  u32& operator[](int i)
+  constexpr u32& operator[](int i)
   {
     switch (i)
     {
@@ -559,7 +562,7 @@ typedef struct vec3U
     }
   }
 
-  u32 const& operator[](int i) const
+  constexpr u32 const& operator[](int i) const
   {
     switch (i)
     {
@@ -582,7 +585,7 @@ typedef struct vec4U
   union { u32 z, b; };
   union { u32 w, a; };
 
-  u32& operator[](int i)
+  constexpr u32& operator[](int i)
   {
     switch (i)
     {
@@ -598,7 +601,7 @@ typedef struct vec4U
     }
   }
 
-  u32 const& operator[](int i) const
+  constexpr u32 const& operator[](int i) const
   {
     switch (i)
     {
