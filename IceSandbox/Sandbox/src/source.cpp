@@ -33,10 +33,10 @@ b8 Init()
   Ice::AttatchRenderComponent(gun, "Cyborg_Weapon.obj", materialA);
   gun->transform->SetRotation({0.0f, 90.0f, 0.0f});
 
-  sphere = &Ice::CreateObject();
-  Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", materialB);
+  //sphere = &Ice::CreateObject();
+  //Ice::AttatchRenderComponent(sphere, "SphereSmooth.obj", materialB);
 
-  sphere->transform->SetPosition({0.0f, -1.0f, 0.0f});
+  //sphere->transform->SetPosition({0.0f, -1.0f, 0.0f});
 
   Ice::CameraSettings camSettings;
   camSettings.isProjection = true;
@@ -50,6 +50,8 @@ b8 Init()
   camera->transform->SetPosition({0.0f, 0.0f, 3.0f});
 
   eTransform = gun->transform;
+
+  //sphere->transform->SetParent(eTransform);
 
   Ice::SetTexture(materialA, 0, "CyborgWeapon/Weapon_ao.png");
 
@@ -73,6 +75,13 @@ b8 Update(f32 _delta)
     transformingCamera = !transformingCamera;
     IceLogDebug("Now controlling the %s", transformingCamera? "camera" : "gun");
   }
+
+  //static b8 isAo = true;
+  //if (Input.OnKeyPressed(Ice_Key_M))
+  //{
+  //  Ice::SetTexture(materialA, 0, isAo? "CyborgWeapon/Weapon_albedo.png" : "CyborgWeapon/Weapon_ao.png");
+  //  isAo = !isAo;
+  //}
 
   const f32 degreesPerSecond = 90.0f;
   vec3 transformVec;

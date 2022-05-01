@@ -5,6 +5,7 @@
 #include "defines.h"
 
 #include "math/vector.h"
+#include "math/quaternion.h"
 
 typedef union mat4
 {
@@ -29,14 +30,6 @@ typedef union mat4
     vec4 row2;
     vec4 row3;
   };
-
-  constexpr mat4 Transpose() const
-  {
-    return { x.x, y.x, z.x, w.x,
-             x.y, y.y, z.y, w.y,
-             x.z, y.z, z.z, w.z,
-             x.w, y.w, z.w, w.w };
-  }
 
   constexpr vec4& operator[](int i)
   {
@@ -100,13 +93,23 @@ typedef union mat4
     return *this;
   }
 
+  // For rotation-only transforms
+  constexpr vec3 operator*(vec3 vector)
+  {
+    return {
+      x.x * vector.x + x.y * vector.y + x.z * vector.z,
+      y.x * vector.x + y.y * vector.y + y.z * vector.z,
+      z.x * vector.x + z.y * vector.y + z.z * vector.z,
+    };
+  }
+
   constexpr vec4 operator*(vec4 vector)
   {
     return {
-      x * vector,
-      y * vector,
-      z * vector,
-      w * vector
+      x.Dot(vector),
+      y.Dot(vector),
+      z.Dot(vector),
+      w.Dot(vector)
     };
   }
 
@@ -115,12 +118,21 @@ typedef union mat4
     mat = mat.Transpose();
 
     return {
-      x * mat.x, x * mat.y, x * mat.z, x * mat.w,
-      y * mat.x, y * mat.y, y * mat.z, y * mat.w,
-      z * mat.x, z * mat.y, z * mat.z, z * mat.w,
-      w * mat.x, w * mat.y, w * mat.z, w * mat.w
+      x.Dot(mat.x), x.Dot(mat.y), x.Dot(mat.z), x.Dot(mat.w),
+      y.Dot(mat.x), y.Dot(mat.y), y.Dot(mat.z), y.Dot(mat.w),
+      z.Dot(mat.x), z.Dot(mat.y), z.Dot(mat.z), z.Dot(mat.w),
+      w.Dot(mat.x), w.Dot(mat.y), w.Dot(mat.z), w.Dot(mat.w)
     };
   }
+
+  constexpr mat4 Transpose() const
+  {
+    return { x.x, y.x, z.x, w.x,
+             x.y, y.y, z.y, w.y,
+             x.z, y.z, z.z, w.z,
+             x.w, y.w, z.w, w.w };
+  }
+
 } mat4;
 
 const mat4 mat4Identity = { 1.0f, 0.0f, 0.0f, 0.0f,

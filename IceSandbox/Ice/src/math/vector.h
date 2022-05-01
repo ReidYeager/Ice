@@ -4,6 +4,8 @@
 
 #include "defines.h"
 
+#include "math.h"
+
 typedef struct vec2
 {
   union { f32 x, r, width; };
@@ -119,6 +121,22 @@ typedef struct vec2
 
   bool operator==(vec2& other) const { return x == other.x && y == other.y; }
   bool operator==(const vec2& other) const { return x == other.x && y == other.y; }
+
+  constexpr f32 Dot(vec2 other)
+  {
+    return x * other.x + y * other.y;
+  }
+
+  constexpr vec2 Normal()
+  {
+    return *this / (f32)sqrt(x * x + y * y);
+  }
+
+  constexpr vec2 Normalize()
+  {
+    *this /= (f32)sqrt(x * x + y * y);
+    return *this;
+  }
 
 } vec2;
 
@@ -245,11 +263,30 @@ typedef struct vec3
   bool operator==(vec3& other) const { return x == other.x && y == other.y && z == other.z; }
   bool operator==(const vec3& other) const { return x == other.x && y == other.y && z == other.z; }
 
+  constexpr f32 Dot(vec3 other)
+  {
+    return x * other.x + y * other.y + z * other.z;
+  }
+
+  constexpr vec3 Cross(vec3 other)
+  {
+    return { (y * other.z) - (z * other.y),
+             (z * other.x) - (x * other.z),
+             (x * other.y) - (y * other.x) };
+  }
+
+  constexpr vec3 Normal()
+  {
+    return *this / (f32)sqrt(x * x + y * y + z * z);
+  }
+
+  constexpr vec3 Normalize()
+  {
+    *this /= (f32)sqrt(x * x + y * y + z * z);
+    return *this;
+  }
+
 } vec3;
-
-struct vec4;
-
-typedef vec4 quaternion;
 
 typedef struct vec4
 {
@@ -354,9 +391,9 @@ typedef struct vec4
     return { x * scalar, y * scalar, z * scalar, w * scalar };
   }
 
-  constexpr f32 operator*(vec4 scalar)
+  constexpr vec4 operator*(vec4 other)
   {
-    return { x * scalar.x + y * scalar.y + z * scalar.z + w * scalar.w };
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
   }
 
   template<typename U>
@@ -393,6 +430,22 @@ typedef struct vec4
     { return x == other.x && y == other.y && z == other.z && w == other.w; }
   constexpr bool operator==(const vec4& other) const
     { return x == other.x && y == other.y && z == other.z && w == other.w; }
+
+  constexpr f32 Dot(vec4 other)
+  {
+    return x * other.x + y * other.y + z * other.z + w * other.w;
+  }
+
+  constexpr vec4 Normal()
+  {
+    return *this / (f32)sqrt(x * x + y * y + z * z + w * w);
+  }
+
+  constexpr vec4 Normalize()
+  {
+    *this /= (f32)sqrt(x * x + y * y + z * z + w * w);
+    return *this;
+  }
 
 } vec4;
 

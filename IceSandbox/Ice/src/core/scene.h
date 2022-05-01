@@ -37,11 +37,12 @@ namespace Ice {
   {
     vec3 s = _transform->GetScale();
     vec3 p = _transform->GetPosition();
-    vec4 q = _transform->GetRotation();
+    quaternion q = _transform->GetRotation();
 
     s = { 1.0f / s.x, 1.0f / s.y, 1.0f / s.z };
     p *= -1;
-    q = {-q.x, -q.y, -q.z, q.w} / sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+    q = {-q.x, -q.y, -q.z, q.w};
+    q.Normalize();
 
     // Combine scale, rotation, position =====
     mat4 out = {

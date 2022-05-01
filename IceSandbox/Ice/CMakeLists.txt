@@ -12,6 +12,7 @@ add_library (Ice STATIC
   "src/logger.h"
 
   "src/math/vector.h"
+  "src/math/quaternion.h"
   "src/math/matrix.h"
   "src/math/linear.h"
 

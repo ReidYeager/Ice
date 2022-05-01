@@ -525,8 +525,6 @@ void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _sett
   renderer->InitializeCamera(cam,
                              transformComponents.GetComponent(_object->GetId())->bufferSegment,
                              _settings);
-
-  IceLogDebug("Camera created");
 }
 
 void Ice::UpdateTransforms()
@@ -537,7 +535,7 @@ void Ice::UpdateTransforms()
     if (cam == nullptr)
     {
       //mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
-      mat4 out = transformComponents[i].transform.GetMatrix(false).Transpose();
+      mat4 out = transformComponents[i].transform.GetMatrix(true).Transpose();
       renderer->PushDataToBuffer((void*)&out, transformComponents[i].bufferSegment);
     }
     else
