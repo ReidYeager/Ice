@@ -1,0 +1,16 @@
+
+
+x + y + z + w
+a + b + c + d
+
+(x + y + z + w)a + (x + y + z + w)b + (x + y + z + w)c + (x + y + z + w)d
+
+(xa + ya + za + wa)
+(xb + yb + zb + wb)
+(xc + yc + zc + wc)
+(xd + yd + zd + wd)
+
+(-xa + ya + za + wa)
+(xb + -yb + zb + wb)
+(xc + yc + -zc + wc)
+(xd + yd + zd + -wd)

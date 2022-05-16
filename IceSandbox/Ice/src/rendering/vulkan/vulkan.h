@@ -77,7 +77,7 @@ namespace Ice
     //=========================
 
     // Ensures that all desired layer and extension functionality is present in the created instance
-    b8 CreateInstance();
+    b8 CreateInstance(const char* _title, u32 _version);
     // Selects the first compatible GPU among those available in the system
     // Fills the selected GPU's information
     b8 ChoosePhysicalDevice();
@@ -86,7 +86,7 @@ namespace Ice
     // Finds the first GPU queue that supports presentation
     u32 GetPresentQueue();
     // Tests the GPU for desired functionality
-    b8 IsDeviceSuitable(const VkPhysicalDevice& _device);
+    u32 IsDeviceSuitable(const VkPhysicalDevice& _device);
     // Creates the vkDevice
     b8 CreateLogicalDevice();
     // Defines the descriptors and sets available for use
@@ -184,7 +184,9 @@ namespace Ice
     u64 PadBufferSize(u64 _inSize, Ice::BufferMemoryUsageFlags _usage);
 
   public:
-    b8 Init(Ice::RendererSettings _settings);
+    b8 Init(Ice::RendererSettings _settings,
+            const char* _title = "Ice_Vk_Application",
+            u32 _version = 0);
     b8 RenderFrame(Ice::FrameInformation* _data);
     b8 Shutdown();
 

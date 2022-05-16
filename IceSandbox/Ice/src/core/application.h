@@ -17,6 +17,8 @@ namespace Ice {
 
   struct ApplicationSettings
   {
+    u32 version = 0;
+
     b8(*clientInitFunction)();
     b8(*clientUpdateFunction)(f32 _delta);
     b8(*clientShutdownFunction)();
@@ -24,12 +26,15 @@ namespace Ice {
     Ice::RendererSettings renderer;
     Ice::WindowSettings window;
 
+    // I don't really like this.
     u32 maxShaderCount = 200;   // Number of unique shaders
     u32 maxMaterialCount = 100; // Number of unique materials
     u32 maxMeshCount = 200;     // Number of unique meshes
     u32 maxObjectCount = 200;   // Number of unique objects
     u32 maxTextureCount = 100;  // Number of unique textures
   };
+
+  u32 CreateVersion(u8 _major, u8 _minor, u8 _patch);
 
   u32 Run(ApplicationSettings);
 

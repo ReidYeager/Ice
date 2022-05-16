@@ -12,9 +12,11 @@
 
 #include <vector>
 
-b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings)
+b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings,
+                             const char* _title /*= "Ice_Vk_Application"*/,
+                             u32 _version /*= 0*/)
 {
-  ICE_ATTEMPT(CreateInstance());
+  ICE_ATTEMPT(CreateInstance(_title, _version));
   ICE_ATTEMPT(CreateSurface());
   ICE_ATTEMPT(ChoosePhysicalDevice());
   ICE_ATTEMPT(CreateLogicalDevice());
@@ -192,7 +194,7 @@ b8 Ice::RendererVulkan::Shutdown()
 // Vulkan implementation
 //=========================
 
-b8 Ice::RendererVulkan::CreateInstance()
+b8 Ice::RendererVulkan::CreateInstance(const char* _title, u32 _version)
 {
   // Retrieve and validate extensions and layers to enable
   std::vector<const char*> extensions;
@@ -210,11 +212,12 @@ b8 Ice::RendererVulkan::CreateInstance()
   VkApplicationInfo appInfo{ VK_STRUCTURE_TYPE_APPLICATION_INFO };
   appInfo.apiVersion = VK_API_VERSION_1_2;
   appInfo.pEngineName = "Ice";
-  appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 1);
+  appInfo.engineVersion = VK_MAKE_VERSION(0, 1, 0);
 
-  // Define this information elsewhere
-  appInfo.pApplicationName = "TMP_APPLICAITON_NAME";
-  appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 0);
+  appInfo.pApplicationName = _title;
+  appInfo.applicationVersion = VK_MAKE_VERSION((_version & 0x00ff0000) >> 16, // Major
+                                               (_version & 0x0000ff00) >> 8,  // Minor
+                                               (_version & 0x000000ff));      // Patch
 
   VkInstanceCreateInfo createInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
   createInfo.enabledExtensionCount = extensions.size();
@@ -238,12 +241,14 @@ b8 Ice::RendererVulkan::ChoosePhysicalDevice()
   std::vector<VkPhysicalDevice> devices(deviceCount);
   vkEnumeratePhysicalDevices(context.instance, &deviceCount, devices.data());
 
+  int bestRank = 0;
   for (const auto& device : devices)
   {
-    if (IsDeviceSuitable(device))
+    int rank = IsDeviceSuitable(device);
+    if (rank > bestRank)
     {
       context.gpu.device = device;
-      break;
+      bestRank = rank;
     }
   }
 
@@ -361,7 +366,7 @@ u32 Ice::RendererVulkan::GetPresentQueue()
   return bestFit;
 }
 
-b8 Ice::RendererVulkan::IsDeviceSuitable(const VkPhysicalDevice& _device)
+u32 Ice::RendererVulkan::IsDeviceSuitable(const VkPhysicalDevice& _device)
 {
   u32 queueCount;
   vkGetPhysicalDeviceQueueFamilyProperties(_device, &queueCount, nullptr);
@@ -379,11 +384,11 @@ b8 Ice::RendererVulkan::IsDeviceSuitable(const VkPhysicalDevice& _device)
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(_device, &properties);
 
-  b8 isSuitable = true;
+  u32 isSuitable = 0;
   // Support screen presentation
-  isSuitable &= canPresent == VK_TRUE;
+  isSuitable += canPresent == VK_TRUE;
   // Only use dedicated GPUs
-  //isSuitable &= properties.deviceType & VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+  isSuitable += properties.deviceType & VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 
   return isSuitable;
 }

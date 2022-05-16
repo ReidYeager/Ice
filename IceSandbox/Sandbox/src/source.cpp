@@ -181,9 +181,13 @@ b8 Shutdown()
 int main()
 {
   Ice::ApplicationSettings settings;
+  settings.version = Ice::CreateVersion(0, 1, 0);
+  char titleBuffer[250];
+  sprintf(titleBuffer, "%s v%d.%d.%d", "Test application", 0, 1, 0);
+
   settings.window.position = { 300, 150 };
   settings.window.extents = { 800, 600 };
-  settings.window.title = "Test application";
+  settings.window.title = titleBuffer;
   settings.renderer.api = Ice::Renderer_Vulkan;
   settings.clientInitFunction = Init;
   settings.clientUpdateFunction = Update;

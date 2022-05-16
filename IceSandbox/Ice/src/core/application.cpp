@@ -106,7 +106,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     return false;
   }
 
-  if (!renderer->Init(_settings.renderer))
+  if (!renderer->Init(_settings.renderer, _settings.window.title, _settings.version))
   {
     IceLogFatal("Failed to initialize the renderer");
     return false;
@@ -203,6 +203,11 @@ b8 IceApplicationShutdown()
   Ice::platform.Shutdown();
 
   return true;
+}
+
+u32 Ice::CreateVersion(u8 _major, u8 _minor, u8 _patch)
+{
+  return ((u32)_major << 16) | ((u32)_minor << 8) | ((u32)_patch);
 }
 
 u32 Ice::Run(ApplicationSettings _settings)
