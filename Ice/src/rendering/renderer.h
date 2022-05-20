@@ -47,4 +47,7 @@ namespace Ice {
   };
 
 }
+
+extern Ice::Renderer* renderer;
+
 #endif // !ICE_RENDERING_RENDERER_H_

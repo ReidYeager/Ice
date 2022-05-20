@@ -151,7 +151,7 @@ b8 Ice::RendererVulkan::Shutdown()
   // Commands =====
   vkFreeCommandBuffers(context.device,
                        context.graphicsCommandPool,
-                       context.commandBuffers.size(),
+                       (u32)context.commandBuffers.size(),
                        context.commandBuffers.data());
   context.commandBuffers.clear();
 
@@ -220,9 +220,9 @@ b8 Ice::RendererVulkan::CreateInstance(const char* _title, u32 _version)
                                                (_version & 0x000000ff));      // Patch
 
   VkInstanceCreateInfo createInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
-  createInfo.enabledExtensionCount = extensions.size();
+  createInfo.enabledExtensionCount = (u32)extensions.size();
   createInfo.ppEnabledExtensionNames = extensions.data();
-  createInfo.enabledLayerCount = layers.size();
+  createInfo.enabledLayerCount = (u32)layers.size();
   createInfo.ppEnabledLayerNames = layers.data();
   createInfo.pApplicationInfo = &appInfo;
   createInfo.flags = 0;
@@ -291,9 +291,9 @@ b8 Ice::RendererVulkan::ChoosePhysicalDevice()
   context.gpu.transientQueueIndex = GetIndexForQueue(VK_QUEUE_TRANSFER_BIT);
   context.gpu.presentQueueIndex   = GetPresentQueue();
 
-  if (context.gpu.graphicsQueueIndex  == -1U ||
-      context.gpu.presentQueueIndex   == -1U ||
-      context.gpu.transientQueueIndex == -1U)
+  if (context.gpu.graphicsQueueIndex  == ~0U ||
+      context.gpu.presentQueueIndex   == ~0U ||
+      context.gpu.transientQueueIndex == ~0U)
   {
     IceLogFatal("Some of the queue indices are invalid (G : %u, P : %u, T : %u)",
                 context.gpu.graphicsQueueIndex,
@@ -307,7 +307,7 @@ b8 Ice::RendererVulkan::ChoosePhysicalDevice()
 
 u32 Ice::RendererVulkan::GetIndexForQueue(VkQueueFlags _flags)
 {
-  u32 bestFit = -1u;
+  u32 bestFit = ~0U;
 
   for (u32 i = 0; i < context.gpu.queueFamilyProperties.size(); i++)
   {
@@ -327,7 +327,7 @@ u32 Ice::RendererVulkan::GetIndexForQueue(VkQueueFlags _flags)
     }
   }
 
-  if (bestFit == -1u)
+  if (bestFit == ~0U)
   {
     IceLogError("Failed to find a device queue that matches the input %u", _flags);
   }
@@ -337,7 +337,7 @@ u32 Ice::RendererVulkan::GetIndexForQueue(VkQueueFlags _flags)
 u32 Ice::RendererVulkan::GetPresentQueue()
 {
   VkBool32 canPresent = false;
-  u32 bestFit = -1u;
+  u32 bestFit = ~0U;
 
   for (u32 queueIndex = 0; queueIndex < context.gpu.queueFamilyProperties.size(); queueIndex++)
   {
@@ -359,7 +359,7 @@ u32 Ice::RendererVulkan::GetPresentQueue()
     }
   }
 
-  if (bestFit == -1u)
+  if (bestFit == ~0U)
   {
     IceLogError("Failed to find a device queue that supports presentation");
   }
@@ -433,11 +433,11 @@ b8 Ice::RendererVulkan::CreateLogicalDevice()
   VkDeviceCreateInfo createInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
-  createInfo.queueCreateInfoCount = queueCreateInfos.size();
+  createInfo.queueCreateInfoCount = (u32)queueCreateInfos.size();
   createInfo.pQueueCreateInfos    = queueCreateInfos.data();
-  createInfo.enabledExtensionCount   = extensions.size();
+  createInfo.enabledExtensionCount   = (u32)extensions.size();
   createInfo.ppEnabledExtensionNames = extensions.data();
-  createInfo.enabledLayerCount   = layers.size();
+  createInfo.enabledLayerCount   = (u32)layers.size();
   createInfo.ppEnabledLayerNames = layers.data();
 
   IVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
@@ -548,7 +548,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
 
     // Image dimensions
     VkExtent2D extent;
-    if (context.gpu.surfaceCapabilities.currentExtent.width != -1u)
+    if (context.gpu.surfaceCapabilities.currentExtent.width != ~0U)
     {
       extent = context.gpu.surfaceCapabilities.currentExtent;
     }
@@ -662,7 +662,7 @@ b8 Ice::RendererVulkan::CreateSyncObjects()
 
 b8 Ice::RendererVulkan::CreateCommandBuffers()
 {
-  const u32 count = context.swapchainImages.size();
+  const u32 count = (u32)context.swapchainImages.size();
   context.commandBuffers.resize(count);
 
   VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };

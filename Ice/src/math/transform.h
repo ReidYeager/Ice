@@ -8,6 +8,24 @@
 
 namespace Ice {
 
+  inline quaternion EulerToQuaternion(vec3 _euler)
+  {
+    _euler *= 0.008726646f; // (Degrees to Radians)/2
+
+    // Rotate round each local-space axis
+    quaternion q1 = { 0, sin(_euler.y), 0, cos(_euler.y) }; // Yaw
+    quaternion q2 = { sin(_euler.x), 0, 0, cos(_euler.x) }; // Pitch
+    quaternion q3 = { 0, 0, sin(_euler.z), cos(_euler.z) }; // Roll
+
+    // Combine into a quaternion rotated by q1, then q2, then q3
+    return (q1 * q2 * q3).Normal();
+  }
+
+  inline quaternion EulerToQuaternion(f32 _x, f32 _y, f32 _z)
+  {
+    return EulerToQuaternion({_x, _y, _z});
+  }
+
   class Transform
   {
   private:
@@ -19,19 +37,6 @@ namespace Ice {
     Transform* parent;
 
     b8 dirty = false;
-
-    quaternion EulerToQuaternion(vec3 _euler)
-    {
-      _euler *= 0.008726646f; // (Degrees to Radians)/2
-
-      // Rotate round each local-space axis
-      quaternion q1 = { 0, sin(_euler.y), 0, cos(_euler.y) }; // Yaw
-      quaternion q2 = { sin(_euler.x), 0, 0, cos(_euler.x) }; // Pitch
-      quaternion q3 = { 0, 0, sin(_euler.z), cos(_euler.z) }; // Roll
-
-      // Combine into a quaternion rotated by q1, then q2, then q3
-      return (q1 * q2 * q3).Normal();
-    }
 
   public:
 
@@ -57,12 +62,22 @@ namespace Ice {
       return position;
     }
 
+    vec3 SetPosition(f32 _x, f32 _y, f32 _z)
+    {
+      return SetPosition({_x, _y, _z});
+    }
+
     // Add this position onto the current position
     vec3 Translate(vec3 _translation)
     {
       dirty = true;
       position += _translation;
       return position;
+    }
+
+    vec3 Translate(f32 _x, f32 _y, f32 _z)
+    {
+      return Translate({_x, _y, _z});
     }
 
     // Rotation =====
@@ -76,15 +91,20 @@ namespace Ice {
     quaternion SetRotation(vec3 _rotation)
     {
       dirty = true;
-      rotation = EulerToQuaternion(_rotation);
+      rotation = Ice::EulerToQuaternion(_rotation);
       return rotation;
+    }
+
+    quaternion SetRotation(f32 _x, f32 _y, f32 _z)
+    {
+      return SetRotation({_x, _y, _z});
     }
 
     // Add this Euler rotation onto the current rotation
     quaternion Rotate(vec3 _rotation)
     {
       dirty = true;
-      quaternion other = EulerToQuaternion(_rotation);
+      quaternion other = Ice::EulerToQuaternion(_rotation);
 
       // TODO : Figure out how to multiply quaternions to maintain the yaw-pitch-roll rotation order
 
@@ -93,6 +113,11 @@ namespace Ice {
 
       rotation.Normalize();
       return rotation;
+    }
+
+    quaternion Rotate(f32 _x, f32 _y, f32 _z)
+    {
+      return Rotate({_x, _y, _z});
     }
 
     // Scale =====
@@ -110,12 +135,22 @@ namespace Ice {
       return scale;
     }
 
+    vec3 SetScale(f32 _x, f32 _y, f32 _z)
+    {
+      return SetScale({_x, _y, _z});
+    }
+
     // Add this scale onto the current scale
     vec3 Scale(vec3 _scale)
     {
       dirty = true;
       scale += _scale;
       return scale;
+    }
+
+    vec3 Scale(f32 _x, f32 _y, f32 _z)
+    {
+      return Scale({_x, _y, _z});
     }
 
     // Matrix =====
@@ -154,7 +189,7 @@ namespace Ice {
       return matrix;
     }
 
-    void SetParent(Transform* _newParent)
+    void SetParentAs(Transform* _newParent)
     {
       parent = _newParent;
     }

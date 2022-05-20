@@ -208,10 +208,8 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
-    Ice::CameraComponent* cameras;
-    u32 cameraCount;
-    Ice::RenderComponent* components;
-    u32 componentCount;
+    std::vector<Ice::ECS::ComponentManager<RenderComponent>*> sceneObjects;
+    std::vector< Ice::ECS::ComponentManager<CameraComponent>*> sceneCameras;
   };
 
   enum RenderingApi

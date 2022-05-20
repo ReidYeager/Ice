@@ -1,7 +1,7 @@
 ﻿
 cmake_minimum_required (VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
@@ -29,6 +29,7 @@ add_library (Ice
   "src/core/input.h"
   "src/core/ecs.h"
   "src/core/scene.h"
+  "src/core/scene.cpp"
   "src/math/transform.h"
 
   "src/platform/platform.h"
@@ -47,21 +48,22 @@ add_library (Ice
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
-  "src/libraries/imgui/imconfig.h"
-  "src/libraries/imgui/imgui.h"
-  "src/libraries/imgui/imgui.cpp"
-  "src/libraries/imgui/imgui_demo.cpp"
-  "src/libraries/imgui/imgui_draw.cpp"
-  "src/libraries/imgui/imgui_impl_vulkan.h"
-  "src/libraries/imgui/imgui_impl_vulkan.cpp"
-  "src/libraries/imgui/imgui_impl_win32.h"
-  "src/libraries/imgui/imgui_impl_win32.cpp"
-  "src/libraries/imgui/imgui_internal.h"
-  "src/libraries/imgui/imgui_tables.cpp"
-  "src/libraries/imgui/imgui_widgets.cpp"
-  "src/libraries/imgui/imstb_rectpack.h"
-  "src/libraries/imgui/imstb_textedit.h"
-  "src/libraries/imgui/imstb_truetype.h"
+  "libraries/include/imgui/imconfig.h"
+  "libraries/include/imgui/imgui.h"
+  "libraries/include/imgui/imgui.cpp"
+  "libraries/include/imgui/imgui_demo.cpp"
+  "libraries/include/imgui/imgui_draw.cpp"
+  "libraries/include/imgui/imgui_impl_vulkan.h"
+  "libraries/include/imgui/imgui_impl_vulkan.cpp"
+  "libraries/include/imgui/imgui_impl_win32.h"
+  "libraries/include/imgui/imgui_impl_win32.cpp"
+  "libraries/include/imgui/imgui_internal.h"
+  "libraries/include/imgui/imgui_tables.cpp"
+  "libraries/include/imgui/imgui_widgets.cpp"
+  "libraries/include/imgui/imstb_rectpack.h"
+  "libraries/include/imgui/imstb_textedit.h"
+  "libraries/include/imgui/imstb_truetype.h"
+
 )
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)

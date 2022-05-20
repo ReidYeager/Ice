@@ -210,7 +210,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
   // Count descriptors =====
   for (Ice::Shader& s : matSettings->shaders)
   {
-    count += s.input.size();
+    count += (u32)s.input.size();
   }
   _material->buffer.count = 1;
   _bindings.resize(count); // Worst-case size.
@@ -368,7 +368,7 @@ b8 Ice::RendererVulkan::CreateDescriptorLayout(std::vector<VkDescriptorSetLayout
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   createInfo.flags = 0;
   createInfo.pNext = nullptr;
-  createInfo.bindingCount = _bindings->size();
+  createInfo.bindingCount = (u32)_bindings->size();
   createInfo.pBindings = _bindings->data();
 
   IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
@@ -446,7 +446,7 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     writes.push_back(newWrite);
   }
 
-  vkUpdateDescriptorSets(context.device, writes.size(), writes.data(), 0, nullptr);
+  vkUpdateDescriptorSets(context.device, (u32)writes.size(), writes.data(), 0, nullptr);
 }
 
 b8 Ice::RendererVulkan::SetMaterialInput(Ice::Material* _material,
@@ -503,7 +503,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLa
   createInfo.pNext = nullptr;
   createInfo.pushConstantRangeCount = 0;
   createInfo.pPushConstantRanges = nullptr;
-  createInfo.setLayoutCount = _setLayouts.size();
+  createInfo.setLayoutCount = (u32)_setLayouts.size();
   createInfo.pSetLayouts = _setLayouts.data();
 
   IVK_ASSERT(vkCreatePipelineLayout(context.device,
@@ -545,7 +545,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   //vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttribDesc.size();
+  vertexInputStateInfo.vertexAttributeDescriptionCount = (u32)vertexInputAttribDesc.size();
   vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
   //vertexInputStateInfo.vertexBindingDescriptionCount = 0;
   vertexInputStateInfo.vertexBindingDescriptionCount = 1;
@@ -587,7 +587,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   //rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;
@@ -646,7 +646,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   createInfo.pDepthStencilState  = &depthStateInfo;
   createInfo.pColorBlendState    = &blendStateInfo;
   createInfo.pDynamicState       = &dynamicStateInfo;
-  createInfo.stageCount = stages.size();
+  createInfo.stageCount = (u32)stages.size();
   createInfo.pStages    = stages.data();
 
   createInfo.layout     = _material->vulkan.pipelineLayout;

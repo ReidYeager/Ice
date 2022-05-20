@@ -9,7 +9,8 @@
 #include "math/transform.h"
 #include "rendering/renderer_defines.h"
 
-#include "math.h"
+#include <unordered_map>
+#include <iostream>
 
 namespace Ice {
 
@@ -19,6 +20,48 @@ namespace Ice {
     Ice::BufferSegment bufferSegment;
   };
 
+  class Object;
+
+  class Scene
+  {
+    friend class Ice::Object;
+
+  private:
+    u8 maxCameraCount = 2; // TMP
+
+    u32 maxObjectCount;
+    u32 objectCount = 0;
+    Ice::Object* objects;
+    Ice::Buffer transformsBuffer; // Stores the transforms matrix for every object
+
+    std::unordered_map<size_t, void*> componentsMap; // Stores pointers to ECS::ComponentManagers
+
+  public:
+    Scene(u32 _maxObjectCount, u32 _maxComponentTypeCount);
+    ~Scene();
+
+    void UpdateTransforms();
+    Ice::Object* AddObject(const char* _meshDir, Ice::Material* _material);
+    Ice::Object* AddCamera(Ice::CameraSettings _settings = {});
+
+    template<typename T>
+    constexpr Ice::ECS::ComponentManager<T>* GetComponentManager()
+    {
+      if (ContainsComponent<T>())
+      {
+        return static_cast<Ice::ECS::ComponentManager<T>*>(componentsMap[typeid(T).hash_code()]);
+      }
+
+      return nullptr;
+    }
+
+    template<typename T>
+    constexpr b8 ContainsComponent()
+    {
+      return componentsMap.find(typeid(T).hash_code()) != componentsMap.end();
+    }
+  };
+
   class Object
   {
   public:
@@ -26,40 +69,35 @@ namespace Ice {
 
   protected:
     Ice::ECS::Entity id;
+    Ice::Scene* owningScene;
 
   public:
-    Object(Ice::ECS::Entity _id) : id(_id) {}
+    Object(Ice::ECS::Entity _id, Ice::Scene* _scene) : id(_id), owningScene(_scene) {}
     const Ice::ECS::Entity GetId() { return id; }
+
+    template<typename T>
+    constexpr T* AddComponent()
+    {
+      if (!owningScene->ContainsComponent<T>())
+      {
+        owningScene->componentsMap.insert(std::pair<size_t, void*>(typeid(T).hash_code(),
+                                                                   new Ice::ECS::ComponentManager<T>));
+
+        owningScene->GetComponentManager<T>()->Initialize(owningScene->maxObjectCount);
+      }
+
+      T* component = owningScene->GetComponentManager<T>()->Create(id);
+      return component;
+    }
+
+    template<typename T>
+    constexpr T* GetComponent()
+    {
+      T* component = owningScene->GetComponentManager<T>()->GetComponent(id);
+      return component;
+    }
+
   };
-
-  // Calculates a transform matrix that does the exact opposite of what the transform says
-  inline mat4 CalculateCameraTransformMatrix(Ice::Transform* _transform)
-  {
-    vec3 s = _transform->GetScale();
-    vec3 p = _transform->GetPosition();
-    quaternion q = _transform->GetRotation();
-
-    s = { 1.0f / s.x, 1.0f / s.y, 1.0f / s.z };
-    p *= -1;
-    q = {-q.x, -q.y, -q.z, q.w};
-    q.Normalize();
-
-    // Combine scale, rotation, position =====
-    mat4 out = {
-      2 * (q.w * q.w + q.x * q.x) - 1, 2 * (q.x * q.y - q.w * q.z)    , 2 * (q.w * q.y + q.x * q.z)    , 0,
-      2 * (q.w * q.z + q.x * q.y)    , 2 * (q.w * q.w + q.y * q.y) - 1, 2 * (q.y * q.z - q.w * q.x)    , 0,
-      2 * (q.x * q.z - q.w * q.y)    , 2 * (q.w * q.x + q.y * q.z)    , 2 * (q.w * q.w + q.z * q.z) - 1, 0,
-      0                              , 0                              , 0                              , 0
-    };
-
-    out = {
-      s.x * out.x.x, s.y * out.x.y, s.z * out.x.z, p.x * s.x * out.x.x + p.y * s.x * out.x.y + p.z * s.x * out.x.z,
-      s.x * out.y.x, s.y * out.y.y, s.z * out.y.z, p.x * s.y * out.y.x + p.y * s.y * out.y.y + p.z * s.y * out.y.z,
-      s.x * out.z.x, s.y * out.z.y, s.z * out.z.z, p.x * s.z * out.z.x + p.y * s.z * out.z.y + p.z * s.z * out.z.z,
-      0            , 0            , 0            , 1
-    };
-    return out;
-  }
 
 }
 

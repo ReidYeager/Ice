@@ -5,6 +5,7 @@
 // These annoy me.
 #pragma warning ( disable : 26812 ) // "Prefer enum-class" warning
 #pragma warning ( disable : 26495 ) // "Variable is uninitialized" warning
+#pragma warning ( disable : 26451 )
 #pragma warning ( disable : 4996 ) // "X is deprecated" warning
 
 #ifdef _DEBUG
@@ -65,7 +66,7 @@ typedef u64 IceFlagExtended;
 
 typedef void* IceHandle;
 #define ICE_NULL_HANDLE nullptr
-#define ICE_NULL_UINT -1U
+#define ICE_NULL_UINT ~0U
 
 //=========================
 // Resource directories

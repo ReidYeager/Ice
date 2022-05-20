@@ -5,7 +5,7 @@
 
 b8 Ice::RendererVulkan::CreateDepthImages()
 {
-  const u32 count = context.swapchainImages.size();
+  const u32 count = (u32)context.swapchainImages.size();
   context.depthImages.resize(count);
 
   for (u32 i = 0; i < count; i++)
@@ -40,7 +40,7 @@ b8 CreateFrameBuffer(Ice::VulkanContext& context,
   createInfo.width = _extents.width;
   createInfo.height = _extents.height;
 
-  createInfo.attachmentCount = _views.size();
+  createInfo.attachmentCount = (u32)_views.size();
   createInfo.pAttachments = _views.data();
 
   IVK_ASSERT(vkCreateFramebuffer(context.device,
@@ -66,7 +66,7 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
   // Descriptions =====
 
   const u32 attachmentCount = 2;
-  VkAttachmentDescription attachments[attachmentCount];
+  VkAttachmentDescription attachments[attachmentCount] = {};
   // Swapchain
   attachments[0].flags = 0;
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -88,7 +88,7 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
   attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-  VkAttachmentReference references[attachmentCount];
+  VkAttachmentReference references[attachmentCount] = {};
   // Swapchain
   references[0].attachment = 0;
   references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -98,7 +98,7 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
 
   // Subpass =====
 
-  VkSubpassDescription subpass;
+  VkSubpassDescription subpass = {};
   subpass.flags = 0;
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
@@ -149,7 +149,7 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
   // ==========
   // Framebuffers
   // ==========
-  u32 count = context.swapchainImages.size();
+  u32 count = (u32)context.swapchainImages.size();
   context.forward.framebuffers.resize(count);
 
   for (u32 i = 0; i < count; i++)

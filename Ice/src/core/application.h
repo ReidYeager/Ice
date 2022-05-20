@@ -51,6 +51,8 @@ namespace Ice {
   // Rendering
   //=========================
 
+  b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh);
+
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
 
@@ -59,12 +61,12 @@ namespace Ice {
   //void SetTexture(Ice::Material* _material, u32 inputIndex, Ice::Image* _image);
 
   //=========================
-  // Objects
+  // Scenes
   //=========================
 
-  Ice::Object& CreateObject();
-  void AttatchRenderComponent(Ice::Object* _object, const char* _meshDir, Ice::Material* _material);
-  void AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings);
+  Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
+  void DestroyScene(Ice::Scene* _scene);
+  void AddSceneToRender(Ice::Scene* _scene);
   void UpdateTransforms();
 
 }

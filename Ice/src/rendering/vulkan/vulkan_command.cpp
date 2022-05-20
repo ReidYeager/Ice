@@ -77,75 +77,146 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
   forwardBeginInfo.renderPass = context.forward.renderpass;
   forwardBeginInfo.framebuffer = context.forward.framebuffers[_commandIndex];
 
-  // Begin recording =====
+  //=========================
+  // Begin recording
+  //=========================
   IVK_ASSERT(vkBeginCommandBuffer(cmdBuffer, &beginInfo),
              "Failed to begin command buffer %u", _commandIndex);
 
-  //=========================
   // Descriptor sets : 0 = Global, 1 = per-camera, 2 = per-material, 3 = per-object
+
+
+  u32 camCount = _data->sceneCameras[0]->GetCount();
+  u32 camSceneIndex = 0;
+  u32 objectCount = _data->sceneObjects[0]->GetCount();
+  u32 objectSceneIndex = 0;
+
   //=========================
+  // Forward renderpass
+  //=========================
+  vkCmdBeginRenderPass(cmdBuffer, &forwardBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBindDescriptorSets(cmdBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          context.globalPipelineLayout,
+                          0,
+                          1,
+                          &context.globalDescriptorSet,
+                          0,
+                          nullptr);
 
-
-  // Forward pass =====
-  for (u32 camIndex = 0; camIndex < _data->cameraCount; camIndex++)
+  for (Ice::ECS::ComponentManager<Ice::CameraComponent>* sceneCamerasPtr : _data->sceneCameras)
   {
-    vkCmdBeginRenderPass(cmdBuffer, &forwardBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindDescriptorSets(cmdBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            context.globalPipelineLayout,
-                            0,
-                            1,
-                            &context.globalDescriptorSet,
-                            0,
-                            nullptr);
+    Ice::ECS::ComponentManager<Ice::CameraComponent>& sceneCameras = *sceneCamerasPtr;
+    camCount = _data->sceneCameras[camSceneIndex]->GetCount();
 
-    vkCmdBindDescriptorSets(cmdBuffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            context.globalPipelineLayout,
-                            1,
-                            1,
-                            &_data->cameras[camIndex].vulkan.descriptorSet,
-                            0,
-                            nullptr);
-
-    for (u32 objectIndex = 0; objectIndex < _data->componentCount; objectIndex++)
+    for (u32 camIndex = 0; camIndex < camCount; camIndex++)
     {
-      vkCmdBindPipeline(cmdBuffer,
-                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        _data->components[objectIndex].material->vulkan.pipeline);
-
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              _data->components[objectIndex].material->vulkan.pipelineLayout,
-                              2,
+                              context.globalPipelineLayout,
                               1,
-                              &_data->components[objectIndex].material->vulkan.descriptorSet,
+                              1,
+                              &sceneCameras[camIndex].vulkan.descriptorSet,
                               0,
                               nullptr);
 
-      vkCmdBindDescriptorSets(cmdBuffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              _data->components[objectIndex].material->vulkan.pipelineLayout,
-                              3,
-                              1,
-                              &_data->components[objectIndex].vulkan.descriptorSet,
-                              0,
-                              nullptr);
+      objectSceneIndex = 0;
+      for (Ice::ECS::ComponentManager<Ice::RenderComponent>* sceneObjectsPtr : _data->sceneObjects)
+      {
+        Ice::ECS::ComponentManager<Ice::RenderComponent> sceneObjects = *sceneObjectsPtr;
+        objectCount = _data->sceneObjects[objectSceneIndex]->GetCount();
 
-      vkCmdBindVertexBuffers(cmdBuffer,
-                             0,
-                             1,
-                             &_data->components[objectIndex].mesh->vertexBuffer.buffer->vulkan.buffer,
-                             &_data->components[objectIndex].mesh->vertexBuffer.offset);
-      vkCmdBindIndexBuffer(cmdBuffer,
-                           _data->components[objectIndex].mesh->indexBuffer.buffer->vulkan.buffer,
-                           _data->components[objectIndex].mesh->indexBuffer.offset,
-                           VK_INDEX_TYPE_UINT32);
-      vkCmdDrawIndexed(cmdBuffer, _data->components[objectIndex].mesh->indexCount, 1, 0, 0, 0);
+        for (u32 objectIndex = 0; objectIndex < objectCount; objectIndex++)
+        {
+          vkCmdBindPipeline(cmdBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            sceneObjects[objectIndex].material->vulkan.pipeline);
+
+          vkCmdBindDescriptorSets(cmdBuffer,
+                                  VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+                                  2,
+                                  1,
+                                  &sceneObjects[objectIndex].material->vulkan.descriptorSet,
+                                  0,
+                                  nullptr);
+
+          vkCmdBindDescriptorSets(cmdBuffer,
+                                  VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+                                  3,
+                                  1,
+                                  &sceneObjects[objectIndex].vulkan.descriptorSet,
+                                  0,
+                                  nullptr);
+
+          vkCmdBindVertexBuffers(cmdBuffer,
+                                 0,
+                                 1,
+                                 &sceneObjects[objectIndex].mesh->vertexBuffer.buffer->vulkan.buffer,
+                                 &sceneObjects[objectIndex].mesh->vertexBuffer.offset);
+          vkCmdBindIndexBuffer(cmdBuffer,
+                               sceneObjects[objectIndex].mesh->indexBuffer.buffer->vulkan.buffer,
+                               sceneObjects[objectIndex].mesh->indexBuffer.offset,
+                               VK_INDEX_TYPE_UINT32);
+          vkCmdDrawIndexed(cmdBuffer, sceneObjects[objectIndex].mesh->indexCount, 1, 0, 0, 0);
+        }
+        objectSceneIndex++;
+      }
     }
-
-    vkCmdEndRenderPass(cmdBuffer);
+    camSceneIndex++;
   }
+  vkCmdEndRenderPass(cmdBuffer);
+
+  //for (u32 camIndex = 0; camIndex < _data->cameraCount; camIndex++)
+  //{
+
+  //  vkCmdBindDescriptorSets(cmdBuffer,
+  //                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                          context.globalPipelineLayout,
+  //                          1,
+  //                          1,
+  //                          &_data->cameras[camIndex].vulkan.descriptorSet,
+  //                          0,
+  //                          nullptr);
+
+  //  for (u32 objectIndex = 0; objectIndex < _data->componentCount; objectIndex++)
+  //  {
+  //    vkCmdBindPipeline(cmdBuffer,
+  //                      VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                      sceneObjects[objectIndex].material->vulkan.pipeline);
+
+  //    vkCmdBindDescriptorSets(cmdBuffer,
+  //                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                            sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+  //                            2,
+  //                            1,
+  //                            &sceneObjects[objectIndex].material->vulkan.descriptorSet,
+  //                            0,
+  //                            nullptr);
+
+  //    vkCmdBindDescriptorSets(cmdBuffer,
+  //                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                            sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+  //                            3,
+  //                            1,
+  //                            &sceneObjects[objectIndex].vulkan.descriptorSet,
+  //                            0,
+  //                            nullptr);
+
+  //    vkCmdBindVertexBuffers(cmdBuffer,
+  //                           0,
+  //                           1,
+  //                           &sceneObjects[objectIndex].mesh->vertexBuffer.buffer->vulkan.buffer,
+  //                           &sceneObjects[objectIndex].mesh->vertexBuffer.offset);
+  //    vkCmdBindIndexBuffer(cmdBuffer,
+  //                         sceneObjects[objectIndex].mesh->indexBuffer.buffer->vulkan.buffer,
+  //                         sceneObjects[objectIndex].mesh->indexBuffer.offset,
+  //                         VK_INDEX_TYPE_UINT32);
+  //    vkCmdDrawIndexed(cmdBuffer, sceneObjects[objectIndex].mesh->indexCount, 1, 0, 0, 0);
+  //  }
+  //}
+  //vkCmdEndRenderPass(cmdBuffer);
 
   // End recording =====
   IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),

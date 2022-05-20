@@ -112,7 +112,7 @@ b8 Ice::RendererVulkan::PushDataToBuffer(void* _data, const Ice::BufferSegment _
   }
 
   // Using char* to index one byte at a time
-  char* mappedGpuMemory;
+  char* mappedGpuMemory = nullptr;
   char* cpuMemory = (char*)_data;
 
   u64 stride = _segmentInfo.buffer->padElementSize;

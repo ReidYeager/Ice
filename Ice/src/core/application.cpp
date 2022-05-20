@@ -27,20 +27,19 @@ b8 isRunning;
 // Rendering =====
 u32 shaderCount = 0;
 Ice::Shader* shaders;
+
 u32 materialCount = 0;
 Ice::Material* materials;
 Ice::MaterialSettings* materialSettings;
+
 u32 meshCount = 0;
 Ice::Mesh* meshes;
-u32 objectCount = 0;
-Ice::Object* objects;
+
 Ice::Image* textures;
 u32 textureCount = 0;
 
-Ice::ECS::ComponentManager<Ice::RenderComponent> renderComponents;
-Ice::ECS::ComponentManager<Ice::TransformComponent> transformComponents;
-Ice::Buffer transformsBuffer; // Stores the transforms matrix for every object
-Ice::ECS::ComponentManager<Ice::CameraComponent> cameraComponents;
+Ice::FrameInformation frameInfo{};
+std::vector<Ice::Scene*> scenes;
 
 //=========================
 // Time
@@ -116,13 +115,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
   materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
-  objects = (Ice::Object*)Ice::MemoryAllocZero(sizeof(Ice::Object) * _settings.maxObjectCount);
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
-
-  renderComponents.Initialize(_settings.maxObjectCount);
-  transformComponents.Initialize(_settings.maxObjectCount);
-  renderer->CreateBufferMemory(&transformsBuffer, 64, _settings.maxObjectCount, Ice::Buffer_Memory_Shader_Read);
-  cameraComponents.Initialize(_settings.maxObjectCount);
 
   // Game =====
   _settings.clientInitFunction();
@@ -136,10 +129,6 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 b8 IceApplicationUpdate()
 {
   UpdateTime();
-
-  Ice::FrameInformation frameInfo {};
-  frameInfo.components = renderComponents.GetComponentArray(&frameInfo.componentCount);
-  frameInfo.cameras = cameraComponents.GetComponentArray(&frameInfo.cameraCount);
 
   while (isRunning && Ice::platform.Update())
   {
@@ -160,14 +149,11 @@ b8 IceApplicationShutdown()
 {
   ICE_ATTEMPT(appSettings.clientShutdownFunction());
 
-  renderComponents.Shutdown();
-
-  cameraComponents.Shutdown();
-
-  renderer->DestroyBufferMemory(&transformsBuffer);
-  transformComponents.Shutdown();
-
-  Ice::MemoryFree(objects);
+  for (u32 i = 0; i < scenes.size(); i++)
+  {
+    delete(scenes[i]);
+  }
+  scenes.clear();
 
   for (u32 i = 0; i < textureCount; i++)
   {
@@ -274,6 +260,113 @@ namespace std {
   };
 }
 
+b8 Ice::CreateMesh(const char* _directory, Ice::Mesh** _mesh)
+{
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+
+  // Load mesh =====
+  {
+    std::string loadWarnings, loadErrors;
+
+    ICE_ATTEMPT_MSG(tinyobj::LoadObj(&attrib,
+                                      &shapes,
+                                      &materials,
+                                      &loadWarnings,
+                                      &loadErrors,
+                                      _directory),
+                    Ice::Log_Error,
+                    "Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
+                    _directory,
+                    loadWarnings.c_str(),
+                    loadErrors.c_str());
+  }
+
+  std::vector<Ice::Vertex> vertices;
+  std::vector<u32> indices;
+
+  // Assemble mesh =====
+  std::unordered_map<HashedVertex, u32> vertMap = {};
+  {
+    HashedVertex vert {};
+    for (const auto& shape : shapes)
+    {
+      for (const auto& index : shape.mesh.indices)
+      {
+        vert.position = {
+          attrib.vertices[3 * index.vertex_index + 0],
+          attrib.vertices[3 * index.vertex_index + 1],
+          attrib.vertices[3 * index.vertex_index + 2]
+        };
+
+        vert.uv = {
+          attrib.texcoords[2 * index.texcoord_index + 0],
+          1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+        };
+
+        vert.normal = {
+          attrib.normals[3 * index.normal_index + 0],
+          attrib.normals[3 * index.normal_index + 1],
+          attrib.normals[3 * index.normal_index + 2]
+        };
+
+        if (vertMap.count(vert) == 0)
+        {
+          vertMap[vert] = (u32)vertices.size();
+
+          Ice::Vertex properVert {};
+          properVert.position = { vert.position.x, vert.position.y, vert.position.z };
+          properVert.uv = { vert.uv.x, vert.uv.y };
+          properVert.normal = { vert.normal.x, vert.normal.y, vert.normal.z };
+
+          vertices.push_back(properVert);
+        }
+        indices.push_back(vertMap[vert]);
+      }
+    }
+  }
+
+  // Create mesh =====
+  {
+    Ice::Mesh& newMesh = meshes[meshCount];
+
+    newMesh.indexCount = (u32)indices.size();
+    ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
+                                             (sizeof(Ice::Vertex) * vertices.size() +
+                                               (sizeof(u32) * indices.size())),
+                                             1,
+                                             Ice::Buffer_Memory_Vertex | Ice::Buffer_Memory_Index));
+
+    newMesh.vertexBuffer.buffer = &newMesh.buffer;
+    newMesh.vertexBuffer.offset = 0;
+    newMesh.vertexBuffer.elementSize = sizeof(Ice::Vertex) * vertices.size();
+    newMesh.vertexBuffer.count = 1;
+    if (!renderer->PushDataToBuffer(vertices.data(), newMesh.vertexBuffer))
+    {
+      IceLogError("Failed to push vertex data to its buffer");
+      renderer->DestroyBufferMemory(&newMesh.buffer);
+      return false;
+    }
+
+    newMesh.indexBuffer.buffer = &newMesh.buffer;
+    newMesh.indexBuffer.offset = newMesh.vertexBuffer.elementSize;
+    newMesh.indexBuffer.elementSize = sizeof(u32) * indices.size();
+    newMesh.indexBuffer.count = 1;
+    if (!renderer->PushDataToBuffer(indices.data(), newMesh.indexBuffer))
+    {
+      IceLogError("Failed to push index data to its buffer");
+      renderer->DestroyBufferMemory(&newMesh.buffer);
+      return false;
+    }
+
+    *_mesh = &meshes[meshCount];
+    meshCount++;
+  }
+
+  return true;
+}
+
 b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material /*= nullptr*/)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
@@ -378,179 +471,43 @@ void Ice::SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _dir
   textureCount++;
 }
 
-b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh)
+Ice::Scene* Ice::CreateScene(u32 _maxObjectCount /*= 100*/, u32 _maxComponentTypeCount /*= 10*/)
 {
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
+  scenes.push_back(new Ice::Scene(_maxObjectCount, _maxComponentTypeCount));
+  return scenes.back();
+}
 
-  // Load mesh =====
+void Ice::DestroyScene(Ice::Scene* _scene)
+{
+  for (u32 i = 0; i < scenes.size(); i++)
   {
-    std::string loadWarnings, loadErrors;
-
-    ICE_ATTEMPT_MSG(tinyobj::LoadObj(&attrib,
-                                      &shapes,
-                                      &materials,
-                                      &loadWarnings,
-                                      &loadErrors,
-                                      _directory),
-                    Ice::Log_Error,
-                    "Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
-                    _directory,
-                    loadWarnings.c_str(),
-                    loadErrors.c_str());
-  }
-
-  std::vector<Ice::Vertex> vertices;
-  std::vector<u32> indices;
-
-  // Assemble mesh =====
-  std::unordered_map<HashedVertex, u32> vertMap = {};
-  {
-    HashedVertex vert {};
-    for (const auto& shape : shapes)
+    if (_scene == scenes[i])
     {
-      for (const auto& index : shape.mesh.indices)
+      delete(scenes[i]);
+
+      if (i < scenes.size() - 1)
       {
-        vert.position = {
-          attrib.vertices[3 * index.vertex_index + 0],
-          attrib.vertices[3 * index.vertex_index + 1],
-          attrib.vertices[3 * index.vertex_index + 2]
-        };
-
-        vert.uv = {
-          attrib.texcoords[2 * index.texcoord_index + 0],
-          1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
-        };
-
-        vert.normal = {
-          attrib.normals[3 * index.normal_index + 0],
-          attrib.normals[3 * index.normal_index + 1],
-          attrib.normals[3 * index.normal_index + 2]
-        };
-
-        if (vertMap.count(vert) == 0)
-        {
-          vertMap[vert] = (u32)vertices.size();
-
-          Ice::Vertex properVert {};
-          properVert.position = { vert.position.x, vert.position.y, vert.position.z };
-          properVert.uv = { vert.uv.x, vert.uv.y };
-          properVert.normal = { vert.normal.x, vert.normal.y, vert.normal.z };
-
-          vertices.push_back(properVert);
-        }
-        indices.push_back(vertMap[vert]);
+        scenes[i] = scenes.back();
+        scenes.pop_back();
       }
     }
   }
 
-  // Create mesh =====
-  {
-    Ice::Mesh& newMesh = meshes[meshCount];
-
-    newMesh.indexCount = indices.size();
-    ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
-                                             (sizeof(Ice::Vertex) * vertices.size() +
-                                               (sizeof(u32) * indices.size())),
-                                             1,
-                                             Ice::Buffer_Memory_Vertex | Ice::Buffer_Memory_Index));
-
-    newMesh.vertexBuffer.buffer = &newMesh.buffer;
-    newMesh.vertexBuffer.offset = 0;
-    newMesh.vertexBuffer.elementSize = sizeof(Ice::Vertex) * vertices.size();
-    newMesh.vertexBuffer.count = 1;
-    if (!renderer->PushDataToBuffer(vertices.data(), newMesh.vertexBuffer))
-    {
-      IceLogError("Failed to push vertex data to its buffer");
-      renderer->DestroyBufferMemory(&newMesh.buffer);
-      return false;
-    }
-
-    newMesh.indexBuffer.buffer = &newMesh.buffer;
-    newMesh.indexBuffer.offset = newMesh.vertexBuffer.elementSize;
-    newMesh.indexBuffer.elementSize = sizeof(u32) * indices.size();
-    newMesh.indexBuffer.count = 1;
-    if (!renderer->PushDataToBuffer(indices.data(), newMesh.indexBuffer))
-    {
-      IceLogError("Failed to push index data to its buffer");
-      renderer->DestroyBufferMemory(&newMesh.buffer);
-      return false;
-    }
-
-    *_mesh = &meshes[meshCount];
-    meshCount++;
-  }
-
-  return true;
+  IceLogError("Scene not found in the application");
 }
 
-Ice::Object& Ice::CreateObject()
+void Ice::AddSceneToRender(Ice::Scene* _scene)
 {
-  Ice::Object entity(Ice::ECS::CreateEntity());
+  u32 count = 0;
 
-  Ice::TransformComponent* tc = transformComponents.Create(entity.GetId());
-  u32 index = transformComponents.GetIndex(entity.GetId());
-
-  tc->bufferSegment.buffer = &transformsBuffer;
-  tc->bufferSegment.elementSize = 64; // Should be defined somewhere else.
-  tc->bufferSegment.count = 1;
-  tc->bufferSegment.startIndex = index;
-  renderer->PushDataToBuffer((void*)&mat4Identity, tc->bufferSegment);
-
-  entity.transform = &tc->transform;
-
-  objects[objectCount] = entity;
-  objectCount++;
-
-  return objects[objectCount - 1];
-}
-
-void Ice::AttatchRenderComponent(Ice::Object* _object,
-                                 const char* _meshDir,
-                                 Ice::Material* _material)
-{
-  Ice::RenderComponent* rc = renderComponents.Create(_object->GetId());
-  Ice::BufferSegment* tbuffer = &transformComponents.GetComponent(_object->GetId())->bufferSegment;
-
-  renderer->InitializeRenderComponent(rc, tbuffer);
-  CreateMesh(_meshDir, &rc->mesh);
-  rc->material = _material;
-}
-
-void Ice::AttatchCameraComponent(Ice::Object* _object, Ice::CameraSettings _settings)
-{
-  Ice::CameraComponent* cam = cameraComponents.Create(_object->GetId());
-  renderer->InitializeCamera(cam,
-                             transformComponents.GetComponent(_object->GetId())->bufferSegment,
-                             _settings);
+  frameInfo.sceneObjects.push_back(_scene->GetComponentManager<Ice::RenderComponent>());
+  frameInfo.sceneCameras.push_back(_scene->GetComponentManager<Ice::CameraComponent>());
 }
 
 void Ice::UpdateTransforms()
 {
-  for (u32 i = 0; i < transformComponents.GetCount(); i++)
+  for (auto& s : scenes)
   {
-    Ice::CameraComponent* cam = cameraComponents.GetComponent(transformComponents.GetEntity(i));
-    if (cam == nullptr)
-    {
-      //mat4 out = Ice::CalculateTransformMatrix(&transformComponents[i].transform).Transpose();
-      mat4 out = transformComponents[i].transform.GetMatrix(true).Transpose();
-      renderer->PushDataToBuffer((void*)&out, transformComponents[i].bufferSegment);
-    }
-    else
-    {
-      mat4 out = Ice::CalculateCameraTransformMatrix(&transformComponents[i].transform).Transpose();
-      //mat4 out = transformComponents[i].transform.GetMatrix(false).Transpose();
-
-      // Fastest way to convert to a column-major glm matrix (f32[16]); avoids copying data
-      glm::mat4* transform = (glm::mat4*)&out;
-      mat4 cm = cam->projectionMatrix.Transpose();
-      glm::mat4* projection = (glm::mat4*)&cm;
-
-      glm::mat4 projView = *projection * *transform;
-
-      renderer->PushDataToBuffer((void*)&projView, transformComponents[i].bufferSegment);
-    }
+    s->UpdateTransforms();
   }
-
 }

@@ -238,12 +238,12 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
   {
-    Input.ProcessKeyboardKey(wparam, true);
+    Input.ProcessKeyboardKey((IceKeyCodeFlag)wparam, true);
   } break;
   case WM_KEYUP:
   case WM_SYSKEYUP:
   {
-    Input.ProcessKeyboardKey(wparam, false);
+    Input.ProcessKeyboardKey((IceKeyCodeFlag)wparam, false);
   } break;
 
   // Mouse =====
