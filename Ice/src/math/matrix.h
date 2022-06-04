@@ -5,7 +5,6 @@
 #include "defines.h"
 
 #include "math/vector.h"
-#include "math/quaternion.h"
 
 typedef union mat4
 {

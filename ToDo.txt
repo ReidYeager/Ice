@@ -1,0 +1,16 @@
+Root :--: Ice/src
+
+\core\application.cpp
+  Line   82 :--: // TODO : Hard-code default texture information into engine so it doesn't have to load anything
+  Line  374 :--: // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
+\core\scene.cpp
+  Line   94 :--: // TODO : Account for parent transform in camera matrix
+  Line  102 :--: // TODO : Create a default mesh and default material for new objects to use
+  Line  158 :--: tc->bufferSegment.elementSize = 64; // TODO : Define per-object buffer size somewhere else.
+\math\transform.h
+  Line  113 :--: // TODO : Figure out how to multiply quaternions to maintain the yaw-pitch-roll rotation order
+\rendering\renderer.h
+  Line   20 :--: // NOTE : Given the frequency this is called, should use something more efficient than virtual.
+\rendering\renderer_defines.h
+  Line  184 :--: // TODO : Add camera render target
+  Line  197 :--: // TODO : Rework the renderComponent to not chase pointers

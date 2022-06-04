@@ -92,7 +92,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         newInput.type = (ShaderInputTypes)typeIndex;
 
         // Get input index
-        if (!lexer.ExpectType(Ice::Token_Int, &token))
+        if (!lexer.ExpectType(Ice::Token_Decimal, &token))
         {
           IceLogError("Binding '%s' is missing an index. Ignoring this binding.\n> '%s'",
                       token.string.c_str(),
@@ -106,7 +106,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         {
         case Ice::Shader_Input_Buffer:
         {
-          if (lexer.ExpectType(Ice::Token_Int, &token))
+          if (lexer.ExpectType(Ice::Token_Decimal, &token))
           {
             newInput.bufferSegment.elementSize = lexer.GetUIntFromToken(&token);
             newInput.bufferSegment.count = 1;
@@ -587,7 +587,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   //rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
 
   rasterStateInfo.rasterizerDiscardEnable = VK_TRUE;
   rasterStateInfo.lineWidth = 1.0f;

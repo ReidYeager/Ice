@@ -66,6 +66,14 @@ namespace Ice {
 
   Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
   void DestroyScene(Ice::Scene* _scene);
+  // Used to create objects in the active scene without needing to pass its pointer around the game
+
+  void SetActiveScene(Ice::Scene* _scene);
+  Ice::Scene* GetActiveScene();
+
+  Ice::Object* CreateObject(const char* _meshDir, Ice::Material* _material);
+  Ice::Object* CreateCamera(Ice::CameraSettings _settings = {});
+
   void AddSceneToRender(Ice::Scene* _scene);
   void UpdateTransforms();
 

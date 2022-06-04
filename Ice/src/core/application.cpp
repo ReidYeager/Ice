@@ -40,6 +40,7 @@ u32 textureCount = 0;
 
 Ice::FrameInformation frameInfo{};
 std::vector<Ice::Scene*> scenes;
+Ice::Scene* activeScene = nullptr;
 
 //=========================
 // Time
@@ -494,6 +495,38 @@ void Ice::DestroyScene(Ice::Scene* _scene)
   }
 
   IceLogError("Scene not found in the application");
+}
+
+void Ice::SetActiveScene(Ice::Scene* _scene)
+{
+  activeScene = _scene;
+}
+
+Ice::Scene* Ice::GetActiveScene()
+{
+  return activeScene;
+}
+
+Ice::Object* Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
+{
+  if (activeScene == nullptr)
+  {
+    IceLogError("No active scene for object creation");
+    return nullptr;
+  }
+
+  return activeScene->AddObject(_meshDir, _material);
+}
+
+Ice::Object* Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
+{
+  if (activeScene == nullptr)
+  {
+    IceLogError("No active scene for object creation");
+    return nullptr;
+  }
+
+  return activeScene->AddCamera(_settings);
 }
 
 void Ice::AddSceneToRender(Ice::Scene* _scene)

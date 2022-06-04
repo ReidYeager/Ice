@@ -3,14 +3,17 @@
 #define ICE_MATH_QUATERNION_H_
 
 #include "defines.h"
+#include "math/vector.h"
+#include "math/matrix.h"
+
 #include "math.h"
 
 typedef struct quaternion
 {
-  union { f32 x, r; };
-  union { f32 y, g; };
-  union { f32 z, b; };
-  union { f32 w, a; };
+  f32 x = 0;
+  f32 y = 0;
+  f32 z = 0;
+  f32 w = 1;
 
   constexpr f32& operator[](int i)
   {
@@ -119,6 +122,11 @@ typedef struct quaternion
     return { x * scalar, y * scalar, z * scalar, w * scalar };
   }
 
+  constexpr vec3 operator*(vec3 vec)
+  {
+    return ToMatrix() * vec;
+  }
+
   constexpr quaternion operator*(quaternion other)
   {
     return { w * other.x + x * other.w + y * other.z - z * other.y, // X
@@ -173,10 +181,36 @@ typedef struct quaternion
     return *this / (f32)sqrt(x * x + y * y + z * z + w * w);
   }
 
-  constexpr quaternion Normalize()
+  constexpr quaternion& Normalize()
   {
     *this /= (f32)sqrt(x * x + y * y + z * z + w * w);
     return *this;
+  }
+
+  constexpr quaternion& Invert()
+  {
+    x *= -1;
+    y *= -1;
+    z *= -1;
+    return *this;
+  }
+
+  constexpr quaternion Inverse()
+  {
+    return {-x, -y, -z, w};
+  }
+
+  constexpr f32 Combined()
+  {
+    return x + y + z + w;
+  }
+
+  constexpr mat4 ToMatrix()
+  {
+    return { 1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z), 2.0f * (x * z + w * y), 0.0f,
+             2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x), 0.0f,
+             2.0f * (x * z - w * y), 2.0f * (y * z + w * x), 1.0f - 2.0f * (x * x + y * y), 0.0f,
+             0.0f, 0.0f, 0.0f, 1.0f };
   }
 
 } quaternion;

@@ -1,0 +1,6 @@
+ToDo token = " TODO : "
+Note token = " NOTE : "
+Scan Root = "Ice/src"
+Output File = "ToDo.txt"
+Output string endcaps = "" ""
+Output string separator = ":--:"

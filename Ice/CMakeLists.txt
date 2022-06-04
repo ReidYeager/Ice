@@ -21,7 +21,6 @@ add_library (Ice
   "src/math/linear.h"
 
   "src/tools/lexer.h"
-  "src/tools/lexer.cpp"
 
   "src/core/application.h"
   "src/core/application.cpp"

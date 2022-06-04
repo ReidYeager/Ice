@@ -49,7 +49,7 @@ namespace Ice {
 
     // Position =====
 
-    vec3 GetPosition()
+    constexpr vec3 GetPosition()
     {
       return position;
     }
@@ -82,47 +82,55 @@ namespace Ice {
 
     // Rotation =====
 
-    quaternion GetRotation()
+    constexpr quaternion GetRotation()
     {
       return rotation;
     }
 
     // Set the current rotation to this Euler rotation
-    quaternion SetRotation(vec3 _rotation)
+    quaternion SetRotation(quaternion _q)
     {
       dirty = true;
-      rotation = Ice::EulerToQuaternion(_rotation);
+      rotation = _q;
       return rotation;
     }
 
-    quaternion SetRotation(f32 _x, f32 _y, f32 _z)
+    quaternion SetEulerRotation(vec3 _rotation)
     {
-      return SetRotation({_x, _y, _z});
+      return SetRotation(Ice::EulerToQuaternion(_rotation));
+    }
+
+    quaternion SetEulerRotation(f32 _x, f32 _y, f32 _z)
+    {
+      return SetRotation(Ice::EulerToQuaternion(_x, _y, _z));
     }
 
     // Add this Euler rotation onto the current rotation
-    quaternion Rotate(vec3 _rotation)
+    quaternion Rotate(quaternion _rotation)
     {
       dirty = true;
-      quaternion other = Ice::EulerToQuaternion(_rotation);
 
       // TODO : Figure out how to multiply quaternions to maintain the yaw-pitch-roll rotation order
-
-      rotation *= other; // Rotates roll->pitch->yaw
-      //rotation = other * rotation; // Rotates around world-space axes
+      rotation *= _rotation; // Rotates roll->pitch->yaw
+      //rotation = _rotation * rotation; // Rotates around world-space axes
 
       rotation.Normalize();
       return rotation;
     }
 
-    quaternion Rotate(f32 _x, f32 _y, f32 _z)
+    quaternion RotateEuler(vec3 _rotation)
     {
-      return Rotate({_x, _y, _z});
+      return Rotate(Ice::EulerToQuaternion(_rotation.x, _rotation.y, _rotation.z));
+    }
+
+    quaternion RotateEuler(f32 _x, f32 _y, f32 _z)
+    {
+      return Rotate(Ice::EulerToQuaternion(_x, _y, _z));
     }
 
     // Scale =====
 
-    vec3 GetScale()
+    constexpr vec3 GetScale()
     {
       return scale;
     }
@@ -165,14 +173,6 @@ namespace Ice {
         quaternion q = rotation;
         vec3 s = scale;
 
-        // Rotation only
-        //matrix = {
-        //  1.0f - 2.0f * (q.y * q.y + q.z * q.z), 2.0f * (q.x * q.y - q.w * q.z), 2.0f * (q.x * q.z + q.w * q.y), 0.0f,
-        //  2.0f * (q.x * q.y + q.w * q.z), 1.0f - 2.0f * (q.x * q.x + q.z * q.z), 2.0f * (q.y * q.z - q.w * q.x), 0.0f,
-        //  2.0f * (q.x * q.z - q.w * q.y), 2.0f * (q.y * q.z + q.w * q.x), 1.0f - 2.0f * (q.x * q.x + q.y * q.y), 0.0f,
-        //  0.0f, 0.0f, 0.0f, 1.0f
-        //};
-
         matrix = {
           s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.y * (2 * (q.x * q.y - q.w * q.z))    , s.z * (2 * (q.x * q.z + q.w * q.y))    , p.x,
           s.x * (2 * (q.x * q.y + q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.z * (2 * (q.y * q.z - q.w * q.x))    , p.y,
@@ -189,14 +189,39 @@ namespace Ice {
       return matrix;
     }
 
-    void SetParentAs(Transform* _newParent)
+    constexpr void SetParentAs(Transform* _newParent)
     {
       parent = _newParent;
     }
 
-    Transform const* GetParent()
+    constexpr b8 HasParent()
+    {
+      return parent != nullptr;
+    }
+
+    constexpr Transform const* GetParent()
     {
       return parent;
+    }
+
+    // Vectors =====
+
+    constexpr vec3 ForwardVector(b8 _includeParents = true)
+    {
+      vec3 forward = { 0.0f, 0.0f, 1.0f };
+      return (rotation.ToMatrix() * forward).Normal();
+    }
+
+    constexpr vec3 RightVector(b8 _includeParents = true)
+    {
+      vec3 right = { 1.0f, 0.0f, 0.0f };
+      return (rotation.ToMatrix() * right).Normal();
+    }
+
+    constexpr vec3 UpVector(b8 _includeParents = true)
+    {
+      vec3 up = { 0.0f, 1.0f, 0.0f };
+      return (rotation.ToMatrix() * up).Normal();
     }
 
   };

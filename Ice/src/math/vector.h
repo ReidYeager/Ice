@@ -436,7 +436,7 @@ typedef struct vec4
     return x * other.x + y * other.y + z * other.z + w * other.w;
   }
 
-  constexpr vec4 Normal()
+  constexpr vec4 Normalized()
   {
     return *this / (f32)sqrt(x * x + y * y + z * z + w * w);
   }
@@ -445,6 +445,11 @@ typedef struct vec4
   {
     *this /= (f32)sqrt(x * x + y * y + z * z + w * w);
     return *this;
+  }
+
+  constexpr f32 Combined()
+  {
+    return x + y + z + w;
   }
 
 } vec4;
