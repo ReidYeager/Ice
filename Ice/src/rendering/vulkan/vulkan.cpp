@@ -700,9 +700,9 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
 {
   // Calculate projection matrix =====
   glm::mat4 glmMatrix;
-  if (_settings.isProjection)
+  if (_settings.isPerspective)
   {
-    glmMatrix = glm::perspective(glm::radians(_settings.horizontal),
+    glmMatrix = glm::perspective(glm::radians(_settings.verticalFov),
                                  _settings.ratio,
                                  _settings.nearClip,
                                  _settings.farClip);
@@ -711,9 +711,9 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   {
     IceLogWarning("Orthographic camera funcionality not currently working");
     glmMatrix = glm::ortho(0.0f,
-                           _settings.horizontal,
+                           _settings.height * _settings.ratio,
                            0.0f,
-                           _settings.horizontal / _settings.ratio,
+                           _settings.height,
                            _settings.nearClip,
                            _settings.farClip);
   }

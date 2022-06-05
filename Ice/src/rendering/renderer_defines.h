@@ -172,10 +172,13 @@ namespace Ice {
 
   struct CameraSettings
   {
-    b8 isProjection = true;
+    b8 isPerspective = true;
 
-    f32 horizontal; // If projection: the horizontal FOV; else: the world-space width
-    f32 ratio; // The ratio of screen width:height
+    union {
+      f32 height; // World-space height of the rendered rectangle
+      f32 verticalFov; // In degrees, For perspective view
+    };
+    f32 ratio; // The ratio of screen dimensions (width / height)
 
     f32 nearClip = 0.1f;
     f32 farClip = 100.0f;

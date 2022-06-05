@@ -34,7 +34,7 @@ namespace Ice {
     vec3 scale;
 
     mat4 matrix;
-    Transform* parent;
+    Transform* parent = nullptr;
 
     b8 dirty = false;
 
@@ -51,6 +51,11 @@ namespace Ice {
 
     constexpr vec3 GetPosition()
     {
+      if (parent != nullptr)
+      {
+        vec4 pos = (parent->GetMatrix() * vec4({ position.x, position.y, position.z, 1.0f }));
+        return vec3({pos.x, pos.y, pos.z});
+      }
       return position;
     }
 
@@ -84,6 +89,10 @@ namespace Ice {
 
     constexpr quaternion GetRotation()
     {
+      if (parent != nullptr)
+      {
+        return parent->GetRotation() * rotation;
+      }
       return rotation;
     }
 
@@ -110,7 +119,6 @@ namespace Ice {
     {
       dirty = true;
 
-      // TODO : Figure out how to multiply quaternions to maintain the yaw-pitch-roll rotation order
       rotation *= _rotation; // Rotates roll->pitch->yaw
       //rotation = _rotation * rotation; // Rotates around world-space axes
 
@@ -132,6 +140,10 @@ namespace Ice {
 
     constexpr vec3 GetScale()
     {
+      if (parent != nullptr)
+      {
+        return parent->GetScale() * scale;
+      }
       return scale;
     }
 

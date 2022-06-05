@@ -183,12 +183,28 @@ typedef struct vec3
     return *this;
   }
 
+  constexpr vec3& operator*=(vec3 other)
+  {
+    x *= other.x;
+    y *= other.y;
+    z *= other.z;
+    return *this;
+  }
+
   template<typename U>
   constexpr vec3& operator/=(U scalar)
   {
     x /= scalar;
     y /= scalar;
     z /= scalar;
+    return *this;
+  }
+
+  constexpr vec3& operator/=(vec3 other)
+  {
+    x /= other.x;
+    y /= other.y;
+    z /= other.z;
     return *this;
   }
 
@@ -232,10 +248,20 @@ typedef struct vec3
     return {x * scalar, y * scalar, z * scalar};
   }
 
+  constexpr vec3 operator*(vec3 other)
+  {
+    return { x * other.x, y * other.y, z * other.z };
+  }
+
   template<typename U>
   constexpr vec3 operator/(U scalar)
   {
     return {x / scalar, y / scalar, z / scalar};
+  }
+
+  constexpr vec3 operator/(vec3 other)
+  {
+    return { x / other.x, y / other.y, z / other.z };
   }
 
   template<typename U>
