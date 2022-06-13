@@ -3,8 +3,8 @@
 #define ICE_MATH_QUATERNION_H_
 
 #include "defines.h"
-#include "math/vector.h"
-#include "math/matrix.h"
+#include "math/vector.hpp"
+#include "math/matrix.hpp"
 
 #include "math.h"
 

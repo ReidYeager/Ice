@@ -15,9 +15,9 @@ add_library (Ice
   "src/defines.h"
   "src/logger.h"
 
-  "src/math/vector.h"
-  "src/math/quaternion.h"
-  "src/math/matrix.h"
+  "src/math/vector.hpp"
+  "src/math/quaternion.hpp"
+  "src/math/matrix.hpp"
   "src/math/linear.h"
 
   "src/tools/lexer.h"
@@ -29,7 +29,7 @@ add_library (Ice
   "src/core/ecs.h"
   "src/core/scene.h"
   "src/core/scene.cpp"
-  "src/math/transform.h"
+  "src/math/transform.hpp"
 
   "src/platform/platform.h"
   "src/platform/platform_win32.cpp"

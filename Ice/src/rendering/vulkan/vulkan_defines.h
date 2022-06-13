@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "logger.h"
 
-#include "math/vector.h"
+#include "math/vector.hpp"
 
 #include <vulkan/vulkan.h>
 

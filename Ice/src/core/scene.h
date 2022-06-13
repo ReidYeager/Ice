@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "core/ecs.h"
-#include "math/vector.h"
+#include "math/vector.hpp"
 #include "math/transform.h"
 #include "rendering/renderer_defines.h"
 

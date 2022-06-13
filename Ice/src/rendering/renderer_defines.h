@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "core/ecs.h"
-#include "math/matrix.h"
+#include "math/matrix.hpp"
 
 #include "rendering/vulkan/vulkan_defines.h"
 
