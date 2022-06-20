@@ -18,10 +18,10 @@ b8 Ice::RendererVulkan::CreateShader(Ice::ShaderSettings _settings, Ice::Shader*
   default: IceLogError("Shader type unknown"); return {};
   }
 
-  ICE_ATTEMPT(CreateShaderModule(_settings, _shader));
-  LoadShaderDescriptors(_settings, _shader);
-
   _shader->settings = _settings;
+
+  ICE_ATTEMPT(CreateShaderModule(_shader));
+  LoadShaderDescriptors(_shader);
 
   return true;
 }
@@ -32,9 +32,21 @@ void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
   vkDestroyShaderModule(context.device, _shader.vulkan.module, context.alloc);
 }
 
-b8 Ice::RendererVulkan::CreateShaderModule(Ice::ShaderSettings _settings, Ice::Shader* _shader)
+b8 Ice::RendererVulkan::ReloadShader(Ice::Shader* _shader)
 {
-  std::string directory = _settings.fileDirectory.c_str();
+  vkDeviceWaitIdle(context.device);
+
+  vkDestroyShaderModule(context.device, _shader->vulkan.module, context.alloc);
+
+  _shader->input.clear();
+  LoadShaderDescriptors(_shader);
+
+  return CreateShaderModule(_shader);
+}
+
+b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
+{
+  std::string directory = _shader->settings.fileDirectory.c_str();
   directory.append(".spv");
 
   std::vector<char> source = Ice::LoadFile(directory.c_str());
@@ -54,12 +66,12 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::ShaderSettings _settings, Ice::S
   return true;
 }
 
-void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, Ice::Shader* _shader)
+void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 {
   // Descriptor loading could be useful across APIs, and most of the code will not change
   //  Should eventually look into abstracting this.
 
-  std::string directory = _settings.fileDirectory.c_str();
+  std::string directory = _shader->settings.fileDirectory.c_str();
   directory.append(".desc");
 
   std::vector<char> descriptorSource = Ice::LoadFile(directory.c_str());
@@ -70,6 +82,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, I
   Ice::LexerToken token;
 
   Ice::ShaderInputElement newInput {};
+  std::vector<ShaderInputElement> tmpInputs;
 
   while (!lexer.CompletedStream())
   {
@@ -96,7 +109,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, I
         {
           IceLogError("Binding '%s' is missing an index. Ignoring this binding.\n> '%s'",
                       token.string.c_str(),
-                      _settings.fileDirectory.c_str());
+                      _shader->settings.fileDirectory.c_str());
           continue;
         }
         newInput.inputIndex = lexer.GetUIntFromToken(&token);
@@ -124,7 +137,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, I
         default: break;
         }
 
-        _shader->input.push_back(newInput);
+        tmpInputs.push_back(newInput);
       }
     }
     // Get buffer information =====
@@ -141,9 +154,10 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, I
     }
   }
 
+  _shader->input = tmpInputs;
 }
 
-b8 Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material* _material)
+b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
 {
   ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_material));
 
@@ -175,7 +189,7 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings, Ice::Mat
                                      _material->vulkan.descriptorSetLayout,
                                      context.objectDescriptorLayout },
                                    &_material->vulkan.pipelineLayout));
-  ICE_ATTEMPT(CreatePipeline(_settings, _material));
+  ICE_ATTEMPT(CreatePipeline(_material));
 
   return true;
 }
@@ -198,6 +212,18 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
 
   vkDestroyPipelineLayout(context.device, _material.vulkan.pipelineLayout, context.alloc);
   vkDestroyPipeline(context.device, _material.vulkan.pipeline, context.alloc);
+}
+
+b8 Ice::RendererVulkan::RecreateMaterial(Ice::Material* _material)
+{
+  vkDestroyPipeline(context.device, _material->vulkan.pipeline, context.alloc);
+  vkDestroyPipelineLayout(context.device, _material->vulkan.pipelineLayout, context.alloc);
+  vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material->vulkan.descriptorSet);
+  vkDestroyDescriptorSetLayout(context.device, _material->vulkan.descriptorSetLayout, context.alloc);
+
+  _material->input.clear();
+
+  return CreateMaterial(_material);
 }
 
 b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _material,
@@ -514,7 +540,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLa
   return true;
 }
 
-b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material)
+b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 {
   // Shader Stages State =====
   VkPipelineShaderStageCreateInfo shaderStage {};
@@ -650,7 +676,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Mat
 
   createInfo.layout     = _material->vulkan.pipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
-  createInfo.subpass = _settings.subpassIndex;
+  createInfo.subpass = _material->subpassIndex;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,

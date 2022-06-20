@@ -144,6 +144,7 @@ namespace Ice {
     std::vector<Ice::Shader*> shaders;
     std::vector<ShaderInputElement> input;
     Ice::Buffer buffer;
+    u32 subpassIndex;
 
     union {
       void* apiData0;

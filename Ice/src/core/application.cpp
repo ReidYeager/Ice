@@ -423,9 +423,9 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   materialSettings[materialCount] = _settings;
 
   // Create material =====
-
+  materials[materialCount].subpassIndex = _settings.subpassIndex;
   materials[materialCount].shaders = shaderPointers;
-  if (!renderer->CreateMaterial(_settings, &materials[materialCount]))
+  if (!renderer->CreateMaterial(&materials[materialCount]))
   {
     IceLogError("Failed to create material");
     return false;
@@ -446,6 +446,21 @@ void Ice::SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment,
 {
   _segment.buffer = &_material->buffer;
   renderer->PushDataToBuffer(_data, _segment);
+}
+
+b8 Ice::ReloadShaders()
+{
+  for (u32 i = 0; i < shaderCount; i++)
+  {
+    ICE_ATTEMPT(renderer->ReloadShader(&shaders[i]));
+  }
+
+  return true;
+}
+
+b8 Ice::RecreateMaterial(Material* _material)
+{
+  return renderer->RecreateMaterial(_material);
 }
 
 b8 Ice::LoadTexture(Ice::Image* _texture, const char* _directory)

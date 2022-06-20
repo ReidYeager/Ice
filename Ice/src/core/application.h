@@ -55,6 +55,8 @@ namespace Ice {
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
+  b8 ReloadShaders();
+  b8 RecreateMaterial(Ice::Material* _material);
 
   b8 LoadTexture(Ice::Image* _texture, const char* _directory);
   void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
