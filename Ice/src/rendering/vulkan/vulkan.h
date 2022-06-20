@@ -156,10 +156,10 @@ namespace Ice
 
     b8 CreateGlobalDescriptors();
 
-    b8 CreateShaderModule(Ice::Shader* _shader);
+    b8 CreateShaderModule(Ice::ShaderSettings _settings, Ice::Shader* _shader);
     // Attempts to read the shader's descriptor file
     // Shader descriptors are optional so this can not fail
-    void LoadShaderDescriptors(Ice::Shader* _shader);
+    void LoadShaderDescriptors(Ice::ShaderSettings _settings, Ice::Shader* _shader);
     b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
                                           std::vector<VkDescriptorSetLayoutBinding>& _bindings);
     b8 CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* bindings,
@@ -174,7 +174,7 @@ namespace Ice
                              const std::vector<Ice::ShaderInputElement>& _bindings);
     b8 CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
                             VkPipelineLayout* _pipelineLayout);
-    b8 CreatePipeline(Ice::Material* _material);
+    b8 CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material);
 
     //=========================
     // Buffer
@@ -190,9 +190,9 @@ namespace Ice
     b8 RenderFrame(Ice::FrameInformation* _data);
     b8 Shutdown();
 
-    b8 CreateShader(Ice::Shader* _shader);
+    b8 CreateShader(Ice::ShaderSettings _settings, Ice::Shader* _shader);
     void DestroyShader(Ice::Shader& _shader);
-    b8 CreateMaterial(Ice::Material* _material);
+    b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material* _material);
     void DestroyMaterial(Ice::Material& _material);
     b8 SetMaterialInput(Ice::Material* _material, u32 _bindIndex, Ice::Image* _image);
 

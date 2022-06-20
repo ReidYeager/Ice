@@ -171,7 +171,7 @@ b8 IceApplicationShutdown()
   for (u32 i = 0; i < materialCount; i++)
   {
     renderer->DestroyMaterial(materials[i]);
-    materialSettings[i].input.clear();
+    //materials[i].input.clear();
   }
   Ice::MemoryFree(materials);
   Ice::MemoryFree(materialSettings);
@@ -381,20 +381,21 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
 
   // Get shaders' info =====
   b8 shaderFound = false;
-  for (u32 i = 0; i < _settings.shaders.size(); i++)
+  std::vector<Ice::Shader*> shaderPointers;
+
+  for (u32 i = 0; i < _settings.shaderSettings.size(); i++)
   {
     shaderFound = false;
-    Ice::Shader& newShader = _settings.shaders[i];
 
     // Check for existing shader
     for (u32 j = 0; j < shaderCount; j++)
     {
       Ice::Shader& oldShader = shaders[j];
-      if (newShader.fileDirectory.compare(oldShader.fileDirectory) == 0 &&
-          newShader.type == oldShader.type)
+      if (_settings.shaderSettings[i].fileDirectory.compare(oldShader.settings.fileDirectory) == 0 &&
+          _settings.shaderSettings[i].type == oldShader.settings.type)
       {
         shaderFound = true;
-        newShader = oldShader;
+        shaderPointers.push_back(&shaders[j]);
         break;
       }
     }
@@ -408,13 +409,13 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
         return false;
       }
 
-      if (!renderer->CreateShader(&newShader))
+      if (!renderer->CreateShader(_settings.shaderSettings[i], &shaders[shaderCount]))
       {
-        IceLogError("Failed to create a shader\n> '%s'", newShader.fileDirectory.c_str());
+        IceLogError("Failed to create a shader\n> '%s'", shaders[shaderCount].settings.fileDirectory.c_str());
         return false;
       }
 
-      shaders[shaderCount] = newShader;
+      shaderPointers.push_back(&shaders[shaderCount]);
       shaderCount++;
     }
   }
@@ -422,15 +423,13 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
   materialSettings[materialCount] = _settings;
 
   // Create material =====
-  Ice::Material newMaterial;
-  newMaterial.settings = &materialSettings[materialCount];
 
-  if (!renderer->CreateMaterial(&newMaterial))
+  materials[materialCount].shaders = shaderPointers;
+  if (!renderer->CreateMaterial(_settings, &materials[materialCount]))
   {
     IceLogError("Failed to create material");
     return false;
   }
-  materials[materialCount] = newMaterial;
   materialCount++;
 
   if (_material != nullptr)

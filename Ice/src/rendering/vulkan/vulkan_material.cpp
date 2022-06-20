@@ -8,20 +8,20 @@
 #include <string>
 #include <vector>
 
-b8 Ice::RendererVulkan::CreateShader(Ice::Shader* _shader)
+b8 Ice::RendererVulkan::CreateShader(Ice::ShaderSettings _settings, Ice::Shader* _shader)
 {
-  Ice::Shader& newShader = *_shader;
-
-  switch (newShader.type)
+  switch (_settings.type)
   {
-  case Shader_Vertex: newShader.fileDirectory.append(".vert"); break;
-  case Shader_Fragment: newShader.fileDirectory.append(".frag"); break;
-  case Shader_Compute: newShader.fileDirectory.append(".comp"); break;
+  case Shader_Vertex: _settings.fileDirectory.append(".vert"); break;
+  case Shader_Fragment: _settings.fileDirectory.append(".frag"); break;
+  case Shader_Compute: _settings.fileDirectory.append(".comp"); break;
   default: IceLogError("Shader type unknown"); return {};
   }
 
-  ICE_ATTEMPT(CreateShaderModule(&newShader));
-  LoadShaderDescriptors(&newShader);
+  ICE_ATTEMPT(CreateShaderModule(_settings, _shader));
+  LoadShaderDescriptors(_settings, _shader);
+
+  _shader->settings = _settings;
 
   return true;
 }
@@ -32,9 +32,9 @@ void Ice::RendererVulkan::DestroyShader(Ice::Shader& _shader)
   vkDestroyShaderModule(context.device, _shader.vulkan.module, context.alloc);
 }
 
-b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
+b8 Ice::RendererVulkan::CreateShaderModule(Ice::ShaderSettings _settings, Ice::Shader* _shader)
 {
-  std::string directory = _shader->fileDirectory.c_str();
+  std::string directory = _settings.fileDirectory.c_str();
   directory.append(".spv");
 
   std::vector<char> source = Ice::LoadFile(directory.c_str());
@@ -54,12 +54,12 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   return true;
 }
 
-void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
+void Ice::RendererVulkan::LoadShaderDescriptors(Ice::ShaderSettings _settings, Ice::Shader* _shader)
 {
   // Descriptor loading could be useful across APIs, and most of the code will not change
   //  Should eventually look into abstracting this.
 
-  std::string directory = _shader->fileDirectory.c_str();
+  std::string directory = _settings.fileDirectory.c_str();
   directory.append(".desc");
 
   std::vector<char> descriptorSource = Ice::LoadFile(directory.c_str());
@@ -96,7 +96,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         {
           IceLogError("Binding '%s' is missing an index. Ignoring this binding.\n> '%s'",
                       token.string.c_str(),
-                      _shader->fileDirectory.c_str());
+                      _settings.fileDirectory.c_str());
           continue;
         }
         newInput.inputIndex = lexer.GetUIntFromToken(&token);
@@ -143,7 +143,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
 }
 
-b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
+b8 Ice::RendererVulkan::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material* _material)
 {
   ICE_ATTEMPT(CreateDescriptorLayoutAndSet(_material));
 
@@ -158,7 +158,7 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
                           Ice::Buffer_Memory_Shader_Read);
 
       // Associate the buffer segments with the material's buffer
-      for (auto& d : _material->settings->input)
+      for (auto& d : _material->input)
       {
         if (d.type == Shader_Input_Buffer)
         {
@@ -168,14 +168,14 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
     }
   }
 
-  UpdateDescriptorSet(_material->vulkan.descriptorSet, _material->settings->input);
+  UpdateDescriptorSet(_material->vulkan.descriptorSet, _material->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
                                      context.cameraDescriptorLayout,
                                      _material->vulkan.descriptorSetLayout,
                                      context.objectDescriptorLayout },
                                    &_material->vulkan.pipelineLayout));
-  ICE_ATTEMPT(CreatePipeline(_material));
+  ICE_ATTEMPT(CreatePipeline(_settings, _material));
 
   return true;
 }
@@ -189,9 +189,9 @@ void Ice::RendererVulkan::DestroyMaterial(Ice::Material& _material)
   //  DestroyBufferMemory(&s.buffer);
   //}
   DestroyBufferMemory(&_material.buffer);
-  _material.settings->shaders.clear();
+  _material.shaders.clear();
 
-  _material.settings->input.clear();
+  _material.input.clear();
 
   vkFreeDescriptorSets(context.device, context.descriptorPool, 1, &_material.vulkan.descriptorSet);
   vkDestroyDescriptorSetLayout(context.device, _material.vulkan.descriptorSetLayout, context.alloc);
@@ -205,12 +205,11 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
 {
   u32 count = 0;
   std::vector<Ice::ShaderInputElement> orderedInputElements; // Used for faster place-checking
-  Ice::MaterialSettings* matSettings = _material->settings;
 
   // Count descriptors =====
-  for (Ice::Shader& s : matSettings->shaders)
+  for (Ice::Shader* s : _material->shaders)
   {
-    count += (u32)s.input.size();
+    count += (u32)s->input.size();
   }
   _material->buffer.count = 1;
   _bindings.resize(count); // Worst-case size.
@@ -219,9 +218,9 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
   // Combine shader inputs =====
   u32 actualCount = 0;
   VkDescriptorSetLayoutBinding newBinding {};
-  for (Ice::Shader& shader : matSettings->shaders)
+  for (Ice::Shader* shader : _material->shaders)
   {
-    for (auto& descriptor : shader.input)
+    for (auto& descriptor : shader->input)
     {
       if (orderedInputElements[descriptor.inputIndex].type == descriptor.type)
       {
@@ -275,7 +274,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
     }
   }
 
-  matSettings->input = orderedInputElements;
+  _material->input = orderedInputElements;
   _bindings.resize(actualCount);
 
   return true;
@@ -515,7 +514,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLa
   return true;
 }
 
-b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
+b8 Ice::RendererVulkan::CreatePipeline(Ice::MaterialSettings _settings, Ice::Material* _material)
 {
   // Shader Stages State =====
   VkPipelineShaderStageCreateInfo shaderStage {};
@@ -523,11 +522,11 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
   shaderStage.pName = "main";
 
-  std::vector<VkPipelineShaderStageCreateInfo> stages(_material->settings->shaders.size());
-  for (u32 i = 0; i < _material->settings->shaders.size(); i++)
+  std::vector<VkPipelineShaderStageCreateInfo> stages(_material->shaders.size());
+  for (u32 i = 0; i < _material->shaders.size(); i++)
   {
-    shaderStage.module = _material->settings->shaders[i].vulkan.module;
-    switch (_material->settings->shaders[i].type)
+    shaderStage.module = _material->shaders[i]->vulkan.module;
+    switch (_material->shaders[i]->settings.type)
     {
     case Shader_Vertex: shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
     case Shader_Fragment: shaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
@@ -651,7 +650,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 
   createInfo.layout     = _material->vulkan.pipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
-  createInfo.subpass = _material->settings->subpassIndex;
+  createInfo.subpass = _settings.subpassIndex;
 
   IVK_ASSERT(vkCreateGraphicsPipelines(context.device,
                                        nullptr,

@@ -116,10 +116,15 @@ namespace Ice {
     // ...
   };
 
-  struct Shader
+  struct ShaderSettings
   {
     ShaderTypes type;
     std::string fileDirectory;
+  };
+
+  struct Shader
+  {
+    ShaderSettings settings;
     std::vector<ShaderInputElement> input;
 
     union {
@@ -130,15 +135,14 @@ namespace Ice {
 
   struct MaterialSettings
   {
-    std::vector<Ice::Shader> shaders;
+    std::vector<Ice::ShaderSettings> shaderSettings;
     u32 subpassIndex = 0;
-
-    std::vector<ShaderInputElement> input;
   };
 
   struct Material
   {
-    Ice::MaterialSettings* settings;
+    std::vector<Ice::Shader*> shaders;
+    std::vector<ShaderInputElement> input;
     Ice::Buffer buffer;
 
     union {

@@ -21,9 +21,9 @@ namespace Ice {
     virtual b8 RenderFrame(FrameInformation* _data) = 0;
     virtual b8 Shutdown() = 0;
 
-    virtual b8 CreateShader(Ice::Shader* _shader) = 0;
+    virtual b8 CreateShader(Ice::ShaderSettings _settings, Ice::Shader* _shader) = 0;
     virtual void DestroyShader(Ice::Shader& _shader) = 0;
-    virtual b8 CreateMaterial(Ice::Material* _material) = 0;
+    virtual b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material* _material) = 0;
     virtual void DestroyMaterial(Ice::Material& _material) = 0;
 
     virtual b8 SetMaterialInput(Ice::Material* _material, u32 _bindIndex, Ice::Image* _image) = 0;

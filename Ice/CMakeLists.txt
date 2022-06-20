@@ -29,7 +29,7 @@ add_library (Ice
   "src/core/ecs.h"
   "src/core/scene.h"
   "src/core/scene.cpp"
-  "src/math/transform.hpp"
+  "src/math/transform.h"
 
   "src/platform/platform.h"
   "src/platform/platform_win32.cpp"
