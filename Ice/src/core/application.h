@@ -55,7 +55,15 @@ namespace Ice {
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
-  b8 ReloadShaders();
+
+  // Reload one shader
+  b8 ReloadShader(Ice::Shader* _shader);
+  b8 ReloadAllShaders();
+
+  // Reload material's shaders and recreate the material
+  b8 ReloadMaterial(Ice::Material* _material);
+  b8 ReloadAllMaterials();
+  // Only recreate the material -- Does not affect its shaders
   b8 RecreateMaterial(Ice::Material* _material);
 
   b8 LoadTexture(Ice::Image* _texture, const char* _directory);

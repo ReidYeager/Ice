@@ -448,11 +448,16 @@ void Ice::SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment,
   renderer->PushDataToBuffer(_data, _segment);
 }
 
-b8 Ice::ReloadShaders()
+b8 Ice::ReloadShader(Shader* _shader)
+{
+  return renderer->ReloadShader(_shader);
+}
+
+b8 Ice::ReloadAllShaders()
 {
   for (u32 i = 0; i < shaderCount; i++)
   {
-    ICE_ATTEMPT(renderer->ReloadShader(&shaders[i]));
+    ICE_ATTEMPT(ReloadShader(&shaders[i]));
   }
 
   return true;
@@ -461,6 +466,26 @@ b8 Ice::ReloadShaders()
 b8 Ice::RecreateMaterial(Material* _material)
 {
   return renderer->RecreateMaterial(_material);
+}
+
+b8 Ice::ReloadMaterial(Material* _material)
+{
+  for (u32 i = 0; i < _material->shaders.size(); i++)
+  {
+    ICE_ATTEMPT(ReloadShader(_material->shaders[i]));
+  }
+
+  return RecreateMaterial(_material);
+}
+
+b8 Ice::ReloadAllMaterials()
+{
+  ICE_ATTEMPT(ReloadAllShaders());
+  for (u32 i = 0; i < materialCount; i++)
+  {
+    ICE_ATTEMPT(RecreateMaterial(&materials[i]));
+  }
+  return true;
 }
 
 b8 Ice::LoadTexture(Ice::Image* _texture, const char* _directory)
