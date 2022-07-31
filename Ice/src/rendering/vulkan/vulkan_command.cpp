@@ -1,8 +1,7 @@
 
 #include "defines.h"
-#include "logger.h"
-
 #include "rendering/vulkan/vulkan.h"
+
 #include "rendering/vulkan/vulkan_defines.h"
 
 #include <vector>
@@ -52,6 +51,7 @@ b8 Ice::RendererVulkan::EndSingleTimeCommand(VkCommandBuffer& _command,
 
 b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInformation* _data)
 {
+  /*
   VkCommandBuffer& cmdBuffer = context.commandBuffers[_commandIndex];
 
   VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -171,6 +171,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
   // End recording =====
   IVK_ASSERT(vkEndCommandBuffer(cmdBuffer),
              "Failed to record command buffer %u", _commandIndex);
+  */
 
   return true;
 }

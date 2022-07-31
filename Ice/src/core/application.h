@@ -3,36 +3,17 @@
 #define ICE_CORE_APPLICATION_H_
 
 #include "defines.h"
+#include "core/application_defines.h"
 
 #include "platform/platform.h"
 #include "rendering/renderer.h"
-#include "core/ecs.h"
-#include "core/scene.h"
+#include "core/ecs/ecs.h"
 
 namespace Ice {
 
   //=========================
   // Application
   //=========================
-
-  struct ApplicationSettings
-  {
-    u32 version = 0;
-
-    b8(*clientInitFunction)();
-    b8(*clientUpdateFunction)(f32 _delta);
-    b8(*clientShutdownFunction)();
-
-    Ice::RendererSettings renderer;
-    Ice::WindowSettings window;
-
-    // I don't really like this.
-    u32 maxShaderCount = 200;   // Number of unique shaders
-    u32 maxMaterialCount = 100; // Number of unique materials
-    u32 maxMeshCount = 200;     // Number of unique meshes
-    u32 maxObjectCount = 200;   // Number of unique objects
-    u32 maxTextureCount = 100;  // Number of unique textures
-  };
 
   u32 CreateVersion(u8 _major, u8 _minor, u8 _patch);
 
@@ -74,6 +55,7 @@ namespace Ice {
   // Scenes
   //=========================
 
+  /*
   Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
   void DestroyScene(Ice::Scene* _scene);
   // Used to create objects in the active scene without needing to pass its pointer around the game
@@ -85,7 +67,10 @@ namespace Ice {
   Ice::Object* CreateCamera(Ice::CameraSettings _settings = {});
 
   void AddSceneToRender(Ice::Scene* _scene);
+  */
+
   void UpdateTransforms();
 
-}
+} // namespace Ice
+
 #endif // !ICE_CORE_APPLICATION_H_

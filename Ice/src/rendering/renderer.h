@@ -16,7 +16,7 @@ namespace Ice {
   public:
     virtual ~Renderer() {}
 
-    virtual b8 Init(Ice::RendererSettings _settings, const char* _title, u32 _version) = 0;
+    virtual b8 Init(Ice::RendererSettingsCore _settings, const char* _title, u32 _version) = 0;
     // NOTE : Given the frequency this is called, should use something more efficient than virtual.
     virtual b8 RenderFrame(FrameInformation* _data) = 0;
     virtual b8 Shutdown() = 0;
@@ -48,7 +48,7 @@ namespace Ice {
                                 Ice::CameraSettings _settings) = 0;
   };
 
-}
+} // namespace Ice
 
 extern Ice::Renderer* renderer;
 

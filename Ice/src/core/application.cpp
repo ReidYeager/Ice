@@ -1,12 +1,10 @@
 
 #include "defines.h"
-#include "logger.h"
 
 #include "core/application.h"
 
 #include "core/input.h"
-#include "core/ecs.h"
-#include "core/scene.h"
+#include "core/ecs/ecs.h"
 #include "platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 #include "math/linear.h"
@@ -46,7 +44,7 @@ Ice::Scene* activeScene = nullptr;
 // Time
 //=========================
 
-Ice::IceTime Ice::time;
+Ice::TimeStruct Ice::time;
 // Setup time =====
 std::chrono::steady_clock::time_point realtimeStart, frameStart, frameEnd;
 const float microToSecond = 0.000001f;
@@ -54,7 +52,7 @@ const float microToSecond = 0.000001f;
 void InitTime()
 {
   Ice::time.deltaTime = 0.0f;
-  Ice::time.totalTime = 0.0f;
+  Ice::time.timeSinceStart = 0.0f;
   Ice::time.frameCount = 0;
 
   realtimeStart = std::chrono::steady_clock::now();
@@ -68,7 +66,7 @@ void UpdateTime()
   frameEnd = std::chrono::steady_clock::now();
 
   Ice::time.deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(frameEnd - frameStart).count() * microToSecond;
-  Ice::time.totalTime = std::chrono::duration_cast<std::chrono::microseconds>(frameEnd - realtimeStart).count() * microToSecond;
+  Ice::time.timeSinceStart = std::chrono::duration_cast<std::chrono::microseconds>(frameEnd - realtimeStart).count() * microToSecond;
 
   Ice::time.frameCount++;
 
@@ -96,7 +94,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   Input.Initialize();
 
   // Rendering =====
-  if (_settings.renderer.api == Ice::Renderer_Vulkan)
+  if (_settings.rendererCore.api == Ice::RenderApiVulkan)
   {
     renderer = new Ice::RendererVulkan();
   }
@@ -106,7 +104,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     return false;
   }
 
-  if (!renderer->Init(_settings.renderer, _settings.window.title, _settings.version))
+  if (!renderer->Init(_settings.rendererCore, _settings.window.title, _settings.version))
   {
     IceLogFatal("Failed to initialize the renderer");
     return false;
@@ -119,10 +117,10 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
   // Game =====
-  _settings.clientInitFunction();
+  _settings.GameInit();
 
   UpdateTime();
-  IceLogInfo("} Startup %2.3f s", Ice::time.totalTime);
+  IceLogInfo("} Startup %2.3f s", Ice::time.timeSinceStart);
 
   return true;
 }
@@ -133,7 +131,7 @@ b8 IceApplicationUpdate()
 
   while (isRunning && Ice::platform.Update())
   {
-    ICE_ATTEMPT(appSettings.clientUpdateFunction(Ice::time.deltaTime));
+    ICE_ATTEMPT(appSettings.GameUpdate(Ice::time.deltaTime));
 
     Ice::UpdateTransforms();
 
@@ -148,7 +146,7 @@ b8 IceApplicationUpdate()
 
 b8 IceApplicationShutdown()
 {
-  ICE_ATTEMPT(appSettings.clientShutdownFunction());
+  ICE_ATTEMPT(appSettings.GameShutdown());
 
   for (u32 i = 0; i < scenes.size(); i++)
   {
@@ -271,17 +269,18 @@ b8 Ice::CreateMesh(const char* _directory, Ice::Mesh** _mesh)
   {
     std::string loadWarnings, loadErrors;
 
-    ICE_ATTEMPT_MSG(tinyobj::LoadObj(&attrib,
-                                      &shapes,
-                                      &materials,
-                                      &loadWarnings,
-                                      &loadErrors,
-                                      _directory),
-                    Ice::Log_Error,
-                    "Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
-                    _directory,
-                    loadWarnings.c_str(),
-                    loadErrors.c_str());
+    if (!tinyobj::LoadObj(&attrib,
+                          &shapes,
+                          &materials,
+                          &loadWarnings,
+                          &loadErrors,
+                          _directory))
+    {
+      IceLogError("Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
+                   _directory,
+                   loadWarnings.c_str(),
+                   loadErrors.c_str());
+    }
   }
 
   std::vector<Ice::Vertex> vertices;
@@ -511,7 +510,8 @@ void Ice::SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _dir
   textureCount++;
 }
 
-Ice::Scene* Ice::CreateScene(u32 _maxObjectCount /*= 100*/, u32 _maxComponentTypeCount /*= 10*/)
+/*
+Ice::Scene* Ice::CreateScene(u32 _maxObjectCount / *= 100* /, u32 _maxComponentTypeCount / *= 10* /)
 {
   scenes.push_back(new Ice::Scene(_maxObjectCount, _maxComponentTypeCount));
   return scenes.back();
@@ -557,7 +557,7 @@ Ice::Object* Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
   return activeScene->AddObject(_meshDir, _material);
 }
 
-Ice::Object* Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
+Ice::Object* Ice::CreateCamera(Ice::CameraSettings _settings / *= {}* /)
 {
   if (activeScene == nullptr)
   {
@@ -575,11 +575,12 @@ void Ice::AddSceneToRender(Ice::Scene* _scene)
   frameInfo.sceneObjects.push_back(_scene->GetComponentManager<Ice::RenderComponent>());
   frameInfo.sceneCameras.push_back(_scene->GetComponentManager<Ice::CameraComponent>());
 }
+*/
 
 void Ice::UpdateTransforms()
 {
-  for (auto& s : scenes)
-  {
-    s->UpdateTransforms();
-  }
+  //for (auto& s : scenes)
+  //{
+  //  s->UpdateTransforms();
+  //}
 }

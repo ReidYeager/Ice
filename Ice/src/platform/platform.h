@@ -87,5 +87,6 @@ namespace Ice {
     WindowData* GetWindow() { return &window; }
   } platform;
 
-}
+} // namespace Ice
+
 #endif // !ICE_PLATFORM_PLATFORM_H_

@@ -3,7 +3,6 @@
 #define ICE_RENDERING_VULKAN_CONTEXT_H_
 
 #include "defines.h"
-#include "logger.h"
 
 #include "math/vector.hpp"
 
@@ -88,7 +87,7 @@ namespace Ice {
     VkDescriptorSet descriptorSet; // Per-object input data
   };
 
-}
+} // namespace Ice
 
 //=======================
 // Assert

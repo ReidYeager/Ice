@@ -34,7 +34,7 @@ b8 Ice::RendererVulkan::CreateSurface()
   return context.surface != VK_NULL_HANDLE;
 }
 
-vec2U Ice::RendererVulkan::GetWindowExtents()
+Ice::vec2U Ice::RendererVulkan::GetWindowExtents()
 {
   return Ice::platform.GetWindow()->settings.extents;
 }
@@ -47,7 +47,7 @@ b8 Ice::RendererVulkan::CreateSurface()
   return false;
 }
 
-vec2U Ice::RendererVulkan::GetWindowExtents()
+Ice::vec2U Ice::RendererVulkan::GetWindowExtents()
 {
   return { 0, 0 };
 }

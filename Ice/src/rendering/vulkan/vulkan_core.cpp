@@ -1,6 +1,5 @@
 
 #include "defines.h"
-#include "logger.h"
 
 #include "rendering/vulkan/vulkan.h"
 #include "rendering/vulkan/vulkan_defines.h"
@@ -12,7 +11,7 @@
 
 #include <vector>
 
-b8 Ice::RendererVulkan::Init(Ice::RendererSettings _settings,
+b8 Ice::RendererVulkan::Init(Ice::RendererSettingsCore _settings,
                              const char* _title /*= "Ice_Vk_Application"*/,
                              u32 _version /*= 0*/)
 {

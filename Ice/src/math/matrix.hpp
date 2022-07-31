@@ -6,85 +6,54 @@
 
 #include "math/vector.hpp"
 
+namespace Ice {
+
+// Column-major matrix
 typedef union mat4
 {
   struct
   {
-    vec4 x;
-    vec4 y;
-    vec4 z;
-    vec4 w;
+    Ice::vec4 x;
+    Ice::vec4 y;
+    Ice::vec4 z;
+    Ice::vec4 w;
   };
   struct
   {
-    vec4 r;
-    vec4 g;
-    vec4 b;
-    vec4 a;
+    Ice::vec4 r;
+    Ice::vec4 g;
+    Ice::vec4 b;
+    Ice::vec4 a;
   };
   struct
   {
-    vec4 row0;
-    vec4 row1;
-    vec4 row2;
-    vec4 row3;
+    Ice::vec4 col0;
+    Ice::vec4 col1;
+    Ice::vec4 col2;
+    Ice::vec4 col3;
   };
 
-  constexpr vec4& operator[](int i)
-  {
-    ICE_ASSERT(i < 4);
-    switch (i)
-    {
-    default:
-    case 0:
-      return x;
-    case 1:
-      return y;
-    case 2:
-      return z;
-    case 3:
-      return w;
-    }
-  }
+  //=========================
+  // Operators
+  //=========================
 
-  constexpr vec4 const& operator[](int i) const
-  {
-    ICE_ASSERT(i < 4);
-    switch (i)
-    {
-    default:
-    case 0:
-      return x;
-    case 1:
-      return y;
-    case 2:
-      return z;
-    case 3:
-      return w;
-    }
-  }
-
+  // Reads array column-by-column
   constexpr mat4 const& operator=(f32* in)
   {
-    for (u32 i = 0; i < 4; i++)
+    for (u32 col = 0; col < 4; col++)
     {
-      for (u32 j = 0; j < 4; j++)
+      for (u32 row = 0; row < 4; row++)
       {
-        switch (i)
+        switch (col)
         {
-        default:
         case 0:
-          x[j] = *(in + (i * 4) + j);
-          break;
+          col0[row] = in[(4 * col) + row];
         case 1:
-          y[j] = *(in + (i * 4) + j);
-          break;
+          col1[row] = in[(4 * col) + row];
         case 2:
-          z[j] = *(in + (i * 4) + j);
-          break;
+          col2[row] = in[(4 * col) + row];
         case 3:
-          w[j] = *(in + (i * 4) + j);
-          break;
+          col3[row] = in[(4 * col) + row];
         }
       }
     }
@@ -92,23 +61,63 @@ typedef union mat4
     return *this;
   }
 
+  constexpr Ice::vec4& operator[](int i)
+  {
+    ICE_ASSERT(i < 4);
+    switch (i)
+    {
+    default:
+    case 0:
+      return x;
+    case 1:
+      return y;
+    case 2:
+      return z;
+    case 3:
+      return w;
+    }
+  }
+
+  constexpr Ice::vec4 const& operator[](int i) const
+  {
+    ICE_ASSERT(i < 4);
+    switch (i)
+    {
+    default:
+    case 0:
+      return x;
+    case 1:
+      return y;
+    case 2:
+      return z;
+    case 3:
+      return w;
+    }
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
   // For rotation-only transforms
-  constexpr vec3 operator*(vec3 vector)
+  constexpr Ice::vec3 operator*(Ice::vec3 _vector)
   {
     return {
-      x.x * vector.x + x.y * vector.y + x.z * vector.z,
-      y.x * vector.x + y.y * vector.y + y.z * vector.z,
-      z.x * vector.x + z.y * vector.y + z.z * vector.z,
+      x.x * _vector.x + y.x * _vector.y + z.x * _vector.z,
+      x.y * _vector.x + y.y * _vector.y + z.y * _vector.z,
+      x.z * _vector.x + y.z * _vector.y + z.z * _vector.z,
     };
   }
 
-  constexpr vec4 operator*(vec4 vector)
+  constexpr Ice::vec4 operator*(Ice::vec4 _vector)
   {
     return {
-      x.Dot(vector),
-      y.Dot(vector),
-      z.Dot(vector),
-      w.Dot(vector)
+      x.Dot(_vector),
+      y.Dot(_vector),
+      z.Dot(_vector),
+      w.Dot(_vector)
     };
   }
 
@@ -124,6 +133,10 @@ typedef union mat4
     };
   }
 
+  //=========================
+  // Operations
+  //=========================
+
   constexpr mat4 Transpose() const
   {
     return { x.x, y.x, z.x, w.x,
@@ -137,6 +150,8 @@ typedef union mat4
 const mat4 mat4Identity = { 1.0f, 0.0f, 0.0f, 0.0f,
                             0.0f, 1.0f, 0.0f, 0.0f,
                             0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f};
+                            0.0f, 0.0f, 0.0f, 1.0f };
+
+} // namespace Ice
 
 #endif // !define ICE_MATH_MATRIX_H_

@@ -4,15 +4,30 @@
 
 #include "defines.h"
 
-#include "math.h"
+#include <math.h>
+#include <assert.h>
+
+namespace Ice {
+
+//=========================
+//=========================
+// F32
+//=========================
+//=========================
 
 typedef struct vec2
 {
   union { f32 x, r, width; };
   union { f32 y, g, height; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr f32& operator[](int i)
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -25,6 +40,8 @@ typedef struct vec2
 
   constexpr f32 const& operator[](int i) const
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -35,6 +52,28 @@ typedef struct vec2
     }
   }
 
+  constexpr bool operator==(vec2& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  constexpr bool operator==(const vec2& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec2 operator*(U scalar)
+  {
+    return { x * scalar, y * scalar };
+  }
+
   template<typename U>
   constexpr vec2& operator*=(U scalar)
   {
@@ -43,12 +82,33 @@ typedef struct vec2
     return *this;
   }
 
+  constexpr vec2 operator*(vec2 other)
+  {
+    return { x * other.x, y * other.y };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec2 operator/(U scalar)
+  {
+    return { x / scalar, y / scalar };
+  }
+
   template<typename U>
   constexpr vec2& operator/=(U scalar)
   {
     x /= scalar;
     y /= scalar;
     return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec2 operator+(U scalar)
+  {
+    return { x + scalar, y + scalar };
   }
 
   template<typename U>
@@ -60,14 +120,11 @@ typedef struct vec2
   }
 
   template<typename U>
-  constexpr vec2& operator-=(U scalar)
+  constexpr vec2 operator+(vec2 other)
   {
-    x -= scalar;
-    y -= scalar;
-    return *this;
+    return { x + other.x, y + other.y };
   }
 
-  template<typename U>
   constexpr vec2& operator+=(vec2 other)
   {
     x += other.x;
@@ -75,31 +132,7 @@ typedef struct vec2
     return *this;
   }
 
-  template<typename U>
-  constexpr vec2& operator-=(vec2 other)
-  {
-    x -= other.x;
-    y -= other.y;
-    return *this;
-  }
-
-  template<typename U>
-  constexpr vec2 operator*(U scalar)
-  {
-    return { x * scalar, y * scalar };
-  }
-
-  template<typename U>
-  constexpr vec2 operator/(U scalar)
-  {
-    return { x / scalar, y / scalar };
-  }
-
-  template<typename U>
-  constexpr vec2 operator+(U scalar)
-  {
-    return { x + scalar, y + scalar };
-  }
+  // Subtraction =====
 
   template<typename U>
   constexpr vec2 operator-(U scalar)
@@ -108,9 +141,11 @@ typedef struct vec2
   }
 
   template<typename U>
-  constexpr vec2 operator+(vec2 other)
+  constexpr vec2& operator-=(U scalar)
   {
-    return { x + other.x, y + other.y };
+    x -= scalar;
+    y -= scalar;
+    return *this;
   }
 
   template<typename U>
@@ -119,8 +154,21 @@ typedef struct vec2
     return { x - other.x, y - other.y };
   }
 
-  bool operator==(vec2& other) const { return x == other.x && y == other.y; }
-  bool operator==(const vec2& other) const { return x == other.x && y == other.y; }
+  constexpr vec2& operator-=(vec2 other)
+  {
+    x -= other.x;
+    y -= other.y;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr f32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
 
   constexpr f32 Dot(vec2 other)
   {
@@ -146,8 +194,14 @@ typedef struct vec3
   union { f32 y, g; };
   union { f32 z, b; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr f32& operator[](int i)
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -162,6 +216,8 @@ typedef struct vec3
 
   constexpr f32 const& operator[](int i) const
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -174,6 +230,28 @@ typedef struct vec3
     }
   }
 
+  constexpr bool operator==(vec3& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  constexpr bool operator==(const vec3& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec3 operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar };
+  }
+
   template<typename U>
   constexpr vec3& operator*=(U scalar)
   {
@@ -183,12 +261,17 @@ typedef struct vec3
     return *this;
   }
 
-  constexpr vec3& operator*=(vec3 other)
+  constexpr vec3 operator*(vec3 other)
   {
-    x *= other.x;
-    y *= other.y;
-    z *= other.z;
-    return *this;
+    return { x * other.x, y * other.y, z * other.z };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec3 operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar };
   }
 
   template<typename U>
@@ -200,12 +283,12 @@ typedef struct vec3
     return *this;
   }
 
-  constexpr vec3& operator/=(vec3 other)
+  // Addition =====
+
+  template<typename U>
+  constexpr vec3 operator+(U scalar)
   {
-    x /= other.x;
-    y /= other.y;
-    z /= other.z;
-    return *this;
+    return { x + scalar, y + scalar, z + scalar };
   }
 
   template<typename U>
@@ -218,12 +301,9 @@ typedef struct vec3
   }
 
   template<typename U>
-  constexpr vec3& operator-=(U scalar)
+  constexpr vec3 operator+(vec3 other)
   {
-    x -= scalar;
-    y -= scalar;
-    z -= scalar;
-    return *this;
+    return { x + other.x, y + other.y, z + other.z };
   }
 
   constexpr vec3& operator+=(vec3 other)
@@ -234,6 +314,29 @@ typedef struct vec3
     return *this;
   }
 
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec3 operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar };
+  }
+
+  template<typename U>
+  constexpr vec3& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3 operator-(vec3 other)
+  {
+    return { x - other.x, y - other.y, z - other.z };
+  }
+
   constexpr vec3& operator-=(vec3 other)
   {
     x -= other.x;
@@ -242,63 +345,18 @@ typedef struct vec3
     return *this;
   }
 
-  template<typename U>
-  constexpr vec3 operator*(U scalar)
-  {
-    return {x * scalar, y * scalar, z * scalar};
-  }
+  //=========================
+  // Operations
+  //=========================
 
-  constexpr vec3 operator*(vec3 other)
-  {
-    return { x * other.x, y * other.y, z * other.z };
-  }
-
-  template<typename U>
-  constexpr vec3 operator/(U scalar)
-  {
-    return {x / scalar, y / scalar, z / scalar};
-  }
-
-  constexpr vec3 operator/(vec3 other)
-  {
-    return { x / other.x, y / other.y, z / other.z };
-  }
-
-  template<typename U>
-  constexpr vec3 operator+(U scalar)
-  {
-    return {x + scalar, y + scalar, z + scalar};
-  }
-
-  template<typename U>
-  constexpr vec3 operator-(U scalar)
-  {
-    return {x - scalar, y - scalar, z - scalar};
-  }
-
-  constexpr vec3 operator+(vec3 other)
-  {
-    return {x + other.x, y + other.y, z + other.z};
-  }
-
-  constexpr vec3 operator-(vec3 other)
-  {
-    return {x - other.x, y - other.y, z - other.z};
-  }
-
-  bool operator==(vec3& other) const { return x == other.x && y == other.y && z == other.z; }
-  bool operator==(const vec3& other) const { return x == other.x && y == other.y && z == other.z; }
+  //constexpr f32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
 
   constexpr f32 Dot(vec3 other)
   {
     return x * other.x + y * other.y + z * other.z;
-  }
-
-  constexpr vec3 Cross(vec3 other)
-  {
-    return { (y * other.z) - (z * other.y),
-             (z * other.x) - (x * other.z),
-             (x * other.y) - (y * other.x) };
   }
 
   constexpr vec3 Normal()
@@ -321,8 +379,14 @@ typedef struct vec4
   union { f32 z, b; };
   union { f32 w, a; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr f32& operator[](int i)
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -339,6 +403,8 @@ typedef struct vec4
 
   constexpr f32 const& operator[](int i) const
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -353,6 +419,28 @@ typedef struct vec4
     }
   }
 
+  constexpr bool operator==(vec4& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  constexpr bool operator==(const vec4& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec4 operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar, w * scalar };
+  }
+
   template<typename U>
   constexpr vec4& operator*=(U scalar)
   {
@@ -363,6 +451,19 @@ typedef struct vec4
     return *this;
   }
 
+  constexpr vec4 operator*(vec4 other)
+  {
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec4 operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar, w / scalar };
+  }
+
   template<typename U>
   constexpr vec4& operator/=(U scalar)
   {
@@ -371,6 +472,14 @@ typedef struct vec4
     z /= scalar;
     w /= scalar;
     return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec4 operator+(U scalar)
+  {
+    return { x + scalar, y + scalar, z + scalar, w + scalar };
   }
 
   template<typename U>
@@ -384,13 +493,9 @@ typedef struct vec4
   }
 
   template<typename U>
-  constexpr vec4& operator-=(U scalar)
+  constexpr vec4 operator+(vec4 other)
   {
-    x -= scalar;
-    y -= scalar;
-    z -= scalar;
-    w -= scalar;
-    return *this;
+    return { x + other.x, y + other.y, z + other.z, w + other.w };
   }
 
   constexpr vec4& operator+=(vec4 other)
@@ -402,6 +507,30 @@ typedef struct vec4
     return *this;
   }
 
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec4 operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar, w - scalar };
+  }
+
+  template<typename U>
+  constexpr vec4& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    w -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4 operator-(vec4 other)
+  {
+    return { x - other.x, y - other.y, z - other.z, w - other.w };
+  }
+
   constexpr vec4& operator-=(vec4 other)
   {
     x -= other.x;
@@ -411,58 +540,21 @@ typedef struct vec4
     return *this;
   }
 
-  template<typename U>
-  constexpr vec4 operator*(U scalar)
-  {
-    return { x * scalar, y * scalar, z * scalar, w * scalar };
-  }
+  //=========================
+  // Operations
+  //=========================
 
-  constexpr vec4 operator*(vec4 other)
-  {
-    return { x * other.x, y * other.y, z * other.z, w * other.w };
-  }
-
-  template<typename U>
-  constexpr vec4 operator/(U scalar)
-  {
-    return { x / scalar, y / scalar, z / scalar, w / scalar };
-  }
-
-  template<typename U>
-  constexpr vec4 operator+(U scalar)
-  {
-    return { x + scalar, y + scalar, z + scalar, w + scalar };
-  }
-
-  template<typename U>
-  constexpr vec4 operator-(U scalar)
-  {
-    return { x - scalar, y - scalar, z - scalar, w - scalar };
-  }
-
-  template<typename U>
-  constexpr vec4 operator+(vec4 other)
-  {
-    return { x + other.x, y + other.y, z + other.z, w + other.w };
-  }
-
-  template<typename U>
-  constexpr vec4 operator-(vec4 other)
-  {
-    return { x - other.x, y - other.y, z - other.z, w - other.w };
-  }
-
-  constexpr bool operator==(vec4& other) const
-    { return x == other.x && y == other.y && z == other.z && w == other.w; }
-  constexpr bool operator==(const vec4& other) const
-    { return x == other.x && y == other.y && z == other.z && w == other.w; }
+  //constexpr f32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
 
   constexpr f32 Dot(vec4 other)
   {
     return x * other.x + y * other.y + z * other.z + w * other.w;
   }
 
-  constexpr vec4 Normalized()
+  constexpr vec4 Normal()
   {
     return *this / (f32)sqrt(x * x + y * y + z * z + w * w);
   }
@@ -473,24 +565,28 @@ typedef struct vec4
     return *this;
   }
 
-  constexpr f32 Combined()
-  {
-    return x + y + z + w;
-  }
-
 } vec4;
 
 //=========================
-// Int vectors
 //=========================
+// I32
+//=========================
+//=========================
+
 
 typedef struct vec2I
 {
   union { i32 x, r, width; };
   union { i32 y, g, height; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr i32& operator[](int i)
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -503,6 +599,8 @@ typedef struct vec2I
 
   constexpr i32 const& operator[](int i) const
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -511,6 +609,140 @@ typedef struct vec2I
     case 1:
       return y;
     }
+  }
+
+  constexpr bool operator==(vec2I& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  constexpr bool operator==(const vec2I& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec2I operator*(U scalar)
+  {
+    return { x * scalar, y * scalar };
+  }
+
+  template<typename U>
+  constexpr vec2I& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    return *this;
+  }
+
+  constexpr vec2I operator*(vec2I other)
+  {
+    return { x * other.x, y * other.y };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec2I operator/(U scalar)
+  {
+    return { x / scalar, y / scalar };
+  }
+
+  template<typename U>
+  constexpr vec2I& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec2I operator+(U scalar)
+  {
+    return { x + scalar, y + scalar };
+  }
+
+  template<typename U>
+  constexpr vec2I& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2I operator+(vec2I other)
+  {
+    return { x + other.x, y + other.y };
+  }
+
+  constexpr vec2I& operator+=(vec2I other)
+  {
+    x += other.x;
+    y += other.y;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec2I operator-(U scalar)
+  {
+    return { x - scalar, y - scalar };
+  }
+
+  template<typename U>
+  constexpr vec2I& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2I operator-(vec2I other)
+  {
+    return { x - other.x, y - other.y };
+  }
+
+  constexpr vec2I& operator-=(vec2I other)
+  {
+    x -= other.x;
+    y -= other.y;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr i32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr i32 Dot(vec2I other)
+  {
+    return x * other.x + y * other.y;
+  }
+
+  constexpr vec2I Normal()
+  {
+    return *this / (i32)sqrt(x * x + y * y);
+  }
+
+  constexpr vec2I Normalize()
+  {
+    *this /= (i32)sqrt(x * x + y * y);
+    return *this;
   }
 
 } vec2I;
@@ -521,8 +753,14 @@ typedef struct vec3I
   union { i32 y, g; };
   union { i32 z, b; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr i32& operator[](int i)
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -537,6 +775,8 @@ typedef struct vec3I
 
   constexpr i32 const& operator[](int i) const
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -547,6 +787,146 @@ typedef struct vec3I
     case 2:
       return z;
     }
+  }
+
+  constexpr bool operator==(vec3I& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  constexpr bool operator==(const vec3I& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec3I operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar };
+  }
+
+  template<typename U>
+  constexpr vec3I& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    return *this;
+  }
+
+  constexpr vec3I operator*(vec3I other)
+  {
+    return { x * other.x, y * other.y, z * other.z };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec3I operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar };
+  }
+
+  template<typename U>
+  constexpr vec3I& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec3I operator+(U scalar)
+  {
+    return { x + scalar, y + scalar, z + scalar };
+  }
+
+  template<typename U>
+  constexpr vec3I& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3I operator+(vec3I other)
+  {
+    return { x + other.x, y + other.y, z + other.z };
+  }
+
+  constexpr vec3I& operator+=(vec3I other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec3I operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar };
+  }
+
+  template<typename U>
+  constexpr vec3I& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3I operator-(vec3I other)
+  {
+    return { x - other.x, y - other.y, z - other.z };
+  }
+
+  constexpr vec3I& operator-=(vec3I other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr i32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr i32 Dot(vec3I other)
+  {
+    return x * other.x + y * other.y + z * other.z;
+  }
+
+  constexpr vec3I Normal()
+  {
+    return *this / (i32)sqrt(x * x + y * y + z * z);
+  }
+
+  constexpr vec3I Normalize()
+  {
+    *this /= (i32)sqrt(x * x + y * y + z * z);
+    return *this;
   }
 
 } vec3I;
@@ -558,8 +938,14 @@ typedef struct vec4I
   union { i32 z, b; };
   union { i32 w, a; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr i32& operator[](int i)
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -576,6 +962,8 @@ typedef struct vec4I
 
   constexpr i32 const& operator[](int i) const
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -589,19 +977,175 @@ typedef struct vec4I
       return w;
     }
   }
+
+  constexpr bool operator==(vec4I& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  constexpr bool operator==(const vec4I& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec4I operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar, w * scalar };
+  }
+
+  template<typename U>
+  constexpr vec4I& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    w *= scalar;
+    return *this;
+  }
+
+  constexpr vec4I operator*(vec4I other)
+  {
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec4I operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar, w / scalar };
+  }
+
+  template<typename U>
+  constexpr vec4I& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    w /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec4I operator+(U scalar)
+  {
+    return { x + scalar, y + scalar, z + scalar, w + scalar };
+  }
+
+  template<typename U>
+  constexpr vec4I& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    w += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4I operator+(vec4I other)
+  {
+    return { x + other.x, y + other.y, z + other.z, w + other.w };
+  }
+
+  constexpr vec4I& operator+=(vec4I other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    w += other.w;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec4I operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar, w - scalar };
+  }
+
+  template<typename U>
+  constexpr vec4I& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    w -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4I operator-(vec4I other)
+  {
+    return { x - other.x, y - other.y, z - other.z, w - other.w };
+  }
+
+  constexpr vec4I& operator-=(vec4I other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    w -= other.w;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr i32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr i32 Dot(vec4I other)
+  {
+    return x * other.x + y * other.y + z * other.z + w * other.w;
+  }
+
+  constexpr vec4I Normal()
+  {
+    return *this / (i32)sqrt(x * x + y * y + z * z + w * w);
+  }
+
+  constexpr vec4I Normalize()
+  {
+    *this /= (i32)sqrt(x * x + y * y + z * z + w * w);
+    return *this;
+  }
+
 } vec4I;
 
-// =======================
-// UInt vectors
-// =======================
+//=========================
+//=========================
+// U32
+//=========================
+//=========================
+
 
 typedef struct vec2U
 {
   union { u32 x, r, width; };
   union { u32 y, g, height; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr u32& operator[](int i)
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -614,6 +1158,8 @@ typedef struct vec2U
 
   constexpr u32 const& operator[](int i) const
   {
+    assert(i < 2);
+
     switch (i)
     {
     default:
@@ -622,6 +1168,140 @@ typedef struct vec2U
     case 1:
       return y;
     }
+  }
+
+  constexpr bool operator==(vec2U& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  constexpr bool operator==(const vec2U& other) const
+  {
+    return x == other.x && y == other.y;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec2U operator*(U scalar)
+  {
+    return { x * scalar, y * scalar };
+  }
+
+  template<typename U>
+  constexpr vec2U& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    return *this;
+  }
+
+  constexpr vec2U operator*(vec2U other)
+  {
+    return { x * other.x, y * other.y };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec2U operator/(U scalar)
+  {
+    return { x / scalar, y / scalar };
+  }
+
+  template<typename U>
+  constexpr vec2U& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec2U operator+(U scalar)
+  {
+    return { x + scalar, y + scalar };
+  }
+
+  template<typename U>
+  constexpr vec2U& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2U operator+(vec2U other)
+  {
+    return { x + other.x, y + other.y };
+  }
+
+  constexpr vec2U& operator+=(vec2U other)
+  {
+    x += other.x;
+    y += other.y;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec2U operator-(U scalar)
+  {
+    return { x - scalar, y - scalar };
+  }
+
+  template<typename U>
+  constexpr vec2U& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec2U operator-(vec2U other)
+  {
+    return { x - other.x, y - other.y };
+  }
+
+  constexpr vec2U& operator-=(vec2U other)
+  {
+    x -= other.x;
+    y -= other.y;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr u32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr u32 Dot(vec2U other)
+  {
+    return x * other.x + y * other.y;
+  }
+
+  constexpr vec2U Normal()
+  {
+    return *this / (u32)sqrt(x * x + y * y);
+  }
+
+  constexpr vec2U Normalize()
+  {
+    *this /= (u32)sqrt(x * x + y * y);
+    return *this;
   }
 
 } vec2U;
@@ -632,8 +1312,14 @@ typedef struct vec3U
   union { u32 y, g; };
   union { u32 z, b; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr u32& operator[](int i)
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -648,6 +1334,8 @@ typedef struct vec3U
 
   constexpr u32 const& operator[](int i) const
   {
+    assert(i < 3);
+
     switch (i)
     {
     default:
@@ -658,6 +1346,146 @@ typedef struct vec3U
     case 2:
       return z;
     }
+  }
+
+  constexpr bool operator==(vec3U& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  constexpr bool operator==(const vec3U& other) const
+  {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec3U operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar };
+  }
+
+  template<typename U>
+  constexpr vec3U& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    return *this;
+  }
+
+  constexpr vec3U operator*(vec3U other)
+  {
+    return { x * other.x, y * other.y, z * other.z };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec3U operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar };
+  }
+
+  template<typename U>
+  constexpr vec3U& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec3U operator+(U scalar)
+  {
+    return { x + scalar, y + scalar, z + scalar };
+  }
+
+  template<typename U>
+  constexpr vec3U& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3U operator+(vec3U other)
+  {
+    return { x + other.x, y + other.y, z + other.z };
+  }
+
+  constexpr vec3U& operator+=(vec3U other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec3U operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar };
+  }
+
+  template<typename U>
+  constexpr vec3U& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec3U operator-(vec3U other)
+  {
+    return { x - other.x, y - other.y, z - other.z };
+  }
+
+  constexpr vec3U& operator-=(vec3U other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr u32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr u32 Dot(vec3U other)
+  {
+    return x * other.x + y * other.y + z * other.z;
+  }
+
+  constexpr vec3U Normal()
+  {
+    return *this / (u32)sqrt(x * x + y * y + z * z);
+  }
+
+  constexpr vec3U Normalize()
+  {
+    *this /= (u32)sqrt(x * x + y * y + z * z);
+    return *this;
   }
 
 } vec3U;
@@ -669,8 +1497,14 @@ typedef struct vec4U
   union { u32 z, b; };
   union { u32 w, a; };
 
+  //=========================
+  // Operators
+  //=========================
+
   constexpr u32& operator[](int i)
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -687,6 +1521,8 @@ typedef struct vec4U
 
   constexpr u32 const& operator[](int i) const
   {
+    assert(i < 4);
+
     switch (i)
     {
     default:
@@ -700,6 +1536,155 @@ typedef struct vec4U
       return w;
     }
   }
+
+  constexpr bool operator==(vec4U& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  constexpr bool operator==(const vec4U& other) const
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+
+  //=========================
+  // Mathematic Operators
+  //=========================
+
+  // Multiplication =====
+
+  template<typename U>
+  constexpr vec4U operator*(U scalar)
+  {
+    return { x * scalar, y * scalar, z * scalar, w * scalar };
+  }
+
+  template<typename U>
+  constexpr vec4U& operator*=(U scalar)
+  {
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
+    w *= scalar;
+    return *this;
+  }
+
+  constexpr vec4U operator*(vec4U other)
+  {
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
+  }
+
+  // Division =====
+
+  template<typename U>
+  constexpr vec4U operator/(U scalar)
+  {
+    return { x / scalar, y / scalar, z / scalar, w / scalar };
+  }
+
+  template<typename U>
+  constexpr vec4U& operator/=(U scalar)
+  {
+    x /= scalar;
+    y /= scalar;
+    z /= scalar;
+    w /= scalar;
+    return *this;
+  }
+
+  // Addition =====
+
+  template<typename U>
+  constexpr vec4U operator+(U scalar)
+  {
+    return { x + scalar, y + scalar, z + scalar, w + scalar };
+  }
+
+  template<typename U>
+  constexpr vec4U& operator+=(U scalar)
+  {
+    x += scalar;
+    y += scalar;
+    z += scalar;
+    w += scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4U operator+(vec4U other)
+  {
+    return { x + other.x, y + other.y, z + other.z, w + other.w };
+  }
+
+  constexpr vec4U& operator+=(vec4U other)
+  {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+    w += other.w;
+    return *this;
+  }
+
+  // Subtraction =====
+
+  template<typename U>
+  constexpr vec4U operator-(U scalar)
+  {
+    return { x - scalar, y - scalar, z - scalar, w - scalar };
+  }
+
+  template<typename U>
+  constexpr vec4U& operator-=(U scalar)
+  {
+    x -= scalar;
+    y -= scalar;
+    z -= scalar;
+    w -= scalar;
+    return *this;
+  }
+
+  template<typename U>
+  constexpr vec4U operator-(vec4U other)
+  {
+    return { x - other.x, y - other.y, z - other.z, w - other.w };
+  }
+
+  constexpr vec4U& operator-=(vec4U other)
+  {
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
+    w -= other.w;
+    return *this;
+  }
+
+  //=========================
+  // Operations
+  //=========================
+
+  //constexpr u32 Combined()
+  //{
+  //  return x + y + z + w;
+  //}
+
+  constexpr u32 Dot(vec4U other)
+  {
+    return x * other.x + y * other.y + z * other.z + w * other.w;
+  }
+
+  constexpr vec4U Normal()
+  {
+    return *this / (u32)sqrt(x * x + y * y + z * z + w * w);
+  }
+
+  constexpr vec4U Normalize()
+  {
+    *this /= (u32)sqrt(x * x + y * y + z * z + w * w);
+    return *this;
+  }
+
 } vec4U;
+
+} // namespace Ice
 
 #endif // !define ICE_MATH_VECTOR_H_

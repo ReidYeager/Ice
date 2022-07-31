@@ -12,6 +12,8 @@
 #define ICE_DEBUG
 #endif // _DEBUG
 
+#include "tools/logger.h"
+
 //=========================
 // Primitives
 //=========================
@@ -34,21 +36,33 @@ typedef double             f64;
 typedef unsigned char      b8;
 typedef unsigned int       b32;
 
+namespace Ice {
+
 //=========================
 // Time
 //=========================
-namespace Ice {
-  extern struct IceTime
-  {
-    f32 totalTime;  // Real-time in seconds since the application started
-    f32 deltaTime;  // Time in seconds taken by the previous tick
-    u32 frameCount; // Number of frames rendered before this tick
-  } time;
-}
+
+struct TimeStruct
+{
+  f32 timeSinceStart;    // wall-time in seconds since the application started
+  f32 deltaTime;  // Time in seconds taken by the previous tick
+  u32 frameCount; // Number of frames rendered before this tick
+};
+extern Ice::TimeStruct time;
 
 //=========================
-// Platform detection
+// Flags
 //=========================
+
+typedef u32 Flag;
+typedef u64 FlagExtended;
+
+} // namespace Ice
+
+  //=========================
+  // Platform detection
+  //=========================
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #define ICE_PLATFORM_WINDOWS 1
 #ifndef _WIN64
@@ -58,26 +72,29 @@ namespace Ice {
 #error "Apologies, but only MS-Windows is currently supported"
 #endif // Platform detection
 
-//=========================
-// Flags
-//=========================
-typedef u32 IceFlag;
-typedef u64 IceFlagExtended;
+  //=========================
+  // Resource directories
+  //=========================
 
-typedef void* IceHandle;
-#define ICE_NULL_HANDLE nullptr
-#define ICE_NULL_UINT ~0U
-
-//=========================
-// Resource directories
-//=========================
 #define PREPROCESSOR_STRING(x) #x
 #define EXPAND_STRING_DEF(x) PREPROCESSOR_STRING(x)
-#define ICE_SOURCE_DIR EXPAND_STRING_DEF(ICE_SOURCE_DIRECTORY)
+#define ICE_SOURCE_DIR EXPAND_STRING_DEF(CMAKE_SOURCE_DIRECTORY)
 
-//#define ICE_RESOURCE_TEXTURE_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/textures/"
-//#define ICE_RESOURCE_SHADER_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/shaders/compiled/"
-//#define ICE_RESOURCE_MODEL_DIR EXPAND_STRING_DEF(SOURCE_DIRECTORY) "/Sandbox/res/models/"
+  //=========================
+  // Attempt
+  //=========================
+
+#define ICE_ATTEMPT(expression) \
+if (!(expression))              \
+  return false;
+
+//#define ICE_ATTEMPT_MSG(expression, message, ...) \
+//if (!(expression))                                \
+//{                                                 \
+//  IceLogError(severity, message, __VA_ARGS__);    \
+//  IceLogError(severity, "\n");                    \
+//  return false;                                   \
+//}
 
 //=========================
 // Asserts
@@ -88,7 +105,6 @@ typedef void* IceHandle;
 
 #ifdef ENABLE_ICE_ASSERTS
 
-#include "logger.h"
 #include <intrin.h>
 
 #define ICE_ASSERT(expression)                                                 \
@@ -110,25 +126,11 @@ typedef void* IceHandle;
   }                                                                            \
 }
 
-#define ICE_ATTEMPT(expression) \
-if (!(expression))              \
-  return false;
-
-#define ICE_ATTEMPT_MSG(expression, severity, message, ...) \
-if (!(expression))                                          \
-{                                                           \
-  Ice::ConsoleLogMessage(severity, message, __VA_ARGS__);   \
-  Ice::ConsoleLogMessage(severity, "\n");                   \
-  return false;                                             \
-}
-
 #define ICE_BREAK __debugbreak()
 
 #else
 #define ICE_ASSERT(expression)
 #define ICE_ASSERT_MSG(expression, msg, ...)
-#define ICE_ATTEMPT(expression)
-#define ICE_ATTEMPT_MSG(expression, severity, message, ...)
 #define ICE_BREAK
 #endif // ENABLE_ICE_ASSERTS
 

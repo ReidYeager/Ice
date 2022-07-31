@@ -1,6 +1,5 @@
 
 #include "defines.h"
-#include "logger.h"
 
 #include "platform/platform.h"
 #include "core/input.h"

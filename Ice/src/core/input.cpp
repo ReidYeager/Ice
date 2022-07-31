@@ -1,7 +1,7 @@
 ﻿
-#include "logger.h"
-
+#include "defines.h"
 #include "core/input.h"
+
 #include "platform/platform.h"
 
 IceInput Input;

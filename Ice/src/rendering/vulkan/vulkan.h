@@ -109,7 +109,7 @@ namespace Ice
     // Creates a vendor-specific surface for display
     b8 CreateSurface();
     // Gets the extents of the current window
-    vec2U GetWindowExtents();
+    Ice::vec2U GetWindowExtents();
 
     //=========================
     // Renderpasses
@@ -184,7 +184,7 @@ namespace Ice
     u64 PadBufferSize(u64 _inSize, Ice::BufferMemoryUsageFlags _usage);
 
   public:
-    b8 Init(Ice::RendererSettings _settings,
+    b8 Init(Ice::RendererSettingsCore _settings,
             const char* _title = "Ice_Vk_Application",
             u32 _version = 0);
     b8 RenderFrame(Ice::FrameInformation* _data);
@@ -223,5 +223,6 @@ namespace Ice
                         Ice::CameraSettings _settings);
   };
 
-}
+} // namespace Ice
+
 #endif // !define ICE_RENDERING_VULKAN_H_

@@ -4,6 +4,8 @@
 
 #include "defines.h"
 
+// TODO : Rewrite Input to be part of Ice namespace
+
 #define NewKey(name, code) Ice_Key_##name = code
 enum IceKeyCodeFlagBits
 {
@@ -61,7 +63,7 @@ enum IceKeyCodeFlagBits
 
   NewKey(Escape, 0x1B)
 };
-typedef IceFlag IceKeyCodeFlag;
+typedef Ice::Flag IceKeyCodeFlag;
 
 enum IceMouseButtonFlagBits
 {
@@ -73,7 +75,7 @@ enum IceMouseButtonFlagBits
   Ice_Mouse_Extra,
   Ice_Mouse_Max
 };
-typedef IceFlag IceMouseButtonFlag;
+typedef Ice::Flag IceMouseButtonFlag;
 #undef NewButton
 
 // Handles signals from the platform's physical input events

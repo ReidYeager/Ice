@@ -2,43 +2,23 @@
 #ifndef ICE_LOGGER_H_
 #define ICE_LOGGER_H_
 
-#include "defines.h"
-
-#include "platform/platform.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
 namespace Ice {
-  enum LogTypes
-  {
-    Log_Info,
-    Log_Debug,
-    Log_Warning,
-    Log_Error,
-    Log_Fatal
-  };
 
-  inline void ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
-  {
-    // Limit 65,535 characters per message
-    const u16 length = 0xFFFF;
-    char* outMessage = new char[length];
-    //rePlatform.MemZero(outMessage, length);
-    Ice::MemoryZero(outMessage, length);
+enum LogTypes
+{
+  Log_Info,
+  Log_Debug,
+  Log_Warning,
+  Log_Error,
+  Log_Fatal
+};
 
-    va_list args;
-    va_start(args, _message);
-    vsnprintf(outMessage, length, _message, args);
-    va_end(args);
+void ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...);
 
-    //rePlatform.ConsolePrint(outMessage, _type);
-    Ice::PrintToConsole(outMessage, _type);
-
-    delete[](outMessage);
-  }
-}
-
+} // namespace Ice
 
 #ifdef ICE_DEBUG
 #define IceLogInfo(message, ...)                               \

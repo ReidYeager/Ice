@@ -2,12 +2,10 @@
 Root :--: Ice/src
 
 \core\application.cpp
-  Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  374 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-\core\scene.cpp
-  Line   94 :--: '// TODO : Account for parent transform in camera matrix'
-  Line  102 :--: '// TODO : Create a default mesh and default material for new objects to use'
-  Line  158 :--: 'tc->bufferSegment.elementSize = 64; // TODO : Define per-object buffer size somewhere else.'
+  Line   80 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
+  Line  373 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+\core\input.h
+  Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
 \rendering\renderer.h
   Line   20 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
 \rendering\renderer_defines.h

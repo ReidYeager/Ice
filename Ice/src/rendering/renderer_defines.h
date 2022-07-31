@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "core/ecs.h"
+#include "core/ecs/ecs.h"
 #include "math/matrix.hpp"
 
 #include "rendering/vulkan/vulkan_defines.h"
@@ -30,7 +30,7 @@ namespace Ice {
     Buffer_Memory_Transfer_Src = 0x08,
     Buffer_Memory_Transfer_Dst = 0x10
   };
-  typedef IceFlag BufferMemoryUsageFlags;
+  typedef Ice::Flag BufferMemoryUsageFlags;
 
   struct Buffer
   {
@@ -216,24 +216,23 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
-    std::vector<Ice::ECS::ComponentManager<RenderComponent>*> sceneObjects;
-    std::vector< Ice::ECS::ComponentManager<CameraComponent>*> sceneCameras;
+    
   };
 
   enum RenderingApi
   {
-    Renderer_Unknown,
-    Renderer_Vulkan,
-    Renderer_OpenGL,
-    Renderer_DirectX
+    RenderApiUnknown = 0,
+    RenderApiVulkan,
+    RenderApiOpenGL,
+    RenderApiDirectX
   };
 
-  struct RendererSettings
+  // Settings that apply to all windows uniformly
+  struct RendererSettingsCore
   {
-    //Ice::Renderer* existingRenderer = nullptr; // Used to setup resources for a new window
     Ice::RenderingApi api;
   };
 
-}
+} // namespace Ice
 
 #endif // !define ICE_RENDERING_RENDERER_CONTEXT_H_

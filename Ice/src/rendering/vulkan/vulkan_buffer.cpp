@@ -19,7 +19,7 @@ u32 GetMemoryTypeIndex(Ice::VulkanContext* _context,
   }
 
   IceLogError("No suitable memory type is supported for this buffer");
-  return ICE_NULL_UINT;
+  return -1U;
 }
 
 b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
