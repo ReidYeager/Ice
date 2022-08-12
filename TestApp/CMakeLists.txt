@@ -5,7 +5,7 @@ project ("TestApp")
 
 find_package(Vulkan REQUIRED)
 
-add_compile_definitions(SOURCE_DIRECTORY=${CMAKE_SOURCE_DIR})
+add_compile_definitions(TESTAPP_DIRECTORY=${TestApp_SOURCE_DIR})
 
 add_executable (TestApp
   "src/source.cpp"

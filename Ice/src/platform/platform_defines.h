@@ -14,17 +14,13 @@
 
 namespace Ice {
 
-//struct WindowSettings
-//{
-//  Ice::vec2U extents;
-//  Ice::vec2I position;
-//  const char* title;
-//};
-
-struct TmpWinSets
+//=========================
+// Window
+//=========================
+struct WindowSettings
 {
-  Ice::vec2U extents;
   Ice::vec2I position;
+  Ice::vec2U extents;
   const char* title;
 };
 
@@ -39,8 +35,7 @@ struct Window
     #endif // ICE_PLATFORM_*
   } platformData;
 
-  vec2U extents;
-  vec2I position;
+  Ice::WindowSettings settings;
 };
 
 } // namespace Ice

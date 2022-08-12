@@ -3,14 +3,13 @@
 #define ICE_RENDERING_RENDERER_CONTEXT_H_
 
 #include "defines.h"
+#include "rendering/vulkan/vulkan_defines.h"
 
 #include "core/ecs/ecs.h"
 #include "math/matrix.hpp"
-
-#include "rendering/vulkan/vulkan_defines.h"
+#include "platform/compact_array.h"
 
 #include <vulkan/vulkan.h>
-
 #include <vector>
 #include <string>
 
@@ -216,7 +215,8 @@ namespace Ice {
   // A permanent solution will be settled on eventually.
   struct FrameInformation
   {
-    
+    Ice::CompactArray<Ice::CameraComponent>* cameras;
+    Ice::CompactArray<Ice::RenderComponent>* renderables;
   };
 
   enum RenderingApi

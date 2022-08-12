@@ -3,6 +3,7 @@
 #define ICE_PLATFORM_PLATFORM_H_
 
 #include "defines.h"
+#include "platform/platform_defines.h"
 
 #include "math/vector.hpp"
 
@@ -21,7 +22,7 @@ namespace Ice {
   // Memory
   //=========================
   void* MemoryAllocate(u64 _size);
-  void MemorySet(void* _data, u64 _size, u32 _value);
+  void MemorySet(void* _data, u64 _size, u8 _value);
   void MemoryCopy(void* _source, void* _destination, u64 _size);
   void MemoryFree(void* _data);
 
@@ -46,45 +47,20 @@ namespace Ice {
   void DestroyImageFile(void* _imageData);
 
   //=========================
-  // Window
-  //=========================
-  struct WindowSettings
-  {
-    vec2I position;
-    vec2U extents;
-    const char* title;
-  };
-
-  #ifdef ICE_PLATFORM_WINDOWS
-  struct WindowData
-  {
-    HWND hwnd;
-    HINSTANCE hinstance;
-
-    WindowSettings settings;
-  };
-  #else
-  struct WindowData
-  {
-    WindowSettings settings;
-  };
-  #endif // ICE_PLATFORM_WINDOWS
-
-  //=========================
   // Platform data
   //=========================
   extern class Platform
   {
   private:
-    WindowData window;
+    Ice::Window window;
 
   public:
     b8 Update();
     b8 Shutdown();
-    void CloseWindow(Ice::WindowData* _window = nullptr);
+    void CloseWindow(Ice::Window* _window = nullptr);
 
     b8 CreateNewWindow(Ice::WindowSettings _settings);
-    WindowData* GetWindow() { return &window; }
+    Ice::Window* GetWindow() { return &window; }
   } platform;
 
 } // namespace Ice

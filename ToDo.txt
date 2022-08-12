@@ -2,12 +2,14 @@
 Root :--: Ice/src
 
 \core\application.cpp
-  Line   80 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  373 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line   84 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
+  Line  396 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
 \rendering\renderer.h
   Line   20 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
 \rendering\renderer_defines.h
-  Line  192 :--: '// TODO : Add camera render target'
-  Line  205 :--: '// TODO : Rework the renderComponent to not chase pointers'
+  Line  191 :--: '// TODO : Add camera render target'
+  Line  204 :--: '// TODO : Rework the renderComponent to not chase pointers'
+\rendering\vulkan\vulkan_command.cpp
+  Line  100 :--: '// TODO : Allow rendering of more than one scene at a time'

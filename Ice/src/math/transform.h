@@ -40,9 +40,12 @@ private:
 
 public:
 
+  Ice::BufferSegment bufferSegment;
+
   Transform()
   {
     matrix = mat4Identity;
+    position = { 0.0f, 0.0f, 0.0f };
     scale = { 1.0f, 1.0f, 1.0f };
     rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
   }
@@ -185,11 +188,18 @@ public:
       quaternion q = rotation;
       Ice::vec3 s = scale;
 
+      //matrix = {
+      //  s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.y * (2 * (q.x * q.y - q.w * q.z))    , s.z * (2 * (q.x * q.z + q.w * q.y))    , p.x,
+      //  s.x * (2 * (q.x * q.y + q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.z * (2 * (q.y * q.z - q.w * q.x))    , p.y,
+      //  s.x * (2 * (q.x * q.z - q.w * q.y))    , s.y * (2 * (q.y * q.z + q.w * q.x))    , s.z * (1 - 2 * (q.x * q.x + q.y * q.y)), p.z,
+      //  0                                      , 0                                      , 0                                      , 1
+      //};
+
       matrix = {
-        s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.y * (2 * (q.x * q.y - q.w * q.z))    , s.z * (2 * (q.x * q.z + q.w * q.y))    , p.x,
-        s.x * (2 * (q.x * q.y + q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.z * (2 * (q.y * q.z - q.w * q.x))    , p.y,
-        s.x * (2 * (q.x * q.z - q.w * q.y))    , s.y * (2 * (q.y * q.z + q.w * q.x))    , s.z * (1 - 2 * (q.x * q.x + q.y * q.y)), p.z,
-        0                                      , 0                                      , 0                                      , 1
+        s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.x * (2 * (q.x * q.y + q.w * q.z))    , s.x * (2 * (q.x * q.z - q.w * q.y))    , 0,
+        s.y * (2 * (q.x * q.y - q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.y * (2 * (q.y * q.z + q.w * q.x))    , 0,
+        s.z * (2 * (q.x * q.z + q.w * q.y))    , s.z * (2 * (q.y * q.z - q.w * q.x))    , s.z * (1 - 2 * (q.x * q.x + q.y * q.y)), 0,
+        p.x                                    , p.y                                    , p.z                                    , 1
       };
     }
 

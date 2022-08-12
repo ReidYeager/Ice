@@ -11,26 +11,31 @@ namespace Ice {
 // Column-major matrix
 typedef union mat4
 {
-  struct
+  union
   {
-    Ice::vec4 x;
-    Ice::vec4 y;
-    Ice::vec4 z;
-    Ice::vec4 w;
-  };
-  struct
-  {
-    Ice::vec4 r;
-    Ice::vec4 g;
-    Ice::vec4 b;
-    Ice::vec4 a;
-  };
-  struct
-  {
-    Ice::vec4 col0;
-    Ice::vec4 col1;
-    Ice::vec4 col2;
-    Ice::vec4 col3;
+    f32 elements[16];
+
+    struct
+    {
+      Ice::vec4 x;
+      Ice::vec4 y;
+      Ice::vec4 z;
+      Ice::vec4 w;
+    };
+    struct
+    {
+      Ice::vec4 r;
+      Ice::vec4 g;
+      Ice::vec4 b;
+      Ice::vec4 a;
+    };
+    struct
+    {
+      Ice::vec4 col0;
+      Ice::vec4 col1;
+      Ice::vec4 col2;
+      Ice::vec4 col3;
+    };
   };
 
   //=========================
@@ -143,6 +148,138 @@ typedef union mat4
              x.y, y.y, z.y, w.y,
              x.z, y.z, z.z, w.z,
              x.w, y.w, z.w, w.w };
+  }
+
+  // TODO ~!!~ Invert matrix
+  mat4 Inverse() const
+  {
+    Ice::mat4 inv;
+    const Ice::mat4& m = *this;
+    double det;
+    int i;
+
+    inv.elements[0] = m.elements[5]  * m.elements[10] * m.elements[15] - 
+                      m.elements[5]  * m.elements[11] * m.elements[14] - 
+                      m.elements[9]  * m.elements[6]  * m.elements[15] + 
+                      m.elements[9]  * m.elements[7]  * m.elements[14] +
+                      m.elements[13] * m.elements[6]  * m.elements[11] - 
+                      m.elements[13] * m.elements[7]  * m.elements[10];
+
+    inv.elements[4] = -m.elements[4]  * m.elements[10] * m.elements[15] + 
+                       m.elements[4]  * m.elements[11] * m.elements[14] + 
+                       m.elements[8]  * m.elements[6]  * m.elements[15] - 
+                       m.elements[8]  * m.elements[7]  * m.elements[14] - 
+                       m.elements[12] * m.elements[6]  * m.elements[11] + 
+                       m.elements[12] * m.elements[7]  * m.elements[10];
+
+    inv.elements[8] = m.elements[4]  * m.elements[9] * m.elements[15] - 
+                      m.elements[4]  * m.elements[11] * m.elements[13] - 
+                      m.elements[8]  * m.elements[5] * m.elements[15] + 
+                      m.elements[8]  * m.elements[7] * m.elements[13] + 
+                      m.elements[12] * m.elements[5] * m.elements[11] - 
+                      m.elements[12] * m.elements[7] * m.elements[9];
+
+    inv.elements[12] = -m.elements[4]  * m.elements[9] * m.elements[14] + 
+                        m.elements[4]  * m.elements[10] * m.elements[13] +
+                        m.elements[8]  * m.elements[5] * m.elements[14] - 
+                        m.elements[8]  * m.elements[6] * m.elements[13] - 
+                        m.elements[12] * m.elements[5] * m.elements[10] + 
+                        m.elements[12] * m.elements[6] * m.elements[9];
+
+    inv.elements[1] = -m.elements[1]  * m.elements[10] * m.elements[15] + 
+                       m.elements[1]  * m.elements[11] * m.elements[14] + 
+                       m.elements[9]  * m.elements[2] * m.elements[15] - 
+                       m.elements[9]  * m.elements[3] * m.elements[14] - 
+                       m.elements[13] * m.elements[2] * m.elements[11] + 
+                       m.elements[13] * m.elements[3] * m.elements[10];
+
+    inv.elements[5] = m.elements[0]  * m.elements[10] * m.elements[15] - 
+                      m.elements[0]  * m.elements[11] * m.elements[14] - 
+                      m.elements[8]  * m.elements[2] * m.elements[15] + 
+                      m.elements[8]  * m.elements[3] * m.elements[14] + 
+                      m.elements[12] * m.elements[2] * m.elements[11] - 
+                      m.elements[12] * m.elements[3] * m.elements[10];
+
+    inv.elements[9] = -m.elements[0]  * m.elements[9] * m.elements[15] + 
+                       m.elements[0]  * m.elements[11] * m.elements[13] + 
+                       m.elements[8]  * m.elements[1] * m.elements[15] - 
+                       m.elements[8]  * m.elements[3] * m.elements[13] - 
+                       m.elements[12] * m.elements[1] * m.elements[11] + 
+                       m.elements[12] * m.elements[3] * m.elements[9];
+
+    inv.elements[13] = m.elements[0]  * m.elements[9] * m.elements[14] - 
+                       m.elements[0]  * m.elements[10] * m.elements[13] - 
+                       m.elements[8]  * m.elements[1] * m.elements[14] + 
+                       m.elements[8]  * m.elements[2] * m.elements[13] + 
+                       m.elements[12] * m.elements[1] * m.elements[10] - 
+                       m.elements[12] * m.elements[2] * m.elements[9];
+
+    inv.elements[2] = m.elements[1]  * m.elements[6] * m.elements[15] - 
+                      m.elements[1]  * m.elements[7] * m.elements[14] - 
+                      m.elements[5]  * m.elements[2] * m.elements[15] + 
+                      m.elements[5]  * m.elements[3] * m.elements[14] + 
+                      m.elements[13] * m.elements[2] * m.elements[7] - 
+                      m.elements[13] * m.elements[3] * m.elements[6];
+
+    inv.elements[6] = -m.elements[0]  * m.elements[6] * m.elements[15] + 
+                       m.elements[0]  * m.elements[7] * m.elements[14] + 
+                       m.elements[4]  * m.elements[2] * m.elements[15] - 
+                       m.elements[4]  * m.elements[3] * m.elements[14] - 
+                       m.elements[12] * m.elements[2] * m.elements[7] + 
+                       m.elements[12] * m.elements[3] * m.elements[6];
+
+    inv.elements[10] = m.elements[0]  * m.elements[5] * m.elements[15] - 
+                       m.elements[0]  * m.elements[7] * m.elements[13] - 
+                       m.elements[4]  * m.elements[1] * m.elements[15] + 
+                       m.elements[4]  * m.elements[3] * m.elements[13] + 
+                       m.elements[12] * m.elements[1] * m.elements[7] - 
+                       m.elements[12] * m.elements[3] * m.elements[5];
+
+    inv.elements[14] = -m.elements[0]  * m.elements[5] * m.elements[14] + 
+                        m.elements[0]  * m.elements[6] * m.elements[13] + 
+                        m.elements[4]  * m.elements[1] * m.elements[14] - 
+                        m.elements[4]  * m.elements[2] * m.elements[13] - 
+                        m.elements[12] * m.elements[1] * m.elements[6] + 
+                        m.elements[12] * m.elements[2] * m.elements[5];
+
+    inv.elements[3] = -m.elements[1] * m.elements[6] * m.elements[11] + 
+                       m.elements[1] * m.elements[7] * m.elements[10] + 
+                       m.elements[5] * m.elements[2] * m.elements[11] - 
+                       m.elements[5] * m.elements[3] * m.elements[10] - 
+                       m.elements[9] * m.elements[2] * m.elements[7] + 
+                       m.elements[9] * m.elements[3] * m.elements[6];
+
+    inv.elements[7] = m.elements[0] * m.elements[6] * m.elements[11] - 
+                      m.elements[0] * m.elements[7] * m.elements[10] - 
+                      m.elements[4] * m.elements[2] * m.elements[11] + 
+                      m.elements[4] * m.elements[3] * m.elements[10] + 
+                      m.elements[8] * m.elements[2] * m.elements[7] - 
+                      m.elements[8] * m.elements[3] * m.elements[6];
+
+    inv.elements[11] = -m.elements[0] * m.elements[5] * m.elements[11] + 
+                        m.elements[0] * m.elements[7] * m.elements[9] + 
+                        m.elements[4] * m.elements[1] * m.elements[11] - 
+                        m.elements[4] * m.elements[3] * m.elements[9] - 
+                        m.elements[8] * m.elements[1] * m.elements[7] + 
+                        m.elements[8] * m.elements[3] * m.elements[5];
+
+    inv.elements[15] = m.elements[0] * m.elements[5] * m.elements[10] - 
+                       m.elements[0] * m.elements[6] * m.elements[9] - 
+                       m.elements[4] * m.elements[1] * m.elements[10] + 
+                       m.elements[4] * m.elements[2] * m.elements[9] + 
+                       m.elements[8] * m.elements[1] * m.elements[6] - 
+                       m.elements[8] * m.elements[2] * m.elements[5];
+
+    det = m.elements[0] * inv.elements[0] + m.elements[1] * inv.elements[4] + m.elements[2] * inv.elements[8] + m.elements[3] * inv.elements[12];
+
+    if (det == 0)
+        return *this;
+
+    det = 1.0 / det;
+
+    //inv *= det;
+
+    return inv;
   }
 
 } mat4;

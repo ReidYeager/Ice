@@ -1,7 +1,8 @@
 
 #include "defines.h"
-
 #include "platform/platform.h"
+
+#include "platform/platform_defines.h"
 #include "core/input.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -23,7 +24,7 @@ void* Ice::MemoryAllocate(u64 _size)
   return malloc(_size);
 }
 
-void Ice::MemorySet(void* _data, u64 _size, u32 _value)
+void Ice::MemorySet(void* _data, u64 _size, u8 _value)
 {
   memset(_data, _value, _size);
 }
@@ -114,7 +115,7 @@ b8 Ice::Platform::Update()
     DispatchMessageA(&message);
   }
 
-  return window.hwnd != 0;
+  return window.platformData.hwnd != 0;
 }
 
 b8 Ice::Platform::Shutdown()
@@ -124,20 +125,20 @@ b8 Ice::Platform::Shutdown()
   return true;
 }
 
-void Ice::Platform::CloseWindow(Ice::WindowData* _window)
+void Ice::Platform::CloseWindow(Ice::Window* _window)
 {
   if (_window == nullptr)
     _window = &window;
 
-  if (_window->hwnd != 0)
+  if (_window->platformData.hwnd != 0)
   {
-    DestroyWindow(_window->hwnd);
-    _window->hwnd = 0;
+    DestroyWindow(_window->platformData.hwnd);
+    _window->platformData.hwnd = 0;
   }
 }
 
-b8 RegisterWindow(Ice::WindowData* _data);
-void PlatformAdjustWindowForBorder(Ice::WindowData* _data);
+b8 RegisterWindow(Ice::Window* _data);
+void PlatformAdjustWindowForBorder(Ice::Window* _data);
 LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPARAM lparam);
 
 b8 Ice::Platform::CreateNewWindow(Ice::WindowSettings _settings)
@@ -155,20 +156,20 @@ b8 Ice::Platform::CreateNewWindow(Ice::WindowSettings _settings)
   PlatformAdjustWindowForBorder(&window);
 
   // Create the window
-  window.hwnd = CreateWindowExA(window_ex_style,
-                                "IceWindowClass",
-                                window.settings.title,
-                                window_style,
-                                window.settings.position.x,
-                                window.settings.position.y,
-                                window.settings.extents.width,
-                                window.settings.extents.height,
-                                0,
-                                0,
-                                window.hinstance,
-                                0);
+  window.platformData.hwnd = CreateWindowExA(window_ex_style,
+                                             "IceWindowClass",
+                                             window.settings.title,
+                                             window_style,
+                                             window.settings.position.x,
+                                             window.settings.position.y,
+                                             window.settings.extents.width,
+                                             window.settings.extents.height,
+                                             0,
+                                             0,
+                                             window.platformData.hinstance,
+                                             0);
 
-  if (window.hwnd == 0)
+  if (window.platformData.hwnd == 0)
   {
     IceLogFatal("Failed to create the window");
     return false;
@@ -177,15 +178,15 @@ b8 Ice::Platform::CreateNewWindow(Ice::WindowSettings _settings)
   // Show the window
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
-  ShowWindow(window.hwnd, showWindowCommandFlags);
+  ShowWindow(window.platformData.hwnd, showWindowCommandFlags);
 
   return true;
 }
 
-b8 RegisterWindow(Ice::WindowData* _data)
+b8 RegisterWindow(Ice::Window* _window)
 {
-  _data->hinstance = GetModuleHandleA(0);
-  HICON icon = LoadIcon(_data->hinstance, IDI_APPLICATION);
+  _window->platformData.hinstance = GetModuleHandleA(0);
+  HICON icon = LoadIcon(_window->platformData.hinstance, IDI_APPLICATION);
 
   WNDCLASSA wc;
   memset(&wc, 0, sizeof(wc));
@@ -193,7 +194,7 @@ b8 RegisterWindow(Ice::WindowData* _data)
   wc.lpfnWndProc = ProcessInputMessage;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = 0;
-  wc.hInstance = _data->hinstance;
+  wc.hInstance = _window->platformData.hinstance;
   wc.hIcon = icon;
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.hbrBackground = NULL;
@@ -208,7 +209,7 @@ b8 RegisterWindow(Ice::WindowData* _data)
   return true;
 }
 
-void PlatformAdjustWindowForBorder(Ice::WindowData* _data)
+void PlatformAdjustWindowForBorder(Ice::Window* _data)
 {
   u32 window_style = WS_OVERLAPPEDWINDOW; //WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION;
   u32 window_ex_style = WS_EX_APPWINDOW;

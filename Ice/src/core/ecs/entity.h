@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "platform/memory_pool.h"
+#include "platform/compact_array.h"
 
 #include <vector>
 
@@ -46,6 +46,13 @@ u32 GetComponentId()
   return componentId;
 }
 
+template <typename T>
+Ice::CompactArray<T>& GetComponentArray()
+{
+  static Ice::CompactArray<T> arr(maxEntities);
+  return arr;
+}
+
 struct EntityDescription
 {
   Ice::Entity entity;
@@ -57,7 +64,7 @@ class Scene
 public:
   std::vector<Ice::EntityDescription> activeEntities;
   std::vector<u32> availableEntities;
-  std::vector<Ice::MemoryPool*> componentPools;
+  //std::vector<Ice::MemoryPool*> componentPools;
 
 public:
 
@@ -107,11 +114,11 @@ public:
 
   // Components =====
 
-  template <typename T>
-  T* GetComponentArray(u32* _count = nullptr)
-  {
-    return componentPools[GetComponentId<T>()]->AsArray<T>(_count);
-  }
+  //template <typename T>
+  //Ice::GetComponentArray<T>()* GetComponentArray()
+  //{
+  //  return &Ice::GetComponentArray<T>();
+  //}
 
   template <typename T>
   T* GetComponent(Ice::Entity _entity)
@@ -127,8 +134,7 @@ public:
 
     if (activeEntities[_entity].componentMask & (1llu << componentId))
     {
-      // Entity has this component
-      return (T*)(*componentPools[componentId])[_entity];
+      return &Ice::GetComponentArray<T>()[_entity.id];
     }
     return nullptr;
   }
@@ -144,18 +150,14 @@ public:
     }
 
     u32 componentId = GetComponentId<T>();
-
-    // Create a new memory pool if needed
-    if (componentPools.size() <= componentId)
-    {
-      componentPools.resize(componentId + 1, nullptr);
-      componentPools[componentId] = new Ice::MemoryPool(sizeof(T), maxEntities);
-    }
+    Ice::CompactArray<T>& v = Ice::GetComponentArray<T>();
+    v.AddElement(T(), _entity.id);
 
     // Add the component to the entity
     activeEntities[_entity].componentMask |= (1 << componentId);
+
     // Initialize the component data
-    return new ((*componentPools[componentId])[_entity]) T();
+    return &v[_entity.id];
   }
 
   template <typename T>

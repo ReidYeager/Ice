@@ -63,13 +63,15 @@ namespace Ice {
   void SetActiveScene(Ice::Scene* _scene);
   Ice::Scene* GetActiveScene();
 
-  Ice::Object* CreateObject(const char* _meshDir, Ice::Material* _material);
-  Ice::Object* CreateCamera(Ice::CameraSettings _settings = {});
-
   void AddSceneToRender(Ice::Scene* _scene);
   */
 
+  Ice::Entity CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings = {});
+  Ice::Entity CreateRenderedEntity(Ice::Scene* _scene);
+
   void UpdateTransforms();
+
+  void TMPSetMainScene(Ice::Scene* _scene);
 
 } // namespace Ice
 

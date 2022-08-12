@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <ice.h>
 
+#include "platform/compact_array.h"
+
+#define SOURCE_DIR EXPAND_STRING_DEF(TESTAPP_DIRECTORY)
+
 b8 Init();
 b8 Update(f32 _delta);
 b8 Shutdown();
@@ -14,8 +18,8 @@ int main()
   settings.GameShutdown = Shutdown;
   settings.rendererCore.api = Ice::RenderApiVulkan;
 
-  settings.window.extents = {800, 600};
-  settings.window.position = {50, 50};
+  settings.window.extents = { 800, 600 };
+  settings.window.position = { 50, 50 };
   settings.window.title = "Test title";
 
   Ice::Run(settings);
@@ -26,56 +30,56 @@ struct A { int x; int y; };
 struct B { char c; };
 struct C { f32 x; u64 f; };
 
+Ice::Material* material;
+Ice::Scene scene;
+Ice::Entity cam;
+
 b8 Init()
 {
-  //Ice::WindowSettings windowSettings {};
-  //Ice::CreateWindow(windowSettings);
+  Ice::TMPSetMainScene(&scene);
 
-  Ice::Scene scene;
-  Ice::Entity gun = scene.CreateEntity();
-  Ice::Entity cube = scene.CreateEntity();
-  Ice::Entity deleted = scene.CreateEntity();
-  scene.DestroyEntity(deleted);
-  Ice::Entity third = scene.CreateEntity();
+  Ice::CameraSettings camSettings {};
+  camSettings.farClip = 100.0f;
+  camSettings.nearClip = 0.1f;
+  camSettings.isPerspective = true;
+  camSettings.verticalFov = 45.0f;
+  camSettings.ratio = 4.0f / 3.0f;
 
-  scene.AddComponent<A>(gun);
-  scene.AddComponent<B>(cube);
-  scene.AddComponent<A>(third);
-  scene.AddComponent<B>(third);
+  cam = Ice::CreateCamera(&scene, camSettings);
+  //scene.GetComponent<Ice::Transform>(cam)->SetPosition({0.0f, 1.5f, 3.0f});
 
-  IceLogDebug("Gun   - (%u, %u)", gun.id, gun.version);
-  IceLogDebug("Cube  - (%u, %u)", cube.id, cube.version);
-  IceLogDebug("Third - (%u, %u)", third.id, third.version);
+  Ice::MaterialSettings materialSettings;
+  Ice::ShaderSettings shaderInfo;
+  shaderInfo.fileDirectory = SOURCE_DIR "/res/shaders/compiled/blank";
+  shaderInfo.type = Ice::Shader_Vertex;
+  materialSettings.shaderSettings.push_back(shaderInfo);
+  shaderInfo.type = Ice::Shader_Fragment;
+  materialSettings.shaderSettings.push_back(shaderInfo);
 
-  IceLogInfo("");
+  ICE_ATTEMPT(Ice::CreateMaterial(materialSettings, &material));
 
-  for (Ice::Entity a : Ice::SceneView<A>(scene))
-  {
-    IceLogInfo("%u, %u", a.id, a.version);
-  }
+  Ice::Entity gun = Ice::CreateRenderedEntity(&scene);
+  Ice::RenderComponent* gunRC = scene.GetComponent<Ice::RenderComponent>(gun);
+  gunRC->material = material;
+  ICE_ATTEMPT(Ice::CreateMesh(SOURCE_DIR "/res/models/BadCactus.obj", &gunRC->mesh));
 
-  IceLogInfo("");
-
-  for (Ice::Entity a : Ice::SceneView<B>(scene))
-  {
-    IceLogInfo("%u, %u", a.id, a.version);
-  }
-
-  IceLogInfo("");
-
-  for (Ice::Entity a : Ice::SceneView<A, B>(scene))
-  {
-    IceLogInfo("%u, %u", a.id, a.version);
-  }
-
-  IceLogInfo("");
+  Ice::Entity cube = Ice::CreateRenderedEntity(&scene);
+  Ice::RenderComponent* cubeRC = scene.GetComponent<Ice::RenderComponent>(cube);
+  cubeRC->material = material;
+  ICE_ATTEMPT(Ice::CreateMesh(SOURCE_DIR "/res/models/Cube.obj", &cubeRC->mesh));
 
   return true;
 }
 
 b8 Update(f32 _delta)
 {
-  return false;
+  scene.GetComponent<Ice::Transform>(cam)->Translate({ 0.0f, 0.5f * _delta, 0.5f * _delta });
+  scene.GetComponent<Ice::Transform>(cam)->RotateEuler({ -5.0f * _delta, 0.0f, 0.0f });
+
+  if (Input.IsKeyDown(Ice_Key_Escape))
+    return false;
+
+  return true;
 }
 
 b8 Shutdown()

@@ -719,7 +719,7 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   glmMatrix[1][1] *= -1;
 
   _camera->projectionMatrix = (f32*)glm::value_ptr(glmMatrix);
-  _camera->projectionMatrix = _camera->projectionMatrix.Transpose();
+  //_camera->projectionMatrix = _camera->projectionMatrix.Transpose();
 
   // Create descriptor set =====
   ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));

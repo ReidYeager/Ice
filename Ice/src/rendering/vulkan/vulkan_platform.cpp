@@ -18,11 +18,11 @@ void Ice::RendererVulkan::GetRequiredPlatformExtensions(std::vector<const char*>
 
 b8 Ice::RendererVulkan::CreateSurface()
 {
-  Ice::WindowData const* window = Ice::platform.GetWindow();
+  Ice::Window const* window = Ice::platform.GetWindow();
 
   VkWin32SurfaceCreateInfoKHR createInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
-  createInfo.hinstance = window->hinstance;
-  createInfo.hwnd = window->hwnd;
+  createInfo.hinstance = window->platformData.hinstance;
+  createInfo.hwnd = window->platformData.hwnd;
   createInfo.flags = 0;
 
   IVK_ASSERT(vkCreateWin32SurfaceKHR(context.instance,

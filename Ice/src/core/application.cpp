@@ -40,6 +40,10 @@ Ice::FrameInformation frameInfo{};
 std::vector<Ice::Scene*> scenes;
 Ice::Scene* activeScene = nullptr;
 
+Ice::Buffer transformsBuffer;
+
+Ice::Scene* mainScene;
+
 //=========================
 // Time
 //=========================
@@ -116,6 +120,19 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
+  ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
+                                           sizeof(Ice::mat4),
+                                           _settings.maxObjectCount,
+                                           Ice::Buffer_Memory_Shader_Read));
+
+  // Initialize transforms =====
+  Ice::Transform* transforms = Ice::GetComponentArray<Ice::Transform>().GetArray();
+  u32 transformCount = Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize();
+  for (u32 i = 0; i < transformCount; i++)
+  {
+    transforms[i] = Ice::Transform();
+  }
+
   // Game =====
   _settings.GameInit();
 
@@ -128,6 +145,10 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 b8 IceApplicationUpdate()
 {
   UpdateTime();
+
+  Ice::FrameInformation frameInfo;
+  frameInfo.cameras = &Ice::GetComponentArray<Ice::CameraComponent>();
+  frameInfo.renderables = &Ice::GetComponentArray<Ice::RenderComponent>();
 
   while (isRunning && Ice::platform.Update())
   {
@@ -179,6 +200,8 @@ b8 IceApplicationShutdown()
     renderer->DestroyShader(shaders[i]);
   }
   Ice::MemoryFree(shaders);
+
+  renderer->DestroyBufferMemory(&transformsBuffer);
 
   renderer->Shutdown();
   delete(renderer);
@@ -546,28 +569,6 @@ Ice::Scene* Ice::GetActiveScene()
   return activeScene;
 }
 
-Ice::Object* Ice::CreateObject(const char* _meshDir, Ice::Material* _material)
-{
-  if (activeScene == nullptr)
-  {
-    IceLogError("No active scene for object creation");
-    return nullptr;
-  }
-
-  return activeScene->AddObject(_meshDir, _material);
-}
-
-Ice::Object* Ice::CreateCamera(Ice::CameraSettings _settings / *= {}* /)
-{
-  if (activeScene == nullptr)
-  {
-    IceLogError("No active scene for object creation");
-    return nullptr;
-  }
-
-  return activeScene->AddCamera(_settings);
-}
-
 void Ice::AddSceneToRender(Ice::Scene* _scene)
 {
   u32 count = 0;
@@ -577,10 +578,65 @@ void Ice::AddSceneToRender(Ice::Scene* _scene)
 }
 */
 
+Ice::Entity Ice::CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings /*= {}*/)
+{
+  Ice::Entity e = _scene->CreateEntity();
+  Ice::CameraComponent* cc = _scene->AddComponent<Ice::CameraComponent>(e);
+  Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
+
+  t->bufferSegment.buffer = &transformsBuffer;
+  t->bufferSegment.count = 1;
+  t->bufferSegment.elementSize = sizeof(mat4);
+  t->bufferSegment.startIndex = e.id;
+  t->bufferSegment.offset = 0;
+
+  renderer->InitializeCamera(cc, t->bufferSegment, _settings);
+
+  return e;
+}
+
+Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene)
+{
+  Ice::Entity e = _scene->CreateEntity();
+  Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
+
+  t->bufferSegment.buffer = &transformsBuffer;
+  t->bufferSegment.count = 1;
+  t->bufferSegment.elementSize = sizeof(mat4);
+  t->bufferSegment.startIndex = e.id;
+  t->bufferSegment.offset = 0;
+
+  Ice::RenderComponent* r = _scene->AddComponent<Ice::RenderComponent>(e);
+
+  renderer->InitializeRenderComponent(r, &t->bufferSegment);
+
+  return e;
+}
+
 void Ice::UpdateTransforms()
 {
-  //for (auto& s : scenes)
-  //{
-  //  s->UpdateTransforms();
-  //}
+  u32 count = 0;
+  Ice::Transform* transforms = Ice::GetComponentArray<Ice::Transform>().GetArray(&count);
+
+  for (u32 i = 0; i < count; i++)
+  {
+    Ice::mat4 m = transforms[i].GetMatrix();
+    renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
+  }
+
+  Ice::SceneView<Ice::Transform, Ice::CameraComponent> cameras(*mainScene);
+
+  for (auto& cam : cameras)
+  {
+    Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
+    m = m * mainScene->GetComponent<Ice::CameraComponent>(cam)->projectionMatrix;
+
+    renderer->PushDataToBuffer(&m, Ice::GetComponentArray<Ice::Transform>()[cam.id].bufferSegment);
+  }
+
+}
+
+void Ice::TMPSetMainScene(Ice::Scene* _scene)
+{
+  mainScene = _scene;
 }

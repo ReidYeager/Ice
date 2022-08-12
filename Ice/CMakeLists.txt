@@ -57,6 +57,7 @@ add_library (Ice
   "src/platform/platform.h"
   "src/platform/platform_win32.cpp"
   "src/platform/memory_pool.h"
+  "src/platform/compact_array.h"
 
   # ==========
   # Rendering
@@ -77,7 +78,7 @@ add_library (Ice
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
-)
+ "src/tools/flag_array.h")
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)
 
