@@ -8,14 +8,13 @@
 
 #include <vector>
 
-// https://www.david-colson.com/2020/02/09/making-a-simple-ecs.html
-
 namespace Ice {
 
 struct Entity
 {
   u32 id;
-  u32 version;
+  u16 owningScene;
+  u16 version;
 
   constexpr operator u32() const
   {
@@ -24,17 +23,17 @@ struct Entity
 
   constexpr bool operator ==(Ice::Entity& _other) const
   {
-    return id == _other.id && version == _other.version;
+    return id == _other.id && version == _other.version && owningScene == _other.owningScene;
   }
 
   constexpr bool operator !=(Ice::Entity& _other) const
   {
-    return id != _other.id || version != _other.version;
+    return id != _other.id || version != _other.version || owningScene != _other.owningScene;
   }
 };
 
 const u32 maxEntities = 64;
-const Ice::Entity nullEntity = {-1u, -1u};
+const Ice::Entity nullEntity = {0xffffffff, 0xffff, 0xffff};
 
 typedef u64 componentMask;
 extern u32 establishedComponentCount;
@@ -56,7 +55,7 @@ Ice::CompactArray<T>& GetComponentArray()
 struct EntityDescription
 {
   Ice::Entity entity;
-  componentMask componentMask; // Replace with bitset?
+  componentMask componentMask;
 };
 
 class Scene
@@ -154,7 +153,7 @@ public:
     v.AddElement(T(), _entity.id);
 
     // Add the component to the entity
-    activeEntities[_entity].componentMask |= (1 << componentId);
+    activeEntities[_entity].componentMask |= (1llu << componentId);
 
     // Initialize the component data
     return &v[_entity.id];
@@ -257,7 +256,7 @@ public:
 
   const Iterator end() const
   {
-    return Iterator(scene, mask, scene->activeEntities.size());
+    return Iterator(scene, mask, (u32)scene->activeEntities.size());
   }
 
 };

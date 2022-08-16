@@ -595,7 +595,9 @@ Ice::Entity Ice::CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings 
   return e;
 }
 
-Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene)
+Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
+                                      const char* _meshDir /*= nullptr*/,
+                                      Ice::Material* _material /*= nullptr*/)
 {
   Ice::Entity e = _scene->CreateEntity();
   Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
@@ -609,6 +611,19 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene)
   Ice::RenderComponent* r = _scene->AddComponent<Ice::RenderComponent>(e);
 
   renderer->InitializeRenderComponent(r, &t->bufferSegment);
+
+  if (_meshDir != nullptr)
+  {
+    if (!Ice::CreateMesh(_meshDir, &r->mesh))
+    {
+      return e;
+    }
+
+    if (_material != nullptr)
+    {
+      r->material = _material;
+    }
+  }
 
   return e;
 }

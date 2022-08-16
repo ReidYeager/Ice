@@ -12,6 +12,9 @@
 
 namespace Ice {
 
+// NOTE : Very unstable. Elements of the array can change at any time.
+// TODO : Need to find a way to accomplish this without breaking connections to its elements
+
 template<class T>
 class CompactArray
 {

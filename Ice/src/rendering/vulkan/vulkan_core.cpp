@@ -553,7 +553,7 @@ b8 Ice::RendererVulkan::CreateSwapchain()
     }
     else
     {
-      vec2U e = GetWindowExtents();
+      Ice::vec2U e = GetWindowExtents();
       extent = { e.width, e.height };
     }
     IceLogInfo("Swapchain using: extents (%u, %u) -- format %d",

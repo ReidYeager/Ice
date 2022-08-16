@@ -17,8 +17,8 @@ namespace Ice {
 
 typedef struct vec2
 {
-  union { f32 x, r, width; };
-  union { f32 y, g, height; };
+  union { f32 x, r, width, pitch; };
+  union { f32 y, g, height, yaw; };
 
   //=========================
   // Operators
@@ -576,8 +576,8 @@ typedef struct vec4
 
 typedef struct vec2I
 {
-  union { i32 x, r, width; };
-  union { i32 y, g, height; };
+  union { i32 x, r, width, pitch; };
+  union { i32 y, g, height, yaw; };
 
   //=========================
   // Operators
@@ -1135,8 +1135,8 @@ typedef struct vec4I
 
 typedef struct vec2U
 {
-  union { u32 x, r, width; };
-  union { u32 y, g, height; };
+  union { u32 x, r, width, pitch; };
+  union { u32 y, g, height, yaw; };
 
   //=========================
   // Operators
