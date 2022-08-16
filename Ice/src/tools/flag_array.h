@@ -45,7 +45,7 @@ public:
     byteCount = (flagCount + 7) / 8; // Bits to bytes, rounding up
 
     data = (char*)Ice::MemoryAllocate(byteCount);
-    Ice::MemorySet(data, byteCount, -1u * _initialValue);
+    Ice::MemorySet(data, byteCount, (~0) * _initialValue);
   }
 
   b8 Get(u32 _index)
@@ -118,7 +118,7 @@ public:
   {
     _value = _value != 0;
 
-    Ice::MemorySet(data, byteCount, -1u * _value);
+    Ice::MemorySet(data, byteCount, (~0) * _value);
   }
 
 };

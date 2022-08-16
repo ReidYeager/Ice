@@ -156,7 +156,6 @@ typedef union mat4
     Ice::mat4 inv;
     const Ice::mat4& m = *this;
     double det;
-    int i;
 
     inv.elements[0] = m.elements[5]  * m.elements[10] * m.elements[15] - 
                       m.elements[5]  * m.elements[11] * m.elements[14] - 

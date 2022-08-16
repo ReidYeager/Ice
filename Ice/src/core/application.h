@@ -67,7 +67,9 @@ namespace Ice {
   */
 
   Ice::Entity CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings = {});
-  Ice::Entity CreateRenderedEntity(Ice::Scene* _scene);
+  Ice::Entity CreateRenderedEntity(Ice::Scene* _scene,
+                                   const char* _meshDir = nullptr,
+                                   Ice::Material* _material = nullptr);
 
   void UpdateTransforms();
 
