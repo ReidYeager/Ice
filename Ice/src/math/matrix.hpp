@@ -38,6 +38,69 @@ typedef union mat4
     };
   };
 
+  mat4(f32* _elementArray)
+  {
+    elements[0 ] = _elementArray[0 ];
+    elements[1 ] = _elementArray[1 ];
+    elements[2 ] = _elementArray[2 ];
+    elements[3 ] = _elementArray[3 ];
+    elements[4 ] = _elementArray[4 ];
+    elements[5 ] = _elementArray[5 ];
+    elements[6 ] = _elementArray[6 ];
+    elements[7 ] = _elementArray[7 ];
+    elements[8 ] = _elementArray[8 ];
+    elements[9 ] = _elementArray[9 ];
+    elements[10] = _elementArray[10];
+    elements[11] = _elementArray[11];
+    elements[12] = _elementArray[12];
+    elements[13] = _elementArray[13];
+    elements[14] = _elementArray[14];
+    elements[15] = _elementArray[15];
+  }
+
+  mat4(f32 _elementArray0 , f32 _elementArray1 , f32 _elementArray2 , f32 _elementArray3 ,
+       f32 _elementArray4 , f32 _elementArray5 , f32 _elementArray6 , f32 _elementArray7 ,
+       f32 _elementArray8 , f32 _elementArray9 , f32 _elementArray10, f32 _elementArray11,
+       f32 _elementArray12, f32 _elementArray13, f32 _elementArray14, f32 _elementArray15)
+  {
+    elements[0 ] = _elementArray0;
+    elements[1 ] = _elementArray1;
+    elements[2 ] = _elementArray2;
+    elements[3 ] = _elementArray3;
+    elements[4 ] = _elementArray4;
+    elements[5 ] = _elementArray5;
+    elements[6 ] = _elementArray6;
+    elements[7 ] = _elementArray7;
+    elements[8 ] = _elementArray8;
+    elements[9 ] = _elementArray9;
+    elements[10] = _elementArray10;
+    elements[11] = _elementArray11;
+    elements[12] = _elementArray12;
+    elements[13] = _elementArray13;
+    elements[14] = _elementArray14;
+    elements[15] = _elementArray15;
+  }
+
+  mat4(f32 _value = 1.0f)
+  {
+    elements[0 ] = _value;
+    elements[1 ] = 0.0f;
+    elements[2 ] = 0.0f;
+    elements[3 ] = 0.0f;
+    elements[4 ] = 0.0f;
+    elements[5 ] = _value;
+    elements[6 ] = 0.0f;
+    elements[7 ] = 0.0f;
+    elements[8 ] = 0.0f;
+    elements[9 ] = 0.0f;
+    elements[10] = _value;
+    elements[11] = 0.0f;
+    elements[12] = 0.0f;
+    elements[13] = 0.0f;
+    elements[14] = 0.0f;
+    elements[15] = _value;
+  }
+
   //=========================
   // Operators
   //=========================
@@ -126,28 +189,26 @@ typedef union mat4
     };
   }
 
-  constexpr mat4 operator*(mat4 mat)
+  mat4 operator*(mat4 mat)
   {
     mat = mat.Transpose();
 
-    return {
-      x.Dot(mat.x), x.Dot(mat.y), x.Dot(mat.z), x.Dot(mat.w),
-      y.Dot(mat.x), y.Dot(mat.y), y.Dot(mat.z), y.Dot(mat.w),
-      z.Dot(mat.x), z.Dot(mat.y), z.Dot(mat.z), z.Dot(mat.w),
-      w.Dot(mat.x), w.Dot(mat.y), w.Dot(mat.z), w.Dot(mat.w)
-    };
+    return mat4(x.Dot(mat.x), x.Dot(mat.y), x.Dot(mat.z), x.Dot(mat.w),
+                y.Dot(mat.x), y.Dot(mat.y), y.Dot(mat.z), y.Dot(mat.w),
+                z.Dot(mat.x), z.Dot(mat.y), z.Dot(mat.z), z.Dot(mat.w),
+                w.Dot(mat.x), w.Dot(mat.y), w.Dot(mat.z), w.Dot(mat.w));
   }
 
   //=========================
   // Operations
   //=========================
 
-  constexpr mat4 Transpose() const
+  mat4 Transpose() const
   {
-    return { x.x, y.x, z.x, w.x,
-             x.y, y.y, z.y, w.y,
-             x.z, y.z, z.z, w.z,
-             x.w, y.w, z.w, w.w };
+    return mat4(x.x, y.x, z.x, w.x,
+                x.y, y.y, z.y, w.y,
+                x.z, y.z, z.z, w.z,
+                x.w, y.w, z.w, w.w);
   }
 
   // TODO ~!!~ Invert matrix
@@ -269,24 +330,22 @@ typedef union mat4
                        m.elements[8] * m.elements[1] * m.elements[6] - 
                        m.elements[8] * m.elements[2] * m.elements[5];
 
-    det = m.elements[0] * inv.elements[0] + m.elements[1] * inv.elements[4] + m.elements[2] * inv.elements[8] + m.elements[3] * inv.elements[12];
+    det = m.elements[0] * inv.elements[0] +
+          m.elements[1] * inv.elements[4] +
+          m.elements[2] * inv.elements[8] +
+          m.elements[3] * inv.elements[12];
 
     if (det == 0)
         return *this;
 
     det = 1.0 / det;
 
-    //inv *= det;
-
     return inv;
   }
 
 } mat4;
 
-const mat4 mat4Identity = { 1.0f, 0.0f, 0.0f, 0.0f,
-                            0.0f, 1.0f, 0.0f, 0.0f,
-                            0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f };
+const Ice::mat4 mat4Identity = Ice::mat4(1.0f);
 
 } // namespace Ice
 

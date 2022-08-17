@@ -17,6 +17,9 @@ typedef struct quaternion
   f32 z = 0;
   f32 w = 1;
 
+  constexpr quaternion(f32 _x, f32 _y, f32 _z, f32 _w) : x(_x), y(_y), z(_z), w(_w) {}
+  constexpr quaternion() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {}
+
   constexpr f32& operator[](int i)
   {
     switch (i)
@@ -145,7 +148,6 @@ typedef struct quaternion
     return *this;
   }
 
-  template<typename U>
   constexpr quaternion operator+(vec4 other)
   {
     return { x + other.x, y + other.y, z + other.z, w + other.w };
@@ -178,7 +180,6 @@ typedef struct quaternion
     return *this;
   }
 
-  template<typename U>
   constexpr quaternion operator-(vec4 other)
   {
     return { x - other.x, y - other.y, z - other.z, w - other.w };
@@ -220,12 +221,14 @@ typedef struct quaternion
     return *this;
   }
 
-  constexpr mat4 Matrix()
+  mat4 Matrix()
   {
-    return { 1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z)       , 2.0f * (x * z + w * y)       , 0.0f,
-             2.0f * (x * y + w * z)       , 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x)       , 0.0f,
-             2.0f * (x * z - w * y)       , 2.0f * (y * z + w * x)       , 1.0f - 2.0f * (x * x + y * y), 0.0f,
-             0.0f                         , 0.0f                         , 0.0f                         , 1.0f };
+    return Ice::mat4(
+      1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z)       , 2.0f * (x * z + w * y)       , 0.0f,
+      2.0f * (x * y + w * z)       , 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x)       , 0.0f,
+      2.0f * (x * z - w * y)       , 2.0f * (y * z + w * x)       , 1.0f - 2.0f * (x * x + y * y), 0.0f,
+      0.0f                         , 0.0f                         , 0.0f                         , 1.0f
+    );
   }
 
   constexpr quaternion Normal()

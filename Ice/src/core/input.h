@@ -125,8 +125,11 @@ public:
   b8 IsMouseButtonDown(IceMouseButtonFlag _button);
   b8 WasMouseButtonDown(IceMouseButtonFlag _button);
   void GetMousePosition(i32* _x, i32* _y);
+  void GetMousePosition(f32* _x, f32* _y);
   void GetMousePreviousPosition(i32* _x, i32* _y);
+  void GetMousePreviousPosition(f32* _x, f32* _y);
   void GetMouseDelta(i32* _x, i32* _y);
+  void GetMouseDelta(f32* _x, f32* _y);
 } Input;
 
 #endif // !CORE_INPUT_H

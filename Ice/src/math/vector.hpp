@@ -20,6 +20,10 @@ typedef struct vec2
   union { f32 x, r, width, pitch; };
   union { f32 y, g, height, yaw; };
 
+  constexpr vec2(f32 _x, f32 _y) : x(_x), y(_y) {}
+  constexpr vec2(f32 _val) : x(_val), y(_val) {}
+  constexpr vec2() : x(0.0f), y(0.0f) {}
+
   //=========================
   // Operators
   //=========================
@@ -119,7 +123,6 @@ typedef struct vec2
     return *this;
   }
 
-  template<typename U>
   constexpr vec2 operator+(vec2 other)
   {
     return { x + other.x, y + other.y };
@@ -148,7 +151,6 @@ typedef struct vec2
     return *this;
   }
 
-  template<typename U>
   constexpr vec2 operator-(vec2 other)
   {
     return { x - other.x, y - other.y };
@@ -177,11 +179,17 @@ typedef struct vec2
 
   constexpr vec2 Normal()
   {
+    if (x == 0.0f && y == 0.0f)
+      return *this;
+
     return *this / (f32)sqrt(x * x + y * y);
   }
 
-  constexpr vec2 Normalize()
+  constexpr vec2& Normalize()
   {
+    if (x == 0.0f && y == 0.0f)
+      return *this;
+
     *this /= (f32)sqrt(x * x + y * y);
     return *this;
   }
@@ -193,6 +201,10 @@ typedef struct vec3
   union { f32 x, r; };
   union { f32 y, g; };
   union { f32 z, b; };
+
+  constexpr vec3(f32 _x, f32 _y, f32 _z) : x(_x), y(_y), z(_z) {}
+  constexpr vec3(f32 _val) : x(_val), y(_val), z(_val) {}
+  constexpr vec3() : x(0.0f), y(0.0f), z(0.0f) {}
 
   //=========================
   // Operators
@@ -286,7 +298,7 @@ typedef struct vec3
   // Addition =====
 
   template<typename U>
-  constexpr vec3 operator+(U scalar)
+  constexpr vec3 operator+(U scalar) const
   {
     return { x + scalar, y + scalar, z + scalar };
   }
@@ -300,8 +312,7 @@ typedef struct vec3
     return *this;
   }
 
-  template<typename U>
-  constexpr vec3 operator+(vec3 other)
+  constexpr vec3 operator+(vec3 other) const
   {
     return { x + other.x, y + other.y, z + other.z };
   }
@@ -331,7 +342,6 @@ typedef struct vec3
     return *this;
   }
 
-  template<typename U>
   constexpr vec3 operator-(vec3 other)
   {
     return { x - other.x, y - other.y, z - other.z };
@@ -361,11 +371,17 @@ typedef struct vec3
 
   constexpr vec3 Normal()
   {
+    if (x == 0.0f && y == 0.0f && z == 0.0f)
+      return *this;
+
     return *this / (f32)sqrt(x * x + y * y + z * z);
   }
 
-  constexpr vec3 Normalize()
+  constexpr vec3& Normalize()
   {
+    if (x == 0.0f && y == 0.0f && z == 0.0f)
+      return *this;
+
     *this /= (f32)sqrt(x * x + y * y + z * z);
     return *this;
   }
@@ -378,6 +394,10 @@ typedef struct vec4
   union { f32 y, g; };
   union { f32 z, b; };
   union { f32 w, a; };
+
+  constexpr vec4(f32 _x, f32 _y, f32 _z, f32 _w) : x(_x), y(_y), z(_z), w(_w) {}
+  constexpr vec4(f32 _val) : x(_val), y(_val), z(_val), w(_val) {}
+  constexpr vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
 
   //=========================
   // Operators
@@ -492,7 +512,6 @@ typedef struct vec4
     return *this;
   }
 
-  template<typename U>
   constexpr vec4 operator+(vec4 other)
   {
     return { x + other.x, y + other.y, z + other.z, w + other.w };
@@ -525,7 +544,6 @@ typedef struct vec4
     return *this;
   }
 
-  template<typename U>
   constexpr vec4 operator-(vec4 other)
   {
     return { x - other.x, y - other.y, z - other.z, w - other.w };
@@ -556,11 +574,17 @@ typedef struct vec4
 
   constexpr vec4 Normal()
   {
+    if (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f)
+      return *this;
+
     return *this / (f32)sqrt(x * x + y * y + z * z + w * w);
   }
 
-  constexpr vec4 Normalize()
+  constexpr vec4& Normalize()
   {
+    if (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f)
+      return *this;
+
     *this /= (f32)sqrt(x * x + y * y + z * z + w * w);
     return *this;
   }
@@ -578,6 +602,10 @@ typedef struct vec2I
 {
   union { i32 x, r, width, pitch; };
   union { i32 y, g, height, yaw; };
+
+  constexpr vec2I(i32 _x, i32 _y) : x(_x), y(_y) {}
+  constexpr vec2I(i32 _val) : x(_val), y(_val) {}
+  constexpr vec2I() : x(0), y(0) {}
 
   //=========================
   // Operators
@@ -678,7 +706,6 @@ typedef struct vec2I
     return *this;
   }
 
-  template<typename U>
   constexpr vec2I operator+(vec2I other)
   {
     return { x + other.x, y + other.y };
@@ -707,7 +734,6 @@ typedef struct vec2I
     return *this;
   }
 
-  template<typename U>
   constexpr vec2I operator-(vec2I other)
   {
     return { x - other.x, y - other.y };
@@ -736,11 +762,17 @@ typedef struct vec2I
 
   constexpr vec2I Normal()
   {
+    if (x == 0 && y == 0)
+      return *this;
+
     return *this / (i32)sqrt(x * x + y * y);
   }
 
-  constexpr vec2I Normalize()
+  constexpr vec2I& Normalize()
   {
+    if (x == 0 && y == 0)
+      return *this;
+
     *this /= (i32)sqrt(x * x + y * y);
     return *this;
   }
@@ -752,6 +784,10 @@ typedef struct vec3I
   union { i32 x, r; };
   union { i32 y, g; };
   union { i32 z, b; };
+
+  constexpr vec3I(i32 _x, i32 _y, i32 _z) : x(_x), y(_y), z(_z) {}
+  constexpr vec3I(i32 _val) : x(_val), y(_val), z(_val) {}
+  constexpr vec3I() : x(0), y(0), z(0) {}
 
   //=========================
   // Operators
@@ -859,7 +895,6 @@ typedef struct vec3I
     return *this;
   }
 
-  template<typename U>
   constexpr vec3I operator+(vec3I other)
   {
     return { x + other.x, y + other.y, z + other.z };
@@ -890,7 +925,6 @@ typedef struct vec3I
     return *this;
   }
 
-  template<typename U>
   constexpr vec3I operator-(vec3I other)
   {
     return { x - other.x, y - other.y, z - other.z };
@@ -920,11 +954,17 @@ typedef struct vec3I
 
   constexpr vec3I Normal()
   {
+    if (x == 0 && y == 0 && z == 0)
+      return *this;
+
     return *this / (i32)sqrt(x * x + y * y + z * z);
   }
 
-  constexpr vec3I Normalize()
+  constexpr vec3I& Normalize()
   {
+    if (x == 0 && y == 0 && z == 0)
+      return *this;
+
     *this /= (i32)sqrt(x * x + y * y + z * z);
     return *this;
   }
@@ -937,6 +977,10 @@ typedef struct vec4I
   union { i32 y, g; };
   union { i32 z, b; };
   union { i32 w, a; };
+
+  constexpr vec4I(i32 _x, i32 _y, i32 _z, i32 _w) : x(_x), y(_y), z(_z), w(_w) {}
+  constexpr vec4I(i32 _val) : x(_val), y(_val), z(_val), w(_val) {}
+  constexpr vec4I() : x(0), y(0), z(0), w(0) {}
 
   //=========================
   // Operators
@@ -1051,7 +1095,6 @@ typedef struct vec4I
     return *this;
   }
 
-  template<typename U>
   constexpr vec4I operator+(vec4I other)
   {
     return { x + other.x, y + other.y, z + other.z, w + other.w };
@@ -1084,7 +1127,6 @@ typedef struct vec4I
     return *this;
   }
 
-  template<typename U>
   constexpr vec4I operator-(vec4I other)
   {
     return { x - other.x, y - other.y, z - other.z, w - other.w };
@@ -1115,11 +1157,17 @@ typedef struct vec4I
 
   constexpr vec4I Normal()
   {
+    if (x == 0 && y == 0 && z == 0 && w == 0)
+      return *this;
+
     return *this / (i32)sqrt(x * x + y * y + z * z + w * w);
   }
 
-  constexpr vec4I Normalize()
+  constexpr vec4I& Normalize()
   {
+    if (x == 0 && y == 0 && z == 0 && w == 0)
+      return *this;
+
     *this /= (i32)sqrt(x * x + y * y + z * z + w * w);
     return *this;
   }
@@ -1137,6 +1185,10 @@ typedef struct vec2U
 {
   union { u32 x, r, width, pitch; };
   union { u32 y, g, height, yaw; };
+
+  constexpr vec2U(u32 _x, u32 _y) : x(_x), y(_y) {}
+  constexpr vec2U(u32 _val) : x(_val), y(_val) {}
+  constexpr vec2U() : x(0u), y(0u) {}
 
   //=========================
   // Operators
@@ -1237,7 +1289,6 @@ typedef struct vec2U
     return *this;
   }
 
-  template<typename U>
   constexpr vec2U operator+(vec2U other)
   {
     return { x + other.x, y + other.y };
@@ -1266,7 +1317,6 @@ typedef struct vec2U
     return *this;
   }
 
-  template<typename U>
   constexpr vec2U operator-(vec2U other)
   {
     return { x - other.x, y - other.y };
@@ -1295,11 +1345,17 @@ typedef struct vec2U
 
   constexpr vec2U Normal()
   {
+    if (x == 0u && y == 0u)
+      return *this;
+
     return *this / (u32)sqrt(x * x + y * y);
   }
 
-  constexpr vec2U Normalize()
+  constexpr vec2U& Normalize()
   {
+    if (x == 0u && y == 0u)
+      return *this;
+
     *this /= (u32)sqrt(x * x + y * y);
     return *this;
   }
@@ -1311,6 +1367,10 @@ typedef struct vec3U
   union { u32 x, r; };
   union { u32 y, g; };
   union { u32 z, b; };
+
+  constexpr vec3U(u32 _x, u32 _y, u32 _z) : x(_x), y(_y), z(_z) {}
+  constexpr vec3U(u32 _val) : x(_val), y(_val), z(_val) {}
+  constexpr vec3U() : x(0u), y(0u), z(0u) {}
 
   //=========================
   // Operators
@@ -1418,7 +1478,6 @@ typedef struct vec3U
     return *this;
   }
 
-  template<typename U>
   constexpr vec3U operator+(vec3U other)
   {
     return { x + other.x, y + other.y, z + other.z };
@@ -1449,7 +1508,6 @@ typedef struct vec3U
     return *this;
   }
 
-  template<typename U>
   constexpr vec3U operator-(vec3U other)
   {
     return { x - other.x, y - other.y, z - other.z };
@@ -1479,11 +1537,17 @@ typedef struct vec3U
 
   constexpr vec3U Normal()
   {
+    if (x == 0u && y == 0u && z == 0u)
+      return *this;
+
     return *this / (u32)sqrt(x * x + y * y + z * z);
   }
 
-  constexpr vec3U Normalize()
+  constexpr vec3U& Normalize()
   {
+    if (x == 0u && y == 0u && z == 0u)
+      return *this;
+
     *this /= (u32)sqrt(x * x + y * y + z * z);
     return *this;
   }
@@ -1496,6 +1560,10 @@ typedef struct vec4U
   union { u32 y, g; };
   union { u32 z, b; };
   union { u32 w, a; };
+
+  constexpr vec4U(u32 _x, u32 _y, u32 _z, u32 _w) : x(_x), y(_y), z(_z), w(_w) {}
+  constexpr vec4U(u32 _val) : x(_val), y(_val), z(_val), w(_val) {}
+  constexpr vec4U() : x(0u), y(0u), z(0u), w(0u) {}
 
   //=========================
   // Operators
@@ -1610,7 +1678,6 @@ typedef struct vec4U
     return *this;
   }
 
-  template<typename U>
   constexpr vec4U operator+(vec4U other)
   {
     return { x + other.x, y + other.y, z + other.z, w + other.w };
@@ -1643,7 +1710,6 @@ typedef struct vec4U
     return *this;
   }
 
-  template<typename U>
   constexpr vec4U operator-(vec4U other)
   {
     return { x - other.x, y - other.y, z - other.z, w - other.w };
@@ -1674,11 +1740,17 @@ typedef struct vec4U
 
   constexpr vec4U Normal()
   {
+    if (x == 0u && y == 0u && z == 0u && w == 0u)
+      return *this;
+
     return *this / (u32)sqrt(x * x + y * y + z * z + w * w);
   }
 
-  constexpr vec4U Normalize()
+  constexpr vec4U& Normalize()
   {
+    if (x == 0u && y == 0u && z == 0u && w == 0u)
+      return *this;
+
     *this /= (u32)sqrt(x * x + y * y + z * z + w * w);
     return *this;
   }

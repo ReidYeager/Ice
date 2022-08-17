@@ -87,15 +87,33 @@ void IceInput::GetMousePosition(i32* _x, i32* _y)
   *_y = m_states.mouseCurrent.y;
 }
 
+void IceInput::GetMousePosition(f32* _x, f32* _y)
+{
+  *_x = (f32)m_states.mouseCurrent.x;
+  *_y = (f32)m_states.mouseCurrent.y;
+}
+
 void IceInput::GetMousePreviousPosition(i32* _x, i32* _y)
 {
   *_x = m_states.mousePrevious.x;
   *_y = m_states.mousePrevious.y;
 }
 
+void IceInput::GetMousePreviousPosition(f32* _x, f32* _y)
+{
+  *_x = (f32)m_states.mousePrevious.x;
+  *_y = (f32)m_states.mousePrevious.y;
+}
+
 void IceInput::GetMouseDelta(i32* _x, i32* _y)
 {
   *_x = m_states.mouseCurrent.x - m_states.mousePrevious.x;
   *_y = m_states.mouseCurrent.y - m_states.mousePrevious.y;
+}
+
+void IceInput::GetMouseDelta(f32* _x, f32* _y)
+{
+  *_x = (f32)(m_states.mouseCurrent.x - m_states.mousePrevious.x);
+  *_y = (f32)(m_states.mouseCurrent.y - m_states.mousePrevious.y);
 }
 

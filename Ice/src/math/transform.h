@@ -30,7 +30,7 @@ class Transform
 {
 private:
   Ice::vec3 position;
-  quaternion rotation;
+  Ice::quaternion rotation;
   Ice::vec3 scale;
 
   mat4 matrix;
@@ -45,9 +45,9 @@ public:
   Transform()
   {
     matrix = mat4Identity;
-    position = { 0.0f, 0.0f, 0.0f };
-    scale = { 1.0f, 1.0f, 1.0f };
-    rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+    position = Ice::vec3(0.0f, 0.0f, 0.0f);
+    scale = Ice::vec3(1.0f, 1.0f, 1.0f);
+    rotation = Ice::quaternion(0.0f, 0.0f, 0.0f, 1.0f);
   }
 
   // Position =====
@@ -195,12 +195,12 @@ public:
       //  0                                      , 0                                      , 0                                      , 1
       //};
 
-      matrix = {
+      matrix = Ice::mat4(
         s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.x * (2 * (q.x * q.y + q.w * q.z))    , s.x * (2 * (q.x * q.z - q.w * q.y))    , 0,
         s.y * (2 * (q.x * q.y - q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.y * (2 * (q.y * q.z + q.w * q.x))    , 0,
         s.z * (2 * (q.x * q.z + q.w * q.y))    , s.z * (2 * (q.y * q.z - q.w * q.x))    , s.z * (1 - 2 * (q.x * q.x + q.y * q.y)), 0,
         p.x                                    , p.y                                    , p.z                                    , 1
-      };
+      );
     }
 
     if (_includeParents && parent != nullptr)
@@ -228,22 +228,21 @@ public:
 
   // Vectors =====
 
+  // TODO : ~!!~ Fix rotation matrix -- Multiplied vec3 rotating in opposite direction
+  //  Correct return values at 0 & 180, but 
   constexpr Ice::vec3 ForwardVector(b8 _includeParents = true)
   {
-    Ice::vec3 forward = { 0.0f, 0.0f, 1.0f };
-    return (rotation.Matrix() * forward).Normal();
+    return (rotation.Matrix() * Ice::vec3(0.0f, 0.0f, -1.0f)).Normal();
   }
 
   constexpr Ice::vec3 RightVector(b8 _includeParents = true)
   {
-    Ice::vec3 right = { 1.0f, 0.0f, 0.0f };
-    return (rotation.Matrix() * right).Normal();
+    return (rotation.Matrix() * Ice::vec3(1.0f, 0.0f, 0.0f)).Normal();
   }
 
   constexpr Ice::vec3 UpVector(b8 _includeParents = true)
   {
-    Ice::vec3 up = { 0.0f, 1.0f, 0.0f };
-    return (rotation.Matrix() * up).Normal();
+    return (rotation.Matrix() * Ice::vec3(0.0f, 1.0f, 0.0f)).Normal();
   }
 
 };
