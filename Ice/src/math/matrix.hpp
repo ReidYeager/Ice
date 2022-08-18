@@ -38,47 +38,48 @@ typedef union mat4
     };
   };
 
-  mat4(f32* _elementArray)
+  mat4(f32* _elementArray, b8 _rowMajorInput = false)
   {
-    elements[0 ] = _elementArray[0 ];
-    elements[1 ] = _elementArray[1 ];
-    elements[2 ] = _elementArray[2 ];
-    elements[3 ] = _elementArray[3 ];
-    elements[4 ] = _elementArray[4 ];
-    elements[5 ] = _elementArray[5 ];
-    elements[6 ] = _elementArray[6 ];
-    elements[7 ] = _elementArray[7 ];
-    elements[8 ] = _elementArray[8 ];
-    elements[9 ] = _elementArray[9 ];
-    elements[10] = _elementArray[10];
-    elements[11] = _elementArray[11];
-    elements[12] = _elementArray[12];
-    elements[13] = _elementArray[13];
-    elements[14] = _elementArray[14];
-    elements[15] = _elementArray[15];
+    elements[0                        ] = _elementArray[0 ];
+    elements[1  + (3 * _rowMajorInput)] = _elementArray[1 ];
+    elements[2  + (6 * _rowMajorInput)] = _elementArray[2 ];
+    elements[3  + (9 * _rowMajorInput)] = _elementArray[3 ];
+    elements[4  - (3 * _rowMajorInput)] = _elementArray[4 ];
+    elements[5                        ] = _elementArray[5 ];
+    elements[6  + (3 * _rowMajorInput)] = _elementArray[6 ];
+    elements[7  + (6 * _rowMajorInput)] = _elementArray[7 ];
+    elements[8  - (6 * _rowMajorInput)] = _elementArray[8 ];
+    elements[9  - (3 * _rowMajorInput)] = _elementArray[9 ];
+    elements[10                       ] = _elementArray[10];
+    elements[11 + (3 * _rowMajorInput)] = _elementArray[11];
+    elements[12 - (9 * _rowMajorInput)] = _elementArray[12];
+    elements[13 - (6 * _rowMajorInput)] = _elementArray[13];
+    elements[14 - (3 * _rowMajorInput)] = _elementArray[14];
+    elements[15                       ] = _elementArray[15];
   }
 
   mat4(f32 _elementArray0 , f32 _elementArray1 , f32 _elementArray2 , f32 _elementArray3 ,
        f32 _elementArray4 , f32 _elementArray5 , f32 _elementArray6 , f32 _elementArray7 ,
        f32 _elementArray8 , f32 _elementArray9 , f32 _elementArray10, f32 _elementArray11,
-       f32 _elementArray12, f32 _elementArray13, f32 _elementArray14, f32 _elementArray15)
+       f32 _elementArray12, f32 _elementArray13, f32 _elementArray14, f32 _elementArray15,
+       b8 _rowMajorInput = false)
   {
-    elements[0 ] = _elementArray0;
-    elements[1 ] = _elementArray1;
-    elements[2 ] = _elementArray2;
-    elements[3 ] = _elementArray3;
-    elements[4 ] = _elementArray4;
-    elements[5 ] = _elementArray5;
-    elements[6 ] = _elementArray6;
-    elements[7 ] = _elementArray7;
-    elements[8 ] = _elementArray8;
-    elements[9 ] = _elementArray9;
-    elements[10] = _elementArray10;
-    elements[11] = _elementArray11;
-    elements[12] = _elementArray12;
-    elements[13] = _elementArray13;
-    elements[14] = _elementArray14;
-    elements[15] = _elementArray15;
+    elements[0                        ] = _elementArray0 ;
+    elements[1  + (3 * _rowMajorInput)] = _elementArray1 ;
+    elements[2  + (6 * _rowMajorInput)] = _elementArray2 ;
+    elements[3  + (9 * _rowMajorInput)] = _elementArray3 ;
+    elements[4  - (3 * _rowMajorInput)] = _elementArray4 ;
+    elements[5                        ] = _elementArray5 ;
+    elements[6  + (3 * _rowMajorInput)] = _elementArray6 ;
+    elements[7  + (6 * _rowMajorInput)] = _elementArray7 ;
+    elements[8  - (6 * _rowMajorInput)] = _elementArray8 ;
+    elements[9  - (3 * _rowMajorInput)] = _elementArray9 ;
+    elements[10                       ] = _elementArray10;
+    elements[11 + (3 * _rowMajorInput)] = _elementArray11;
+    elements[12 - (9 * _rowMajorInput)] = _elementArray12;
+    elements[13 - (6 * _rowMajorInput)] = _elementArray13;
+    elements[14 - (3 * _rowMajorInput)] = _elementArray14;
+    elements[15                       ] = _elementArray15;
   }
 
   mat4(f32 _value = 1.0f)
@@ -211,7 +212,6 @@ typedef union mat4
                 x.w, y.w, z.w, w.w);
   }
 
-  // TODO ~!!~ Invert matrix
   mat4 Inverse() const
   {
     Ice::mat4 inv;

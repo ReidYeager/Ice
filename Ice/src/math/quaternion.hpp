@@ -223,12 +223,11 @@ typedef struct quaternion
 
   mat4 Matrix()
   {
-    return Ice::mat4(
-      1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z)       , 2.0f * (x * z + w * y)       , 0.0f,
-      2.0f * (x * y + w * z)       , 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x)       , 0.0f,
-      2.0f * (x * z - w * y)       , 2.0f * (y * z + w * x)       , 1.0f - 2.0f * (x * x + y * y), 0.0f,
-      0.0f                         , 0.0f                         , 0.0f                         , 1.0f
-    );
+    return Ice::mat4(2.0f*(w*w + x*x) - 1.0f, 2.0f*(x*y - w*z)       , 2.0f*(x*z + w*y)       , 0.0f,
+                     2.0f*(x*y + w*z)       , 2.0f*(w*w + y*y) - 1.0f, 2.0f*(y*z - w*x)       , 0.0f,
+                     2.0f*(x*z - w*y)       , 2.0f*(y*z + w*x)       , 2.0f*(w*w + z*z) - 1.0f, 0.0f,
+                     0.0f                   , 0.0f                   , 0.0f                   , 1.0f,
+                     true);
   }
 
   constexpr quaternion Normal()

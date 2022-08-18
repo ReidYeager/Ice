@@ -6,8 +6,6 @@ Root :--: Ice/src
   Line  396 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
-\math\transform.h
-  Line  231 :--: '// TODO : ~!!~ Fix rotation matrix -- Multiplied vec3 rotating in opposite direction'
 \platform\compact_array.h
   Line   15 :--: '// NOTE : Very unstable. Elements of the array can change at any time.'
   Line   16 :--: '// TODO : Need to find a way to accomplish this without breaking connections to its elements'

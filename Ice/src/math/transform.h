@@ -188,13 +188,6 @@ public:
       quaternion q = rotation;
       Ice::vec3 s = scale;
 
-      //matrix = {
-      //  s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.y * (2 * (q.x * q.y - q.w * q.z))    , s.z * (2 * (q.x * q.z + q.w * q.y))    , p.x,
-      //  s.x * (2 * (q.x * q.y + q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.z * (2 * (q.y * q.z - q.w * q.x))    , p.y,
-      //  s.x * (2 * (q.x * q.z - q.w * q.y))    , s.y * (2 * (q.y * q.z + q.w * q.x))    , s.z * (1 - 2 * (q.x * q.x + q.y * q.y)), p.z,
-      //  0                                      , 0                                      , 0                                      , 1
-      //};
-
       matrix = Ice::mat4(
         s.x * (1 - 2 * (q.y * q.y + q.z * q.z)), s.x * (2 * (q.x * q.y + q.w * q.z))    , s.x * (2 * (q.x * q.z - q.w * q.y))    , 0,
         s.y * (2 * (q.x * q.y - q.w * q.z))    , s.y * (1 - 2 * (q.x * q.x + q.z * q.z)), s.y * (2 * (q.y * q.z + q.w * q.x))    , 0,
@@ -228,8 +221,6 @@ public:
 
   // Vectors =====
 
-  // TODO : ~!!~ Fix rotation matrix -- Multiplied vec3 rotating in opposite direction
-  //  Correct return values at 0 & 180, but 
   constexpr Ice::vec3 ForwardVector(b8 _includeParents = true)
   {
     return (rotation.Matrix() * Ice::vec3(0.0f, 0.0f, -1.0f)).Normal();
