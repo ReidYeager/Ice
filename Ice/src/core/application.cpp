@@ -9,6 +9,7 @@
 #include "rendering/vulkan/vulkan.h"
 #include "math/linear.h"
 #include "math/transform.h"
+#include "core/ecs/entity.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -600,6 +601,9 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
                                       Ice::Material* _material /*= nullptr*/)
 {
   Ice::Entity e = _scene->CreateEntity();
+  if (e == nullEntity)
+    return e;
+
   Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
 
   t->bufferSegment.buffer = &transformsBuffer;
@@ -630,24 +634,43 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
 
 void Ice::UpdateTransforms()
 {
+  Ice::CompactArray<Ice::Transform>& transformCompact = Ice::GetComponentArray<Ice::Transform>();
+
+  Ice::SceneView<Ice::Transform, Ice::CameraComponent> camsView(*mainScene);
+  std::vector<Ice::Entity> camEntities;
+  for (Ice::Entity e : camsView)
+  {
+    camEntities.push_back(e);
+  }
+
   u32 count = 0;
-  Ice::Transform* transforms = Ice::GetComponentArray<Ice::Transform>().GetArray(&count);
-
-  for (u32 i = 0; i < count; i++)
+  Ice::Transform* transforms = transformCompact.GetArray(&count);
+  Ice::mat4 m(1.0f);
+  for (u32 i = 0, j = 0; i < count; i++)
   {
-    Ice::mat4 m = transforms[i].GetMatrix();
-    renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
+    if (transforms[i].GetDirty()) // TODO : Find a better way to only update GPU transform when dirty
+    {
+      if (j < camEntities.size() && i == transformCompact.indexMap[camEntities[j].id])
+      {
+        //Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
+        m = transforms[i].GetMatrix().Inverse() * mainScene->GetComponent<Ice::CameraComponent>(camEntities[j])->projectionMatrix;
+        j++;
+      }
+      else
+      {
+        m = transforms[i].GetMatrix();
+      }
+      renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
+    }
   }
 
-  Ice::SceneView<Ice::Transform, Ice::CameraComponent> cameras(*mainScene);
+  //for (auto& cam : cameras)
+  //{
+  //    Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
+  //    m *= mainScene->GetComponent<Ice::CameraComponent>(cam)->projectionMatrix;
 
-  for (auto& cam : cameras)
-  {
-    Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
-    m = m * mainScene->GetComponent<Ice::CameraComponent>(cam)->projectionMatrix;
-
-    renderer->PushDataToBuffer(&m, Ice::GetComponentArray<Ice::Transform>()[cam.id].bufferSegment);
-  }
+  //    renderer->PushDataToBuffer(&m, Ice::GetComponentArray<Ice::Transform>()[cam.id].bufferSegment);
+  //}
 
 }
 

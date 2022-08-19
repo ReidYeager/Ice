@@ -236,6 +236,11 @@ public:
     return (rotation.Matrix() * Ice::vec3(0.0f, 1.0f, 0.0f)).Normal();
   }
 
+  constexpr b8 GetDirty()
+  {
+    return dirty;
+  }
+
 };
 
 } // namespace Ice

@@ -2,8 +2,11 @@
 Root :--: Ice/src
 
 \core\application.cpp
-  Line   84 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  396 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line   85 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
+  Line  397 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  651 :--: 'if (transforms[i].GetDirty()) // TODO : Find a better way to only update GPU transform when dirty'
+\core\ecs\entity.h
+  Line   35 :--: 'const u32 maxEntities = 512; // TODO : ~!!~ Let the game define this'
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
 \platform\compact_array.h

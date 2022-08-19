@@ -91,7 +91,7 @@ private:
     i32 x;
     i32 y;
     i32 wheel; // Positive is up-scroll
-    u8 buttons[Ice_Mouse_Max];
+    b8 buttons[Ice_Mouse_Max];
   };
 
   struct InputStates
@@ -123,6 +123,8 @@ public:
   void ProcessMouseMove(i32 _x, i32 _y);
   void ProcessMouseWheel(i32 _magnitude);
   b8 IsMouseButtonDown(IceMouseButtonFlag _button);
+  b8 OnMouseButtonPressed(IceMouseButtonFlag _button);
+  b8 OnMouseButtonReleased(IceMouseButtonFlag _button);
   b8 WasMouseButtonDown(IceMouseButtonFlag _button);
   void GetMousePosition(i32* _x, i32* _y);
   void GetMousePosition(f32* _x, f32* _y);

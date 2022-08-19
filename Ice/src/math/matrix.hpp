@@ -200,6 +200,18 @@ typedef union mat4
                 w.Dot(mat.x), w.Dot(mat.y), w.Dot(mat.z), w.Dot(mat.w));
   }
 
+  mat4& operator*=(mat4 mat)
+  {
+    mat = mat.Transpose();
+
+    *this = mat4(x.Dot(mat.x), x.Dot(mat.y), x.Dot(mat.z), x.Dot(mat.w),
+                 y.Dot(mat.x), y.Dot(mat.y), y.Dot(mat.z), y.Dot(mat.w),
+                 z.Dot(mat.x), z.Dot(mat.y), z.Dot(mat.z), z.Dot(mat.w),
+                 w.Dot(mat.x), w.Dot(mat.y), w.Dot(mat.z), w.Dot(mat.w));
+
+    return *this;
+  }
+
   //=========================
   // Operations
   //=========================

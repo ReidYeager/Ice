@@ -76,6 +76,16 @@ b8 IceInput::IsMouseButtonDown(IceMouseButtonFlag _button)
   return m_states.mouseCurrent.buttons[_button];
 }
 
+b8 IceInput::OnMouseButtonPressed(IceMouseButtonFlag _button)
+{
+  return m_states.mouseCurrent.buttons[Ice_Mouse_Left] && !m_states.mousePrevious.buttons[Ice_Mouse_Left];
+}
+
+b8 IceInput::OnMouseButtonReleased(IceMouseButtonFlag _button)
+{
+  return m_states.mousePrevious.buttons[Ice_Mouse_Left] && !m_states.mouseCurrent.buttons[Ice_Mouse_Left];
+}
+
 b8 IceInput::WasMouseButtonDown(IceMouseButtonFlag _button)
 {
   return m_states.mousePrevious.buttons[_button];

@@ -32,7 +32,7 @@ struct Entity
   }
 };
 
-const u32 maxEntities = 64;
+const u32 maxEntities = 512; // TODO : ~!!~ Let the game define this
 const Ice::Entity nullEntity = {0xffffffff, 0xffff, 0xffff};
 
 typedef u64 componentMask;
@@ -90,6 +90,7 @@ public:
     // Can only hit limit if available is empty
     if (activeEntities.size() >= maxEntities)
     {
+      IceLogError("Max entity count reached : %u", maxEntities);
       return nullEntity;
     }
 
