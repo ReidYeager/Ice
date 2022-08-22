@@ -10,7 +10,7 @@ project("ICE")
 
 add_compile_definitions(CMAKE_SOURCE_DIRECTORY=${ICE_SOURCE_DIR})
 
-add_library (Ice
+add_library (Ice STATIC
   # ==========
   # Base
   # ==========
