@@ -97,7 +97,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
                           0,
                           nullptr);
 
-  // TODO : Allow rendering of more than one scene at a time
+  // -TODO- : Allow rendering of more than one scene at a time
 
   u32 camCount = 0;
   Ice::CameraComponent* sceneCameras = _data->cameras->GetArray(&camCount);
@@ -150,6 +150,8 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
                            sceneObjects[objectIndex].mesh->indexBuffer.buffer->vulkan.buffer,
                            sceneObjects[objectIndex].mesh->indexBuffer.offset,
                            VK_INDEX_TYPE_UINT32);
+
+      // TODO : Instanced rendering -- DrawIndexed can use a significant amount of time
       vkCmdDrawIndexed(cmdBuffer, sceneObjects[objectIndex].mesh->indexCount, 1, 0, 0, 0);
     }
   }

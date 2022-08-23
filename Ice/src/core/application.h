@@ -32,7 +32,7 @@ namespace Ice {
   // Rendering
   //=========================
 
-  b8 CreateMesh(const char* _directory, Ice::Mesh** _mesh);
+  b8 GetMesh(const char* _directory, Ice::Mesh** _mesh);
 
   b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
   void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);

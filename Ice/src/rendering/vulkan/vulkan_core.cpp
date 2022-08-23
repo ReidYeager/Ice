@@ -102,6 +102,7 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   presentInfo.pWaitSemaphores = &context.renderCompleteSemaphores[flightSlotIndex];
   presentInfo.pImageIndices = &swapchainImageIndex;
 
+  // NOTE : Queue present alone takes ~50% of execution time
   result = vkQueuePresentKHR(context.presentQueue, &presentInfo);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -455,16 +456,17 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
   const u32 poolSizeCount = 2;
   VkDescriptorPoolSize sizes[poolSizeCount] = {};
 
+  // TODO : ~!!~ Make max uniform descriptor/image descriptor/set counts adjustable
   sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  sizes[0].descriptorCount = 100;
+  sizes[0].descriptorCount = 1024; // TMP
 
   sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  sizes[1].descriptorCount = 100;
+  sizes[1].descriptorCount = 1024; // TMP
 
   // Creation =====
   VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  createInfo.maxSets = 100; // 1 for global, ~3 for renderpasses, X for materials, Y for objects
+  createInfo.maxSets = 1024; // 1 for global, ~3 for renderpasses, X for materials, Y for objects
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 

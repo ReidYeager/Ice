@@ -40,44 +40,35 @@ public:
     indexAvailability.Resize(allocatedElementCount, true);
   }
 
-  u32 AddElement(T _newElement, u32 _index = -1)
+  u32 AddElementAt(u32 _index, T _newElement = {})
   {
-    u32 index = -1;
+    assert(_index < allocatedElementCount);
 
-    if (_index == -1)
+    if (!indexAvailability.Get(_index))
     {
-      index = indexAvailability.FirstIndexWithValue(1);
-    }
-    else
-    {
-      if (!indexAvailability.Get(_index))
-      {
-        IceLogWarning("Index %u unavailable in compact array", _index);
-        DebugBreak();
-        return -1;
-      }
-
-      index = _index;
+      IceLogWarning("Index %u unavailable in compact array", _index);
+      DebugBreak();
+      return -1;
     }
 
     u32 dataIndex = usedElementCount;
 
-    indexAvailability.Set(index, 0);
-    indexMap[index] = dataIndex;
+    indexAvailability.Set(_index, 0);
+    indexMap[_index] = dataIndex;
     data[dataIndex] = _newElement;
     usedElementCount++;
 
-    return index;
+    return _index;
   }
 
-  u32 AddElement(u32 _index = -1)
+  u32 AddElement(T _newElement = {})
   {
     u32 index = indexAvailability.FirstIndexWithValue(1);
     u32 dataIndex = usedElementCount;
 
     indexAvailability.Set(index, 0);
     indexMap[index] = dataIndex;
-    data[dataIndex] = {};
+    data[dataIndex] = _newElement;
     usedElementCount++;
 
     return index;
@@ -134,6 +125,57 @@ public:
   {
     data = (T*)realloc(sizeof(T) * _newSize);
     allocatedElementCount = _newSize;
+  }
+
+  //=========================
+  // Iterator
+  //=========================
+
+  struct Iterator
+  {
+    u32 index;
+    u32 maxCount;
+    T* data;
+
+    Iterator(u32 _index, u32 _maxCount, T* _data)
+    {
+      index = _index;
+      maxCount = _maxCount;
+      data = _data;
+    }
+
+    T& operator *() const
+    {
+      return data[index];
+    }
+
+    Iterator& operator ++()
+    {
+      if (index < maxCount)
+        index++;
+
+      return *this;
+    }
+
+    bool operator !=(const Iterator& _other)
+    {
+      return index != _other.index;
+    }
+
+    bool operator ==(const Iterator& _other)
+    {
+      return index == _other.index;
+    }
+  };
+
+  const Iterator begin() const
+  {
+    return Iterator(0, usedElementCount, data);
+  }
+
+  const Iterator end() const
+  {
+    return Iterator(usedElementCount, usedElementCount, data);
   }
 
 };

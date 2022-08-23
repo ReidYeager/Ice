@@ -32,7 +32,8 @@ struct Entity
   }
 };
 
-const u32 maxEntities = 512; // TODO : ~!!~ Let the game define this
+// TODO : ~!!~ Let the game define max entity count || Let entity array expand
+const u32 maxEntities = 2048;
 const Ice::Entity nullEntity = {0xffffffff, 0xffff, 0xffff};
 
 typedef u64 componentMask;
@@ -151,7 +152,7 @@ public:
 
     u32 componentId = GetComponentId<T>();
     Ice::CompactArray<T>& v = Ice::GetComponentArray<T>();
-    v.AddElement(T(), _entity.id);
+    v.AddElementAt(_entity.id);
 
     // Add the component to the entity
     activeEntities[_entity].componentMask |= (1llu << componentId);

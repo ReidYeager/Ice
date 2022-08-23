@@ -170,6 +170,12 @@ namespace Ice {
     Ice::BufferSegment indexBuffer;
   };
 
+  struct MeshInformation
+  {
+    std::string fileName;
+    Ice::Mesh mesh;
+  };
+
   //=========================
   // Renderer
   //=========================

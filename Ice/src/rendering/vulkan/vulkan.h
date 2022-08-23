@@ -57,6 +57,7 @@ namespace Ice
 
     VkDescriptorSetLayout cameraDescriptorLayout;
     VkDescriptorSetLayout objectDescriptorLayout;
+    VkDescriptorSet objectDescriptorSet;
 
     Ice::IvkRenderpass forward;
     Ice::IvkRenderpass deferred;

@@ -32,7 +32,8 @@ Ice::Material* materials;
 Ice::MaterialSettings* materialSettings;
 
 u32 meshCount = 0;
-Ice::Mesh* meshes;
+Ice::MeshInformation* meshes;
+u32 maxMeshCount = 0;
 
 Ice::Image* textures;
 u32 textureCount = 0;
@@ -118,7 +119,8 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   shaders = (Ice::Shader*)Ice::MemoryAllocZero(sizeof(Ice::Shader) * _settings.maxShaderCount);
   materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
   materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
-  meshes = (Ice::Mesh*)Ice::MemoryAllocZero(sizeof(Ice::Mesh) * _settings.maxMeshCount);
+  meshes = (Ice::MeshInformation*)Ice::MemoryAllocZero(sizeof(Ice::MeshInformation) * _settings.maxMeshCount);
+  maxMeshCount = _settings.maxMeshCount;
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
   ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
@@ -184,7 +186,7 @@ b8 IceApplicationShutdown()
 
   for (u32 i = 0; i < meshCount; i++)
   {
-    renderer->DestroyBufferMemory(&meshes[i].buffer);
+    renderer->DestroyBufferMemory(&meshes[i].mesh.buffer);
   }
   Ice::MemoryFree(meshes);
 
@@ -283,7 +285,7 @@ namespace std {
   };
 }
 
-b8 Ice::CreateMesh(const char* _directory, Ice::Mesh** _mesh)
+b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -353,7 +355,7 @@ b8 Ice::CreateMesh(const char* _directory, Ice::Mesh** _mesh)
 
   // Create mesh =====
   {
-    Ice::Mesh& newMesh = meshes[meshCount];
+    Ice::Mesh& newMesh = *_mesh;
 
     newMesh.indexCount = (u32)indices.size();
     ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
@@ -383,10 +385,31 @@ b8 Ice::CreateMesh(const char* _directory, Ice::Mesh** _mesh)
       renderer->DestroyBufferMemory(&newMesh.buffer);
       return false;
     }
-
-    *_mesh = &meshes[meshCount];
-    meshCount++;
   }
+
+  return true;
+}
+
+b8 Ice::GetMesh(const char* _directory, Ice::Mesh** _mesh)
+{
+  for (u32 i = 0; i < meshCount; i++)
+  {
+    if (meshes[i].fileName.compare(_directory) == 0)
+    {
+      *_mesh = &meshes[i].mesh;
+      return true;
+    }
+  }
+
+  if (meshCount >= maxMeshCount)
+  {
+    return false;
+  }
+
+  ICE_ATTEMPT(CreateMesh(_directory, &meshes[meshCount].mesh))
+  meshes[meshCount].fileName = _directory;
+  *_mesh = &meshes[meshCount].mesh;
+  meshCount++;
 
   return true;
 }
@@ -618,7 +641,7 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
 
   if (_meshDir != nullptr)
   {
-    if (!Ice::CreateMesh(_meshDir, &r->mesh))
+    if (!Ice::GetMesh(_meshDir, &r->mesh))
     {
       return e;
     }
@@ -648,11 +671,10 @@ void Ice::UpdateTransforms()
   Ice::mat4 m(1.0f);
   for (u32 i = 0, j = 0; i < count; i++)
   {
-    if (transforms[i].GetDirty()) // TODO : Find a better way to only update GPU transform when dirty
+    if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms
     {
       if (j < camEntities.size() && i == transformCompact.indexMap[camEntities[j].id])
       {
-        //Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
         m = transforms[i].GetMatrix().Inverse() * mainScene->GetComponent<Ice::CameraComponent>(camEntities[j])->projectionMatrix;
         j++;
       }
@@ -663,15 +685,6 @@ void Ice::UpdateTransforms()
       renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
     }
   }
-
-  //for (auto& cam : cameras)
-  //{
-  //    Ice::mat4 m = Ice::GetComponentArray<Ice::Transform>()[cam.id].GetMatrix().Inverse();
-  //    m *= mainScene->GetComponent<Ice::CameraComponent>(cam)->projectionMatrix;
-
-  //    renderer->PushDataToBuffer(&m, Ice::GetComponentArray<Ice::Transform>()[cam.id].bufferSegment);
-  //}
-
 }
 
 void Ice::TMPSetMainScene(Ice::Scene* _scene)

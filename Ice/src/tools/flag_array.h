@@ -45,7 +45,7 @@ public:
     byteCount = (flagCount + 7) / 8; // Bits to bytes, rounding up
 
     data = (char*)Ice::MemoryAllocate(byteCount);
-    Ice::MemorySet(data, byteCount, (~0) * _initialValue);
+    Ice::MemorySet(data, byteCount, 0xFFFFFFFF * _initialValue);
   }
 
   b8 Get(u32 _index)
@@ -93,7 +93,7 @@ public:
 
     const char byteValue = data[byteIndex];
     u32 bitIndex = 0;
-    u32 maxBitIndex = ValueToBit(flagCount);
+    u32 maxBitIndex = (byteIndex < (byteCount - 1)) ? 8 : ValueToBit(flagCount);
 
     // The current bit is full so check all bits
     if (maxBitIndex == 0)
