@@ -12,37 +12,67 @@
 
 namespace Ice {
 
-// NOTE : Very unstable. Elements of the array can change at any time.
-// TODO : Need to find a way to accomplish this without breaking connections to its elements
-
 template<class T>
 class CompactArray
 {
-  public:
+  private:
   T* data = nullptr;
   u32* indexMap = nullptr;
   Ice::FlagArray indexAvailability;
 
   u32 allocatedElementCount = 0;
   u32 usedElementCount = 0;
+  u32 indexCount = 0;
 
-  constexpr u32 BackIndex()
+  constexpr u32 BackIndex() const
   {
     return usedElementCount - 1;
+  }
+
+  void ResizeData(u32 _newCount)
+  {
+    T* old = data;
+    data = (T*)Ice::MemoryAllocZero(_newCount * sizeof(T));
+
+    Ice::MemoryCopy(old, data, min(usedElementCount, _newCount) * sizeof(T));
+    Ice::MemoryFree(old);
+
+    allocatedElementCount = _newCount;
+  }
+
+  void ResizeMap(u32 _newCount)
+  {
+    u32* oldMap = indexMap;
+    indexMap = (u32*)Ice::MemoryAllocate(_newCount * sizeof(u32));
+    indexAvailability.Resize(_newCount, true);
+
+    Ice::MemoryCopy(oldMap, indexMap, indexCount * sizeof(u32));
+    indexCount = _newCount;
   }
 
 public:
   CompactArray(u32 _count)
   {
-    allocatedElementCount = _count;
-    data = (T*)Ice::MemoryAllocate(allocatedElementCount * sizeof(T));
-    indexMap = (u32*)Ice::MemoryAllocZero(allocatedElementCount * sizeof(u32));
-    indexAvailability.Resize(allocatedElementCount, true);
+    ResizeData(_count);
+    ResizeMap(_count);
   }
 
   u32 AddElementAt(u32 _index, T _newElement = {})
   {
-    assert(_index < allocatedElementCount);
+    if (_index >= indexCount)
+    {
+      u32 newCount = indexCount;
+      while (newCount <= _index)
+      {
+        newCount *= 2;
+      }
+
+      ResizeMap(newCount);
+    }
+    if (usedElementCount >= allocatedElementCount)
+    {
+      ResizeData(allocatedElementCount * 2);
+    }
 
     if (!indexAvailability.Get(_index))
     {
@@ -63,6 +93,15 @@ public:
 
   u32 AddElement(T _newElement = {})
   {
+    if (usedElementCount >= allocatedElementCount)
+    {
+      ResizeData(allocatedElementCount * 2);
+    }
+    if (indexCount < allocatedElementCount)
+    {
+      ResizeMap(allocatedElementCount);
+    }
+
     u32 index = indexAvailability.FirstIndexWithValue(1);
     u32 dataIndex = usedElementCount;
 
@@ -96,15 +135,21 @@ public:
     usedElementCount--;
   }
 
+  u32 GetMappedIndex(u32 _index)
+  {
+    assert(_index < indexCount);
+    return indexMap[_index];
+  }
+
   T& operator [](u32 _index)
   {
-    assert(_index < allocatedElementCount);
+    assert(_index < indexCount);
     return data[indexMap[_index]];
   }
 
   T* Get(u32 _index)
   {
-    assert(_index < allocatedElementCount);
+    assert(_index < indexCount);
     return &data[indexMap[_index]];
   }
 
@@ -116,15 +161,15 @@ public:
     return data;
   }
 
-  u32 GetAllocatedSize()
+  constexpr u32 GetAllocatedSize() const
   {
     return allocatedElementCount;
   }
 
-  void Resize(u64 _newSize)
+  void Resize(u32 _newCount)
   {
-    data = (T*)realloc(sizeof(T) * _newSize);
-    allocatedElementCount = _newSize;
+    ResizeData(_newCount);
+    ResizeMap(_newCount);
   }
 
   //=========================

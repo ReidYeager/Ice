@@ -39,6 +39,11 @@ void Ice::MemoryFree(void* _data)
   free(_data);
 }
 
+void* Ice::MemoryReallocate(void* _data, u64 _newSize)
+{
+  return realloc(_data, _newSize);
+}
+
 //=========================
 // Console
 //=========================

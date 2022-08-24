@@ -38,14 +38,20 @@ public:
 
   void Resize(u32 _flagCount, b8 _initialValue = false)
   {
-    if (data != nullptr)
-      Ice::MemoryFree(data);
+    char* oldData = data;
+    u32 oldByteCount = byteCount;
 
     flagCount = _flagCount;
     byteCount = (flagCount + 7) / 8; // Bits to bytes, rounding up
 
     data = (char*)Ice::MemoryAllocate(byteCount);
     Ice::MemorySet(data, byteCount, 0xFFFFFFFF * _initialValue);
+
+    if (oldData != nullptr)
+    {
+      Ice::MemoryCopy(oldData, data, min(oldByteCount, byteCount));
+      Ice::MemoryFree(oldData);
+    }
   }
 
   b8 Get(u32 _index)

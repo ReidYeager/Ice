@@ -32,8 +32,7 @@ struct Entity
   }
 };
 
-// TODO : ~!!~ Let the game define max entity count || Let entity array expand
-const u32 maxEntities = 2048;
+const u32 defaultArraySize = 32;
 const Ice::Entity nullEntity = {0xffffffff, 0xffff, 0xffff};
 
 typedef u64 componentMask;
@@ -49,7 +48,7 @@ u32 GetComponentId()
 template <typename T>
 Ice::CompactArray<T>& GetComponentArray()
 {
-  static Ice::CompactArray<T> arr(maxEntities);
+  static Ice::CompactArray<T> arr(defaultArraySize);
   return arr;
 }
 
@@ -70,7 +69,7 @@ public:
 
   Scene()
   {
-    activeEntities.reserve(maxEntities);
+    activeEntities.reserve(defaultArraySize);
   }
 
   // Entities =====
@@ -89,11 +88,11 @@ public:
 
     // Destroyed entities still count against total entity count
     // Can only hit limit if available is empty
-    if (activeEntities.size() >= maxEntities)
-    {
-      IceLogError("Max entity count reached : %u", maxEntities);
-      return nullEntity;
-    }
+    //if (activeEntities.size() >= maxEntities)
+    //{
+    //  IceLogError("Max entity count reached : %u", maxEntities);
+    //  return nullEntity;
+    //}
 
     // Create new entity
     activeEntities.push_back({ { (u32)activeEntities.size(), 0 }, 0});

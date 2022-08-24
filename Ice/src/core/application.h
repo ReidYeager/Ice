@@ -71,7 +71,7 @@ namespace Ice {
                                    const char* _meshDir = nullptr,
                                    Ice::Material* _material = nullptr);
 
-  void UpdateTransforms();
+  b8 UpdateTransforms();
 
   void TMPSetMainScene(Ice::Scene* _scene);
 

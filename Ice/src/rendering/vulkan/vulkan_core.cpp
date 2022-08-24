@@ -456,7 +456,7 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
   const u32 poolSizeCount = 2;
   VkDescriptorPoolSize sizes[poolSizeCount] = {};
 
-  // TODO : ~!!~ Make max uniform descriptor/image descriptor/set counts adjustable
+  // TODO : Make max uniform descriptor/image descriptor/set counts adjustable
   sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   sizes[0].descriptorCount = 1024; // TMP
 
@@ -685,11 +685,17 @@ b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _compone
   ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout,
                                   &_component->vulkan.descriptorSet));
 
+  return UpdateRenderComponent(_component, _transformBuffer);
+}
+
+b8 Ice::RendererVulkan::UpdateRenderComponent(Ice::RenderComponent* _component,
+                                              Ice::BufferSegment* _transformBuffer)
+{
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
   bufferInput.bufferSegment = *_transformBuffer;
-  std::vector<Ice::ShaderInputElement> inputs = {bufferInput};
+  std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
   UpdateDescriptorSet(_component->vulkan.descriptorSet, inputs);
 
   return true;

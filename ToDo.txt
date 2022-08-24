@@ -3,22 +3,18 @@ Root :--: Ice/src
 
 \core\application.cpp
   Line   86 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  420 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  674 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
-\core\ecs\entity.h
-  Line   35 :--: '// TODO : ~!!~ Let the game define max entity count || Let entity array expand'
+  Line  126 :--: '// TODO : ~!!~ Allow transform buffer to expand so number of entites may surpass 1024'
+  Line  422 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  675 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
-\platform\compact_array.h
-  Line   15 :--: '// NOTE : Very unstable. Elements of the array can change at any time.'
-  Line   16 :--: '// TODO : Need to find a way to accomplish this without breaking connections to its elements'
 \rendering\renderer.h
   Line   20 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
 \rendering\renderer_defines.h
   Line  197 :--: '// TODO : Add camera render target'
   Line  210 :--: '// TODO : Rework the renderComponent to not chase pointers'
 \rendering\vulkan\vulkan_command.cpp
-  Line  154 :--: '// TODO : Instanced rendering -- DrawIndexed can use a significant amount of time'
+  Line  147 :--: '// TODO : Instanced rendering -- DrawIndexed can use a significant amount of time'
 \rendering\vulkan\vulkan_core.cpp
   Line  105 :--: '// NOTE : Queue present alone takes ~50% of execution time'
-  Line  459 :--: '// TODO : ~!!~ Make max uniform descriptor/image descriptor/set counts adjustable'
+  Line  459 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'

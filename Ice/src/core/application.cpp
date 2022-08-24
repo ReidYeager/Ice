@@ -40,7 +40,7 @@ u32 textureCount = 0;
 
 Ice::FrameInformation frameInfo{};
 std::vector<Ice::Scene*> scenes;
-Ice::Scene* activeScene = nullptr;
+Ice::Scene*activeScene = nullptr;
 
 Ice::Buffer transformsBuffer;
 
@@ -123,9 +123,11 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   maxMeshCount = _settings.maxMeshCount;
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
+  // TODO : ~!!~ Allow transform buffer to expand so number of entites may surpass 1024
+  Ice::GetComponentArray<Ice::Transform>().Resize(1024);
   ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
                                            sizeof(Ice::mat4),
-                                           _settings.maxObjectCount,
+                                           1024, //_settings.maxObjectCount,
                                            Ice::Buffer_Memory_Shader_Read));
 
   // Initialize transforms =====
@@ -157,7 +159,7 @@ b8 IceApplicationUpdate()
   {
     ICE_ATTEMPT(appSettings.GameUpdate(Ice::time.deltaTime));
 
-    Ice::UpdateTransforms();
+    ICE_ATTEMPT(Ice::UpdateTransforms());
 
     ICE_ATTEMPT(renderer->RenderFrame(&frameInfo));
 
@@ -655,13 +657,12 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
   return e;
 }
 
-void Ice::UpdateTransforms()
+b8 Ice::UpdateTransforms()
 {
   Ice::CompactArray<Ice::Transform>& transformCompact = Ice::GetComponentArray<Ice::Transform>();
 
-  Ice::SceneView<Ice::Transform, Ice::CameraComponent> camsView(*mainScene);
   std::vector<Ice::Entity> camEntities;
-  for (Ice::Entity e : camsView)
+  for (Ice::Entity e : Ice::SceneView<Ice::Transform, Ice::CameraComponent>(*mainScene))
   {
     camEntities.push_back(e);
   }
@@ -673,9 +674,10 @@ void Ice::UpdateTransforms()
   {
     if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms
     {
-      if (j < camEntities.size() && i == transformCompact.indexMap[camEntities[j].id])
+      if (j < camEntities.size() && i == transformCompact.GetMappedIndex(camEntities[j].id))
       {
-        m = transforms[i].GetMatrix().Inverse() * mainScene->GetComponent<Ice::CameraComponent>(camEntities[j])->projectionMatrix;
+        m = transforms[i].GetMatrix().Inverse() *
+            mainScene->GetComponent<Ice::CameraComponent>(camEntities[j])->projectionMatrix;
         j++;
       }
       else
@@ -685,6 +687,8 @@ void Ice::UpdateTransforms()
       renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
     }
   }
+
+  return true;
 }
 
 void Ice::TMPSetMainScene(Ice::Scene* _scene)

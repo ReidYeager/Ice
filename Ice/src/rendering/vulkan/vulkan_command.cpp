@@ -97,62 +97,55 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
                           0,
                           nullptr);
 
-  // -TODO- : Allow rendering of more than one scene at a time
-
-  u32 camCount = 0;
-  Ice::CameraComponent* sceneCameras = _data->cameras->GetArray(&camCount);
-
-  //for (Ice::ECS::ComponentManager<Ice::CameraComponent>* sceneCamerasPtr : _data->sceneCameras)
-  for (u32 camIndex = 0; camIndex < camCount; camIndex++)
+  for (Ice::CameraComponent& cam : *_data->cameras)
   {
     vkCmdBindDescriptorSets(cmdBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             context.globalPipelineLayout,
                             1,
                             1,
-                            &sceneCameras[camIndex].vulkan.descriptorSet,
+                            &cam.vulkan.descriptorSet,
                             0,
                             nullptr);
 
-    u32 objectCount = 0;
-    Ice::RenderComponent* sceneObjects = _data->renderables->GetArray(&objectCount);
-
-    for (u32 objectIndex = 0; objectIndex < objectCount; objectIndex++)
+    u32 testCount = 0;
+    for (Ice::RenderComponent& rc : *_data->renderables)
     {
+      testCount++;
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        sceneObjects[objectIndex].material->vulkan.pipeline);
+                        rc.material->vulkan.pipeline);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+                              rc.material->vulkan.pipelineLayout,
                               2,
                               1,
-                              &sceneObjects[objectIndex].material->vulkan.descriptorSet,
+                              &rc.material->vulkan.descriptorSet,
                               0,
                               nullptr);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              sceneObjects[objectIndex].material->vulkan.pipelineLayout,
+                              rc.material->vulkan.pipelineLayout,
                               3,
                               1,
-                              &sceneObjects[objectIndex].vulkan.descriptorSet,
+                              &rc.vulkan.descriptorSet,
                               0,
                               nullptr);
 
       vkCmdBindVertexBuffers(cmdBuffer,
                              0,
                              1,
-                             &sceneObjects[objectIndex].mesh->vertexBuffer.buffer->vulkan.buffer,
-                             &sceneObjects[objectIndex].mesh->vertexBuffer.offset);
+                             &rc.mesh->vertexBuffer.buffer->vulkan.buffer,
+                             &rc.mesh->vertexBuffer.offset);
       vkCmdBindIndexBuffer(cmdBuffer,
-                           sceneObjects[objectIndex].mesh->indexBuffer.buffer->vulkan.buffer,
-                           sceneObjects[objectIndex].mesh->indexBuffer.offset,
+                           rc.mesh->indexBuffer.buffer->vulkan.buffer,
+                           rc.mesh->indexBuffer.offset,
                            VK_INDEX_TYPE_UINT32);
 
       // TODO : Instanced rendering -- DrawIndexed can use a significant amount of time
-      vkCmdDrawIndexed(cmdBuffer, sceneObjects[objectIndex].mesh->indexCount, 1, 0, 0, 0);
+      vkCmdDrawIndexed(cmdBuffer, rc.mesh->indexCount, 1, 0, 0, 0);
     }
   }
   vkCmdEndRenderPass(cmdBuffer);

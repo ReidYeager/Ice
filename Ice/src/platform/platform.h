@@ -25,6 +25,7 @@ namespace Ice {
   void MemorySet(void* _data, u64 _size, u8 _value);
   void MemoryCopy(void* _source, void* _destination, u64 _size);
   void MemoryFree(void* _data);
+  void* MemoryReallocate(void* _data, u64 _newSize);
 
   inline void MemoryZero(void* _data, u64 _size) { MemorySet(_data, _size, 0); }
   inline void* MemoryAllocZero(u64 _size)
