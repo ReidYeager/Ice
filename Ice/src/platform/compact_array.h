@@ -57,7 +57,7 @@ public:
     ResizeMap(_count);
   }
 
-  u32 AddElementAt(u32 _index, T _newElement = {})
+  u32 AddElementAt(u32 _index, T _initValue = {})
   {
     if (_index >= indexCount)
     {
@@ -85,13 +85,13 @@ public:
 
     indexAvailability.Set(_index, 0);
     indexMap[_index] = dataIndex;
-    data[dataIndex] = _newElement;
+    data[dataIndex] = _initValue;
     usedElementCount++;
 
     return _index;
   }
 
-  u32 AddElement(T _newElement = {})
+  u32 AddElement(T _initValue = {})
   {
     if (usedElementCount >= allocatedElementCount)
     {
@@ -107,7 +107,7 @@ public:
 
     indexAvailability.Set(index, 0);
     indexMap[index] = dataIndex;
-    data[dataIndex] = _newElement;
+    data[dataIndex] = _initValue;
     usedElementCount++;
 
     return index;
@@ -159,6 +159,11 @@ public:
       *_count = usedElementCount;
 
     return data;
+  }
+
+  constexpr u32 size() const
+  {
+    return usedElementCount;
   }
 
   constexpr u32 GetAllocatedSize() const

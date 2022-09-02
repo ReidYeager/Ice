@@ -39,12 +39,8 @@ Ice::Image* textures;
 u32 textureCount = 0;
 
 Ice::FrameInformation frameInfo{};
-std::vector<Ice::Scene*> scenes;
-Ice::Scene*activeScene = nullptr;
 
 Ice::Buffer transformsBuffer;
-
-Ice::Scene* mainScene;
 
 //=========================
 // Time
@@ -123,7 +119,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   maxMeshCount = _settings.maxMeshCount;
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
-  // TODO : ~!!~ Allow transform buffer to expand so number of entites may surpass 1024
+  // TODO : ~!!~ Allow transform buffer to expand so number of entites is not limited
   Ice::GetComponentArray<Ice::Transform>().Resize(1024);
   ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
                                            sizeof(Ice::mat4),
@@ -151,7 +147,7 @@ b8 IceApplicationUpdate()
 {
   UpdateTime();
 
-  Ice::FrameInformation frameInfo;
+  Ice::FrameInformation frameInfo {};
   frameInfo.cameras = &Ice::GetComponentArray<Ice::CameraComponent>();
   frameInfo.renderables = &Ice::GetComponentArray<Ice::RenderComponent>();
 
@@ -173,12 +169,6 @@ b8 IceApplicationUpdate()
 b8 IceApplicationShutdown()
 {
   ICE_ATTEMPT(appSettings.GameShutdown());
-
-  for (u32 i = 0; i < scenes.size(); i++)
-  {
-    delete(scenes[i]);
-  }
-  scenes.clear();
 
   for (u32 i = 0; i < textureCount; i++)
   {
@@ -604,11 +594,11 @@ void Ice::AddSceneToRender(Ice::Scene* _scene)
 }
 */
 
-Ice::Entity Ice::CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings /*= {}*/)
+Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
 {
-  Ice::Entity e = _scene->CreateEntity();
-  Ice::CameraComponent* cc = _scene->AddComponent<Ice::CameraComponent>(e);
-  Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
+  Ice::Entity e = Ice::CreateEntity();
+  Ice::CameraComponent* cc = e.AddComponent<Ice::CameraComponent>();
+  Ice::Transform* t = e.AddComponent<Ice::Transform>();
 
   t->bufferSegment.buffer = &transformsBuffer;
   t->bufferSegment.count = 1;
@@ -621,15 +611,14 @@ Ice::Entity Ice::CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings 
   return e;
 }
 
-Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
-                                      const char* _meshDir /*= nullptr*/,
+Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
                                       Ice::Material* _material /*= nullptr*/)
 {
-  Ice::Entity e = _scene->CreateEntity();
+  Ice::Entity e = Ice::CreateEntity();
   if (e == nullEntity)
     return e;
 
-  Ice::Transform* t = _scene->AddComponent<Ice::Transform>(e);
+  Ice::Transform* t = e.AddComponent<Ice::Transform>();
 
   t->bufferSegment.buffer = &transformsBuffer;
   t->bufferSegment.count = 1;
@@ -637,7 +626,7 @@ Ice::Entity Ice::CreateRenderedEntity(Ice::Scene* _scene,
   t->bufferSegment.startIndex = e.id;
   t->bufferSegment.offset = 0;
 
-  Ice::RenderComponent* r = _scene->AddComponent<Ice::RenderComponent>(e);
+  Ice::RenderComponent* r = e.AddComponent<Ice::RenderComponent>();
 
   renderer->InitializeRenderComponent(r, &t->bufferSegment);
 
@@ -662,7 +651,7 @@ b8 Ice::UpdateTransforms()
   Ice::CompactArray<Ice::Transform>& transformCompact = Ice::GetComponentArray<Ice::Transform>();
 
   std::vector<Ice::Entity> camEntities;
-  for (Ice::Entity e : Ice::SceneView<Ice::Transform, Ice::CameraComponent>(*mainScene))
+  for (Ice::Entity e : Ice::SceneView<Ice::Transform, Ice::CameraComponent>())
   {
     camEntities.push_back(e);
   }
@@ -677,7 +666,7 @@ b8 Ice::UpdateTransforms()
       if (j < camEntities.size() && i == transformCompact.GetMappedIndex(camEntities[j].id))
       {
         m = transforms[i].GetMatrix().Inverse() *
-            mainScene->GetComponent<Ice::CameraComponent>(camEntities[j])->projectionMatrix;
+            camEntities[j].GetComponent<Ice::CameraComponent>()->projectionMatrix;
         j++;
       }
       else
@@ -689,9 +678,4 @@ b8 Ice::UpdateTransforms()
   }
 
   return true;
-}
-
-void Ice::TMPSetMainScene(Ice::Scene* _scene)
-{
-  mainScene = _scene;
 }

@@ -2,10 +2,12 @@
 Root :--: Ice/src
 
 \core\application.cpp
-  Line   86 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  126 :--: '// TODO : ~!!~ Allow transform buffer to expand so number of entites may surpass 1024'
-  Line  422 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  675 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+  Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
+  Line  122 :--: '// TODO : ~!!~ Allow transform buffer to expand so number of entites is not limited'
+  Line  412 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  664 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+\core\ecs\entity.h
+  Line   49 :--: '// TODO : ~!!~ See if there is a way to separate entity data (backend) and functionality (frontend)'
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
 \rendering\renderer.h

@@ -66,14 +66,11 @@ namespace Ice {
   void AddSceneToRender(Ice::Scene* _scene);
   */
 
-  Ice::Entity CreateCamera(Ice::Scene* _scene, Ice::CameraSettings _settings = {});
-  Ice::Entity CreateRenderedEntity(Ice::Scene* _scene,
-                                   const char* _meshDir = nullptr,
+  Ice::Entity CreateCamera(Ice::CameraSettings _settings = {});
+  Ice::Entity CreateRenderedEntity(const char* _meshDir = nullptr,
                                    Ice::Material* _material = nullptr);
 
   b8 UpdateTransforms();
-
-  void TMPSetMainScene(Ice::Scene* _scene);
 
 } // namespace Ice
 
