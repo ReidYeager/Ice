@@ -45,6 +45,7 @@ namespace Ice {
                                          Ice::BufferSegment* _TransformBuffer) = 0;
     virtual b8 UpdateRenderComponent(Ice::RenderComponent* _component,
                                      Ice::BufferSegment* _TransformBuffer) = 0;
+    virtual void DestroyRenderComponent(Ice::RenderComponent* _component) = 0;
     virtual b8 InitializeCamera(Ice::CameraComponent* _camera,
                                 Ice::BufferSegment _transformSegment,
                                 Ice::CameraSettings _settings) = 0;

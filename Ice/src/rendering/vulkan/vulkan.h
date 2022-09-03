@@ -221,6 +221,7 @@ namespace Ice
                                  Ice::BufferSegment* _TransformBuffer);
     b8 UpdateRenderComponent(Ice::RenderComponent* _component,
                              Ice::BufferSegment* _TransformBuffer);
+    void DestroyRenderComponent(Ice::RenderComponent* _component);
     b8 InitializeCamera(Ice::CameraComponent* _camera,
                         Ice::BufferSegment _transformSegment,
                         Ice::CameraSettings _settings);

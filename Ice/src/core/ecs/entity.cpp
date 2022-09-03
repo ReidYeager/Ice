@@ -33,6 +33,14 @@ Ice::Entity Ice::CreateEntity()
   //}
 
   // Create new entity
-  u32 index = activeEntities.AddElement({ activeEntities.size(), 0, 0, 0 });
+  Ice::Entity e {activeEntities.size(), 0, 0, 0};
+
+  u32 index = activeEntities.AddElement(e);
   return activeEntities[index];
+}
+
+b8 Ice::Entity::IsValid()
+{
+  // TODO : ? Entity::IsValid() can not be constexpr. Should only check against nullEntity?
+  return (*this != Ice::nullEntity) && (*this == Ice::activeEntities[id]);
 }

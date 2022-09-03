@@ -7,17 +7,10 @@
 
 namespace Ice {
 
-struct EntityBackend
-{
-  u32 id;
-  u16 owningScene;
-  u16 version;
+struct Entity;
 
-  EntityComponentMask componentMask;
-};
-
-extern Ice::CompactArray<Ice::EntityBackend> activeEntities;
-extern std::vector<Ice::EntityBackend> availableEntities;
+extern Ice::CompactArray<Ice::Entity> activeEntities;
+extern std::vector<Ice::Entity> availableEntities;
 
 extern u32 componentCount;
 template<typename T>

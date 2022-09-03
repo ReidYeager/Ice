@@ -4,6 +4,7 @@
 
 #include "defines.h"
 
+#include "core/ecs/ecs_defines.h"
 #include "math/linear.h"
 
 namespace Ice {
@@ -34,7 +35,7 @@ private:
   Ice::vec3 scale;
 
   mat4 matrix;
-  Transform* parent = nullptr;
+  Ice::Entity parent = Ice::nullEntity;
 
   b8 dirty = false;
 
@@ -52,11 +53,12 @@ public:
 
   // Position =====
 
-  constexpr Ice::vec3 GetPosition()
+  Ice::vec3 GetPosition()
   {
-    if (parent != nullptr)
+    if (parent.IsValid())
     {
-      vec4 pos = (parent->GetMatrix() * vec4({ position.x, position.y, position.z, 1.0f }));
+      vec4 pos = Ice::GetComponentArray<Ice::Transform>()[parent].GetMatrix() *
+                 vec4({ position.x, position.y, position.z, 1.0f });
       return Ice::vec3({ pos.x, pos.y, pos.z });
     }
     return position;
@@ -90,11 +92,11 @@ public:
 
   // Rotation =====
 
-  constexpr quaternion GetRotation()
+  quaternion GetRotation()
   {
-    if (parent != nullptr)
+    if (parent.IsValid())
     {
-      return parent->GetRotation() * rotation;
+      return Ice::GetComponentArray<Ice::Transform>()[parent].GetRotation() * rotation;
     }
     return rotation;
   }
@@ -141,11 +143,11 @@ public:
 
   // Scale =====
 
-  constexpr Ice::vec3 GetScale()
+  Ice::vec3 GetScale()
   {
-    if (parent != nullptr)
+    if (parent.IsValid())
     {
-      return parent->GetScale() * scale;
+      return Ice::GetComponentArray<Ice::Transform>()[parent].GetScale() * scale;
     }
     return scale;
   }
@@ -196,25 +198,30 @@ public:
       );
     }
 
-    if (_includeParents && parent != nullptr)
+    if (_includeParents && parent.IsValid())
     {
-      return parent->GetMatrix() * matrix;
+      return Ice::GetComponentArray<Ice::Transform>()[parent].GetMatrix() * matrix;
     }
 
     return matrix;
   }
 
-  constexpr void SetParentAs(Transform* _newParent)
+  constexpr void SetParentAs(Ice::Entity _newParent)
   {
     parent = _newParent;
   }
 
   constexpr b8 HasParent()
   {
-    return parent != nullptr;
+    return parent != Ice::nullId;
   }
 
-  constexpr Transform const* GetParent()
+  Transform const* GetParentPointer()
+  {
+    return Ice::GetComponentArray<Ice::Transform>().Get(parent);
+  }
+
+  constexpr Ice::Entity const GetParent()
   {
     return parent;
   }

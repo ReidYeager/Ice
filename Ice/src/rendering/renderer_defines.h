@@ -194,7 +194,6 @@ namespace Ice {
     f32 farClip = 100.0f;
   };
 
-  // TODO : Add camera render target
   struct CameraComponent
   {
     mat4 projectionMatrix;

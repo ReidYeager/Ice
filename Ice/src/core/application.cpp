@@ -119,11 +119,12 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   maxMeshCount = _settings.maxMeshCount;
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
-  // TODO : ~!!~ Allow transform buffer to expand so number of entites is not limited
-  Ice::GetComponentArray<Ice::Transform>().Resize(1024);
+  Ice::GetComponentArray<Ice::Transform>().Resize(16);
+  // TODO : ~!!~ Find a way to expand buffer memory -- Currently destroys buffer-type descriptor bindings
   ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
                                            sizeof(Ice::mat4),
-                                           1024, //_settings.maxObjectCount,
+                                           //Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize(),
+                                           2048,
                                            Ice::Buffer_Memory_Shader_Read));
 
   // Initialize transforms =====
@@ -548,51 +549,6 @@ void Ice::SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _dir
 
   textureCount++;
 }
-
-/*
-Ice::Scene* Ice::CreateScene(u32 _maxObjectCount / *= 100* /, u32 _maxComponentTypeCount / *= 10* /)
-{
-  scenes.push_back(new Ice::Scene(_maxObjectCount, _maxComponentTypeCount));
-  return scenes.back();
-}
-
-void Ice::DestroyScene(Ice::Scene* _scene)
-{
-  for (u32 i = 0; i < scenes.size(); i++)
-  {
-    if (_scene == scenes[i])
-    {
-      delete(scenes[i]);
-
-      if (i < scenes.size() - 1)
-      {
-        scenes[i] = scenes.back();
-        scenes.pop_back();
-      }
-    }
-  }
-
-  IceLogError("Scene not found in the application");
-}
-
-void Ice::SetActiveScene(Ice::Scene* _scene)
-{
-  activeScene = _scene;
-}
-
-Ice::Scene* Ice::GetActiveScene()
-{
-  return activeScene;
-}
-
-void Ice::AddSceneToRender(Ice::Scene* _scene)
-{
-  u32 count = 0;
-
-  frameInfo.sceneObjects.push_back(_scene->GetComponentManager<Ice::RenderComponent>());
-  frameInfo.sceneCameras.push_back(_scene->GetComponentManager<Ice::CameraComponent>());
-}
-*/
 
 Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
 {

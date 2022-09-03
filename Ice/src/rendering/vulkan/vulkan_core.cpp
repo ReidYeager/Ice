@@ -701,6 +701,11 @@ b8 Ice::RendererVulkan::UpdateRenderComponent(Ice::RenderComponent* _component,
   return true;
 }
 
+void Ice::RendererVulkan::DestroyRenderComponent(Ice::RenderComponent* _component)
+{
+  
+}
+
 b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
                                          Ice::BufferSegment _transformSegment,
                                          Ice::CameraSettings _settings)

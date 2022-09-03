@@ -13,14 +13,17 @@
 namespace Ice {
 
 typedef u64 EntityComponentMask;
+const u16 nullIdShort = 0xffff;
+const u32 nullId = 0xffffffff;
+const u64 nullIdLong = 0xffffffffffffffff;
 
 struct Entity
 {
-  u32 id;
-  u16 owningScene;
-  u16 version;
+  u32 id = Ice::nullId;
+  u16 owningScene = Ice::nullIdShort;
+  u16 version = Ice::nullIdShort;
 
-  EntityComponentMask componentMask;
+  EntityComponentMask componentMask = 0;
 
   constexpr operator u32() const
   {
@@ -29,12 +32,18 @@ struct Entity
 
   constexpr bool operator ==(Ice::Entity& _other) const
   {
-    return id == _other.id && version == _other.version && owningScene == _other.owningScene;
+    return id == _other.id &&
+           version == _other.version &&
+           owningScene == _other.owningScene &&
+           componentMask == _other.componentMask;
   }
 
   constexpr bool operator !=(Ice::Entity& _other) const
   {
-    return id != _other.id || version != _other.version || owningScene != _other.owningScene;
+    return id != _other.id ||
+           version != _other.version ||
+           owningScene != _other.owningScene ||
+           componentMask != _other.componentMask;
   }
 
   template <typename T>
@@ -59,9 +68,11 @@ struct Entity
     return Ice::GetComponentArray<T>().Get(id);
   }
 
+  b8 IsValid();
+
 };
 
-const Ice::Entity nullEntity = {0xffffffff, 0xffff, 0xffff};
+const Ice::Entity nullEntity = {Ice::nullId, Ice::nullIdShort, Ice::nullIdShort, 0};
 
 Ice::Entity CreateEntity();
 
