@@ -19,7 +19,7 @@ u32 GetMemoryTypeIndex(Ice::VulkanContext* _context,
   }
 
   IceLogError("No suitable memory type is supported for this buffer");
-  return 0xffffffff;
+  return Ice::nullId;
 }
 
 b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
@@ -39,7 +39,7 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
   *_outBuffer = { _elementSize, PadBufferSize(_elementSize, _usage), _elementCount, _usage };
 
   // Buffer =====
-  VkBufferCreateInfo createInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+  VkBufferCreateInfo createInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   createInfo.size = _outBuffer->padElementSize * _outBuffer->count;
 
@@ -71,12 +71,12 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
   VkMemoryRequirements bufferMemRequirements;
   vkGetBufferMemoryRequirements(context.device, _outBuffer->vulkan.buffer, &bufferMemRequirements);
 
-  VkMemoryAllocateInfo allocInfo { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  VkMemoryAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
   allocInfo.allocationSize = bufferMemRequirements.size;
   allocInfo.memoryTypeIndex = GetMemoryTypeIndex(&context,
                                                  bufferMemRequirements.memoryTypeBits,
-                                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
-                                                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                                                   | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
   IVK_ASSERT(vkAllocateMemory(context.device, &allocInfo, context.alloc, &_outBuffer->vulkan.memory),
              "Failed to allocate buffer memory : size %llu",
@@ -88,6 +88,33 @@ b8 Ice::RendererVulkan::CreateBufferMemory(Ice::Buffer* _outBuffer,
                                 _outBuffer->vulkan.memory, 0),
              "Failed to bind buffer and memory");
 
+  return true;
+}
+
+b8 Ice::RendererVulkan::ResizeBufferMemory(Ice::Buffer* _buffer, u32 _newElementCount)
+{
+  vkDeviceWaitIdle(context.device);
+
+  // New buffer =====
+  Ice::Buffer newBuffer = *_buffer;
+  ICE_ATTEMPT(CreateBufferMemory(&newBuffer, _buffer->elementSize, _newElementCount, _buffer->usage));
+
+  // Copy data =====
+  VkCommandBuffer cmd = BeginSingleTimeCommand(context.transientCommandPool);
+
+  VkBufferCopy copy;
+  copy.size = min(_buffer->count * _buffer->padElementSize, newBuffer.count * newBuffer.padElementSize);
+  copy.dstOffset = 0;
+  copy.srcOffset = 0;
+
+  vkCmdCopyBuffer(cmd, _buffer->vulkan.buffer, newBuffer.vulkan.buffer, 1, &copy);
+
+  EndSingleTimeCommand(cmd, context.transientCommandPool, context.transientQueue);
+
+  // Destory old buffer =====
+  DestroyBufferMemory(_buffer);
+
+  *_buffer = newBuffer;
   return true;
 }
 

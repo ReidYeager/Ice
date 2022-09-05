@@ -75,7 +75,7 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
 
   VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
-  VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
   submitInfo.waitSemaphoreCount = 1;
   submitInfo.pWaitSemaphores = &context.imageAvailableSemaphores[flightSlotIndex];
   submitInfo.pWaitDstStageMask = waitStages;
@@ -95,7 +95,7 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
              "Failed to submit draw command");
 
   // Present =====
-  VkPresentInfoKHR presentInfo { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+  VkPresentInfoKHR presentInfo{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = &context.swapchain;
   presentInfo.waitSemaphoreCount = 1;
@@ -200,14 +200,14 @@ b8 Ice::RendererVulkan::CreateInstance(const char* _title, u32 _version)
   std::vector<const char*> extensions;
   GetRequiredPlatformExtensions(extensions);
   extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-  #ifdef ICE_DEBUG
+#ifdef ICE_DEBUG
   extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-  #endif
+#endif
 
   std::vector<const char*> layers;
-  #ifdef ICE_DEBUG
+#ifdef ICE_DEBUG
   layers.push_back("VK_LAYER_KHRONOS_validation");
-  #endif
+#endif
 
   VkApplicationInfo appInfo{ VK_STRUCTURE_TYPE_APPLICATION_INFO };
   appInfo.apiVersion = VK_API_VERSION_1_2;
@@ -219,7 +219,7 @@ b8 Ice::RendererVulkan::CreateInstance(const char* _title, u32 _version)
                                                (_version & 0x0000ff00) >> 8,  // Minor
                                                (_version & 0x000000ff));      // Patch
 
-  VkInstanceCreateInfo createInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
+  VkInstanceCreateInfo createInfo{ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
   createInfo.enabledExtensionCount = (u32)extensions.size();
   createInfo.ppEnabledExtensionNames = extensions.data();
   createInfo.enabledLayerCount = (u32)layers.size();
@@ -287,13 +287,13 @@ b8 Ice::RendererVulkan::ChoosePhysicalDevice()
                                             gpu.presentModes.data());
 
   // Select queue families =====
-  context.gpu.graphicsQueueIndex  = GetIndexForQueue(VK_QUEUE_GRAPHICS_BIT);
+  context.gpu.graphicsQueueIndex = GetIndexForQueue(VK_QUEUE_GRAPHICS_BIT);
   context.gpu.transientQueueIndex = GetIndexForQueue(VK_QUEUE_TRANSFER_BIT);
-  context.gpu.presentQueueIndex   = GetPresentQueue();
+  context.gpu.presentQueueIndex = GetPresentQueue();
 
-  if (context.gpu.graphicsQueueIndex  == ~0U ||
-      context.gpu.presentQueueIndex   == ~0U ||
-      context.gpu.transientQueueIndex == ~0U)
+  if (context.gpu.graphicsQueueIndex == ~0U
+      || context.gpu.presentQueueIndex == ~0U
+      || context.gpu.transientQueueIndex == ~0U)
   {
     IceLogFatal("Some of the queue indices are invalid (G : %u, P : %u, T : %u)",
                 context.gpu.graphicsQueueIndex,
@@ -425,26 +425,26 @@ b8 Ice::RendererVulkan::CreateLogicalDevice()
   std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
   std::vector<const char*> layers;
-  #ifdef ICE_DEBUG
+#ifdef ICE_DEBUG
   layers.push_back("VK_LAYER_KHRONOS_validation");
-  #endif // ICE_DEBUG
+#endif // ICE_DEBUG
 
   // Creation =====
-  VkDeviceCreateInfo createInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+  VkDeviceCreateInfo createInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
   createInfo.queueCreateInfoCount = (u32)queueCreateInfos.size();
-  createInfo.pQueueCreateInfos    = queueCreateInfos.data();
-  createInfo.enabledExtensionCount   = (u32)extensions.size();
+  createInfo.pQueueCreateInfos = queueCreateInfos.data();
+  createInfo.enabledExtensionCount = (u32)extensions.size();
   createInfo.ppEnabledExtensionNames = extensions.data();
-  createInfo.enabledLayerCount   = (u32)layers.size();
+  createInfo.enabledLayerCount = (u32)layers.size();
   createInfo.ppEnabledLayerNames = layers.data();
 
   IVK_ASSERT(vkCreateDevice(context.gpu.device, &createInfo, nullptr, &context.device),
              "Failed to create Vulkan logical device");
 
   vkGetDeviceQueue(context.device, context.gpu.graphicsQueueIndex, 0, &context.graphicsQueue);
-  vkGetDeviceQueue(context.device, context.gpu.presentQueueIndex , 0, &context.presentQueue );
+  vkGetDeviceQueue(context.device, context.gpu.presentQueueIndex, 0, &context.presentQueue);
   vkGetDeviceQueue(context.device, context.gpu.transientQueueIndex, 0, &context.transientQueue);
 
   return context.device != VK_NULL_HANDLE;
@@ -458,15 +458,15 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
 
   // TODO : Make max uniform descriptor/image descriptor/set counts adjustable
   sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  sizes[0].descriptorCount = 1024; // TMP
+  sizes[0].descriptorCount = 2048; // TMP
 
   sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  sizes[1].descriptorCount = 1024; // TMP
+  sizes[1].descriptorCount = 2048; // TMP
 
   // Creation =====
-  VkDescriptorPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+  VkDescriptorPoolCreateInfo createInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  createInfo.maxSets = 1024; // 1 for global, ~3 for renderpasses, X for materials, Y for objects
+  createInfo.maxSets = 1024; // 0 = Global, 1 = per-camera, 2 = per-material, 3 = per-object
   createInfo.poolSizeCount = poolSizeCount;
   createInfo.pPoolSizes = sizes;
 
@@ -482,7 +482,7 @@ b8 Ice::RendererVulkan::CreateDescriptorPool()
 b8 Ice::RendererVulkan::CreateCommandPool(b8 _createTransient /*= false*/)
 {
   VkCommandPool* poolPtr = 0;
-  VkCommandPoolCreateInfo createInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+  VkCommandPoolCreateInfo createInfo{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 
   if (_createTransient)
   { // Transfer =====
@@ -626,10 +626,10 @@ b8 Ice::RendererVulkan::CreateSwapchain()
 
 b8 Ice::RendererVulkan::CreateSyncObjects()
 {
-  VkSemaphoreCreateInfo semaphoreInfo { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+  VkSemaphoreCreateInfo semaphoreInfo{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
   semaphoreInfo.flags = 0;
 
-  VkFenceCreateInfo fenceInfo { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+  VkFenceCreateInfo fenceInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   // Create each frame's sync objects =====
@@ -666,7 +666,7 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
   const u32 count = (u32)context.swapchainImages.size();
   context.commandBuffers.resize(count);
 
-  VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  VkCommandBufferAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = count;
   allocInfo.commandPool = context.graphicsCommandPool;
@@ -680,30 +680,43 @@ b8 Ice::RendererVulkan::CreateCommandBuffers()
 }
 
 b8 Ice::RendererVulkan::InitializeRenderComponent(Ice::RenderComponent* _component,
-                                                  Ice::BufferSegment* _transformBuffer)
+                                                  Ice::BufferSegment const _transformBuffer)
 {
   ICE_ATTEMPT(CreateDescriptorSet(&context.objectDescriptorLayout,
                                   &_component->vulkan.descriptorSet));
 
-  return UpdateRenderComponent(_component, _transformBuffer);
+  return UpdateShaderBindings(&_component->vulkan.descriptorSet, _transformBuffer);
 }
 
-b8 Ice::RendererVulkan::UpdateRenderComponent(Ice::RenderComponent* _component,
-                                              Ice::BufferSegment* _transformBuffer)
+b8 Ice::RendererVulkan::UpdateRenderComponent(Ice::RenderComponent* const _component,
+                                              Ice::BufferSegment const _transformBufferSegment)
+{
+  return UpdateShaderBindings(&_component->vulkan.descriptorSet, _transformBufferSegment);
+}
+
+b8 Ice::RendererVulkan::UpdateCameraComponent(Ice::CameraComponent* const _component,
+                                              Ice::BufferSegment const _transformBufferSegment)
+{
+  return UpdateShaderBindings(&_component->vulkan.descriptorSet, _transformBufferSegment);
+}
+
+// TODO : Abstract descriptor bindings so they are easier to work with
+b8 Ice::RendererVulkan::UpdateShaderBindings(VkDescriptorSet* const _set,
+                                             Ice::BufferSegment const _transformBufferSegment)
 {
   Ice::ShaderInputElement bufferInput;
   bufferInput.inputIndex = 0;
   bufferInput.type = Ice::Shader_Input_Buffer;
-  bufferInput.bufferSegment = *_transformBuffer;
+  bufferInput.bufferSegment = _transformBufferSegment;
   std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
-  UpdateDescriptorSet(_component->vulkan.descriptorSet, inputs);
+  UpdateDescriptorSet(_set, inputs);
 
   return true;
 }
 
 void Ice::RendererVulkan::DestroyRenderComponent(Ice::RenderComponent* _component)
 {
-  
+
 }
 
 b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
@@ -737,12 +750,13 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   // Create descriptor set =====
   ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));
 
-  Ice::ShaderInputElement bufferInput;
-  bufferInput.inputIndex = 0;
-  bufferInput.type = Ice::Shader_Input_Buffer;
-  bufferInput.bufferSegment = _transformSegment;
-  std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
-  UpdateDescriptorSet(_camera->vulkan.descriptorSet, inputs);
+  UpdateShaderBindings(&_camera->vulkan.descriptorSet, _transformSegment);
+  //Ice::ShaderInputElement bufferInput;
+  //bufferInput.inputIndex = 0;
+  //bufferInput.type = Ice::Shader_Input_Buffer;
+  //bufferInput.bufferSegment = _transformSegment;
+  //std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
+  //UpdateDescriptorSet(&_camera->vulkan.descriptorSet, inputs);
 
   return true;
 }

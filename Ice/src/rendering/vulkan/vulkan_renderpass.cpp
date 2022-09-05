@@ -47,7 +47,7 @@ b8 CreateFrameBuffer(Ice::VulkanContext& context,
                                  &createInfo,
                                  context.alloc,
                                  _framebuffer),
-                                 "Failed to create frame buffer");
+             "Failed to create frame buffer");
 
   return true;
 }
@@ -72,10 +72,10 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
   attachments[0].format = context.swapchainFormat;
   attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachments[0].finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  attachments[0].loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   // Depth
   attachments[1].flags = 0;
@@ -131,12 +131,12 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
   //dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
   // Creation =====
-  VkRenderPassCreateInfo rpCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  VkRenderPassCreateInfo rpCreateInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
   rpCreateInfo.flags = 0;
   rpCreateInfo.attachmentCount = attachmentCount;
-  rpCreateInfo.pAttachments    = attachments;
+  rpCreateInfo.pAttachments = attachments;
   rpCreateInfo.subpassCount = 1;
-  rpCreateInfo.pSubpasses   = &subpass;
+  rpCreateInfo.pSubpasses = &subpass;
   rpCreateInfo.dependencyCount = 0;
   //rpCreateInfo.pDependencies   = dependencies;
 
@@ -158,8 +158,8 @@ b8 Ice::RendererVulkan::CreateForwardComponents()
                                   &context.forward.framebuffers[i],
                                   context.forward.renderpass,
                                   context.swapchainExtent,
-                                  {context.swapchainImageViews[i],
-                                  context.depthImages[i].view }));
+                                  { context.swapchainImageViews[i],
+                                    context.depthImages[i].view }));
   }
 
   return true;

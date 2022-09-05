@@ -15,7 +15,10 @@ private:
   u32 byteCount = 0;
   u32 flagCount = 0;
 
-  constexpr u32 ValueToByte(u32 _value) { return _value / 8; }
+  constexpr u32 ValueToByte(u32 _value)
+  {
+    return _value / 8;
+  }
   constexpr u32 ValueToBit(u32 _value)
   {
     return _value % 8;
@@ -27,7 +30,8 @@ public:
     Resize(_flagCount, _initialValue);
   }
 
-  FlagArray() { }
+  FlagArray()
+  {}
 
   ~FlagArray()
   {

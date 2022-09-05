@@ -12,80 +12,80 @@
 
 namespace Ice {
 
-  //=========================
-  // Image
-  //=========================
+//=========================
+// Image
+//=========================
 
-  struct IvkImage
-  {
-    VkImage image;
-    VkImageView view;
-    VkSampler sampler;
+struct IvkImage
+{
+  VkImage image;
+  VkImageView view;
+  VkSampler sampler;
 
-    VkFormat format;
-    VkImageLayout layout;
+  VkFormat format;
+  VkImageLayout layout;
 
-    VkDeviceMemory memory;
-  };
+  VkDeviceMemory memory;
+};
 
-  //=========================
-  // Buffer
-  //=========================
+//=========================
+// Buffer
+//=========================
 
-  struct IvkBuffer
-  {
-    VkBuffer buffer;
-    VkDeviceMemory memory;
-  };
+struct IvkBuffer
+{
+  VkBuffer buffer;
+  VkDeviceMemory memory;
+};
 
-  //=========================
-  // Material
-  //=========================
+//=========================
+// Material
+//=========================
 
-  struct IvkShader
-  {
-    VkShaderModule module;
-  };
+struct IvkShader
+{
+  VkShaderModule module;
+};
 
-  struct IvkMaterial
-  {
-    VkPipelineLayout pipelineLayout;
-    VkPipeline pipeline;
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorSet descriptorSet;
-  };
+struct IvkMaterial
+{
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+};
 
-  //=========================
-  // Context
-  //=========================
+//=========================
+// Context
+//=========================
 
-  struct IvkRenderpass
-  {
-    VkRenderPass renderpass;
-    std::vector<VkFramebuffer> framebuffers;
-  };
+struct IvkRenderpass
+{
+  VkRenderPass renderpass;
+  std::vector<VkFramebuffer> framebuffers;
+};
 
-  struct Gpu
-  {
-    VkPhysicalDevice                 device;
-    VkPhysicalDeviceProperties       properties;
-    VkPhysicalDeviceFeatures         features;
-    VkPhysicalDeviceMemoryProperties memoryProperties;
-    VkSurfaceCapabilitiesKHR         surfaceCapabilities;
+struct Gpu
+{
+  VkPhysicalDevice                 device;
+  VkPhysicalDeviceProperties       properties;
+  VkPhysicalDeviceFeatures         features;
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  VkSurfaceCapabilitiesKHR         surfaceCapabilities;
 
-    std::vector<VkSurfaceFormatKHR>      surfaceFormats;
-    std::vector<VkPresentModeKHR>        presentModes;
-    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+  std::vector<VkSurfaceFormatKHR>      surfaceFormats;
+  std::vector<VkPresentModeKHR>        presentModes;
+  std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 
-    u32 graphicsQueueIndex;
-    u32 presentQueueIndex;
-    u32 transientQueueIndex;
-  };
+  u32 graphicsQueueIndex;
+  u32 presentQueueIndex;
+  u32 transientQueueIndex;
+};
 
-  struct IvkObjectData
-  {
-    VkDescriptorSet descriptorSet; // Per-object input data
-  };
+struct IvkObjectData
+{
+  VkDescriptorSet descriptorSet; // Per-object input data
+};
 
 } // namespace Ice
 
@@ -95,7 +95,7 @@ namespace Ice {
 
 inline const char* VulkanResultToString(VkResult _result)
 {
-  #define RTS(x) case x: return #x
+#define RTS(x) case x: return #x
   switch (_result)
   {
     RTS(VK_SUCCESS);
@@ -140,7 +140,7 @@ inline const char* VulkanResultToString(VkResult _result)
   default: return "Invalid vkResult";
   }
 
-  #undef ETS
+#undef ETS
 }
 
 #define IVK_ASSERT(function, errorMsg, ...)                                            \

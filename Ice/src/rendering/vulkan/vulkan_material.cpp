@@ -53,7 +53,7 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   if (source.size() == 0)
     return false;
 
-  VkShaderModuleCreateInfo createInfo { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
+  VkShaderModuleCreateInfo createInfo{ VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
   createInfo.codeSize = source.size();
   createInfo.pCode = reinterpret_cast<u32*>(source.data());
 
@@ -81,7 +81,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
   Ice::Lexer lexer(descriptorSource);
   Ice::LexerToken token;
 
-  Ice::ShaderInputElement newInput {};
+  Ice::ShaderInputElement newInput{};
   std::vector<ShaderInputElement> tmpInputs;
 
   while (!lexer.CompletedStream())
@@ -167,9 +167,9 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
     if (_material->buffer.elementSize * _material->buffer.count)
     {
       CreateBufferMemory(&_material->buffer,
-                          _material->buffer.elementSize,
-                          _material->buffer.count,
-                          Ice::Buffer_Memory_Shader_Read);
+                         _material->buffer.elementSize,
+                         _material->buffer.count,
+                         Ice::Buffer_Memory_Shader_Read);
 
       // Associate the buffer segments with the material's buffer
       for (auto& d : _material->input)
@@ -182,7 +182,7 @@ b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)
     }
   }
 
-  UpdateDescriptorSet(_material->vulkan.descriptorSet, _material->input);
+  UpdateDescriptorSet(&_material->vulkan.descriptorSet, _material->input);
 
   ICE_ATTEMPT(CreatePipelineLayout({ context.globalDescriptorLayout,
                                      context.cameraDescriptorLayout,
@@ -243,7 +243,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
 
   // Combine shader inputs =====
   u32 actualCount = 0;
-  VkDescriptorSetLayoutBinding newBinding {};
+  VkDescriptorSetLayoutBinding newBinding{};
   for (Ice::Shader* shader : _material->shaders)
   {
     for (auto& descriptor : shader->input)
@@ -337,7 +337,7 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
     iceBind[0].bufferSegment.elementSize = 64;
     iceBind[0].type = Shader_Input_Buffer;
     iceBind[0].inputIndex = 0;
-    UpdateDescriptorSet(context.globalDescriptorSet, iceBind);
+    UpdateDescriptorSet(&context.globalDescriptorSet, iceBind);
 
     // Camera descriptors =====
     bindings.clear();
@@ -397,9 +397,9 @@ b8 Ice::RendererVulkan::CreateDescriptorLayout(std::vector<VkDescriptorSetLayout
   createInfo.pBindings = _bindings->data();
 
   IVK_ASSERT(vkCreateDescriptorSetLayout(context.device,
-             &createInfo,
-             context.alloc,
-             _layout),
+                                         &createInfo,
+                                         context.alloc,
+                                         _layout),
              "Failed to create descriptor set layout");
 
   return true;
@@ -418,20 +418,22 @@ b8 Ice::RendererVulkan::CreateDescriptorSet(VkDescriptorSetLayout* _layout, VkDe
   return true;
 }
 
-void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
+void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet* _set,
                                               const std::vector<Ice::ShaderInputElement>& _inputs)
 {
+  vkDeviceWaitIdle(context.device);
+
   std::vector<VkDescriptorImageInfo> images;
   images.reserve(_inputs.size());
   std::vector<VkDescriptorBufferInfo> buffers;
   buffers.reserve(_inputs.size());
   std::vector<VkWriteDescriptorSet> writes;
 
-  VkDescriptorImageInfo newImage {};
-  VkDescriptorBufferInfo newBuffer {};
+  VkDescriptorImageInfo newImage{};
+  VkDescriptorBufferInfo newBuffer{};
 
-  VkWriteDescriptorSet newWrite { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-  newWrite.dstSet = _set;
+  VkWriteDescriptorSet newWrite{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  newWrite.dstSet = *_set;
   newWrite.dstArrayElement = 0;
   newWrite.descriptorCount = 1;
   newWrite.pTexelBufferView = nullptr;
@@ -445,8 +447,8 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     case Shader_Input_Buffer:
     {
       newBuffer.buffer = descriptor.bufferSegment.buffer->vulkan.buffer;
-      newBuffer.offset = descriptor.bufferSegment.startIndex *
-                         descriptor.bufferSegment.buffer->padElementSize;
+      newBuffer.offset = descriptor.bufferSegment.startIndex
+        * descriptor.bufferSegment.buffer->padElementSize;
       newBuffer.range = descriptor.bufferSegment.elementSize;
 
       buffers.push_back(newBuffer);
@@ -456,7 +458,7 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet& _set,
     } break;
     case Shader_Input_Image:
     {
-      newImage.imageLayout =  descriptor.image->vulkan.layout;
+      newImage.imageLayout = descriptor.image->vulkan.layout;
       newImage.imageView = descriptor.image->vulkan.view;
       newImage.sampler = descriptor.image->vulkan.sampler;
 
@@ -484,7 +486,7 @@ b8 Ice::RendererVulkan::SetMaterialInput(Ice::Material* _material,
   imageInput.image = _image;
   std::vector<Ice::ShaderInputElement> inputs = { imageInput };
 
-  UpdateDescriptorSet(_material->vulkan.descriptorSet, inputs);
+  UpdateDescriptorSet(&_material->vulkan.descriptorSet, inputs);
   return true;
 }
 
@@ -523,7 +525,7 @@ std::vector<VkVertexInputAttributeDescription> GetVertexAttributeDescriptions()
 b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLayout>& _setLayouts,
                                              VkPipelineLayout* _pipelineLayout)
 {
-  VkPipelineLayoutCreateInfo createInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+  VkPipelineLayoutCreateInfo createInfo{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.pNext = nullptr;
   createInfo.pushConstantRangeCount = 0;
@@ -543,7 +545,7 @@ b8 Ice::RendererVulkan::CreatePipelineLayout(const std::vector<VkDescriptorSetLa
 b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 {
   // Shader Stages State =====
-  VkPipelineShaderStageCreateInfo shaderStage {};
+  VkPipelineShaderStageCreateInfo shaderStage{};
   shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
   shaderStage.pName = "main";
@@ -567,28 +569,28 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   const auto vertexInputAttribDesc = GetVertexAttributeDescriptions();
   const auto vertexInputBindingDesc = GetVertexBindingDescription();
 
-  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo {};
+  VkPipelineVertexInputStateCreateInfo vertexInputStateInfo{};
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   //vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
   vertexInputStateInfo.vertexAttributeDescriptionCount = (u32)vertexInputAttribDesc.size();
-  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttribDesc.data();
+  vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttribDesc.data();
   //vertexInputStateInfo.vertexBindingDescriptionCount = 0;
   vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  vertexInputStateInfo.pVertexBindingDescriptions    = &vertexInputBindingDesc;
+  vertexInputStateInfo.pVertexBindingDescriptions = &vertexInputBindingDesc;
 
   // Input Assembly State =====
   // Defines how meshes are to be rendered
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo {};
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
   inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
 
   // Viewport State =====
   // Defines the screen settings used during rasterization
-  VkViewport viewport {};
+  VkViewport viewport{};
   viewport.x = 0;
   viewport.y = 0;
-  viewport.width  = (float)context.swapchainExtent.width;
+  viewport.width = (float)context.swapchainExtent.width;
   viewport.height = (float)context.swapchainExtent.height;
   viewport.minDepth = 0;
   viewport.maxDepth = 1;
@@ -597,7 +599,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   scissor.extent = context.swapchainExtent;
   scissor.offset = { 0, 0 };
 
-  VkPipelineViewportStateCreateInfo viewportStateInfo {};
+  VkPipelineViewportStateCreateInfo viewportStateInfo{};
   viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportStateInfo.viewportCount = 1;
   viewportStateInfo.pViewports = &viewport;
@@ -606,7 +608,7 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
 
   // Rasterization State =====
   // Defines how the pipeline will rasterize the image
-  VkPipelineRasterizationStateCreateInfo rasterStateInfo {};
+  VkPipelineRasterizationStateCreateInfo rasterStateInfo{};
   rasterStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   //rasterStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
@@ -621,13 +623,13 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   rasterStateInfo.rasterizerDiscardEnable = VK_FALSE;
 
   // Multisampling State =====
-  VkPipelineMultisampleStateCreateInfo multisampleStateInfo {};
+  VkPipelineMultisampleStateCreateInfo multisampleStateInfo{};
   multisampleStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multisampleStateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
   multisampleStateInfo.sampleShadingEnable = VK_FALSE;
 
   // Depth Stencil State =====
-  VkPipelineDepthStencilStateCreateInfo depthStateInfo {};
+  VkPipelineDepthStencilStateCreateInfo depthStateInfo{};
   depthStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   depthStateInfo.depthTestEnable = VK_TRUE;
   depthStateInfo.depthWriteEnable = VK_TRUE;
@@ -636,17 +638,17 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   depthStateInfo.depthBoundsTestEnable = VK_FALSE;
 
   // Color Blend State =====
-  VkPipelineColorBlendAttachmentState blendAttachmentStates [4] {};
-  blendAttachmentStates[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                                            VK_COLOR_COMPONENT_G_BIT |
-                                            VK_COLOR_COMPONENT_B_BIT |
-                                            VK_COLOR_COMPONENT_A_BIT;
+  VkPipelineColorBlendAttachmentState blendAttachmentStates[4]{};
+  blendAttachmentStates[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+    | VK_COLOR_COMPONENT_G_BIT
+    | VK_COLOR_COMPONENT_B_BIT
+    | VK_COLOR_COMPONENT_A_BIT;
   blendAttachmentStates[0].blendEnable = VK_FALSE;
   blendAttachmentStates[1] = blendAttachmentStates[0];
   blendAttachmentStates[2] = blendAttachmentStates[0];
   blendAttachmentStates[3] = blendAttachmentStates[0];
 
-  VkPipelineColorBlendStateCreateInfo blendStateInfo {};
+  VkPipelineColorBlendStateCreateInfo blendStateInfo{};
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   blendStateInfo.logicOpEnable = VK_FALSE;
   blendStateInfo.attachmentCount = 1;
@@ -656,25 +658,25 @@ b8 Ice::RendererVulkan::CreatePipeline(Ice::Material* _material)
   // States included here are capable of being set by dynamic state setting functions
   // When binding the pipeline, if these states are not set via one of the state setting functions
   //    the state's settings bound from the previous bound pipeline shall be used
-  VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
+  VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
   dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
   dynamicStateInfo.dynamicStateCount = 0;
   dynamicStateInfo.pDynamicStates = nullptr;
 
   // Creation =====
-  VkGraphicsPipelineCreateInfo createInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
-  createInfo.pViewportState      = &viewportStateInfo;
-  createInfo.pVertexInputState   = &vertexInputStateInfo;
+  VkGraphicsPipelineCreateInfo createInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+  createInfo.pViewportState = &viewportStateInfo;
+  createInfo.pVertexInputState = &vertexInputStateInfo;
   createInfo.pInputAssemblyState = &inputAssemblyStateInfo;
   createInfo.pRasterizationState = &rasterStateInfo;
-  createInfo.pMultisampleState   = &multisampleStateInfo;
-  createInfo.pDepthStencilState  = &depthStateInfo;
-  createInfo.pColorBlendState    = &blendStateInfo;
-  createInfo.pDynamicState       = &dynamicStateInfo;
+  createInfo.pMultisampleState = &multisampleStateInfo;
+  createInfo.pDepthStencilState = &depthStateInfo;
+  createInfo.pColorBlendState = &blendStateInfo;
+  createInfo.pDynamicState = &dynamicStateInfo;
   createInfo.stageCount = (u32)stages.size();
-  createInfo.pStages    = stages.data();
+  createInfo.pStages = stages.data();
 
-  createInfo.layout     = _material->vulkan.pipelineLayout;
+  createInfo.layout = _material->vulkan.pipelineLayout;
   createInfo.renderPass = context.forward.renderpass;
   createInfo.subpass = _material->subpassIndex;
 

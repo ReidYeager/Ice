@@ -11,66 +11,66 @@
 
 namespace Ice {
 
-  //=========================
-  // Application
-  //=========================
+//=========================
+// Application
+//=========================
 
-  u32 CreateVersion(u8 _major, u8 _minor, u8 _patch);
+u32 CreateVersion(u8 _major, u8 _minor, u8 _patch);
 
-  u32 Run(ApplicationSettings);
+u32 Run(ApplicationSettings);
 
-  // End the application loop peacefully
-  void Shutdown();
+// End the application loop peacefully
+void Shutdown();
 
-  //=========================
-  // Platform
-  //=========================
+//=========================
+// Platform
+//=========================
 
-  void CloseWindow();
+void CloseWindow();
 
-  //=========================
-  // Rendering
-  //=========================
+//=========================
+// Rendering
+//=========================
 
-  b8 GetMesh(const char* _directory, Ice::Mesh** _mesh);
+b8 GetMesh(const char* _directory, Ice::Mesh** _mesh);
 
-  b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
-  void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
+b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
+void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
 
-  // Reload one shader
-  b8 ReloadShader(Ice::Shader* _shader);
-  b8 ReloadAllShaders();
+// Reload one shader
+b8 ReloadShader(Ice::Shader* _shader);
+b8 ReloadAllShaders();
 
-  // Reload material's shaders and recreate the material
-  b8 ReloadMaterial(Ice::Material* _material);
-  b8 ReloadAllMaterials();
-  // Only recreate the material -- Does not affect its shaders
-  b8 RecreateMaterial(Ice::Material* _material);
+// Reload material's shaders and recreate the material
+b8 ReloadMaterial(Ice::Material* _material);
+b8 ReloadAllMaterials();
+// Only recreate the material -- Does not affect its shaders
+b8 RecreateMaterial(Ice::Material* _material);
 
-  b8 LoadTexture(Ice::Image* _texture, const char* _directory);
-  void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
-  //void SetTexture(Ice::Material* _material, u32 inputIndex, Ice::Image* _image);
+b8 LoadTexture(Ice::Image* _texture, const char* _directory);
+void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
+//void SetTexture(Ice::Material* _material, u32 inputIndex, Ice::Image* _image);
 
-  //=========================
-  // Scenes
-  //=========================
+//=========================
+// Scenes
+//=========================
 
-  /*
-  Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
-  void DestroyScene(Ice::Scene* _scene);
-  // Used to create objects in the active scene without needing to pass its pointer around the game
+/*
+Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
+void DestroyScene(Ice::Scene* _scene);
+// Used to create objects in the active scene without needing to pass its pointer around the game
 
-  void SetActiveScene(Ice::Scene* _scene);
-  Ice::Scene* GetActiveScene();
+void SetActiveScene(Ice::Scene* _scene);
+Ice::Scene* GetActiveScene();
 
-  void AddSceneToRender(Ice::Scene* _scene);
-  */
+void AddSceneToRender(Ice::Scene* _scene);
+*/
 
-  Ice::Entity CreateCamera(Ice::CameraSettings _settings = {});
-  Ice::Entity CreateRenderedEntity(const char* _meshDir = nullptr,
-                                   Ice::Material* _material = nullptr);
+Ice::Entity CreateCamera(Ice::CameraSettings _settings = {});
+Ice::Entity CreateRenderedEntity(const char* _meshDir = nullptr,
+                                 Ice::Material* _material = nullptr);
 
-  b8 UpdateTransforms();
+b8 UpdateTransforms();
 
 } // namespace Ice
 

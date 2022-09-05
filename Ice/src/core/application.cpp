@@ -112,20 +112,25 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     return false;
   }
 
-  shaders = (Ice::Shader*)Ice::MemoryAllocZero(sizeof(Ice::Shader) * _settings.maxShaderCount);
-  materials = (Ice::Material*)Ice::MemoryAllocZero(sizeof(Ice::Material) * _settings.maxMaterialCount);
-  materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
-  meshes = (Ice::MeshInformation*)Ice::MemoryAllocZero(sizeof(Ice::MeshInformation) * _settings.maxMeshCount);
+  shaders = (Ice::Shader*)Ice::MemoryAllocZero(
+    sizeof(Ice::Shader) * _settings.maxShaderCount);
+  materials = (Ice::Material*)Ice::MemoryAllocZero(
+    sizeof(Ice::Material) * _settings.maxMaterialCount);
+  materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(
+    sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
+  meshes = (Ice::MeshInformation*)Ice::MemoryAllocZero(
+    sizeof(Ice::MeshInformation) * _settings.maxMeshCount);
   maxMeshCount = _settings.maxMeshCount;
   textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
 
   Ice::GetComponentArray<Ice::Transform>().Resize(16);
-  // TODO : ~!!~ Find a way to expand buffer memory -- Currently destroys buffer-type descriptor bindings
-  ICE_ATTEMPT(renderer->CreateBufferMemory(&transformsBuffer,
-                                           sizeof(Ice::mat4),
-                                           //Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize(),
-                                           2048,
-                                           Ice::Buffer_Memory_Shader_Read));
+  ICE_ATTEMPT(renderer->CreateBufferMemory(
+    &transformsBuffer,
+    sizeof(Ice::mat4),
+    Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize(),
+    Ice::Buffer_Memory_Shader_Read |
+    Ice::Buffer_Memory_Transfer_Src |
+    Ice::Buffer_Memory_Transfer_Dst));
 
   // Initialize transforms =====
   Ice::Transform* transforms = Ice::GetComponentArray<Ice::Transform>().GetArray();
@@ -148,7 +153,7 @@ b8 IceApplicationUpdate()
 {
   UpdateTime();
 
-  Ice::FrameInformation frameInfo {};
+  Ice::FrameInformation frameInfo{};
   frameInfo.cameras = &Ice::GetComponentArray<Ice::CameraComponent>();
   frameInfo.renderables = &Ice::GetComponentArray<Ice::RenderComponent>();
 
@@ -269,13 +274,15 @@ struct HashedVertex
 
 // Used to map vertices into an unordered array during mesh building
 namespace std {
-  template<> struct hash<HashedVertex> {
-    size_t operator()(HashedVertex const& vertex) const {
-      return ((hash<glm::vec3>()(vertex.position) ^
-              (hash<glm::vec2>()(vertex.uv) << 1)) >> 1) ^
-              (hash<glm::vec3>()(vertex.normal) << 1);
-    }
-  };
+template<> struct hash<HashedVertex>
+{
+  size_t operator()(HashedVertex const& vertex) const
+  {
+    return ((hash<glm::vec3>()(vertex.position) ^
+             (hash<glm::vec2>()(vertex.uv) << 1)) >> 1) ^
+      (hash<glm::vec3>()(vertex.normal) << 1);
+  }
+};
 }
 
 b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
@@ -296,9 +303,9 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
                           _directory))
     {
       IceLogError("Failed to load mesh '%s'\n> tinyobj warnings: '%s'\n> tinyobj errors: '%s'",
-                   _directory,
-                   loadWarnings.c_str(),
-                   loadErrors.c_str());
+                  _directory,
+                  loadWarnings.c_str(),
+                  loadErrors.c_str());
     }
   }
 
@@ -308,7 +315,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
   // Assemble mesh =====
   std::unordered_map<HashedVertex, u32> vertMap = {};
   {
-    HashedVertex vert {};
+    HashedVertex vert{};
     for (const auto& shape : shapes)
     {
       for (const auto& index : shape.mesh.indices)
@@ -334,7 +341,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
         {
           vertMap[vert] = (u32)vertices.size();
 
-          Ice::Vertex properVert {};
+          Ice::Vertex properVert{};
           properVert.position = { vert.position.x, vert.position.y, vert.position.z };
           properVert.uv = { vert.uv.x, vert.uv.y };
           properVert.normal = { vert.normal.x, vert.normal.y, vert.normal.z };
@@ -353,7 +360,7 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
     newMesh.indexCount = (u32)indices.size();
     ICE_ATTEMPT(renderer->CreateBufferMemory(&newMesh.buffer,
                                              (sizeof(Ice::Vertex) * vertices.size() +
-                                               (sizeof(u32) * indices.size())),
+                                              (sizeof(u32) * indices.size())),
                                              1,
                                              Ice::Buffer_Memory_Vertex | Ice::Buffer_Memory_Index));
 
@@ -399,7 +406,7 @@ b8 Ice::GetMesh(const char* _directory, Ice::Mesh** _mesh)
     return false;
   }
 
-  ICE_ATTEMPT(CreateMesh(_directory, &meshes[meshCount].mesh))
+  ICE_ATTEMPT(CreateMesh(_directory, &meshes[meshCount].mesh));
   meshes[meshCount].fileName = _directory;
   *_mesh = &meshes[meshCount].mesh;
   meshCount++;
@@ -570,10 +577,12 @@ Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
 Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
                                       Ice::Material* _material /*= nullptr*/)
 {
+  Ice::CompactArray<Ice::Transform>& carray = Ice::GetComponentArray<Ice::Transform>();
   Ice::Entity e = Ice::CreateEntity();
   if (e == nullEntity)
     return e;
 
+  Ice::GetComponentArray<Ice::Transform>();
   Ice::Transform* t = e.AddComponent<Ice::Transform>();
 
   t->bufferSegment.buffer = &transformsBuffer;
@@ -582,9 +591,28 @@ Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
   t->bufferSegment.startIndex = e.id;
   t->bufferSegment.offset = 0;
 
-  Ice::RenderComponent* r = e.AddComponent<Ice::RenderComponent>();
+  if (Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize() > transformsBuffer.count)
+  {
+    Ice::CompactArray<Ice::Transform>& transformCompact = Ice::GetComponentArray<Ice::Transform>();
+    renderer->ResizeBufferMemory(&transformsBuffer, transformCompact.GetAllocatedSize());
 
-  renderer->InitializeRenderComponent(r, &t->bufferSegment);
+    for (Ice::Entity e : Ice::SceneView<Ice::RenderComponent, Ice::Transform>())
+    {
+      transformCompact[e].bufferSegment.buffer = &transformsBuffer;
+      renderer->UpdateRenderComponent(e.GetComponent<Ice::RenderComponent>(),
+                                      transformCompact[e].bufferSegment);
+    }
+
+    for (Ice::Entity e : Ice::SceneView<Ice::CameraComponent, Ice::Transform>())
+    {
+      transformCompact[e].bufferSegment.buffer = &transformsBuffer;
+      renderer->UpdateCameraComponent(e.GetComponent<Ice::CameraComponent>(),
+                                      transformCompact[e].bufferSegment);
+    }
+  }
+
+  Ice::RenderComponent* r = e.AddComponent<Ice::RenderComponent>();
+  renderer->InitializeRenderComponent(r, t->bufferSegment);
 
   if (_meshDir != nullptr)
   {
@@ -606,6 +634,18 @@ b8 Ice::UpdateTransforms()
 {
   Ice::CompactArray<Ice::Transform>& transformCompact = Ice::GetComponentArray<Ice::Transform>();
 
+  if (transformCompact.GetAllocatedSize() > transformsBuffer.count)
+  {
+    renderer->ResizeBufferMemory(&transformsBuffer, transformCompact.GetAllocatedSize());
+
+    for (Ice::Entity e : Ice::SceneView<Ice::RenderComponent, Ice::Transform>())
+    {
+      transformCompact[e].bufferSegment.buffer = &transformsBuffer;
+      renderer->UpdateRenderComponent(e.GetComponent<Ice::RenderComponent>(),
+                                      transformCompact[e].bufferSegment);
+    }
+  }
+
   std::vector<Ice::Entity> camEntities;
   for (Ice::Entity e : Ice::SceneView<Ice::Transform, Ice::CameraComponent>())
   {
@@ -622,7 +662,7 @@ b8 Ice::UpdateTransforms()
       if (j < camEntities.size() && i == transformCompact.GetMappedIndex(camEntities[j].id))
       {
         m = transforms[i].GetMatrix().Inverse() *
-            camEntities[j].GetComponent<Ice::CameraComponent>()->projectionMatrix;
+          camEntities[j].GetComponent<Ice::CameraComponent>()->projectionMatrix;
         j++;
       }
       else

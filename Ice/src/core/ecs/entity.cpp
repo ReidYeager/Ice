@@ -33,7 +33,7 @@ Ice::Entity Ice::CreateEntity()
   //}
 
   // Create new entity
-  Ice::Entity e {activeEntities.size(), 0, 0, 0};
+  Ice::Entity e{ activeEntities.size(), 0, 0, 0 };
 
   u32 index = activeEntities.AddElement(e);
   return activeEntities[index];

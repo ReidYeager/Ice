@@ -3,9 +3,8 @@ Root :--: Ice/src
 
 \core\application.cpp
   Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  123 :--: '// TODO : ~!!~ Find a way to expand buffer memory -- Currently destroys buffer-type descriptor bindings'
-  Line  413 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  620 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+  Line  420 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  660 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
 \core\ecs\entity.cpp
   Line   44 :--: '// TODO : ? Entity::IsValid() can not be constexpr. Should only check against nullEntity?'
 \core\ecs\entity.h
@@ -13,11 +12,13 @@ Root :--: Ice/src
 \core\input.h
   Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
 \rendering\renderer.h
-  Line   20 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
+  Line   21 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
+  Line   49 :--: '// TODO : Separate vkDescriptorSet from object's renderer/camera component.'
 \rendering\renderer_defines.h
-  Line  209 :--: '// TODO : Rework the renderComponent to not chase pointers'
+  Line  215 :--: '// TODO : Rework the renderComponent to not chase pointers'
 \rendering\vulkan\vulkan_command.cpp
   Line  147 :--: '// TODO : Instanced rendering -- DrawIndexed can use a significant amount of time'
 \rendering\vulkan\vulkan_core.cpp
   Line  105 :--: '// NOTE : Queue present alone takes ~50% of execution time'
   Line  459 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'
+  Line  703 :--: '// TODO : Abstract descriptor bindings so they are easier to work with'

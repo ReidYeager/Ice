@@ -20,7 +20,7 @@ b8 Ice::RendererVulkan::CreateSurface()
 {
   Ice::Window const* window = Ice::platform.GetWindow();
 
-  VkWin32SurfaceCreateInfoKHR createInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
+  VkWin32SurfaceCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
   createInfo.hinstance = window->platformData.hinstance;
   createInfo.hwnd = window->platformData.hwnd;
   createInfo.flags = 0;
@@ -40,7 +40,8 @@ Ice::vec2U Ice::RendererVulkan::GetWindowExtents()
 }
 
 #else
-void Ice::RendererVulkan::GetRequiredPlatformExtensions(std::vector<const char*>& _extensions) {}
+void Ice::RendererVulkan::GetRequiredPlatformExtensions(std::vector<const char*>& _extensions)
+{}
 
 b8 Ice::RendererVulkan::CreateSurface()
 {

@@ -32,18 +32,18 @@ struct Entity
 
   constexpr bool operator ==(Ice::Entity& _other) const
   {
-    return id == _other.id &&
-           version == _other.version &&
-           owningScene == _other.owningScene &&
-           componentMask == _other.componentMask;
+    return id == _other.id
+      && version == _other.version
+      && owningScene == _other.owningScene
+      && componentMask == _other.componentMask;
   }
 
   constexpr bool operator !=(Ice::Entity& _other) const
   {
-    return id != _other.id ||
-           version != _other.version ||
-           owningScene != _other.owningScene ||
-           componentMask != _other.componentMask;
+    return id != _other.id
+      || version != _other.version
+      || owningScene != _other.owningScene
+      || componentMask != _other.componentMask;
   }
 
   template <typename T>
@@ -72,7 +72,7 @@ struct Entity
 
 };
 
-const Ice::Entity nullEntity = {Ice::nullId, Ice::nullIdShort, Ice::nullIdShort, 0};
+const Ice::Entity nullEntity = { Ice::nullId, Ice::nullIdShort, Ice::nullIdShort, 0 };
 
 Ice::Entity CreateEntity();
 

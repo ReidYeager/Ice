@@ -28,7 +28,7 @@ void Ice::RendererVulkan::TransitionImageLayout(Ice::Image* _image,
 {
   VkCommandBuffer command = BeginSingleTimeCommand(context.graphicsCommandPool);
 
-  VkImageMemoryBarrier memBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+  VkImageMemoryBarrier memBarrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
   memBarrier.oldLayout = _image->vulkan.layout;
   memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -70,7 +70,7 @@ void Ice::RendererVulkan::CopyBufferToImage(Ice::Buffer* _buffer, Ice::Image* _i
 {
   VkCommandBuffer command = BeginSingleTimeCommand(context.transientCommandPool);
 
-  VkBufferImageCopy copyRegion {};
+  VkBufferImageCopy copyRegion{};
   copyRegion.bufferOffset = 0;
   copyRegion.bufferRowLength = _image->extents.width;
   copyRegion.bufferImageHeight = _image->extents.height;
@@ -116,7 +116,7 @@ b8 Ice::RendererVulkan::CreateTexture(Ice::Image* _image, void* _data)
                                  1,
                                  Ice::Buffer_Memory_Transfer_Src));
 
-  Ice::BufferSegment segment {};
+  Ice::BufferSegment segment{};
   segment.elementSize = _image->extents.x * _image->extents.y * 4;
   segment.count = 1;
   segment.buffer = &copyBuffer;
@@ -147,19 +147,19 @@ b8 Ice::RendererVulkan::CreateImage(Ice::IvkImage* _image,
                                     VkImageUsageFlags _usage)
 {
   // Creation =====
-  VkImageCreateInfo createInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-  createInfo.flags         = 0;
-  createInfo.format        = _format;
-  createInfo.usage         = _usage;
-  createInfo.extent.width  = _extents.width;
+  VkImageCreateInfo createInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+  createInfo.flags = 0;
+  createInfo.format = _format;
+  createInfo.usage = _usage;
+  createInfo.extent.width = _extents.width;
   createInfo.extent.height = _extents.height;
-  createInfo.extent.depth  = 1;
-  createInfo.mipLevels     = 1;
-  createInfo.arrayLayers   = 1;
-  createInfo.imageType     = VK_IMAGE_TYPE_2D;
-  createInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-  createInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-  createInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+  createInfo.extent.depth = 1;
+  createInfo.mipLevels = 1;
+  createInfo.arrayLayers = 1;
+  createInfo.imageType = VK_IMAGE_TYPE_2D;
+  createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
   IVK_ASSERT(vkCreateImage(context.device, &createInfo, context.alloc, &_image->image),
              "Failed to create an image");
@@ -170,7 +170,7 @@ b8 Ice::RendererVulkan::CreateImage(Ice::IvkImage* _image,
   VkMemoryRequirements memoryReq;
   vkGetImageMemoryRequirements(context.device, _image->image, &memoryReq);
 
-  VkMemoryAllocateInfo memoryAlloc { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  VkMemoryAllocateInfo memoryAlloc{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
   memoryAlloc.allocationSize = memoryReq.size;
 
   // Search for an applicable memory type index
@@ -193,7 +193,7 @@ b8 Ice::RendererVulkan::CreateImageView(VkImageView* _view,
                                         VkFormat _format,
                                         VkImageAspectFlags _aspectMask)
 {
-  VkImageViewCreateInfo createInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+  VkImageViewCreateInfo createInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
   createInfo.flags = 0;
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
   createInfo.image = _image;
@@ -213,7 +213,7 @@ b8 Ice::RendererVulkan::CreateImageView(VkImageView* _view,
 
 b8 Ice::RendererVulkan::CreateImageSampler(Ice::Image* _image)
 {
-  VkSamplerCreateInfo createInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+  VkSamplerCreateInfo createInfo{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
   createInfo.magFilter = VK_FILTER_LINEAR;
   createInfo.minFilter = VK_FILTER_LINEAR;
   createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

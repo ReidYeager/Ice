@@ -9,7 +9,7 @@
 VkCommandBuffer Ice::RendererVulkan::BeginSingleTimeCommand(VkCommandPool _pool)
 {
   // Allocate command =====
-  VkCommandBufferAllocateInfo allocInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  VkCommandBufferAllocateInfo allocInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandPool = _pool;
   allocInfo.commandBufferCount = 1;
@@ -19,7 +19,7 @@ VkCommandBuffer Ice::RendererVulkan::BeginSingleTimeCommand(VkCommandPool _pool)
              "Failed to allocate sintle time command");
 
   // Begin command recording =====
-  VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   vkBeginCommandBuffer(command, &beginInfo);
 
@@ -35,7 +35,7 @@ b8 Ice::RendererVulkan::EndSingleTimeCommand(VkCommandBuffer& _command,
              "Failed to record single-time command buffer");
 
   // Execution =====
-  VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &_command;
 
@@ -53,7 +53,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
 {
   VkCommandBuffer& cmdBuffer = context.commandBuffers[_commandIndex];
 
-  VkCommandBufferBeginInfo beginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   beginInfo.flags = 0;
 
   const u32 clearCount = 6;
@@ -68,7 +68,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
   // ==========
   // Forward
   // ==========
-  VkRenderPassBeginInfo forwardBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  VkRenderPassBeginInfo forwardBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
   forwardBeginInfo.clearValueCount = 2;
   forwardBeginInfo.pClearValues = &clearValues[4];
   forwardBeginInfo.renderArea.extent = context.swapchainExtent;
