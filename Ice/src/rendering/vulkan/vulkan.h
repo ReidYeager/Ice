@@ -156,6 +156,7 @@ private:
   //=========================
 
   b8 CreateGlobalDescriptors();
+  void PushDataToGlobalDescriptors(void* _data, Ice::BufferSegment _segment = {});
 
   b8 CreateShaderModule(Ice::Shader* _shader);
   // Attempts to read the shader's descriptor file

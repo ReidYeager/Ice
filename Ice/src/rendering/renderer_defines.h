@@ -31,6 +31,19 @@ enum BufferMemoryUsageBits
 };
 typedef Ice::Flag BufferMemoryUsageFlags;
 
+struct Buffer;
+
+struct BufferSegment
+{
+  u64 elementSize; // Number of bytes affected in each covered element
+  u32 startIndex; // Index of the first covered element
+  u64 offset; // Offset into the first covered element
+  u32 count; // Number of covered elements
+
+  // The segment's parent buffer
+  Ice::Buffer* buffer;
+};
+
 struct Buffer
 {
   u64 elementSize = 0; // Bytes
@@ -43,17 +56,6 @@ struct Buffer
     void* apiData0;
     Ice::IvkBuffer vulkan;
   };
-};
-
-struct BufferSegment
-{
-  u64 elementSize; // Number of bytes affected in each covered element
-  u32 startIndex; // Index of the first covered element
-  u64 offset; // Offset into the first covered element
-  u32 count; // Number of covered elements
-
-  // The segment's parent buffer
-  Ice::Buffer* buffer;
 };
 
 //=========================
@@ -201,13 +203,21 @@ struct CameraSettings
 
 struct CameraComponent
 {
-  mat4 projectionMatrix;
+  Ice::mat4 projectionMatrix;
+  Ice::Buffer buffer;
 
   union
   {
     void* apiData0;
     Ice::IvkObjectData vulkan;
   };
+};
+
+struct CameraData
+{
+  Ice::mat4 viewProjectionMatrix;
+  Ice::vec4 position;
+  Ice::vec4 forward;
 };
 
 struct RenderComponent

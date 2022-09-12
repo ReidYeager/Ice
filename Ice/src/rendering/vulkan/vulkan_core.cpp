@@ -694,10 +694,17 @@ b8 Ice::RendererVulkan::UpdateRenderComponent(Ice::RenderComponent* const _compo
   return UpdateShaderBindings(&_component->vulkan.descriptorSet, _transformBufferSegment);
 }
 
-b8 Ice::RendererVulkan::UpdateCameraComponent(Ice::CameraComponent* const _component,
+b8 Ice::RendererVulkan::UpdateCameraComponent(Ice::CameraComponent* const _camera,
                                               Ice::BufferSegment const _transformBufferSegment)
 {
-  return UpdateShaderBindings(&_component->vulkan.descriptorSet, _transformBufferSegment);
+  Ice::BufferSegment segment;
+  segment.buffer = &_camera->buffer;
+  segment.elementSize = _camera->buffer.elementSize;
+  segment.count = 1;
+  segment.offset = 0;
+  segment.startIndex = 0;
+
+  return UpdateShaderBindings(&_camera->vulkan.descriptorSet, segment);
 }
 
 // TODO : Abstract descriptor bindings so they are easier to work with
@@ -745,19 +752,22 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
   glmMatrix[1][1] *= -1;
 
   _camera->projectionMatrix = Ice::mat4((f32*)glm::value_ptr(glmMatrix));
-  //_camera->projectionMatrix = _camera->projectionMatrix.Transpose();
+
+  ICE_ATTEMPT(CreateBufferMemory(&_camera->buffer,
+                                 sizeof(Ice::CameraData),
+                                 1,
+                                 Ice::Buffer_Memory_Shader_Read | Ice::Buffer_Memory_Transfer_Dst));
 
   // Create descriptor set =====
   ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));
 
-  UpdateShaderBindings(&_camera->vulkan.descriptorSet, _transformSegment);
-  //Ice::ShaderInputElement bufferInput;
-  //bufferInput.inputIndex = 0;
-  //bufferInput.type = Ice::Shader_Input_Buffer;
-  //bufferInput.bufferSegment = _transformSegment;
-  //std::vector<Ice::ShaderInputElement> inputs = { bufferInput };
-  //UpdateDescriptorSet(&_camera->vulkan.descriptorSet, inputs);
+  Ice::BufferSegment segment;
+  segment.buffer = &_camera->buffer;
+  segment.elementSize = _camera->buffer.elementSize;
+  segment.count = 1;
+  segment.offset = 0;
+  segment.startIndex = 0;
 
-  return true;
+  return UpdateShaderBindings(&_camera->vulkan.descriptorSet, segment);
 }
 

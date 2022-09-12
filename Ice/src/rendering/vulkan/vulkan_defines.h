@@ -82,9 +82,10 @@ struct Gpu
   u32 transientQueueIndex;
 };
 
+// Per-object data
 struct IvkObjectData
 {
-  VkDescriptorSet descriptorSet; // Per-object input data
+  VkDescriptorSet descriptorSet; // Shader input data
 };
 
 } // namespace Ice

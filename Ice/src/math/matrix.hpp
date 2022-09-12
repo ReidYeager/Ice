@@ -107,25 +107,24 @@ typedef union mat4
   //=========================
 
   // Reads array column-by-column
-  constexpr mat4 const& operator=(f32* in)
+  constexpr mat4 const& operator=(f32* _in)
   {
-    for (u32 col = 0; col < 4; col++)
-    {
-      for (u32 row = 0; row < 4; row++)
-      {
-        switch (col)
-        {
-        case 0:
-          col0[row] = in[(4 * col) + row];
-        case 1:
-          col1[row] = in[(4 * col) + row];
-        case 2:
-          col2[row] = in[(4 * col) + row];
-        case 3:
-          col3[row] = in[(4 * col) + row];
-        }
-      }
-    }
+    elements[0] = _in[0 ];
+    elements[1] = _in[1 ];
+    elements[2] = _in[2 ];
+    elements[3] = _in[3 ];
+    elements[4] = _in[4 ];
+    elements[5] = _in[5 ];
+    elements[6] = _in[6 ];
+    elements[7] = _in[7 ];
+    elements[8] = _in[8 ];
+    elements[9] = _in[9 ];
+    elements[1] = _in[10];
+    elements[1] = _in[11];
+    elements[1] = _in[12];
+    elements[1] = _in[13];
+    elements[1] = _in[14];
+    elements[1] = _in[15];
 
     return *this;
   }

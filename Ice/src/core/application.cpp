@@ -141,7 +141,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   }
 
   // Game =====
-  _settings.GameInit();
+  ICE_ATTEMPT(_settings.GameInit());
 
   UpdateTime();
   IceLogInfo("} Startup %2.3f s", Ice::time.timeSinceStart);
@@ -153,6 +153,8 @@ b8 IceApplicationUpdate()
 {
   UpdateTime();
 
+  Ice::mat4 globalDescriptorData;
+
   Ice::FrameInformation frameInfo{};
   frameInfo.cameras = &Ice::GetComponentArray<Ice::CameraComponent>();
   frameInfo.renderables = &Ice::GetComponentArray<Ice::RenderComponent>();
@@ -160,6 +162,9 @@ b8 IceApplicationUpdate()
   while (isRunning && Ice::platform.Update())
   {
     ICE_ATTEMPT(appSettings.GameUpdate(Ice::time.deltaTime));
+
+    globalDescriptorData[0] = Ice::time.timeSinceStart;
+    renderer->PushDataToGlobalDescriptors(&globalDescriptorData);
 
     ICE_ATTEMPT(Ice::UpdateTransforms());
 
@@ -201,6 +206,11 @@ b8 IceApplicationShutdown()
     renderer->DestroyShader(shaders[i]);
   }
   Ice::MemoryFree(shaders);
+
+  for (Ice::Entity& e : Ice::SceneView<Ice::CameraComponent>())
+  {
+    renderer->DestroyBufferMemory(&e.GetComponent<Ice::CameraComponent>()->buffer);
+  }
 
   renderer->DestroyBufferMemory(&transformsBuffer);
 
@@ -561,9 +571,10 @@ Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
 {
   Ice::Entity e = Ice::CreateEntity();
   Ice::CameraComponent* cc = e.AddComponent<Ice::CameraComponent>();
+  e.AddComponent<Ice::CameraData>();
   Ice::Transform* t = e.AddComponent<Ice::Transform>();
 
-  t->bufferSegment.buffer = &transformsBuffer;
+  t->bufferSegment.buffer = &cc->buffer;
   t->bufferSegment.count = 1;
   t->bufferSegment.elementSize = sizeof(mat4);
   t->bufferSegment.startIndex = e.id;
@@ -600,13 +611,6 @@ Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
     {
       transformCompact[e].bufferSegment.buffer = &transformsBuffer;
       renderer->UpdateRenderComponent(e.GetComponent<Ice::RenderComponent>(),
-                                      transformCompact[e].bufferSegment);
-    }
-
-    for (Ice::Entity e : Ice::SceneView<Ice::CameraComponent, Ice::Transform>())
-    {
-      transformCompact[e].bufferSegment.buffer = &transformsBuffer;
-      renderer->UpdateCameraComponent(e.GetComponent<Ice::CameraComponent>(),
                                       transformCompact[e].bufferSegment);
     }
   }
@@ -661,15 +665,31 @@ b8 Ice::UpdateTransforms()
     {
       if (j < camEntities.size() && i == transformCompact.GetMappedIndex(camEntities[j].id))
       {
-        m = transforms[i].GetMatrix().Inverse() *
-          camEntities[j].GetComponent<Ice::CameraComponent>()->projectionMatrix;
+        Ice::CameraData* cd = camEntities[j].GetComponent<Ice::CameraData>();
+        Ice::CameraComponent* cc = camEntities[j].GetComponent<Ice::CameraComponent>();
+
+        Ice::vec3 v = transforms[i].GetPosition();
+        cd->position = Ice::vec4(v.x, v.y, v.z, 1.0f);
+        v = transforms[i].ForwardVector();
+        cd->forward = Ice::vec4(v.x, v.y, v.z, 1.0f);
+
+        cd->viewProjectionMatrix = transforms[i].GetMatrix().Inverse() * cc->projectionMatrix;
+
+        Ice::BufferSegment segment {};
+        segment.buffer = &cc->buffer;
+        segment.elementSize = cc->buffer.elementSize;
+        segment.count = 1;
+        segment.offset = 0;
+
+        renderer->PushDataToBuffer(cd, segment);
+
         j++;
       }
       else
       {
         m = transforms[i].GetMatrix();
+        renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
       }
-      renderer->PushDataToBuffer(&m, transforms[i].bufferSegment);
     }
   }
 

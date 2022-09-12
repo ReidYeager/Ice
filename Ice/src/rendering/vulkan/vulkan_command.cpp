@@ -145,6 +145,7 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
                            VK_INDEX_TYPE_UINT32);
 
       // TODO : Instanced rendering -- DrawIndexed can use a significant amount of time
+      //  Time to render rises to 10ms with ~1000 spheres (482 verts / 960 tris, with a basic unlit shader)
       vkCmdDrawIndexed(cmdBuffer, rc.mesh->indexCount, 1, 0, 0, 0);
     }
   }

@@ -58,6 +58,8 @@ public:
   virtual b8 InitializeCamera(Ice::CameraComponent* _camera,
                               Ice::BufferSegment _transformSegment,
                               Ice::CameraSettings _settings) = 0;
+
+  virtual void PushDataToGlobalDescriptors(void* _data, Ice::BufferSegment _segment = {}) = 0;
 };
 
 } // namespace Ice

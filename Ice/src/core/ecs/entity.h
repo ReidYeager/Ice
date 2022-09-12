@@ -55,7 +55,7 @@ struct Entity
       componentMask |= (1llu << Ice::GetComponentId<T>());
       // Ice::Entities are technically duplicated.
       // One stored in activeEntities, the other managed by the game
-      // TODO : ~!!~ See if there is a way to separate entity data (backend) and functionality (frontend)
+      // TODO : See if there is a way to separate entity data (backend) and functionality (frontend)
       activeEntities[id].componentMask |= (1llu << Ice::GetComponentId<T>());
     }
 

@@ -327,7 +327,7 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
                                              &context.globalDescriptorSet));
 
     ICE_ATTEMPT(CreateBufferMemory(&context.globalDescriptorBuffer,
-                                   64,
+                                   64 + (2 * sizeof(Ice::vec4)),
                                    1,
                                    Ice::Buffer_Memory_Shader_Read));
 
@@ -364,6 +364,19 @@ b8 Ice::RendererVulkan::CreateGlobalDescriptors()
   ICE_ATTEMPT(CreateDescriptorLayout(&bindings, &context.objectDescriptorLayout));
 
   return true;
+}
+
+void Ice::RendererVulkan::PushDataToGlobalDescriptors(void* _data, Ice::BufferSegment _segment /*= {}*/)
+{
+  _segment.buffer = &context.globalDescriptorBuffer;
+
+  if (_segment.count == 0)
+  {
+    _segment.count = 1;
+    _segment.elementSize = context.globalDescriptorBuffer.elementSize;
+  }
+
+  PushDataToBuffer(_data, _segment);
 }
 
 b8 Ice::RendererVulkan::CreateDescriptorLayoutAndSet(Ice::Material* _material)
