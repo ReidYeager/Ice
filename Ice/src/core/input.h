@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-// TODO : Rewrite Input to be part of Ice namespace
+namespace Ice {
 
 #define NewKey(name, code) Ice_Key_##name = code
 enum IceKeyCodeFlagBits
@@ -120,7 +120,7 @@ public:
 
   // Updates the mouse state regarding the inputs
   void ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed);
-  void ProcessMouseMove(i32 _x, i32 _y);
+  void ProcessMouseMove(i32 _deltaX, i32 _deltaY);
   void ProcessMouseWheel(i32 _magnitude);
   b8 IsMouseButtonDown(IceMouseButtonFlag _button);
   b8 OnMouseButtonPressed(IceMouseButtonFlag _button);
@@ -133,5 +133,7 @@ public:
   void GetMouseDelta(i32* _x, i32* _y);
   void GetMouseDelta(f32* _x, f32* _y);
 } Input;
+
+} // namespace Ice
 
 #endif // !CORE_INPUT_H

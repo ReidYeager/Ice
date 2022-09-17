@@ -41,6 +41,5 @@ Ice::Entity Ice::CreateEntity()
 
 b8 Ice::Entity::IsValid()
 {
-  // TODO : ? Entity::IsValid() can not be constexpr. Should only check against nullEntity?
   return (*this != Ice::nullEntity) && (*this == Ice::activeEntities[id]);
 }

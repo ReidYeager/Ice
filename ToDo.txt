@@ -5,12 +5,10 @@ Root :--: Ice/src
   Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
   Line  430 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
   Line  664 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
-\core\ecs\entity.cpp
-  Line   44 :--: '// TODO : ? Entity::IsValid() can not be constexpr. Should only check against nullEntity?'
 \core\ecs\entity.h
   Line   58 :--: '// TODO : See if there is a way to separate entity data (backend) and functionality (frontend)'
-\core\input.h
-  Line    7 :--: '// TODO : Rewrite Input to be part of Ice namespace'
+\platform\platform_win32.cpp
+  Line  278 :--: '// TODO : Controller input'
 \rendering\renderer.h
   Line   21 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
   Line   49 :--: '// TODO : Separate vkDescriptorSet from object's renderer/camera component.'

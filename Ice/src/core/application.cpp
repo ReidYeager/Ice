@@ -93,7 +93,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     IceLogFatal("Failed to initialize the renderer");
     return false;
   }
-  Input.Initialize();
+  Ice::Input.Initialize();
 
   // Rendering =====
   if (_settings.rendererCore.api == Ice::RenderApiVulkan)
@@ -170,7 +170,7 @@ b8 IceApplicationUpdate()
 
     ICE_ATTEMPT(renderer->RenderFrame(&frameInfo));
 
-    Input.Update();
+    Ice::Input.Update();
     UpdateTime();
   }
 
@@ -217,7 +217,7 @@ b8 IceApplicationShutdown()
   renderer->Shutdown();
   delete(renderer);
 
-  Input.Shutdown();
+  Ice::Input.Shutdown();
   Ice::CloseWindow();
   Ice::platform.Shutdown();
 

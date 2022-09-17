@@ -180,6 +180,21 @@ b8 Ice::Platform::CreateNewWindow(Ice::WindowSettings _settings)
     return false;
   }
 
+#ifndef HID_USAGE_PAGE_GENERIC
+#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
+#endif
+#ifndef HID_USAGE_GENERIC_MOUSE
+#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
+#endif
+
+  RAWINPUTDEVICE Rid;
+  Rid.usUsagePage = HID_USAGE_PAGE_GENERIC;
+  Rid.usUsage = HID_USAGE_GENERIC_MOUSE;
+  Rid.dwFlags = RIDEV_INPUTSINK;
+  Rid.hwndTarget = window.platformData.hwnd;
+  ICE_ATTEMPT(RegisterRawInputDevices(&Rid, 1, sizeof(Rid)));
+  IceLogInfo("mouse registerd");
+
   // Show the window
   b32 shouldActivate = 1;
   i32 showWindowCommandFlags = shouldActivate ? SW_SHOW : SW_SHOWNOACTIVATE;
@@ -243,19 +258,50 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
   {
-    Input.ProcessKeyboardKey((IceKeyCodeFlag)wparam, true);
+    Ice::Input.ProcessKeyboardKey((Ice::IceKeyCodeFlag)wparam, true);
   } break;
   case WM_KEYUP:
   case WM_SYSKEYUP:
   {
-    Input.ProcessKeyboardKey((IceKeyCodeFlag)wparam, false);
+    Ice::Input.ProcessKeyboardKey((Ice::IceKeyCodeFlag)wparam, false);
   } break;
 
   // Mouse =====
-  case WM_MOUSEMOVE:
+  //case WM_MOUSEMOVE:
+  //{
+  //  IceLogInfo("Mouse move");
+  // // Gets the mouse's window coordinates
+  //  Ice::Input.ProcessMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+  //} break;
+  case WM_INPUT: // Raw input (Only using mouse movement here)
   {
-    Input.ProcessMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-  } break;
+    // TODO : Controller input
+    // https://learn.microsoft.com/en-us/windows/win32/inputdev/about-raw-input
+    //UINT dwSize = sizeof(RAWINPUT);
+    //static BYTE lpb[sizeof(RAWINPUT)];
+
+    // Test if the input is being generated while the window is focused
+    GET_RAWINPUT_CODE_WPARAM(wparam);
+    if (wparam != RIM_INPUT)
+      break;
+
+    UINT size = sizeof(RAWINPUT);
+    u8 data[sizeof(RAWINPUT)];
+    GetRawInputData((HRAWINPUT)lparam, RID_INPUT, data, &size, sizeof(RAWINPUTHEADER));
+
+    RAWINPUT* raw = (RAWINPUT*)data;
+
+    if (raw->header.dwType == RIM_TYPEMOUSE)
+    {
+      Ice::Input.ProcessMouseMove(raw->data.mouse.lLastX, raw->data.mouse.lLastY);
+      //IceLogInfo("%f, %f", raw->data.mouse.lLastX, raw->data.mouse.lLastY);
+      //raw->data.mouse.
+    }
+
+    //GetRawInputData((HRAWINPUT)lparam, RID_INPUT, )
+    break;
+  }
+  // Mouse buttons
   case WM_LBUTTONDOWN:
   case WM_LBUTTONUP:
   case WM_RBUTTONDOWN:
@@ -270,45 +316,45 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
                  message == WM_MBUTTONDOWN ||
                  message == WM_XBUTTONDOWN;
 
-    IceMouseButtonFlag button = Ice_Mouse_Max;
+    Ice::IceMouseButtonFlag button = Ice::Ice_Mouse_Max;
     switch (message)
     {
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
-      button = Ice_Mouse_Left; break;
+      button = Ice::Ice_Mouse_Left; break;
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
-      button = Ice_Mouse_Right; break;
+      button = Ice::Ice_Mouse_Right; break;
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
-      button = Ice_Mouse_Middle; break;
+      button = Ice::Ice_Mouse_Middle; break;
     case WM_XBUTTONDOWN:
     case WM_XBUTTONUP:
     {
       u32 xButton = GET_XBUTTON_WPARAM(wparam);
       switch (xButton)
       {
-        case 1: button = Ice_Mouse_Back; break;
-        case 2: button = Ice_Mouse_Forward; break;
-        default: button = Ice_Mouse_Extra; break;
+        case 1: button = Ice::Ice_Mouse_Back; break;
+        case 2: button = Ice::Ice_Mouse_Forward; break;
+        default: button = Ice::Ice_Mouse_Extra; break;
       }
     } break;
     default:
       break;
     }
 
-    if (button != Ice_Mouse_Max)
+    if (button != Ice::Ice_Mouse_Max)
     {
-      Input.ProcessMouseButton(button, pressed);
+      Ice::Input.ProcessMouseButton(button, pressed);
     }
   } break;
-  case WM_SIZE:
+  case WM_SIZE: // Resize window
   {
     u32 width = LOWORD(lparam);
     u32 height = HIWORD(lparam);
     Ice::platform.GetWindow()->settings.extents = { width, height };
   } break;
-  case WM_MOVE:
+  case WM_MOVE: // Move window
   {
     i32 x = LOWORD(lparam);
     i32 y = HIWORD(lparam);
