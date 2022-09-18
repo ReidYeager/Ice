@@ -4,6 +4,9 @@
 
 #include "defines.h"
 
+#include "math/linear.h"
+#include "tools/flag_array.h"
+
 namespace Ice {
 
 #define NewKey(name, code) Ice_Key_##name = code
@@ -84,12 +87,12 @@ extern class IceInput
 private:
   struct keyboardState
   {
-    b8 keys[256];
+    b8 keys[256]; // Not a FlagArray for faster reads & easier copy in input.Update
   };
   struct mouseState
   {
-    i32 x;
-    i32 y;
+    Ice::vec2I windowPosition;
+    Ice::vec2I rawDelta;
     i32 wheel; // Positive is up-scroll
     b8 buttons[Ice_Mouse_Max];
   };
@@ -121,17 +124,20 @@ public:
   // Updates the mouse state regarding the inputs
   void ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed);
   void ProcessMouseMove(i32 _deltaX, i32 _deltaY);
+  void ProcessMouseWindowPos(i32 _x, i32 _y);
   void ProcessMouseWheel(i32 _magnitude);
   b8 IsMouseButtonDown(IceMouseButtonFlag _button);
   b8 OnMouseButtonPressed(IceMouseButtonFlag _button);
   b8 OnMouseButtonReleased(IceMouseButtonFlag _button);
   b8 WasMouseButtonDown(IceMouseButtonFlag _button);
-  void GetMousePosition(i32* _x, i32* _y);
-  void GetMousePosition(f32* _x, f32* _y);
-  void GetMousePreviousPosition(i32* _x, i32* _y);
-  void GetMousePreviousPosition(f32* _x, f32* _y);
-  void GetMouseDelta(i32* _x, i32* _y);
-  void GetMouseDelta(f32* _x, f32* _y);
+  Ice::vec2I GetMousePosition();
+  //Ice::vec2 GetMousePosition();
+  Ice::vec2I GetMousePreviousPosition();
+  //Ice::vec2 GetMousePreviousPosition();
+  Ice::vec2I GetMouseDelta();
+  //Ice::vec2 GetMouseDelta();
+  Ice::vec2I GetMousePreviousDelta();
+  //Ice::vec2 GetMousePreviousDelta();
 } Input;
 
 } // namespace Ice

@@ -4,7 +4,7 @@
 #include "rendering/vulkan/vulkan.h"
 
 #include "platform/platform.h"
-#include "math/vector.hpp"
+#include "math/vector.h"
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>

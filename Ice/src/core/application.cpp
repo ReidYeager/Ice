@@ -151,6 +151,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
 b8 IceApplicationUpdate()
 {
+  Ice::Input.Update();
   UpdateTime();
 
   Ice::mat4 globalDescriptorData;

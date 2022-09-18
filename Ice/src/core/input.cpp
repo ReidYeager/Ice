@@ -20,6 +20,7 @@ void Ice::IceInput::Update()
 {
   Ice::MemoryCopy(&m_states.keyboardCurrent, &m_states.keyboardPrevious, sizeof(keyboardState));
   Ice::MemoryCopy(&m_states.mouseCurrent, &m_states.mousePrevious, sizeof(mouseState));
+  m_states.mouseCurrent.rawDelta = { 0, 0 }; // Raw input does not return 0,0
 }
 
 void Ice::IceInput::ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed)
@@ -64,8 +65,12 @@ void Ice::IceInput::ProcessMouseMove(i32 _deltaX, i32 _deltaY)
   //  m_states.mouseCurrent.x = _x;
   //  m_states.mouseCurrent.y = _y;
   //}
-  m_states.mouseCurrent.x += _deltaX;
-  m_states.mouseCurrent.y += _deltaY;
+  m_states.mouseCurrent.rawDelta = { _deltaX, _deltaY };
+}
+
+void Ice::IceInput::ProcessMouseWindowPos(i32 _x, i32 _y)
+{
+  m_states.mouseCurrent.windowPosition = { _x, _y };
 }
 
 void Ice::IceInput::ProcessMouseWheel(i32 _magnitude)
@@ -93,39 +98,23 @@ b8 Ice::IceInput::WasMouseButtonDown(IceMouseButtonFlag _button)
   return m_states.mousePrevious.buttons[_button];
 }
 
-void Ice::IceInput::GetMousePosition(i32* _x, i32* _y)
+Ice::vec2I Ice::IceInput::GetMousePosition()
 {
-  *_x = m_states.mouseCurrent.x;
-  *_y = m_states.mouseCurrent.y;
+  return m_states.mouseCurrent.windowPosition;
 }
 
-void Ice::IceInput::GetMousePosition(f32* _x, f32* _y)
+Ice::vec2I Ice::IceInput::GetMousePreviousPosition()
 {
-  *_x = (f32)m_states.mouseCurrent.x;
-  *_y = (f32)m_states.mouseCurrent.y;
+  return m_states.mousePrevious.windowPosition;
 }
 
-void Ice::IceInput::GetMousePreviousPosition(i32* _x, i32* _y)
+Ice::vec2I Ice::IceInput::GetMouseDelta()
 {
-  *_x = m_states.mousePrevious.x;
-  *_y = m_states.mousePrevious.y;
+  return m_states.mouseCurrent.rawDelta;
 }
 
-void Ice::IceInput::GetMousePreviousPosition(f32* _x, f32* _y)
+Ice::vec2I Ice::IceInput::GetMousePreviousDelta()
 {
-  *_x = (f32)m_states.mousePrevious.x;
-  *_y = (f32)m_states.mousePrevious.y;
-}
-
-void Ice::IceInput::GetMouseDelta(i32* _x, i32* _y)
-{
-  *_x = m_states.mouseCurrent.x - m_states.mousePrevious.x;
-  *_y = m_states.mouseCurrent.y - m_states.mousePrevious.y;
-}
-
-void Ice::IceInput::GetMouseDelta(f32* _x, f32* _y)
-{
-  *_x = (f32)(m_states.mouseCurrent.x - m_states.mousePrevious.x);
-  *_y = (f32)(m_states.mouseCurrent.y - m_states.mousePrevious.y);
+  return m_states.mousePrevious.rawDelta;
 }
 

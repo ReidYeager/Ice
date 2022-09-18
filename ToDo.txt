@@ -3,8 +3,8 @@ Root :--: Ice/src
 
 \core\application.cpp
   Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  430 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  664 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+  Line  431 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  665 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
 \core\ecs\entity.h
   Line   58 :--: '// TODO : See if there is a way to separate entity data (backend) and functionality (frontend)'
 \platform\platform_win32.cpp

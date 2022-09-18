@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "math/vector.hpp"
+#include "math/vector.h"
 
 #include <vulkan/vulkan.h>
 

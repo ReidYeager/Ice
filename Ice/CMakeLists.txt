@@ -24,7 +24,7 @@ add_library (Ice STATIC
   "src/math/matrix.hpp"
   "src/math/quaternion.hpp"
   "src/math/transform.h"
-  "src/math/vector.hpp"
+  "src/math/vector.h"
 
   # ==========
   # Tools
@@ -78,7 +78,7 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
- "src/tools/flag_array.h" "src/core/ecs/ecs_defines.h")
+ "src/tools/flag_array.h" "src/core/ecs/ecs_defines.h"  "src/math/vector.cpp")
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)
 

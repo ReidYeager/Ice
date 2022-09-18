@@ -9,6 +9,18 @@
 
 namespace Ice {
 
+struct vec2;
+struct vec3;
+struct vec4;
+
+struct vec2I;
+struct vec3I;
+struct vec4I;
+
+struct vec2U;
+struct vec3U;
+struct vec4U;
+
 //=========================
 //=========================
 // F32
@@ -65,6 +77,15 @@ typedef struct vec2
   {
     return x == other.x && y == other.y;
   }
+
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -251,6 +272,15 @@ typedef struct vec3
   {
     return x == other.x && y == other.y && z == other.z;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -448,6 +478,15 @@ typedef struct vec4
   {
     return x == other.x && y == other.y && z == other.z && w == other.w;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -649,6 +688,15 @@ typedef struct vec2I
     return x == other.x && y == other.y;
   }
 
+  operator Ice::vec2() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
+
   //=========================
   // Mathematic Operators
   //=========================
@@ -834,6 +882,15 @@ typedef struct vec3I
   {
     return x == other.x && y == other.y && z == other.z;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -1031,6 +1088,15 @@ typedef struct vec4I
   {
     return x == other.x && y == other.y && z == other.z && w == other.w;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -1232,6 +1298,15 @@ typedef struct vec2U
     return x == other.x && y == other.y;
   }
 
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
+
   //=========================
   // Mathematic Operators
   //=========================
@@ -1417,6 +1492,15 @@ typedef struct vec3U
   {
     return x == other.x && y == other.y && z == other.z;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
+  operator Ice::vec4U() const;
 
   //=========================
   // Mathematic Operators
@@ -1614,6 +1698,15 @@ typedef struct vec4U
   {
     return x == other.x && y == other.y && z == other.z && w == other.w;
   }
+
+  operator Ice::vec2() const;
+  operator Ice::vec2I() const;
+  operator Ice::vec2U() const;
+  operator Ice::vec3() const;
+  operator Ice::vec3I() const;
+  operator Ice::vec3U() const;
+  operator Ice::vec4() const;
+  operator Ice::vec4I() const;
 
   //=========================
   // Mathematic Operators

@@ -36,7 +36,8 @@ void Ice::MemoryCopy(void* _source, void* _destination, u64 _size)
 
 void Ice::MemoryFree(void* _data)
 {
-  free(_data);
+  if (_data != nullptr)
+    free(_data);
 }
 
 void* Ice::MemoryReallocate(void* _data, u64 _newSize)
@@ -267,18 +268,15 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   } break;
 
   // Mouse =====
-  //case WM_MOUSEMOVE:
-  //{
-  //  IceLogInfo("Mouse move");
-  // // Gets the mouse's window coordinates
-  //  Ice::Input.ProcessMouseMove(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-  //} break;
+  case WM_MOUSEMOVE:
+  {
+    // Gets the mouse's window coordinates
+    Ice::Input.ProcessMouseWindowPos(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+  } break;
   case WM_INPUT: // Raw input (Only using mouse movement here)
   {
     // TODO : Controller input
     // https://learn.microsoft.com/en-us/windows/win32/inputdev/about-raw-input
-    //UINT dwSize = sizeof(RAWINPUT);
-    //static BYTE lpb[sizeof(RAWINPUT)];
 
     // Test if the input is being generated while the window is focused
     GET_RAWINPUT_CODE_WPARAM(wparam);

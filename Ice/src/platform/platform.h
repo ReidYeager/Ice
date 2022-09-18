@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "platform/platform_defines.h"
 
-#include "math/vector.hpp"
+#include "math/vector.h"
 
 #include <vector>
 

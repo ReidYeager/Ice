@@ -35,6 +35,11 @@ public:
 
   ~FlagArray()
   {
+    Shutdown();
+  }
+
+  void Shutdown()
+  {
     flagCount = 0;
     byteCount = 0;
     Ice::MemoryFree(data);

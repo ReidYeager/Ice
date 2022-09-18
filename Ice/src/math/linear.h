@@ -2,7 +2,7 @@
 #ifndef ICE_MATH_LINEAR_H_
 #define ICE_MATH_LINEAR_H_
 
-#include "math/vector.hpp"
+#include "math/vector.h"
 #include "math/quaternion.hpp"
 #include "math/matrix.hpp"
 
