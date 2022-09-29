@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 #include "tools/flag_array.h"
 
 #include <bitset>
@@ -229,6 +229,17 @@ public:
   }
 
 };
+
+//template <typename T>
+//struct CompactPointer
+//{
+//  u32 index;
+//
+//  T* operator .()
+//  {
+//    return 
+//  }
+//};
 
 } // namespace Ice
 

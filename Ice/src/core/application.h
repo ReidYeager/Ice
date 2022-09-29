@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "core/application_defines.h"
 
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 #include "rendering/renderer.h"
 #include "core/ecs/ecs.h"
 

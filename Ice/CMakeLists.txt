@@ -53,11 +53,11 @@ add_library (Ice STATIC
   # ==========
   # Platform
   # ==========
-  "src/platform/platform_defines.h"
-  "src/platform/platform.h"
-  "src/platform/platform_win32.cpp"
-  "src/platform/memory_pool.h"
-  "src/platform/compact_array.h"
+  "src/core/platform/platform_defines.h"
+  "src/core/platform/platform.h"
+  "src/core/platform/platform_win32.cpp"
+  "src/core/platform/memory_pool.h"
+  "src/core/platform/compact_array.h"
 
   # ==========
   # Rendering

@@ -5,10 +5,8 @@ Root :--: Ice/src
   Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
   Line  431 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
   Line  665 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
-\core\ecs\entity.h
-  Line   58 :--: '// TODO : See if there is a way to separate entity data (backend) and functionality (frontend)'
-\platform\platform_win32.cpp
-  Line  278 :--: '// TODO : Controller input'
+\core\platform\platform_win32.cpp
+  Line  277 :--: '// TODO : Controller input'
 \rendering\renderer.h
   Line   21 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
   Line   49 :--: '// TODO : Separate vkDescriptorSet from object's renderer/camera component.'

@@ -5,7 +5,7 @@
 
 #include "core/input.h"
 #include "core/ecs/ecs.h"
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 #include "rendering/vulkan/vulkan.h"
 #include "math/linear.h"
 #include "math/transform.h"
@@ -93,7 +93,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     IceLogFatal("Failed to initialize the renderer");
     return false;
   }
-  Ice::Input.Initialize();
+  Ice::input.Initialize();
 
   // Rendering =====
   if (_settings.rendererCore.api == Ice::RenderApiVulkan)
@@ -151,7 +151,7 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
 b8 IceApplicationUpdate()
 {
-  Ice::Input.Update();
+  Ice::input.Update();
   UpdateTime();
 
   Ice::mat4 globalDescriptorData;
@@ -171,7 +171,7 @@ b8 IceApplicationUpdate()
 
     ICE_ATTEMPT(renderer->RenderFrame(&frameInfo));
 
-    Ice::Input.Update();
+    Ice::input.Update();
     UpdateTime();
   }
 
@@ -218,7 +218,7 @@ b8 IceApplicationShutdown()
   renderer->Shutdown();
   delete(renderer);
 
-  Ice::Input.Shutdown();
+  Ice::input.Shutdown();
   Ice::CloseWindow();
   Ice::platform.Shutdown();
 

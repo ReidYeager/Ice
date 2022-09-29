@@ -3,7 +3,7 @@
 #define ICE_CORE_ECS_ECS_H_
 
 #include "core/ecs/entity.h"
-#include "platform/compact_array.h"
+#include "core/platform/compact_array.h"
 
 #include <vector>
 

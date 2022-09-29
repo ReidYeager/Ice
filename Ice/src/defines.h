@@ -38,6 +38,10 @@ typedef unsigned int       b32;
 
 namespace Ice {
 
+const u16 null16 = 0xffff;
+const u32 null32 = 0xffffffff;
+const u64 null64 = 0xffffffffffffffff;
+
 //=========================
 // Time
 //=========================

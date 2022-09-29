@@ -1,7 +1,7 @@
 
 #include "defines.h"
 
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 
 void Ice::ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
 {

@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "math/matrix.hpp"
-#include "platform/platform_defines.h"
+#include "core/platform/platform_defines.h"
 #include "rendering/renderer_defines.h"
 
 namespace Ice {

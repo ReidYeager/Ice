@@ -5,23 +5,21 @@
 #include "defines.h"
 
 #include "core/ecs/ecs_defines.h"
-#include "platform/compact_array.h"
+#include "core/platform/compact_array.h"
 #include "tools/flag_array.h"
+//#include "math/transform.h"
 
 #include <vector>
 
 namespace Ice {
 
 typedef u64 EntityComponentMask;
-const u16 nullIdShort = 0xffff;
-const u32 nullId = 0xffffffff;
-const u64 nullIdLong = 0xffffffffffffffff;
 
 struct Entity
 {
-  u32 id = Ice::nullId;
-  u16 owningScene = Ice::nullIdShort;
-  u16 version = Ice::nullIdShort;
+  u32 id = Ice::null32;
+  u16 owningScene = Ice::null16;
+  u16 version = Ice::null16;
 
   EntityComponentMask componentMask = 0;
 
@@ -55,7 +53,6 @@ struct Entity
       componentMask |= (1llu << Ice::GetComponentId<T>());
       // Ice::Entities are technically duplicated.
       // One stored in activeEntities, the other managed by the game
-      // TODO : See if there is a way to separate entity data (backend) and functionality (frontend)
       activeEntities[id].componentMask |= (1llu << Ice::GetComponentId<T>());
     }
 
@@ -72,9 +69,10 @@ struct Entity
 
 };
 
-const Ice::Entity nullEntity = { Ice::nullId, Ice::nullIdShort, Ice::nullIdShort, 0 };
+const Ice::Entity nullEntity = { Ice::null32, Ice::null16, Ice::null16, 0 };
 
 Ice::Entity CreateEntity();
+Ice::Entity GetEntity(u32 _id);
 
 } // namespace Ice
 

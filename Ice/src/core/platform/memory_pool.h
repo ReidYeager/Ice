@@ -4,7 +4,7 @@
 
 #include "defines.h"
 
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 
 namespace Ice {
 

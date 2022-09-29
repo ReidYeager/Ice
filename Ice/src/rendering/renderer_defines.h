@@ -7,7 +7,7 @@
 
 #include "core/ecs/ecs.h"
 #include "math/matrix.hpp"
-#include "platform/compact_array.h"
+#include "core/platform/compact_array.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -81,7 +81,7 @@ struct Image
 enum ShaderInputTypes
 {
   si(Buffer),
-  si(Image),
+  si(Image2D),
 
   Shader_Input_Count,
 };
@@ -90,7 +90,7 @@ enum ShaderInputTypes
 #define si(name) #name
 const char* const ShaderInputTypeStrings[Shader_Input_Count] = {
   si(Buffer),
-  si(Image)
+  si(Image2D)
 };
 #undef si
 

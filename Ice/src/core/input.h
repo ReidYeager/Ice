@@ -9,7 +9,7 @@
 
 namespace Ice {
 
-#define NewKey(name, code) Ice_Key_##name = code
+#define NewKey(name, code) Key_##name = code
 enum IceKeyCodeFlagBits
 {
   // Top row numbers
@@ -66,23 +66,23 @@ enum IceKeyCodeFlagBits
 
   NewKey(Escape, 0x1B)
 };
-typedef Ice::Flag IceKeyCodeFlag;
+typedef Ice::Flag KeyCodeFlag;
 
 enum IceMouseButtonFlagBits
 {
-  Ice_Mouse_Left,
-  Ice_Mouse_Right,
-  Ice_Mouse_Middle,
-  Ice_Mouse_Forward,
-  Ice_Mouse_Back,
-  Ice_Mouse_Extra,
-  Ice_Mouse_Max
+  Mouse_Left,
+  Mouse_Right,
+  Mouse_Middle,
+  Mouse_Forward,
+  Mouse_Back,
+  Mouse_Extra,
+  Mouse_Max
 };
-typedef Ice::Flag IceMouseButtonFlag;
+typedef Ice::Flag MouseButtonFlag;
 #undef NewButton
 
 // Handles signals from the platform's physical input events
-extern class IceInput
+extern class Input
 {
 private:
   struct keyboardState
@@ -94,7 +94,7 @@ private:
     Ice::vec2I windowPosition;
     Ice::vec2I rawDelta;
     i32 wheel; // Positive is up-scroll
-    b8 buttons[Ice_Mouse_Max];
+    b8 buttons[Mouse_Max];
   };
 
   struct InputStates
@@ -114,22 +114,22 @@ public:
   void Update();
 
   // Updates the keyboard state regarding the input keycode
-  void ProcessKeyboardKey(IceKeyCodeFlag _key, b8 _pressed);
-  b8 IsKeyDown(IceKeyCodeFlag _key);
-  b8 WasKeyDown(IceKeyCodeFlag _key);
-  b8 OnKeyPressed(IceKeyCodeFlag _key);
-  b8 OnKeyReleased(IceKeyCodeFlag _key);
-  b8 OnKeyHold(IceKeyCodeFlag _key);
+  void ProcessKeyboardKey(KeyCodeFlag _key, b8 _pressed);
+  b8 IsKeyDown(KeyCodeFlag _key);
+  b8 WasKeyDown(KeyCodeFlag _key);
+  b8 OnKeyPressed(KeyCodeFlag _key);
+  b8 OnKeyReleased(KeyCodeFlag _key);
+  b8 OnKeyHold(KeyCodeFlag _key);
 
   // Updates the mouse state regarding the inputs
-  void ProcessMouseButton(IceMouseButtonFlag _button, b8 _pressed);
+  void ProcessMouseButton(MouseButtonFlag _button, b8 _pressed);
   void ProcessMouseMove(i32 _deltaX, i32 _deltaY);
   void ProcessMouseWindowPos(i32 _x, i32 _y);
   void ProcessMouseWheel(i32 _magnitude);
-  b8 IsMouseButtonDown(IceMouseButtonFlag _button);
-  b8 OnMouseButtonPressed(IceMouseButtonFlag _button);
-  b8 OnMouseButtonReleased(IceMouseButtonFlag _button);
-  b8 WasMouseButtonDown(IceMouseButtonFlag _button);
+  b8 IsMouseButtonDown(MouseButtonFlag _button);
+  b8 OnMouseButtonPressed(MouseButtonFlag _button);
+  b8 OnMouseButtonReleased(MouseButtonFlag _button);
+  b8 WasMouseButtonDown(MouseButtonFlag _button);
   Ice::vec2I GetMousePosition();
   //Ice::vec2 GetMousePosition();
   Ice::vec2I GetMousePreviousPosition();
@@ -138,7 +138,7 @@ public:
   //Ice::vec2 GetMouseDelta();
   Ice::vec2I GetMousePreviousDelta();
   //Ice::vec2 GetMousePreviousDelta();
-} Input;
+} input;
 
 } // namespace Ice
 

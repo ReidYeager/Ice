@@ -505,16 +505,32 @@ public:
 
   // Compares the token string with the array of strings
   // Returns [0, _count) as the index of the matching string, _count if no match was found
-  unsigned int GetTokenSetIndex(const Ice::LexerToken& _token, const char* const* _stringArray, unsigned int _count)
+  unsigned int GetTokenSetIndex(const Ice::LexerToken& _token,
+                                const char* const* _stringArray,
+                                unsigned int _count,
+                                b8 _matchCase = true)
   {
-    unsigned int index;
-    for (index = 0; index < _count; index++)
+    unsigned int elementIndex, charIndex;
+    char tokenChar, testChar;
+    b8 charTestResult;
+
+    for (elementIndex = 0; elementIndex < _count; elementIndex++)
     {
-      if (_token.string.compare(_stringArray[index]) == 0)
-        return index;
+      charIndex = 0;
+      do
+      {
+        tokenChar = _token.string[charIndex];
+        testChar = _stringArray[elementIndex][charIndex];
+        charTestResult = (tokenChar | (!_matchCase * 0x20)) == (testChar | (!_matchCase * 0x20));
+        charIndex++;
+      } while (charTestResult && tokenChar != '\0' && testChar != '\0');
+
+      // If both are '\0'
+      if (tokenChar == testChar)
+        return elementIndex;
     }
 
-    return index;
+    return elementIndex;
   }
 
   // Peek at the next token's string in the stream

@@ -2,7 +2,7 @@
 #include "defines.h"
 
 #include "rendering/vulkan/vulkan.h"
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 #include "tools/lexer.h"
 
 #include <string>
@@ -96,10 +96,11 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
         // Check if the token is a valid descriptor
         u32 typeIndex = lexer.GetTokenSetIndex(token,
                                                Ice::ShaderInputTypeStrings,
-                                               (u32)Ice::Shader_Input_Count);
+                                               (u32)Ice::Shader_Input_Count,
+                                               false);
         if (typeIndex == (u32)Ice::Shader_Input_Count)
         {
-          IceLogWarning("Ivalid descriptor '%s'\n> '%s'", token.string.c_str(), directory.c_str());
+          IceLogWarning("Invalid descriptor '%s'\n> '%s'", token.string.c_str(), directory.c_str());
           continue;
         }
         newInput.type = (ShaderInputTypes)typeIndex;
@@ -286,7 +287,7 @@ b8 Ice::RendererVulkan::AssembleMaterialDescriptorBindings(Ice::Material* _mater
                                               _material->buffer.elementSize);
         }
       } break;
-      case Ice::Shader_Input_Image:
+      case Ice::Shader_Input_Image2D:
       {
         newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptor.image = &defaultTexture;
@@ -469,7 +470,7 @@ void Ice::RendererVulkan::UpdateDescriptorSet(VkDescriptorSet* _set,
       newWrite.pBufferInfo = &buffers[buffers.size() - 1];
       newWrite.pImageInfo = nullptr;
     } break;
-    case Shader_Input_Image:
+    case Shader_Input_Image2D:
     {
       newImage.imageLayout = descriptor.image->vulkan.layout;
       newImage.imageView = descriptor.image->vulkan.view;
@@ -495,7 +496,7 @@ b8 Ice::RendererVulkan::SetMaterialInput(Ice::Material* _material,
 {
   Ice::ShaderInputElement imageInput;
   imageInput.inputIndex = _bindIndex;
-  imageInput.type = Ice::Shader_Input_Image;
+  imageInput.type = Ice::Shader_Input_Image2D;
   imageInput.image = _image;
   std::vector<Ice::ShaderInputElement> inputs = { imageInput };
 

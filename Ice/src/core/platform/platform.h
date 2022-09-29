@@ -3,7 +3,7 @@
 #define ICE_PLATFORM_PLATFORM_H_
 
 #include "defines.h"
-#include "platform/platform_defines.h"
+#include "core/platform/platform_defines.h"
 
 #include "math/vector.h"
 

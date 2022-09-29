@@ -39,6 +39,11 @@ Ice::Entity Ice::CreateEntity()
   return activeEntities[index];
 }
 
+Ice::Entity Ice::GetEntity(u32 _id)
+{
+  return activeEntities[_id];
+}
+
 b8 Ice::Entity::IsValid()
 {
   return (*this != Ice::nullEntity) && (*this == Ice::activeEntities[id]);

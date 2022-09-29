@@ -3,7 +3,7 @@
 
 #include "rendering/vulkan/vulkan.h"
 
-#include "platform/platform.h"
+#include "core/platform/platform.h"
 #include "math/vector.h"
 
 #include <vulkan/vulkan.h>

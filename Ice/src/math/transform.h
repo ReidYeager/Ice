@@ -14,9 +14,9 @@ inline quaternion EulerToQuaternion(Ice::vec3 _euler)
   _euler *= 0.008726646f; // (Degrees to Radians)/2
 
   // Rotate round each local-space axis
-  Ice::quaternion q1 = { 0.0f         , (f32)sin(_euler.y), 0.0f         , (f32)cos(_euler.y) }; // Yaw
-  Ice::quaternion q2 = { (f32)sin(_euler.x), 0.0f         , 0.0f         , (f32)cos(_euler.x) }; // Pitch
-  Ice::quaternion q3 = { 0.0f         , 0.0f         , (f32)sin(_euler.z), (f32)cos(_euler.z) }; // Roll
+  Ice::quaternion q1 = { 0.0f, (f32)sin(_euler.y), 0.0f, (f32)cos(_euler.y) }; // Yaw
+  Ice::quaternion q2 = { (f32)sin(_euler.x), 0.0f, 0.0f, (f32)cos(_euler.x) }; // Pitch
+  Ice::quaternion q3 = { 0.0f, 0.0f, (f32)sin(_euler.z), (f32)cos(_euler.z) }; // Roll
 
   // Combine into a quaternion rotated by q1, then q2, then q3
   return (q1 * q2 * q3).Normal();
@@ -213,7 +213,7 @@ public:
 
   constexpr b8 HasParent()
   {
-    return parent != Ice::nullId;
+    return parent != Ice::null32;
   }
 
   Transform const* GetParentPointer()
@@ -221,7 +221,7 @@ public:
     return Ice::GetComponentArray<Ice::Transform>().Get(parent);
   }
 
-  constexpr Ice::Entity const GetParent()
+  constexpr u32 const GetParent()
   {
     return parent;
   }
