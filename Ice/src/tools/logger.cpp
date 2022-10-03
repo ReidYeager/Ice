@@ -1,15 +1,16 @@
 
 #include "defines.h"
 
+#include "tools/logger.h"
 #include "core/platform/platform.h"
 
-void Ice::ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
+// Not in logger.h to use engine platform functions
+//   instead of having some platform specific functionality separate from the rest
+void Ice::LoggerAssembleMessage(Ice::LogTypes _type, const char* _message, ...)
 {
   // Limit 2048 characters per message
   const u16 length = 0x800;
   char* outMessage = (char*)Ice::MemoryAllocZero(length);
-  //char* outMessage = new char[length];
-  //Ice::MemoryZero(outMessage, length);
 
   va_list args;
   va_start(args, _message);
@@ -19,5 +20,4 @@ void Ice::ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...)
   Ice::PrintToConsole(outMessage, _type);
 
   Ice::MemoryFree(outMessage);
-  //delete[](outMessage);
 }

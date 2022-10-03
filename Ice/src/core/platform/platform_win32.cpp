@@ -180,12 +180,12 @@ b8 Ice::Platform::CreateNewWindow(Ice::WindowSettings _settings)
     return false;
   }
 
-#ifndef HID_USAGE_PAGE_GENERIC
-#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
-#endif
-#ifndef HID_USAGE_GENERIC_MOUSE
-#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
-#endif
+  #ifndef HID_USAGE_PAGE_GENERIC
+  #define HID_USAGE_PAGE_GENERIC ((USHORT) 0x01)
+  #endif
+  #ifndef HID_USAGE_GENERIC_MOUSE
+  #define HID_USAGE_GENERIC_MOUSE ((USHORT) 0x02)
+  #endif
 
   RAWINPUTDEVICE Rid;
   Rid.usUsagePage = HID_USAGE_PAGE_GENERIC;
@@ -267,9 +267,8 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
   } break;
 
   // Mouse =====
-  case WM_MOUSEMOVE:
+  case WM_MOUSEMOVE: // Gets the mouse's window coordinates
   {
-    // Gets the mouse's window coordinates
     Ice::input.ProcessMouseWindowPos(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
   } break;
   case WM_INPUT: // Raw input (Only using mouse movement here)
@@ -291,60 +290,31 @@ LRESULT CALLBACK ProcessInputMessage(HWND hwnd, u32 message, WPARAM wparam, LPAR
     if (raw->header.dwType == RIM_TYPEMOUSE)
     {
       Ice::input.ProcessMouseMove(raw->data.mouse.lLastX, raw->data.mouse.lLastY);
-      //IceLogInfo("%f, %f", raw->data.mouse.lLastX, raw->data.mouse.lLastY);
-      //raw->data.mouse.
-    }
 
-    //GetRawInputData((HRAWINPUT)lparam, RID_INPUT, )
+      // TODO : Detect if cursor is off-window when m1/m2/m3 is pressed and ignore
+      //  Otherwise it locks the input value of that button to 1
+      u32 buttons = (u32)raw->data.mouse.ulButtons;
+      u32 index = 0;
+      while (buttons != 0)
+      {
+        if (buttons & 3)
+        {
+          switch (index)
+          {
+          case 0: Ice::input.ProcessMouseButton(Ice::Mouse_Left   , buttons & 1); break;
+          case 1: Ice::input.ProcessMouseButton(Ice::Mouse_Right  , buttons & 1); break;
+          case 2: Ice::input.ProcessMouseButton(Ice::Mouse_Middle , buttons & 1); break;
+          case 3: Ice::input.ProcessMouseButton(Ice::Mouse_Back   , buttons & 1); break;
+          case 4: Ice::input.ProcessMouseButton(Ice::Mouse_Forward, buttons & 1); break;
+          default: break;
+          }
+        }
+        buttons = buttons >> 2;
+        index++;
+      }
+    }
     break;
   }
-  // Mouse buttons
-  case WM_LBUTTONDOWN:
-  case WM_LBUTTONUP:
-  case WM_RBUTTONDOWN:
-  case WM_RBUTTONUP:
-  case WM_MBUTTONDOWN:
-  case WM_MBUTTONUP:
-  case WM_XBUTTONDOWN:
-  case WM_XBUTTONUP:
-  {
-    b8 pressed = message == WM_LBUTTONDOWN ||
-                 message == WM_RBUTTONDOWN ||
-                 message == WM_MBUTTONDOWN ||
-                 message == WM_XBUTTONDOWN;
-
-    Ice::MouseButtonFlag button = Ice::Mouse_Max;
-    switch (message)
-    {
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-      button = Ice::Mouse_Left; break;
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-      button = Ice::Mouse_Right; break;
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-      button = Ice::Mouse_Middle; break;
-    case WM_XBUTTONDOWN:
-    case WM_XBUTTONUP:
-    {
-      u32 xButton = GET_XBUTTON_WPARAM(wparam);
-      switch (xButton)
-      {
-        case 1: button = Ice::Mouse_Back; break;
-        case 2: button = Ice::Mouse_Forward; break;
-        default: button = Ice::Mouse_Extra; break;
-      }
-    } break;
-    default:
-      break;
-    }
-
-    if (button != Ice::Mouse_Max)
-    {
-      Ice::input.ProcessMouseButton(button, pressed);
-    }
-  } break;
   case WM_SIZE: // Resize window
   {
     u32 width = LOWORD(lparam);

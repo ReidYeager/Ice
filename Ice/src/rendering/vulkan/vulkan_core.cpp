@@ -3,7 +3,7 @@
 
 #include "rendering/vulkan/vulkan.h"
 #include "rendering/vulkan/vulkan_defines.h"
-#include "core/application.h"
+#include "core/application.h" // RecreateAllMaterials, ...
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -60,10 +60,10 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
-    //Resize();
-    //return true;
-    IceLogFatal("Need to resize");
-    return false;
+    ICE_ATTEMPT(Resize());
+    return true;
+    //IceLogFatal("Need to resize");
+    //return false;
   }
   else if (result != VK_SUCCESS)
   {
@@ -107,9 +107,9 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
-    //Resize();
-    IceLogFatal("Need to resize");
-    return false;
+    ICE_ATTEMPT(Resize());
+    //IceLogFatal("Need to resize");
+    //return false;
   }
   else if (result != VK_SUCCESS)
   {
@@ -186,6 +186,60 @@ b8 Ice::RendererVulkan::Shutdown()
   vkDestroyDevice(context.device, context.alloc);
   vkDestroySurfaceKHR(context.instance, context.surface, context.alloc);
   vkDestroyInstance(context.instance, context.alloc);
+
+  return true;
+}
+
+b8 Ice::RendererVulkan::Resize()
+{
+  vkDeviceWaitIdle(context.device);
+
+  IceLogDebug(">>> Resizing");
+
+  // Destroy frame components =====
+  //Renderpasses
+  for (const auto& f : context.forward.framebuffers)
+  {
+    vkDestroyFramebuffer(context.device, f, context.alloc);
+  }
+  context.forward.framebuffers.clear();
+  vkDestroyRenderPass(context.device, context.forward.renderpass, context.alloc);
+
+  // Swapchain
+  for (IvkImage& i : context.depthImages)
+  {
+    DestroyImage(&i);
+  }
+  for (VkImageView& v : context.swapchainImageViews)
+  {
+    vkDestroyImageView(context.device, v, context.alloc);
+  }
+  context.swapchainImageViews.clear();
+  context.swapchainImages.clear();
+  vkDestroySwapchainKHR(context.device, context.swapchain, context.alloc);
+
+  vkDestroySurfaceKHR(context.instance, context.surface, context.alloc);
+
+  // Re-create frame components =====
+  ICE_ATTEMPT(CreateSurface());
+  ICE_ATTEMPT(CreateSwapchain());
+  ICE_ATTEMPT(CreateDepthImages());
+
+  ICE_ATTEMPT(CreateForwardComponents());
+
+  // Update materials =====
+  // Need to update the viewports in all materials
+  ICE_ATTEMPT(RecreateAllMaterials());
+
+  for (Ice::Entity& e : Ice::SceneView<Ice::CameraComponent>())
+  {
+    Ice::CameraComponent* cc = e.GetComponent<Ice::CameraComponent>();
+
+    cc->settings.ratio = (f32)context.swapchainExtent.width / (f32)context.swapchainExtent.height;
+    UpdateCameraProjection(cc, cc->settings);
+  }
+
+  IceLogDebug(">>> Complete");
 
   return true;
 }
@@ -730,6 +784,29 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
                                          Ice::BufferSegment _transformSegment,
                                          Ice::CameraSettings _settings)
 {
+  UpdateCameraProjection(_camera, _settings);
+
+  ICE_ATTEMPT(CreateBufferMemory(&_camera->buffer,
+                                 sizeof(Ice::CameraData),
+                                 1,
+                                 Ice::Buffer_Memory_Shader_Read | Ice::Buffer_Memory_Transfer_Dst));
+
+  // Create descriptor set =====
+  ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));
+
+  Ice::BufferSegment segment;
+  segment.buffer = &_camera->buffer;
+  segment.elementSize = _camera->buffer.elementSize;
+  segment.count = 1;
+  segment.offset = 0;
+  segment.startIndex = 0;
+
+  return UpdateShaderBindings(&_camera->vulkan.descriptorSet, segment);
+}
+
+b8 Ice::RendererVulkan::UpdateCameraProjection(Ice::CameraComponent* _camera,
+                                               Ice::CameraSettings _settings)
+{
   // Calculate projection matrix =====
   glm::mat4 glmMatrix;
   if (_settings.isPerspective)
@@ -753,21 +830,7 @@ b8 Ice::RendererVulkan::InitializeCamera(Ice::CameraComponent* _camera,
 
   _camera->projectionMatrix = Ice::mat4((f32*)glm::value_ptr(glmMatrix));
 
-  ICE_ATTEMPT(CreateBufferMemory(&_camera->buffer,
-                                 sizeof(Ice::CameraData),
-                                 1,
-                                 Ice::Buffer_Memory_Shader_Read | Ice::Buffer_Memory_Transfer_Dst));
+  _camera->settings = _settings;
 
-  // Create descriptor set =====
-  ICE_ATTEMPT(CreateDescriptorSet(&context.cameraDescriptorLayout, &_camera->vulkan.descriptorSet));
-
-  Ice::BufferSegment segment;
-  segment.buffer = &_camera->buffer;
-  segment.elementSize = _camera->buffer.elementSize;
-  segment.count = 1;
-  segment.offset = 0;
-  segment.startIndex = 0;
-
-  return UpdateShaderBindings(&_camera->vulkan.descriptorSet, segment);
+  return true;
 }
-

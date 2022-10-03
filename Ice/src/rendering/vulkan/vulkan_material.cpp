@@ -21,7 +21,7 @@ b8 Ice::RendererVulkan::CreateShader(Ice::ShaderSettings _settings, Ice::Shader*
   _shader->settings = _settings;
 
   ICE_ATTEMPT(CreateShaderModule(_shader));
-  LoadShaderDescriptors(_shader);
+  _shader->input = LoadShaderDescriptors(_shader);
 
   return true;
 }
@@ -66,7 +66,7 @@ b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)
   return true;
 }
 
-void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
+std::vector<Ice::ShaderInputElement> Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 {
   // Descriptor loading could be useful across APIs, and most of the code will not change
   //  Should eventually look into abstracting this.
@@ -76,7 +76,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
 
   std::vector<char> descriptorSource = Ice::LoadFile(directory.c_str());
   if (descriptorSource.size() == 0)
-    return; // Empty or non-existent file (No descriptors)
+    return {}; // Empty or non-existent file (No descriptors)
 
   Ice::Lexer lexer(descriptorSource);
   Ice::LexerToken token;
@@ -155,7 +155,7 @@ void Ice::RendererVulkan::LoadShaderDescriptors(Ice::Shader* _shader)
     }
   }
 
-  _shader->input = tmpInputs;
+  return tmpInputs;
 }
 
 b8 Ice::RendererVulkan::CreateMaterial(Ice::Material* _material)

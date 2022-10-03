@@ -4,17 +4,18 @@ Root :--: Ice/src
 \core\application.cpp
   Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
   Line  431 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  665 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+  Line  670 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
 \core\platform\platform_win32.cpp
-  Line  277 :--: '// TODO : Controller input'
+  Line  272 :--: '// TODO : Controller input'
+  Line  290 :--: '// TODO : Detect if cursor is off-window when m1/m2/m3 is pressed and ignore'
 \rendering\renderer.h
   Line   21 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
   Line   49 :--: '// TODO : Separate vkDescriptorSet from object's renderer/camera component.'
 \rendering\renderer_defines.h
-  Line  225 :--: '// TODO : Rework the renderComponent to not chase pointers'
+  Line  226 :--: '// TODO : Rework the renderComponent to not chase pointers'
 \rendering\vulkan\vulkan_command.cpp
   Line  147 :--: '// TODO : Instanced rendering -- DrawIndexed can use a significant amount of time'
 \rendering\vulkan\vulkan_core.cpp
   Line  105 :--: '// NOTE : Queue present alone takes ~50% of execution time'
-  Line  459 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'
-  Line  710 :--: '// TODO : Abstract descriptor bindings so they are easier to work with'
+  Line  513 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'
+  Line  764 :--: '// TODO : Abstract descriptor bindings so they are easier to work with'

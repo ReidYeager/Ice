@@ -7,7 +7,7 @@
 
 #include "core/ecs/ecs.h"
 #include "math/matrix.hpp"
-#include "core/platform/compact_array.h"
+#include "tools/compact_array.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -205,6 +205,7 @@ struct CameraComponent
 {
   Ice::mat4 projectionMatrix;
   Ice::Buffer buffer;
+  Ice::CameraSettings settings;
 
   union
   {

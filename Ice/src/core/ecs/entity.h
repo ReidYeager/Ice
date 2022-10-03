@@ -5,7 +5,7 @@
 #include "defines.h"
 
 #include "core/ecs/ecs_defines.h"
-#include "core/platform/compact_array.h"
+#include "tools/compact_array.h"
 #include "tools/flag_array.h"
 //#include "math/transform.h"
 

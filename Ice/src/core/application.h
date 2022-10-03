@@ -46,6 +46,7 @@ b8 ReloadMaterial(Ice::Material* _material);
 b8 ReloadAllMaterials();
 // Only recreate the material -- Does not affect its shaders
 b8 RecreateMaterial(Ice::Material* _material);
+b8 RecreateAllMaterials();
 
 b8 LoadTexture(Ice::Image* _texture, const char* _directory);
 void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);

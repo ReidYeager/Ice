@@ -101,6 +101,8 @@ private:
   // Creates a command buffer for each frame
   b8 CreateCommandBuffers();
 
+  b8 Resize();
+
   //=========================
   // Platform
   //=========================
@@ -161,7 +163,7 @@ private:
   b8 CreateShaderModule(Ice::Shader* _shader);
   // Attempts to read the shader's descriptor file
   // Shader descriptors are optional so this can not fail
-  void LoadShaderDescriptors(Ice::Shader* _shader);
+  std::vector<ShaderInputElement> LoadShaderDescriptors(Ice::Shader* _shader);
   b8 AssembleMaterialDescriptorBindings(Ice::Material* _material,
                                         std::vector<VkDescriptorSetLayoutBinding>& _bindings);
   b8 CreateDescriptorLayoutAndSet(std::vector<VkDescriptorSetLayoutBinding>* bindings,
@@ -226,6 +228,7 @@ public:
   b8 InitializeCamera(Ice::CameraComponent* _camera,
                       Ice::BufferSegment _transformSegment,
                       Ice::CameraSettings _settings);
+  b8 UpdateCameraProjection(Ice::CameraComponent* _camera, Ice::CameraSettings _settings);
 };
 
 } // namespace Ice

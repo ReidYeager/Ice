@@ -57,7 +57,7 @@ add_library (Ice STATIC
   "src/core/platform/platform.h"
   "src/core/platform/platform_win32.cpp"
   "src/core/platform/memory_pool.h"
-  "src/core/platform/compact_array.h"
+  "src/tools/compact_array.h"
 
   # ==========
   # Rendering
@@ -78,7 +78,7 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
- "src/tools/flag_array.h" "src/core/ecs/ecs_defines.h"  "src/math/vector.cpp")
+ "src/tools/flag_array.h" "src/core/ecs/ecs_defines.h"  "src/math/vector.cpp" "src/tools/logger.h")
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)
 

@@ -525,6 +525,15 @@ b8 Ice::RecreateMaterial(Material* _material)
   return renderer->RecreateMaterial(_material);
 }
 
+b8 Ice::RecreateAllMaterials()
+{
+  for (u32 i = 0; i < materialCount; i++)
+  {
+    ICE_ATTEMPT(RecreateMaterial(&materials[i]));
+  }
+  return true;
+}
+
 b8 Ice::ReloadMaterial(Material* _material)
 {
   for (u32 i = 0; i < _material->shaders.size(); i++)
@@ -538,11 +547,7 @@ b8 Ice::ReloadMaterial(Material* _material)
 b8 Ice::ReloadAllMaterials()
 {
   ICE_ATTEMPT(ReloadAllShaders());
-  for (u32 i = 0; i < materialCount; i++)
-  {
-    ICE_ATTEMPT(RecreateMaterial(&materials[i]));
-  }
-  return true;
+  return RecreateAllMaterials();
 }
 
 b8 Ice::LoadTexture(Ice::Image* _texture, const char* _directory)

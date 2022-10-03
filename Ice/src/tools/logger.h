@@ -1,60 +1,56 @@
 
-#ifndef ICE_LOGGER_H_
-#define ICE_LOGGER_H_
-
-#include <stdarg.h>
-#include <stdio.h>
+#ifndef ICE_TOOLS_LOGGER_H_
+#define ICE_TOOLS_LOGGER_H_
 
 namespace Ice {
 
 enum LogTypes
 {
-  Log_Info,
-  Log_Debug,
-  Log_Warning,
-  Log_Error,
-  Log_Fatal
+  Log_Type_Info,
+  Log_Type_Debug,
+  Log_Type_Warning,
+  Log_Type_Error,
+  Log_Type_Fatal
 };
 
-void ConsoleLogMessage(Ice::LogTypes _type, const char* _message, ...);
+void LoggerAssembleMessage(LogTypes _type, const char* _message, ...);
 
-} // namespace Ice
+}  // namespace Ice
 
 #ifdef ICE_DEBUG
-#define IceLogInfo(message, ...)                               \
-{                                                              \
-  Ice::ConsoleLogMessage(Ice::Log_Info, message, __VA_ARGS__); \
-  Ice::ConsoleLogMessage(Ice::Log_Info, "\n"); \
+#define IceLogInfo(message, ...)                                        \
+{                                                                       \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Info, message, __VA_ARGS__); \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Info, "\n");                 \
 }
 
-#define IceLogDebug(message, ...)                               \
-{                                                               \
-  Ice::ConsoleLogMessage(Ice::Log_Debug, message, __VA_ARGS__); \
-  Ice::ConsoleLogMessage(Ice::Log_Debug, "\n");                 \
+#define IceLogDebug(message, ...)                                        \
+{                                                                        \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Debug, message, __VA_ARGS__); \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Debug, "\n");                 \
 }
 
-#define IceLogWarning(message, ...)                               \
-{                                                                 \
-  Ice::ConsoleLogMessage(Ice::Log_Warning, message, __VA_ARGS__); \
-  Ice::ConsoleLogMessage(Ice::Log_Warning, "\n");                 \
+#define IceLogWarning(message, ...)                                        \
+{                                                                          \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Warning, message, __VA_ARGS__); \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Warning, "\n");                 \
 }
 #else
 #define IceLogInfo(message, ...)
 #define IceLogDebug(message, ...)
 #define IceLogWarning(message, ...)
-#endif // ICE_DEBUG
+#endif  // ICE_DEBUG
 
-#define IceLogError(message, ...)                               \
-{                                                               \
-  Ice::ConsoleLogMessage(Ice::Log_Error, message, __VA_ARGS__); \
-  Ice::ConsoleLogMessage(Ice::Log_Error, "\n");                 \
+#define IceLogError(message, ...)                                        \
+{                                                                        \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Error, message, __VA_ARGS__); \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Error, "\n");                 \
 }
 
-#define IceLogFatal(message, ...)                               \
-{                                                               \
-  Ice::ConsoleLogMessage(Ice::Log_Fatal, message, __VA_ARGS__); \
-  Ice::ConsoleLogMessage(Ice::Log_Fatal, "\n");                 \
+#define IceLogFatal(message, ...)                                        \
+{                                                                        \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Fatal, message, __VA_ARGS__); \
+  Ice::LoggerAssembleMessage(Ice::Log_Type_Fatal, "\n");                 \
 }
 
-#endif // !DRYL_LOGGER_H
-
+#endif  // ICE_TOOLS_LOGGER_H_

@@ -73,8 +73,8 @@ enum IceMouseButtonFlagBits
   Mouse_Left,
   Mouse_Right,
   Mouse_Middle,
-  Mouse_Forward,
   Mouse_Back,
+  Mouse_Forward,
   Mouse_Extra,
   Mouse_Max
 };
