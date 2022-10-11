@@ -8,6 +8,7 @@
 #include "core/platform/platform.h"
 #include "rendering/renderer.h"
 #include "core/ecs/ecs.h"
+#include "tools/array.h"
 
 namespace Ice {
 
@@ -27,6 +28,9 @@ void Shutdown();
 //=========================
 
 void CloseWindow();
+
+//void* AllocateMemory(u64 _size);
+//void FreeMemory(void* _data);
 
 //=========================
 // Rendering
@@ -51,21 +55,6 @@ b8 RecreateAllMaterials();
 b8 LoadTexture(Ice::Image* _texture, const char* _directory);
 void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
 //void SetTexture(Ice::Material* _material, u32 inputIndex, Ice::Image* _image);
-
-//=========================
-// Scenes
-//=========================
-
-/*
-Ice::Scene* CreateScene(u32 _maxObjectCount = 100, u32 _maxComponentTypeCount = 10);
-void DestroyScene(Ice::Scene* _scene);
-// Used to create objects in the active scene without needing to pass its pointer around the game
-
-void SetActiveScene(Ice::Scene* _scene);
-Ice::Scene* GetActiveScene();
-
-void AddSceneToRender(Ice::Scene* _scene);
-*/
 
 Ice::Entity CreateCamera(Ice::CameraSettings _settings = {});
 Ice::Entity CreateRenderedEntity(const char* _meshDir = nullptr,

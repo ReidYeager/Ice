@@ -17,9 +17,9 @@
 
 namespace Ice {
 
-//=========================
+// =====
 // Buffer
-//=========================
+// =====
 
 enum BufferMemoryUsageBits
 {
@@ -58,9 +58,9 @@ struct Buffer
   };
 };
 
-//=========================
+// =====
 // Image
-//=========================
+// =====
 
 struct Image
 {
@@ -73,9 +73,9 @@ struct Image
   };
 };
 
-//=========================
+// =====
 // Material
-//=========================
+// =====
 
 #define si(name) Shader_Input_##name
 enum ShaderInputTypes
@@ -137,10 +137,17 @@ struct Shader
   };
 };
 
+enum MaterialType
+{
+  Material_Opaque,
+  Material_Transparent,
+};
+
 struct MaterialSettings
 {
   std::vector<Ice::ShaderSettings> shaderSettings;
   u32 subpassIndex = 0;
+  Ice::MaterialType type = Ice::Material_Opaque;
 };
 
 struct Material
@@ -157,9 +164,9 @@ struct Material
   };
 };
 
-//=========================
+// =====
 // Mesh
-//=========================
+// =====
 
 struct Vertex
 {
@@ -182,9 +189,31 @@ struct MeshInformation
   Ice::Mesh mesh;
 };
 
-//=========================
+// =====
+// Lights
+// =====
+
+struct DirectionLight
+{
+  Ice::vec4 color; // w value unused
+  Ice::vec4 direction; // w value unused
+};
+
+struct SpotLight
+{
+  Ice::vec4 color;
+  Ice::vec4 settings;
+};
+
+struct PointLight
+{
+  Ice::vec4 color;
+  Ice::vec4 settings;
+};
+
+// =====
 // Renderer
-//=========================
+// =====
 
 struct CameraSettings
 {

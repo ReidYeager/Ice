@@ -25,6 +25,7 @@ add_library (Ice STATIC
   "src/math/quaternion.hpp"
   "src/math/transform.h"
   "src/math/vector.h"
+  "src/math/vector.cpp"
 
   # ==========
   # Tools
@@ -32,6 +33,9 @@ add_library (Ice STATIC
   "src/tools/lexer.h"
   "src/tools/logger.h"
   "src/tools/logger.cpp"
+  "src/tools/array.h"
+  "src/tools/flag_array.h"
+  "src/tools/compact_array.h"
 
   # ==========
   # Core
@@ -46,6 +50,7 @@ add_library (Ice STATIC
   # ==========
   # Core/Ecs
   # ==========
+  "src/core/ecs/ecs_defines.h"
   "src/core/ecs/ecs.h"
   "src/core/ecs/entity.h"
   "src/core/ecs/entity.cpp"
@@ -57,7 +62,6 @@ add_library (Ice STATIC
   "src/core/platform/platform.h"
   "src/core/platform/platform_win32.cpp"
   "src/core/platform/memory_pool.h"
-  "src/tools/compact_array.h"
 
   # ==========
   # Rendering
@@ -78,7 +82,7 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
- "src/tools/flag_array.h" "src/core/ecs/ecs_defines.h"  "src/math/vector.cpp" "src/tools/logger.h")
+ "src/nrendering/nvulkan.h")
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)
 

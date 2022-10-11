@@ -125,12 +125,12 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
 
   Ice::GetComponentArray<Ice::Transform>().Resize(16);
   ICE_ATTEMPT(renderer->CreateBufferMemory(
-    &transformsBuffer,
-    sizeof(Ice::mat4),
-    Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize(),
-    Ice::Buffer_Memory_Shader_Read |
-    Ice::Buffer_Memory_Transfer_Src |
-    Ice::Buffer_Memory_Transfer_Dst));
+              &transformsBuffer,
+              sizeof(Ice::mat4),
+              Ice::GetComponentArray<Ice::Transform>().GetAllocatedSize(),
+              Ice::Buffer_Memory_Shader_Read
+              | Ice::Buffer_Memory_Transfer_Src
+              | Ice::Buffer_Memory_Transfer_Dst));
 
   // Initialize transforms =====
   Ice::Transform* transforms = Ice::GetComponentArray<Ice::Transform>().GetArray();

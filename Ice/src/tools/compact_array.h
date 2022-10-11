@@ -12,7 +12,7 @@
 
 namespace Ice {
 
-template<class T>
+template<typename T>
 class CompactArray
 {
   private:
@@ -53,8 +53,11 @@ class CompactArray
 public:
   CompactArray(u32 _count)
   {
-    ResizeData(_count);
-    ResizeMap(_count);
+    data = (T*)Ice::MemoryAllocZero(_count * sizeof(T));
+    indexMap = (u32*)Ice::MemoryAllocate(_count * sizeof(u32));
+    indexAvailability.Resize(_count, true);
+    allocatedElementCount = _count;
+    indexCount = _count;
   }
 
   u32 AddElementAt(u32 _index, T _initValue = {})
@@ -229,17 +232,6 @@ public:
   }
 
 };
-
-//template <typename T>
-//struct CompactPointer
-//{
-//  u32 index;
-//
-//  T* operator .()
-//  {
-//    return 
-//  }
-//};
 
 } // namespace Ice
 

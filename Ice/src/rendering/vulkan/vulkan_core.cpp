@@ -62,8 +62,6 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   {
     ICE_ATTEMPT(Resize());
     return true;
-    //IceLogFatal("Need to resize");
-    //return false;
   }
   else if (result != VK_SUCCESS)
   {
@@ -108,8 +106,6 @@ b8 Ice::RendererVulkan::RenderFrame(Ice::FrameInformation* _data)
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
     ICE_ATTEMPT(Resize());
-    //IceLogFatal("Need to resize");
-    //return false;
   }
   else if (result != VK_SUCCESS)
   {
