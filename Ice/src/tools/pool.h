@@ -1,19 +1,14 @@
 
-#ifndef ICE_PLATFORM_COMPACT_ARRAY_H_
-#define ICE_PLATFORM_COMPACT_ARRAY_H_
+#ifndef ICE_TOOLS_POOL_H_
+#define ICE_TOOLS_POOL_H_
 
 #include "defines.h"
-
 #include "core/platform/platform.h"
-#include "tools/flag_array.h"
-
-#include <bitset>
-#include <vector>
 
 namespace Ice {
 
 template<typename T>
-class CompactArray
+class CompactPool
 {
   private:
   T* data = nullptr;
@@ -23,6 +18,9 @@ class CompactArray
   u32 allocatedElementCount = 0;
   u32 usedElementCount = 0;
   u32 indexCount = 0;
+
+  // When false, prevents automatic resizing but not manual
+  b8 canGrow = false;
 
   constexpr u32 BackIndex() const
   {
@@ -52,29 +50,28 @@ class CompactArray
   }
 
 public:
-  CompactArray(u32 _count)
+  CompactPool(u32 _count = 1, b8 _canGrow = false)
   {
     data = (T*)Ice::MemoryAllocZero(_count * sizeof(T));
     indexMap = (u32*)Ice::MemoryAllocate(_count * sizeof(u32));
     indexAvailability.Resize(_count, true);
     allocatedElementCount = _count;
     indexCount = _count;
+    canGrow = _canGrow;
   }
 
-  CompactArray(const Ice::CompactArray<T>& _other)
+  CompactPool(T* _data, u32 _count, b8 _canGrow = false)
   {
-    u32 _count;
-    T* _data = _other.GetArray(_count);
-
     data = (T*)Ice::MemoryAllocZero(_count * sizeof(T));
     Ice::MemoryCopy(_data, data, _count);
     indexMap = (u32*)Ice::MemoryAllocate(_count * sizeof(u32));
     indexAvailability.Resize(_count, true);
     allocatedElementCount = _count;
     indexCount = _count;
+    canGrow = _canGrow;
   }
 
-  ~CompactArray()
+  ~CompactPool()
   {
     if (allocatedElementCount)
       Shutdown();
@@ -90,48 +87,21 @@ public:
     indexAvailability.Shutdown();
   }
 
-  u32 AddElementAt(u32 _index, T _initValue = {})
+  void SetCanGrow(b8 _value)
   {
-    if (_index >= indexCount)
-    {
-      u32 newCount = indexCount;
-      while (newCount <= _index)
-      {
-        newCount *= 2;
-      }
-
-      ResizeMap(newCount);
-    }
-    if (usedElementCount >= allocatedElementCount)
-    {
-      ResizeData(allocatedElementCount * 2);
-    }
-
-    if (!indexAvailability.Get(_index))
-    {
-      IceLogWarning("Index %u unavailable in compact array", _index);
-      DebugBreak();
-      return -1;
-    }
-
-    u32 dataIndex = usedElementCount;
-
-    indexAvailability.Set(_index, 0);
-    indexMap[_index] = dataIndex;
-    data[dataIndex] = _initValue;
-    usedElementCount++;
-
-    return _index;
+    canGrow = _value;
   }
 
-  u32 AddElement(T _initValue = {})
+  T& GetNewElement(u32* _elementIndex = nullptr)
   {
     if (usedElementCount >= allocatedElementCount)
     {
+      if (!canGrow)
+      {
+        ICE_ABORT("Pool reached limit");
+      }
+
       ResizeData(allocatedElementCount * 2);
-    }
-    if (indexCount < allocatedElementCount)
-    {
       ResizeMap(allocatedElementCount);
     }
 
@@ -140,13 +110,16 @@ public:
 
     indexAvailability.Set(index, 0);
     indexMap[index] = dataIndex;
-    data[dataIndex] = _initValue;
+    data[dataIndex] = T();
     usedElementCount++;
 
-    return index;
+    if (_elementIndex != nullptr)
+      *_elementIndex = index;
+
+    return data[dataIndex];
   }
 
-  void RemoveAt(u32 _index)
+  void ReturnElement(u32 _index)
   {
     assert(_index < usedElementCount);
 
@@ -197,6 +170,11 @@ public:
   constexpr u32 Size() const
   {
     return usedElementCount;
+  }
+
+  constexpr b8 IsEmpty() const
+  {
+    return usedElementCount == allocatedElementCount;
   }
 
   constexpr u32 GetAllocatedSize() const
@@ -263,6 +241,6 @@ public:
 
 };
 
-} // namespace Ice
+}
 
-#endif // !ICE_PLATFORM_COMPACT_ARRAY_H_
+#endif // !ICE_TOOLS_POOL_H_

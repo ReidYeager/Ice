@@ -114,20 +114,20 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
       testCount++;
       vkCmdBindPipeline(cmdBuffer,
                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        rc.material->vulkan.pipeline);
+                        _data->materials->Get(rc.material)->vulkan.pipeline);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              rc.material->vulkan.pipelineLayout,
+                              _data->materials->Get(rc.material)->vulkan.pipelineLayout,
                               2,
                               1,
-                              &rc.material->vulkan.descriptorSet,
+                              &_data->materials->Get(rc.material)->vulkan.descriptorSet,
                               0,
                               nullptr);
 
       vkCmdBindDescriptorSets(cmdBuffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              rc.material->vulkan.pipelineLayout,
+                              _data->materials->Get(rc.material)->vulkan.pipelineLayout,
                               3,
                               1,
                               &rc.vulkan.descriptorSet,
@@ -137,16 +137,16 @@ b8 Ice::RendererVulkan::RecordCommandBuffer(u32 _commandIndex, Ice::FrameInforma
       vkCmdBindVertexBuffers(cmdBuffer,
                              0,
                              1,
-                             &rc.mesh->vertexBuffer.buffer->vulkan.buffer,
-                             &rc.mesh->vertexBuffer.offset);
+                             &_data->meshes->Get(rc.mesh)->mesh.vertexBuffer.buffer->vulkan.buffer,
+                             &_data->meshes->Get(rc.mesh)->mesh.vertexBuffer.offset);
       vkCmdBindIndexBuffer(cmdBuffer,
-                           rc.mesh->indexBuffer.buffer->vulkan.buffer,
-                           rc.mesh->indexBuffer.offset,
+                           _data->meshes->Get(rc.mesh)->mesh.indexBuffer.buffer->vulkan.buffer,
+                           _data->meshes->Get(rc.mesh)->mesh.indexBuffer.offset,
                            VK_INDEX_TYPE_UINT32);
 
       // TODO : Instanced rendering -- DrawIndexed can use a significant amount of time
       //  Time to render rises to 10ms with ~1000 spheres (482 verts / 960 tris, with a basic unlit shader)
-      vkCmdDrawIndexed(cmdBuffer, rc.mesh->indexCount, 1, 0, 0, 0);
+      vkCmdDrawIndexed(cmdBuffer, _data->meshes->Get(rc.mesh)->mesh.indexCount, 1, 0, 0, 0);
     }
   }
   vkCmdEndRenderPass(cmdBuffer);

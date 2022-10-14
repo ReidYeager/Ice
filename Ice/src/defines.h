@@ -14,6 +14,8 @@
 
 #include "tools/logger.h"
 
+#include <stdlib.h>
+
 //=========================
 // Primitives
 //=========================
@@ -88,9 +90,7 @@ typedef u64 FlagExtended;
   // Attempt
   //=========================
 
-#define ICE_ATTEMPT(expression) \
-if (!(expression))              \
-  return false;
+#define ICE_ATTEMPT(expression) if(!(expression)) { return false; }
 
 //#define ICE_ATTEMPT_MSG(expression, message, ...) \
 //if (!(expression))                                \
@@ -131,6 +131,13 @@ if (!(expression))              \
 }
 
 #define ICE_BREAK __debugbreak()
+
+#define ICE_ABORT(message, ...)                            \
+{                                                          \
+  IceLogFatal(">> Ice Abort : %s:%d", __FILE__, __LINE__); \
+  IceLogFatal(message, __VA_ARGS__);                       \
+  abort();                                                 \
+}
 
 #else
 #define ICE_ASSERT(expression)

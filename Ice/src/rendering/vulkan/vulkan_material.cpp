@@ -37,11 +37,12 @@ b8 Ice::RendererVulkan::ReloadShader(Ice::Shader* _shader)
   vkDeviceWaitIdle(context.device);
 
   vkDestroyShaderModule(context.device, _shader->vulkan.module, context.alloc);
-
   _shader->input.clear();
-  LoadShaderDescriptors(_shader);
 
-  return CreateShaderModule(_shader);
+  ICE_ATTEMPT(CreateShaderModule(_shader));
+  _shader->input = LoadShaderDescriptors(_shader);
+
+  return true;
 }
 
 b8 Ice::RendererVulkan::CreateShaderModule(Ice::Shader* _shader)

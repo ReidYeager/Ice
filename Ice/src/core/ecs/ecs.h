@@ -46,7 +46,7 @@ public:
       do
       {
         entityIndex++;
-      } while (entityIndex < activeEntities.size() &&
+      } while (entityIndex < activeEntities.Size() &&
                (activeEntities[entityIndex].id == nullEntity.id ||
                 (activeEntities[entityIndex].componentMask & mask) != mask));
 
@@ -55,12 +55,12 @@ public:
 
     bool operator !=(const Iterator& _other) const
     {
-      return entityIndex != _other.entityIndex && entityIndex != activeEntities.size();
+      return entityIndex != _other.entityIndex && entityIndex != activeEntities.Size();
     }
 
     bool operator ==(const Iterator& _other) const
     {
-      return entityIndex == _other.entityIndex || entityIndex == activeEntities.size();
+      return entityIndex == _other.entityIndex || entityIndex == activeEntities.Size();
     }
 
   };
@@ -76,7 +76,7 @@ public:
     u32 startIndex = 0;
 
     // Skip to first valid entity
-    while (startIndex < activeEntities.size() &&
+    while (startIndex < activeEntities.Size() &&
            (activeEntities[startIndex].id == nullEntity.id ||
             (activeEntities[startIndex].componentMask & mask) != mask))
     {
@@ -88,7 +88,7 @@ public:
 
   const Iterator end() const
   {
-    return Iterator(mask, (u32)activeEntities.size());
+    return Iterator(mask, (u32)activeEntities.Size());
   }
 
 };

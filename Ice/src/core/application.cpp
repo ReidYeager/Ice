@@ -10,6 +10,8 @@
 #include "math/linear.h"
 #include "math/transform.h"
 #include "core/ecs/entity.h"
+#include "tools/array.h"
+#include "tools/pool.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -20,23 +22,15 @@
 #include <chrono>
 
 Ice::ApplicationSettings appSettings;
-Ice::Renderer* renderer;
+Ice::RendererVulkan* renderer;
 b8 isRunning;
 
 // Rendering =====
-u32 shaderCount = 0;
-Ice::Shader* shaders;
-
-u32 materialCount = 0;
-Ice::Material* materials;
-Ice::MaterialSettings* materialSettings;
-
-u32 meshCount = 0;
-Ice::MeshInformation* meshes;
-u32 maxMeshCount = 0;
-
-Ice::Image* textures;
-u32 textureCount = 0;
+Ice::CompactPool<Ice::Shader> shaders;
+Ice::CompactPool<Ice::Material> materials;
+Ice::CompactPool<Ice::MaterialSettings> materialSettings;
+Ice::CompactPool<Ice::MeshInformation> meshes;
+Ice::CompactPool<Ice::Image> textures;
 
 Ice::FrameInformation frameInfo{};
 
@@ -96,14 +90,17 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
   Ice::input.Initialize();
 
   // Rendering =====
-  if (_settings.rendererCore.api == Ice::RenderApiVulkan)
+  switch (_settings.rendererCore.api)
+  {
+  case Ice::RenderApiVulkan:
   {
     renderer = new Ice::RendererVulkan();
-  }
-  else
+  } break;
+  default:
   {
-    IceLogFatal("Selected API not supported");
+    IceLogFatal("Selected rendering API not supported");
     return false;
+  } break;
   }
 
   if (!renderer->Init(_settings.rendererCore, _settings.window.title, _settings.version))
@@ -112,16 +109,13 @@ b8 IceApplicationInitialize(Ice::ApplicationSettings _settings)
     return false;
   }
 
-  shaders = (Ice::Shader*)Ice::MemoryAllocZero(
-    sizeof(Ice::Shader) * _settings.maxShaderCount);
-  materials = (Ice::Material*)Ice::MemoryAllocZero(
-    sizeof(Ice::Material) * _settings.maxMaterialCount);
-  materialSettings = (Ice::MaterialSettings*)Ice::MemoryAllocZero(
-    sizeof(Ice::MaterialSettings) * _settings.maxMaterialCount);
-  meshes = (Ice::MeshInformation*)Ice::MemoryAllocZero(
-    sizeof(Ice::MeshInformation) * _settings.maxMeshCount);
-  maxMeshCount = _settings.maxMeshCount;
-  textures = (Ice::Image*)Ice::MemoryAllocZero(sizeof(Ice::Image) * _settings.maxTextureCount);
+  //shaders = (Ice::Shader*)Ice::MemoryAllocZero(
+  //  sizeof(Ice::Shader) * _settings.maxShaderCount);
+  shaders.Resize(_settings.maxShaderCount);
+  materials.Resize(_settings.maxMaterialCount);
+  materialSettings.Resize(_settings.maxMaterialCount);
+  meshes.Resize(_settings.maxMeshCount);
+  textures.Resize(_settings.maxTextureCount);
 
   Ice::GetComponentArray<Ice::Transform>().Resize(16);
   ICE_ATTEMPT(renderer->CreateBufferMemory(
@@ -159,6 +153,8 @@ b8 IceApplicationUpdate()
   Ice::FrameInformation frameInfo{};
   frameInfo.cameras = &Ice::GetComponentArray<Ice::CameraComponent>();
   frameInfo.renderables = &Ice::GetComponentArray<Ice::RenderComponent>();
+  frameInfo.meshes = &meshes;
+  frameInfo.materials = &materials;
 
   while (isRunning && Ice::platform.Update())
   {
@@ -182,31 +178,30 @@ b8 IceApplicationShutdown()
 {
   ICE_ATTEMPT(appSettings.GameShutdown());
 
-  for (u32 i = 0; i < textureCount; i++)
+  for (u32 i = 0; i < textures.Size(); i++)
   {
     renderer->DestroyImage(&textures[i]);
   }
-  Ice::MemoryFree(textures);
+  textures.Shutdown();
 
-  for (u32 i = 0; i < meshCount; i++)
+  for (Ice::MeshInformation& m : meshes)
   {
-    renderer->DestroyBufferMemory(&meshes[i].mesh.buffer);
+    renderer->DestroyBufferMemory(&m.mesh.buffer);
   }
-  Ice::MemoryFree(meshes);
+  meshes.Shutdown();
 
-  for (u32 i = 0; i < materialCount; i++)
+  for (Ice::Material& m : materials)
   {
-    renderer->DestroyMaterial(materials[i]);
-    //materials[i].input.clear();
+    renderer->DestroyMaterial(m);
   }
-  Ice::MemoryFree(materials);
-  Ice::MemoryFree(materialSettings);
+  materials.Shutdown();
+  materialSettings.Shutdown();
 
-  for (u32 i = 0; i < shaderCount; i++)
+  for (u32 i = 0; i < shaders.Size(); i++)
   {
     renderer->DestroyShader(shaders[i]);
   }
-  Ice::MemoryFree(shaders);
+  shaders.Shutdown();
 
   for (Ice::Entity& e : Ice::SceneView<Ice::CameraComponent>())
   {
@@ -401,36 +396,37 @@ b8 CreateMesh(const char* _directory, Ice::Mesh* _mesh)
   return true;
 }
 
-b8 Ice::GetMesh(const char* _directory, Ice::Mesh** _mesh)
+b8 Ice::GetMesh(const char* _directory, u32* _mesh)
 {
-  for (u32 i = 0; i < meshCount; i++)
+  u32 meshIndex = 0;
+  for (Ice::MeshInformation m : meshes)
   {
-    if (meshes[i].fileName.compare(_directory) == 0)
+    if (m.fileName.compare(_directory) == 0)
     {
-      *_mesh = &meshes[i].mesh;
+      *_mesh = meshIndex;
       return true;
     }
+    meshIndex++;
   }
 
-  if (meshCount >= maxMeshCount)
+  Ice::MeshInformation& m = meshes.GetNewElement(_mesh);
+  if (!CreateMesh(_directory, &m.mesh))
   {
+    meshes.ReturnElement(*_mesh);
+    *_mesh = Ice::null32;
     return false;
   }
 
-  ICE_ATTEMPT(CreateMesh(_directory, &meshes[meshCount].mesh));
-  meshes[meshCount].fileName = _directory;
-  *_mesh = &meshes[meshCount].mesh;
-  meshCount++;
-
+  m.fileName = _directory;
   return true;
 }
 
-b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material /*= nullptr*/)
+b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, u32* _material /*= nullptr*/)
 {
   // Don't search for existing materials to allow one material setup with multiple buffer values
   // TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)
 
-  if (materialCount == appSettings.maxMaterialCount)
+  if (materials.Size() == appSettings.maxMaterialCount)
   {
     IceLogError("Maximum material count (%u) reached", appSettings.maxMaterialCount);
     return false;
@@ -438,60 +434,70 @@ b8 Ice::CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _materia
 
   // Get shaders' info =====
   b8 shaderFound = false;
-  std::vector<Ice::Shader*> shaderPointers;
+  std::vector<u32> shaderIndices;
 
   for (u32 i = 0; i < _settings.shaderSettings.size(); i++)
   {
     shaderFound = false;
+    u32 index = 0;
 
     // Check for existing shader
-    for (u32 j = 0; j < shaderCount; j++)
+    for (Ice::Shader& oldShader : shaders)
     {
-      Ice::Shader& oldShader = shaders[j];
-      if (_settings.shaderSettings[i].fileDirectory.compare(oldShader.settings.fileDirectory) == 0 &&
-          _settings.shaderSettings[i].type == oldShader.settings.type)
+      std::string oldNameWithoutExt = oldShader.settings.fileDirectory.
+                                      substr(0, oldShader.settings.fileDirectory.size() - 5);
+      std::string newName= _settings.shaderSettings[i].fileDirectory;
+
+      if (oldNameWithoutExt.compare(newName) == 0
+          && _settings.shaderSettings[i].type == oldShader.settings.type)
       {
         shaderFound = true;
-        shaderPointers.push_back(&shaders[j]);
+        shaderIndices.push_back(index);
+        index++;
         break;
       }
+      index++;
     }
 
     // Create new shader
     if (!shaderFound)
     {
-      if (shaderCount == appSettings.maxShaderCount)
+      if (shaders.Size() == appSettings.maxShaderCount)
       {
         IceLogError("Maximum shader count (%u) reached", appSettings.maxShaderCount);
         return false;
       }
 
-      if (!renderer->CreateShader(_settings.shaderSettings[i], &shaders[shaderCount]))
+      Ice::Shader& newshader = shaders.GetNewElement();
+      if (!renderer->CreateShader(_settings.shaderSettings[i], &newshader))
       {
-        IceLogError("Failed to create a shader\n> '%s'", shaders[shaderCount].settings.fileDirectory.c_str());
+        IceLogError("Failed to create a shader\n> '%s'", newshader.settings.fileDirectory.c_str());
         return false;
       }
 
-      shaderPointers.push_back(&shaders[shaderCount]);
-      shaderCount++;
+      shaderIndices.push_back(index);
+      index++;
     }
   }
 
-  materialSettings[materialCount] = _settings;
+  std::vector<Ice::Shader*> shaderPointers;
+  for (u32 i : shaderIndices)
+  {
+    shaderPointers.push_back(&shaders[i]);
+  }
+
+  materialSettings.GetNewElement() = _settings;
 
   // Create material =====
-  materials[materialCount].subpassIndex = _settings.subpassIndex;
-  materials[materialCount].shaders = shaderPointers;
-  if (!renderer->CreateMaterial(&materials[materialCount]))
+  Ice::Material& newmaterial = materials.GetNewElement(_material);
+  newmaterial.subpassIndex = _settings.subpassIndex;
+  newmaterial.shaders = shaderPointers;
+  if (!renderer->CreateMaterial(&newmaterial))
   {
+    materials.ReturnElement(*_material);
+    *_material = Ice::null32;
     IceLogError("Failed to create material");
     return false;
-  }
-  materialCount++;
-
-  if (_material != nullptr)
-  {
-    *_material = &materials[materialCount - 1];
   }
 
   // Bind default descriptors (create buffer, assign textures)
@@ -512,9 +518,9 @@ b8 Ice::ReloadShader(Shader* _shader)
 
 b8 Ice::ReloadAllShaders()
 {
-  for (u32 i = 0; i < shaderCount; i++)
+  for (Ice::Shader& s : shaders)
   {
-    ICE_ATTEMPT(ReloadShader(&shaders[i]));
+    ICE_ATTEMPT(ReloadShader(&s));
   }
 
   return true;
@@ -527,9 +533,9 @@ b8 Ice::RecreateMaterial(Material* _material)
 
 b8 Ice::RecreateAllMaterials()
 {
-  for (u32 i = 0; i < materialCount; i++)
+  for (Ice::Material& m : materials)
   {
-    ICE_ATTEMPT(RecreateMaterial(&materials[i]));
+    ICE_ATTEMPT(RecreateMaterial(&m));
   }
   return true;
 }
@@ -565,12 +571,10 @@ b8 Ice::LoadTexture(Ice::Image* _texture, const char* _directory)
 
 void Ice::SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _directory)
 {
-  Ice::Image& newTexture = textures[textureCount];
+  Ice::Image& newTexture = textures.GetNewElement();
   LoadTexture(&newTexture, _directory);
 
   renderer->SetMaterialInput(_material, _inputIndex, &newTexture);
-
-  textureCount++;
 }
 
 Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
@@ -592,7 +596,7 @@ Ice::Entity Ice::CreateCamera(Ice::CameraSettings _settings /*= {}*/)
 }
 
 Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
-                                      Ice::Material* _material /*= nullptr*/)
+                                      u32 _material /*= Ice::null32*/)
 {
   Ice::CompactArray<Ice::Transform>& carray = Ice::GetComponentArray<Ice::Transform>();
   Ice::Entity e = Ice::CreateEntity();
@@ -631,7 +635,7 @@ Ice::Entity Ice::CreateRenderedEntity(const char* _meshDir /*= nullptr*/,
       return e;
     }
 
-    if (_material != nullptr)
+    if (_material != Ice::null32)
     {
       r->material = _material;
     }

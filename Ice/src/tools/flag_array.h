@@ -35,7 +35,8 @@ public:
 
   ~FlagArray()
   {
-    Shutdown();
+    if (flagCount)
+      Shutdown();
   }
 
   void Shutdown()

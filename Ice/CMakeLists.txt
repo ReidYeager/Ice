@@ -82,7 +82,7 @@ add_library (Ice STATIC
   "src/rendering/vulkan/vulkan_platform.cpp"
   "src/rendering/vulkan/vulkan_renderpass.cpp"
 
- "src/nrendering/nvulkan.h")
+ "src/tools/pool.h")
 
 set_target_properties(Ice PROPERTIES LINKER_LANGUAGE C)
 

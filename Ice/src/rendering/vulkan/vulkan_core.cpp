@@ -11,9 +11,7 @@
 
 #include <vector>
 
-b8 Ice::RendererVulkan::Init(Ice::RendererSettingsCore _settings,
-                             const char* _title /*= "Ice_Vk_Application"*/,
-                             u32 _version /*= 0*/)
+b8 Ice::RendererVulkan::Init(Ice::RendererSettingsCore _settings, const char* _title, u32 _version)
 {
   ICE_ATTEMPT(CreateInstance(_title, _version));
   ICE_ATTEMPT(CreateSurface());

@@ -36,9 +36,9 @@ void CloseWindow();
 // Rendering
 //=========================
 
-b8 GetMesh(const char* _directory, Ice::Mesh** _mesh);
+b8 GetMesh(const char* _directory, u32* _mesh);
 
-b8 CreateMaterial(Ice::MaterialSettings _settings, Ice::Material** _material = nullptr);
+b8 CreateMaterial(Ice::MaterialSettings _settings, u32* _material = nullptr);
 void SetMaterialData(Ice::Material* _material, Ice::BufferSegment _segment, void* _data);
 
 // Reload one shader
@@ -58,7 +58,7 @@ void SetTexture(Ice::Material* _material, u32 _inputIndex, const char* _image);
 
 Ice::Entity CreateCamera(Ice::CameraSettings _settings = {});
 Ice::Entity CreateRenderedEntity(const char* _meshDir = nullptr,
-                                 Ice::Material* _material = nullptr);
+                                 u32 _material = Ice::null32);
 
 b8 UpdateTransforms();
 

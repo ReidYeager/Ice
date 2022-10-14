@@ -66,7 +66,7 @@ struct VulkanContext
   std::vector<VkCommandBuffer> commandBuffers;
 };
 
-class RendererVulkan : public Ice::Renderer
+class RendererVulkan //: public Ice::Renderer
 {
 private:
   Ice::VulkanContext context;
@@ -158,7 +158,6 @@ private:
   //=========================
 
   b8 CreateGlobalDescriptors();
-  void PushDataToGlobalDescriptors(void* _data, Ice::BufferSegment _segment = {});
 
   b8 CreateShaderModule(Ice::Shader* _shader);
   // Attempts to read the shader's descriptor file
@@ -188,9 +187,7 @@ private:
   u64 PadBufferSize(u64 _inSize, Ice::BufferMemoryUsageFlags _usage);
 
 public:
-  b8 Init(Ice::RendererSettingsCore _settings,
-          const char* _title = "Ice_Vk_Application",
-          u32 _version = 0);
+  b8 Init(Ice::RendererSettingsCore _settings, const char* _title, u32 _version);
   b8 RenderFrame(Ice::FrameInformation* _data);
   b8 Shutdown();
 
@@ -200,6 +197,8 @@ public:
   b8 CreateMaterial(Ice::Material* _material);
   void DestroyMaterial(Ice::Material& _material);
   b8 RecreateMaterial(Ice::Material* _material);
+
+  void PushDataToGlobalDescriptors(void* _data, Ice::BufferSegment _segment = {});
 
   b8 SetMaterialInput(Ice::Material* _material, u32 _bindIndex, Ice::Image* _image);
 

@@ -26,7 +26,8 @@ private:
     T* old = data;
     data = (T*)Ice::MemoryAllocZero(_newCount * sizeof(T));
 
-    Ice::MemoryCopy(old, data, min(usedElementCount, _newCount) * sizeof(T));
+    usedElementCount = min(usedElementCount, _newCount);
+    Ice::MemoryCopy(old, data, usedElementCount * sizeof(T));
     Ice::MemoryFree(old);
 
     allocatedElementCount = _newCount;
@@ -47,6 +48,19 @@ public:
     Ice::MemoryCopy(_data, data, _count * sizeof(T));
   }
 
+  ~Array()
+  {
+    if (allocatedElementCount)
+      Shutdown();
+  }
+
+  void Shutdown()
+  {
+    Ice::MemoryFree(data);
+    allocatedElementCount = 0;
+    usedElementCount = 0;
+  }
+
   T& PushBack(T _value)
   {
     if (usedElementCount >= allocatedElementCount)
@@ -57,6 +71,11 @@ public:
     data[usedElementCount] = _value;
     usedElementCount++;
 
+    return data[usedElementCount - 1];
+  }
+
+  T& Back()
+  {
     return data[usedElementCount - 1];
   }
 
@@ -80,7 +99,7 @@ public:
     return data;
   }
 
-  constexpr u32 size() const
+  constexpr u32 Size() const
   {
     return usedElementCount;
   }

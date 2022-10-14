@@ -8,6 +8,7 @@
 #include "core/ecs/ecs.h"
 #include "math/matrix.hpp"
 #include "tools/compact_array.h"
+#include "tools/pool.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -41,6 +42,7 @@ struct BufferSegment
   u32 count; // Number of covered elements
 
   // The segment's parent buffer
+  // TODO : !!! Find a better way to point to the parent buffer. Using a pointer isn't safe when resizing pools
   Ice::Buffer* buffer;
 };
 
@@ -252,9 +254,8 @@ struct CameraData
 
 struct RenderComponent
 {
-  // TODO : Rework the renderComponent to not chase pointers
-  Ice::Material* material;
-  Ice::Mesh* mesh;
+  u32 material;
+  u32 mesh;
 
   union
   {
@@ -269,6 +270,8 @@ struct FrameInformation
 {
   Ice::CompactArray<Ice::CameraComponent>* cameras;
   Ice::CompactArray<Ice::RenderComponent>* renderables;
+  Ice::CompactPool<Ice::MeshInformation>* meshes;
+  Ice::CompactPool<Ice::Material>* materials;
 };
 
 enum RenderingApi

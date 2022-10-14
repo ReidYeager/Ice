@@ -2,20 +2,17 @@
 Root :--: Ice/src
 
 \core\application.cpp
-  Line   82 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
-  Line  431 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
-  Line  670 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
+  Line   76 :--: '// TODO : Hard-code default texture information into engine so it doesn't have to load anything'
+  Line  427 :--: '// TODO : Create buffers for multiple instances of a material (instead of creating multiple materials)'
+  Line  674 :--: 'if (transforms[i].GetDirty()) // TODO : Separate static & dynamic transforms'
 \core\platform\platform_win32.cpp
-  Line  276 :--: '// TODO : Controller input'
-  Line  294 :--: '// TODO : Detect if cursor is off-window when m1/m2/m3 is pressed and ignore'
-\rendering\renderer.h
-  Line   21 :--: '// NOTE : Given the frequency this is called, should use something more efficient than virtual.'
-  Line   49 :--: '// TODO : Separate vkDescriptorSet from object's renderer/camera component.'
+  Line  280 :--: '// TODO : Controller input'
+  Line  298 :--: '// TODO : Detect if cursor is off-window when m1/m2/m3 is pressed and ignore'
 \rendering\renderer_defines.h
-  Line  255 :--: '// TODO : Rework the renderComponent to not chase pointers'
+  Line   45 :--: '// TODO : !!! Find a better way to point to the parent buffer. Using a pointer isn't safe when resizing pools'
 \rendering\vulkan\vulkan_command.cpp
   Line  147 :--: '// TODO : Instanced rendering -- DrawIndexed can use a significant amount of time'
 \rendering\vulkan\vulkan_core.cpp
-  Line  103 :--: '// NOTE : Queue present alone takes ~50% of execution time'
-  Line  509 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'
-  Line  760 :--: '// TODO : Abstract descriptor bindings so they are easier to work with'
+  Line  101 :--: '// NOTE : Queue present alone takes ~50% of execution time'
+  Line  507 :--: '// TODO : Make max uniform descriptor/image descriptor/set counts adjustable'
+  Line  758 :--: '// TODO : Abstract descriptor bindings so they are easier to work with'

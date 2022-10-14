@@ -20,7 +20,9 @@
 
 void* Ice::MemoryAllocate(u64 _size)
 {
-  return malloc(_size);
+  if (_size > 0)
+    return malloc(_size);
+  return nullptr;
 }
 
 void Ice::MemorySet(void* _data, u64 _size, u8 _value)
@@ -41,7 +43,9 @@ void Ice::MemoryFree(void* _data)
 
 void* Ice::MemoryReallocate(void* _data, u64 _newSize)
 {
-  return realloc(_data, _newSize);
+  if (_newSize > 0)
+    return realloc(_data, _newSize);
+  return _data;
 }
 
 //=========================
